@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/go-playground/validator/v10"
+	v "github.com/k8shell-io/common/validator"
 	"gopkg.in/yaml.v3"
 )
 
@@ -97,6 +98,11 @@ type Storage struct {
 type Repo struct {
 	Name  string `yaml:"name" validate:"required"`
 	Owner string `yaml:"owner" validate:"required"`
+}
+
+// Validate validates the blueprint and returns user-friendly errors
+func (b *Blueprint) Validate() v.Validator {
+	return v.NewValidator(b)
 }
 
 func ValidateCustomBlueprint(blueprintYAML []byte) []string {
