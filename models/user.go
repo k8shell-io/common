@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"time"
 )
 
@@ -18,42 +19,42 @@ var ErrUserTokenNotSupported = errors.New("user token not supported by provider"
 
 // User represents a user in the system
 type User struct {
-	Username     string         `yaml:"username"`
-	Organization string         `yaml:"organization"`
-	IsValid      bool           `yaml:"isValid"`
-	ExpiresAt    time.Time      `yaml:"expiresAt"`
-	UID          uint32         `yaml:"uid"`
-	GID          uint32         `yaml:"gid"`
-	Fullname     string         `yaml:"fullname"`
-	AccessToken  string         `yaml:"accessToken"`
-	Email        string         `yaml:"email"`
-	Password     string         `yaml:"password,omitempty"`
-	Auths        []string       `yaml:"auths"`
-	AuthKeys     []string       `yaml:"authKeys"`
-	Locked       bool           `yaml:"locked"`
-	FailedLogins int            `yaml:"failedLogins"`
-	Channels     []string       `yaml:"channels"`
-	Envs         []string       `yaml:"envs"`
-	Roles        []string       `yaml:"roles"`
-	Blueprints   []string       `yaml:"blueprints"`
-	Source       string         `yaml:"source"`
+	Username     string    `yaml:"username"`
+	Organization string    `yaml:"organization"`
+	IsValid      bool      `yaml:"isValid"`
+	ExpiresAt    time.Time `yaml:"expiresAt"`
+	UID          uint32    `yaml:"uid"`
+	GID          uint32    `yaml:"gid"`
+	Fullname     string    `yaml:"fullname"`
+	AccessToken  string    `yaml:"accessToken"`
+	Email        string    `yaml:"email"`
+	Password     string    `yaml:"password,omitempty"`
+	Auths        []string  `yaml:"auths"`
+	AuthKeys     []string  `yaml:"authKeys"`
+	Locked       bool      `yaml:"locked"`
+	FailedLogins int       `yaml:"failedLogins"`
+	Channels     []string  `yaml:"channels"`
+	Envs         []string  `yaml:"envs"`
+	Roles        []string  `yaml:"roles"`
+	Blueprints   []string  `yaml:"blueprints"`
+	Source       string    `yaml:"source"`
 }
 
 // SSHSession represents an SSH session for a user
 type SSHSession struct {
-	SessionID int32             `yaml:"sessionID"`
-	Username  string            `yaml:"username"`
-	ProxyID   string            `yaml:"proxyID"`
-	ProxyPID  int               `yaml:"proxyPID"`
-	Client    string            `yaml:"client"`
-	ClientIP  string            `yaml:"clientIP"`
-	StartTime *time.Time        `yaml:"startTime"`
-	EndTime   *time.Time        `yaml:"endTime"`
-	Workspace string            `yaml:"workspace"`
-	BytesIn   int64             `yaml:"bytesIn"`
-	BytesOut  int64             `yaml:"bytesOut"`
-	Channels  []string          `yaml:"channels"`
-	ProvTime  float32           `yaml:"provTime"`
+	SessionID int32      `yaml:"sessionID"`
+	Username  string     `yaml:"username"`
+	ProxyID   string     `yaml:"proxyID"`
+	ProxyPID  int        `yaml:"proxyPID"`
+	Client    string     `yaml:"client"`
+	ClientIP  string     `yaml:"clientIP"`
+	StartTime *time.Time `yaml:"startTime"`
+	EndTime   *time.Time `yaml:"endTime"`
+	Workspace string     `yaml:"workspace"`
+	BytesIn   int64      `yaml:"bytesIn"`
+	BytesOut  int64      `yaml:"bytesOut"`
+	Channels  []string   `yaml:"channels"`
+	ProvTime  float32    `yaml:"provTime"`
 }
 
 // CreateSessionID generates a unique session ID for an SSH session
@@ -63,46 +64,45 @@ func CreateSessionID(channel string, proxyID string, proxyPID int, channelNumber
 
 // Organization represents an organization in the system
 type Organization struct {
-	Name        string          `yaml:"name"`
-	Description string          `yaml:"description"`
+	Name        string `yaml:"name"`
+	Description string `yaml:"description"`
 }
 
 // ProviderInfo holds information about a identity provider
 type ProviderInfo struct {
-	Status          string      `yaml:"status"`
-	CreatedAt       time.Time   `yaml:"createdAt"`
-	UpdatedAt       time.Time   `yaml:"updatedAt"`
-	Username        string      `yaml:"username"`
-	Provider        string      `yaml:"provider"`
-	UserCode        string      `yaml:"userCode"`
-	DeviceCode      string      `yaml:"deviceCode"`
-	ExpiresAt       *time.Time  `yaml:"expiresAt"`
-	VerificationURI string      `yaml:"verificationURI"`
-	AccessToken     string      `yaml:"accessToken"`
-	RefreshToken    string      `yaml:"refreshToken"`
+	Status          string     `yaml:"status"`
+	CreatedAt       time.Time  `yaml:"createdAt"`
+	UpdatedAt       time.Time  `yaml:"updatedAt"`
+	Username        string     `yaml:"username"`
+	Provider        string     `yaml:"provider"`
+	UserCode        string     `yaml:"userCode"`
+	DeviceCode      string     `yaml:"deviceCode"`
+	ExpiresAt       *time.Time `yaml:"expiresAt"`
+	VerificationURI string     `yaml:"verificationURI"`
+	AccessToken     string     `yaml:"accessToken"`
+	RefreshToken    string     `yaml:"refreshToken"`
 }
 
 // OnboardUser represents a user being onboarded
 type OnboardUser struct {
-	Provider        string      `json:"provider"`
-	Username        string      `json:"username"`
-	UserCode        string      `json:"user_code"`
-	VerificationUrl string      `json:"verification_url"`
-	ExpiresIn       int         `json:"expires_in"`
+	Provider        string `json:"provider"`
+	Username        string `json:"username"`
+	UserCode        string `json:"user_code"`
+	VerificationUrl string `json:"verification_url"`
+	ExpiresIn       int    `json:"expires_in"`
 }
 
 // OnboardCapability represents the capability of a user to onboard
 type OnboardCapability struct {
-	Provider   string           `json:"provider"`
-	Username   string           `json:"username"`
-	CanOnboard bool             `json:"can_onboard"`
+	Provider   string `json:"provider"`
+	Username   string `json:"username"`
+	CanOnboard bool   `json:"can_onboard"`
 }
 
 // UserToken represents a token for a user
 type UserToken struct {
-	Provider string             `json:"provider"`
-	Address  string             `json:"address"`
-	Username string             `json:"username"`
-	Token    string             `json:"token"`
+	Provider string `json:"provider"`
+	Address  string `json:"address"`
+	Username string `json:"username"`
+	Token    string `json:"token"`
 }
-
