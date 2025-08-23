@@ -6,6 +6,41 @@ import (
 	"time"
 )
 
+const (
+	ChannelSession      string = "session"
+	ChannelShell        string = "shell"
+	ChannelPty          string = "pty"
+	ChannelPortForward  string = "port-forward"
+	ChannelSFTP         string = "sftp"
+	ChannelSCP          string = "scp"
+	ChannelExec         string = "exec"
+	ChannelForwardAgent string = "forward-agent"
+	ChannelSystemExec   string = "system-exec"
+)
+
+const (
+	ChannelShortSh string = "sh"
+	ChannelShortPt string = "pt"
+	ChannelShortPf string = "pf"
+	ChannelShortSf string = "sf"
+	ChannelShortSc string = "sc"
+	ChannelShortEx string = "ex"
+	ChannelShortAf string = "af"
+	ChannelShortSe string = "se"
+)
+
+const (
+	RoleAdmin          string = "admin"
+	RoleOrgAdmin       string = "org-admin"
+	RoleWorkspaceAdmin string = "workspace-admin"
+	RoleWorkspaceUser  string = "workspace-user"
+)
+
+const (
+	AuthMethodPublicKey string = "publickey"
+	AuthMethodPassword  string = "password"
+)
+
 var ErrMethodNotSupported = errors.New("method not supported")
 var ErrUserNotFound = errors.New("user not found")
 var ErrActiveSessionNotFound = errors.New("active session not found")
