@@ -1,9 +1,9 @@
-package logger
+package log
 
 import (
+	"fmt"
 	"io"
 	"os"
-	"time"
 
 	"github.com/rs/zerolog"
 )
@@ -12,17 +12,26 @@ import (
 // Set this to false to use a human-readable console format.
 var JsonLogger = true
 
+// Time format with milliseconds
+const TimeFormat = "2006-01-02T15:04:05.000"
+
 // NewLogger creates a new zerolog logger with a console output format.
 func NewLogger(component string) *zerolog.Logger {
 	var output = io.Writer(os.Stdout)
 	if !JsonLogger {
-		output = zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
+		output = zerolog.ConsoleWriter{
+			Out:        os.Stdout,
+			TimeFormat: TimeFormat,
+		}
 	} else {
 		output = os.Stdout
 	}
-	log := zerolog.New(output).
-		With().
+
+	zerolog.TimeFieldFormat = TimeFormat
+
+	log := zerolog.New(output).With().
 		Timestamp().
+		Str("pid", fmt.Sprintf("%d", os.Getpid())).
 		Str("component", component).
 		Logger()
 	return &log
