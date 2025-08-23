@@ -1,0 +1,22 @@
+blueprint:
+  template: development
+
+  shell: /bin/zsh
+  image: ${WORKSPACE_REGISTRY}/workspaces/dev:1.10
+  sudo: true
+  network_policy: system
+  resources:
+    limits:
+      cpu: 8
+      memory: 16Gi
+
+  init_scripts:
+    files:
+      - init_repo@&: |
+          go env -w GOPRIVATE=github.com/k8shell-io/*
+          cd $HOME/identity
+          swag init --generalInfo internal/server/restapi.go --output docs    
+          GOPATH="$HOME/go" go mod tidy
+
+
+
