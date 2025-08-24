@@ -34,13 +34,16 @@ var (
 // UserStr is the parsed representation of a user string.
 type UserStr struct {
 	Raw       string            // original input
-	User      string            // user (left of ~ or whole local if no ~)
+	Username  string            // username (left of ~ or whole local if no ~)
 	Blueprint string            // direct blueprint name (if no params)
-	Params    map[string]string // normalized keys to values (if params form)
+	ParamsRaw map[string]string // normalized keys to values (if params form)
+	RepoName  string            // shortcut for Params["repo"]
+	RepoOwner string            // shortcut for Params["owner"]
+	RepoRef   string            // shortcut for Params["ref"]
 }
 
-// Parse parses a user string using default length constraints.
-func Parse(input string) (*UserStr, error) {
+// NewUserStr parses a user string using default length constraints.
+func NewUserStr(input string) (*UserStr, error) {
 	if MAX_TOTAL_LEN > 0 && utf8.RuneCountInString(input) > MAX_TOTAL_LEN {
 		return nil, fmt.Errorf("%w: total>%d", ErrTooLong, MAX_TOTAL_LEN)
 	}
@@ -49,14 +52,14 @@ func Parse(input string) (*UserStr, error) {
 		return nil, fmt.Errorf("%w: local>%d", ErrTooLong, MAX_LOCAL_LEN)
 	}
 
-	user, wsSpec, _ := cutOnce(input, "~")
+	username, wsSpec, _ := cutOnce(input, "~")
 
 	if wsSpec == "" {
 		return &UserStr{
 			Raw:       input,
-			User:      user,
+			Username:  username,
 			Blueprint: "",
-			Params:    nil,
+			ParamsRaw: nil,
 		}, nil
 	}
 
@@ -67,9 +70,9 @@ func Parse(input string) (*UserStr, error) {
 		}
 		return &UserStr{
 			Raw:       input,
-			User:      user,
+			Username:  username,
 			Blueprint: decoded,
-			Params:    nil,
+			ParamsRaw: nil,
 		}, nil
 	}
 
@@ -98,11 +101,28 @@ func Parse(input string) (*UserStr, error) {
 		params[k] = val
 	}
 
+	var repoName string
+	var repoOwner string = username
+	if repo := params["repo"]; repo != "" {
+		if owner, name, found := cutOnce(repo, "/"); found {
+			repoOwner = owner
+			repoName = name
+		} else {
+			repoName = repo
+		}
+	}
+	if owner := params["owner"]; owner != "" {
+		repoOwner = owner
+	}
+
 	return &UserStr{
 		Raw:       input,
-		User:      user,
+		Username:  username,
 		Blueprint: "",
-		Params:    params,
+		ParamsRaw: params,
+		RepoName:  repoName,
+		RepoOwner: repoOwner,
+		RepoRef:   params["ref"],
 	}, nil
 }
 
