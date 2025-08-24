@@ -35,12 +35,12 @@ var (
 type UserStr struct {
 	Raw                string            // original input
 	Username           string            // username (left of ~ or whole local if no ~)
-	Blueprint          string            // blueprint name
 	ParamsRaw          map[string]string // normalized keys to values (if params form)
 	RepoName           string            // shortcut for Params["repo"]
 	RepoOwner          string            // shortcut for Params["owner"]
 	RepoRef            string            // shortcut for Params["ref"]
 	HasCustomBlueprint bool              // indicates if the blueprint is custom
+	blueprintName      string            // blueprint name
 }
 
 // NewUserStr parses a user string using default length constraints.
@@ -57,10 +57,11 @@ func NewUserStr(input string) (*UserStr, error) {
 
 	if wsSpec == "" {
 		return &UserStr{
-			Raw:       input,
-			Username:  username,
-			Blueprint: "",
-			ParamsRaw: nil,
+			Raw:                input,
+			Username:           username,
+			blueprintName:      "",
+			ParamsRaw:          nil,
+			HasCustomBlueprint: false,
 		}, nil
 	}
 
@@ -70,10 +71,11 @@ func NewUserStr(input string) (*UserStr, error) {
 			return nil, fmt.Errorf("userstr: blueprint percent-decode: %w", err)
 		}
 		return &UserStr{
-			Raw:       input,
-			Username:  username,
-			Blueprint: decoded,
-			ParamsRaw: nil,
+			Raw:                input,
+			Username:           username,
+			blueprintName:      decoded,
+			ParamsRaw:          nil,
+			HasCustomBlueprint: false,
 		}, nil
 	}
 
@@ -116,21 +118,26 @@ func NewUserStr(input string) (*UserStr, error) {
 		repoOwner = owner
 	}
 
-	var blueprintName = ""
-	if repoOwner != "" && repoName != "" {
-		blueprintName = fmt.Sprintf("repo-%s-%s", repoOwner, repoName)
-	}
-
 	return &UserStr{
 		Raw:                input,
 		Username:           username,
-		Blueprint:          blueprintName,
+		blueprintName:      "",
 		ParamsRaw:          params,
 		RepoName:           repoName,
 		RepoOwner:          repoOwner,
 		RepoRef:            params["ref"],
-		HasCustomBlueprint: blueprintName != "",
+		HasCustomBlueprint: repoOwner != "" && repoName != "",
 	}, nil
+}
+
+func (u *UserStr) GetBlueprintName(prefix string) string {
+	if u.blueprintName != "" || !u.HasCustomBlueprint {
+		return u.blueprintName
+	}
+	if prefix != "" {
+		return fmt.Sprintf("%s-%s-%s", prefix, u.RepoOwner, u.RepoName)
+	}
+	return fmt.Sprintf("repo-%s-%s", u.RepoOwner, u.RepoName)
 }
 
 // cutOnce splits s at the first instance of sep. Returns before, after, and whether sep was found.
