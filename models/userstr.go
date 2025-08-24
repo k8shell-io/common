@@ -33,13 +33,14 @@ var (
 
 // UserStr is the parsed representation of a user string.
 type UserStr struct {
-	Raw       string            // original input
-	Username  string            // username (left of ~ or whole local if no ~)
-	Blueprint string            // direct blueprint name (if no params)
-	ParamsRaw map[string]string // normalized keys to values (if params form)
-	RepoName  string            // shortcut for Params["repo"]
-	RepoOwner string            // shortcut for Params["owner"]
-	RepoRef   string            // shortcut for Params["ref"]
+	Raw                string            // original input
+	Username           string            // username (left of ~ or whole local if no ~)
+	Blueprint          string            // blueprint name
+	ParamsRaw          map[string]string // normalized keys to values (if params form)
+	RepoName           string            // shortcut for Params["repo"]
+	RepoOwner          string            // shortcut for Params["owner"]
+	RepoRef            string            // shortcut for Params["ref"]
+	HasCustomBlueprint bool              // indicates if the blueprint is custom
 }
 
 // NewUserStr parses a user string using default length constraints.
@@ -115,14 +116,20 @@ func NewUserStr(input string) (*UserStr, error) {
 		repoOwner = owner
 	}
 
+	var blueprintName = ""
+	if repoOwner != "" && repoName != "" {
+		blueprintName = fmt.Sprintf("repo-%s-%s", repoOwner, repoName)
+	}
+
 	return &UserStr{
-		Raw:       input,
-		Username:  username,
-		Blueprint: fmt.Sprintf("repo-%s-%s", repoOwner, repoName),
-		ParamsRaw: params,
-		RepoName:  repoName,
-		RepoOwner: repoOwner,
-		RepoRef:   params["ref"],
+		Raw:                input,
+		Username:           username,
+		Blueprint:          blueprintName,
+		ParamsRaw:          params,
+		RepoName:           repoName,
+		RepoOwner:          repoOwner,
+		RepoRef:            params["ref"],
+		HasCustomBlueprint: blueprintName != "",
 	}, nil
 }
 
