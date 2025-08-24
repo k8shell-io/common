@@ -3,7 +3,6 @@ blueprint:
   shell: /bin/zsh
   image: workspaces/dev:1.10
   sudo: true
-  networkPolicy: system
   resources:
     cpu: 8
     memory: 16Gi
