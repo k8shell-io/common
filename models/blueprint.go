@@ -64,7 +64,7 @@ type Cert struct {
 
 // Network represents network configuration
 type Network struct {
-	NetworkPolicy string   `yaml:"networkPolicy" validate:"required,oneof=workspace system isolated user organization"`
+	NetworkPolicy string   `yaml:"networkPolicy,omitempty" validate:"required,oneof=workspace system isolated user organization"`
 	AllowEgress   []string `yaml:"allowEgress,omitempty" validate:"dive,cidr"`
 }
 
