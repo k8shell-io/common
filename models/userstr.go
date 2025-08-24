@@ -41,7 +41,6 @@ type UserStr struct {
 	RepoOwner          string            // shortcut for Params["owner"]
 	RepoRef            string            // shortcut for Params["ref"]
 	HasCustomBlueprint bool              // indicates if the blueprint is custom
-	blueprintPrefix    string            // prefix for the blueprint name
 }
 
 // NewUserStr parses a user string using default length constraints.
@@ -132,10 +131,6 @@ func NewUserStr(input string) (*UserStr, error) {
 		RepoRef:            params["ref"],
 		HasCustomBlueprint: blueprintName != "",
 	}, nil
-}
-
-func (u *UserStr) SetBlueprintPrefix(prefix string) {
-	u.blueprintPrefix = prefix
 }
 
 // cutOnce splits s at the first instance of sep. Returns before, after, and whether sep was found.
