@@ -118,7 +118,7 @@ func NewUserStr(input string) (*UserStr, error) {
 	return &UserStr{
 		Raw:       input,
 		Username:  username,
-		Blueprint: "",
+		Blueprint: fmt.Sprintf("repo-%s-%s", repoOwner, repoName),
 		ParamsRaw: params,
 		RepoName:  repoName,
 		RepoOwner: repoOwner,
