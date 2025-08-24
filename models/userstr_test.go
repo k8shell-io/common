@@ -10,8 +10,8 @@ func TestDirectBlueprint(t *testing.T) {
 	if r.Username != "tomas" {
 		t.Fatalf("unexpected user: %+v", r)
 	}
-	if r.GetBlueprintName("") != "dev" {
-		t.Fatalf("unexpected blueprint: %+v", r.GetBlueprintName(""))
+	if r.Blueprint != "dev" {
+		t.Fatalf("unexpected blueprint: %+v", r.Blueprint)
 	}
 	if r.ParamsRaw != nil || r.RepoName != "" || r.RepoOwner != "" || r.RepoRef != "" {
 		t.Fatalf("expected nil params: %+v", r.ParamsRaw)
@@ -45,8 +45,8 @@ func TestNoSpec(t *testing.T) {
 	if r.Username != "alice" {
 		t.Fatalf("unexpected: %+v", r)
 	}
-	if r.GetBlueprintName("") != "" || r.ParamsRaw != nil || r.RepoName != "" || r.RepoOwner != "" || r.RepoRef != "" {
-		t.Fatalf("expected nil bp/params: bpname=%s, %+v", r.GetBlueprintName(""), r)
+	if r.Blueprint != "" || r.ParamsRaw != nil || r.RepoName != "" || r.RepoOwner != "" || r.RepoRef != "" {
+		t.Fatalf("expected nil bp/params")
 	}
 }
 
