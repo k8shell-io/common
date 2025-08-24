@@ -105,24 +105,24 @@ func (b *Blueprint) Validate() v.Validator {
 	return v.NewValidator(b)
 }
 
-func ValidateCustomBlueprint(blueprintYAML []byte) []string {
+func ValidateCustomBlueprint(blueprintYAML []byte) (*CustomBlueprint, []string) {
 	var fullYAML map[string]interface{}
 	if err := yaml.Unmarshal(blueprintYAML, &fullYAML); err != nil {
-		return []string{
+		return nil, []string{
 			fmt.Sprintf("Invalid YAML format: %v", err),
 		}
 	}
 
 	var blueprintData, exists = fullYAML["blueprint"]
 	if !exists {
-		return []string{
+		return nil, []string{
 			"Blueprint data is missing in the YAML",
 		}
 	}
 
 	blueprintOnlyYAML, err := yaml.Marshal(blueprintData)
 	if err != nil {
-		return []string{
+		return nil, []string{
 			fmt.Sprintf("Failed to process blueprint data: %v", err),
 		}
 	}
@@ -131,7 +131,7 @@ func ValidateCustomBlueprint(blueprintYAML []byte) []string {
 	decoder := yaml.NewDecoder(bytes.NewReader(blueprintOnlyYAML))
 	decoder.KnownFields(true)
 	if err := decoder.Decode(&customBp); err != nil {
-		return []string{
+		return nil, []string{
 			fmt.Sprintf("Failed to decode blueprint: %v", err),
 		}
 	}
@@ -143,7 +143,7 @@ func ValidateCustomBlueprint(blueprintYAML []byte) []string {
 			validationErrors = append(validationErrors,
 				fmt.Sprintf("Field '%s' failed validation: %s", err.Field(), err.Tag()))
 		}
-		return validationErrors
+		return nil, validationErrors
 	}
-	return nil
+	return &customBp, nil
 }
