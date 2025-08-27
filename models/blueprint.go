@@ -11,6 +11,7 @@ import (
 
 // Blueprint represents a single blueprint configuration
 type Blueprint struct {
+	Metadata        BlueprintMetadata
 	Name            string              `yaml:"name" validate:"required,min=1,max=30"`
 	Template        string              `yaml:"template"`
 	Shell           string              `yaml:"shell" validate:"required"`
