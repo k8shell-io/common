@@ -43,6 +43,13 @@ type UserStr struct {
 	HasCustomBlueprint bool              // indicates if the blueprint is custom
 }
 
+// UserStrBuilder is a builder for creating UserStr instances.
+type UserStrBuilder struct {
+	username  string
+	blueprint string
+	params    map[string]string
+}
+
 // NewUserStr parses a user string using default length constraints.
 func NewUserStr(input string) (*UserStr, error) {
 	if MAX_TOTAL_LEN > 0 && utf8.RuneCountInString(input) > MAX_TOTAL_LEN {
@@ -140,4 +147,58 @@ func cutOnce(s, sep string) (string, string, bool) {
 		return s, "", false
 	}
 	return s[:i], s[i+len(sep):], true
+}
+
+// *** UserStrBuilder
+
+// NewUserStrWith starts building a UserStr for the given username.
+func NewUserStrWith(username string) *UserStrBuilder {
+	return &UserStrBuilder{
+		username: username,
+		params:   make(map[string]string),
+	}
+}
+
+func (b *UserStrBuilder) WithBlueprint(bp string) *UserStrBuilder {
+	b.blueprint = bp
+	return b
+}
+
+func (b *UserStrBuilder) WithRepo(repo string) *UserStrBuilder {
+	b.params["repo"] = repo
+	return b
+}
+
+func (b *UserStrBuilder) WithOwner(owner string) *UserStrBuilder {
+	b.params["owner"] = owner
+	return b
+}
+
+func (b *UserStrBuilder) WithRef(ref string) *UserStrBuilder {
+	b.params["ref"] = ref
+	return b
+}
+
+func (b *UserStrBuilder) WithParam(key, value string) *UserStrBuilder {
+	b.params[strings.ToLower(key)] = value
+	return b
+}
+
+// Build assembles the UserStr (and runs through your normal parser for consistency).
+func (b *UserStrBuilder) Build() (*UserStr, error) {
+	var raw string
+
+	if b.blueprint != "" && len(b.params) == 0 {
+		raw = fmt.Sprintf("%s~%s", b.username, url.PathEscape(b.blueprint))
+	} else if len(b.params) > 0 {
+		var parts []string
+		for k, v := range b.params {
+			parts = append(parts, fmt.Sprintf("%s=%s", strings.ToLower(k), url.PathEscape(v)))
+		}
+		raw = fmt.Sprintf("%s~%s", b.username, strings.Join(parts, "+"))
+	} else {
+		raw = b.username
+	}
+
+	return NewUserStr(raw)
 }
