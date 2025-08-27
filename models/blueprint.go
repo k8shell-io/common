@@ -104,8 +104,9 @@ type Storage struct {
 }
 
 type Repo struct {
-	Name  string `yaml:"name" validate:"required"`
-	Owner string `yaml:"owner" validate:"required"`
+	Address string `yaml:"address" validate:"required"`
+	Name    string `yaml:"name" validate:"required"`
+	Owner   string `yaml:"owner" validate:"required"`
 }
 
 // Validate validates the blueprint and returns user-friendly errors
