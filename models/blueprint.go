@@ -31,7 +31,7 @@ type Blueprint struct {
 
 // CustomBlueprint represents a custom blueprint configuration
 type CustomBlueprint struct {
-	Metadata       CustomBlueprintMetadata
+	Metadata       BlueprintMetadata
 	Name           string              `yaml:"name,omitempty"`
 	Template       string              `yaml:"template" validate:"required"`
 	Shell          string              `yaml:"shell,omitempty"`
@@ -45,8 +45,8 @@ type CustomBlueprint struct {
 	InitScripts    []map[string]string `yaml:"initScripts,omitempty"`
 }
 
-// CustomBlueprintMetadata holds metadata information for a custom blueprint.
-type CustomBlueprintMetadata struct {
+// BlueprintMetadata holds metadata information for a blueprint.
+type BlueprintMetadata struct {
 	RepoName    string
 	RepoOwner   string
 	RepoAddress string
