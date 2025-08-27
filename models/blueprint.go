@@ -31,6 +31,7 @@ type Blueprint struct {
 
 // CustomBlueprint represents a custom blueprint configuration
 type CustomBlueprint struct {
+	Metadata       CustomBlueprintMetadata
 	Name           string              `yaml:"name,omitempty"`
 	Template       string              `yaml:"template" validate:"required"`
 	Shell          string              `yaml:"shell,omitempty"`
@@ -42,6 +43,13 @@ type CustomBlueprint struct {
 	Resources      Resources           `yaml:"resources,omitempty"`
 	Storages       map[string]Storage  `yaml:"storages,omitempty"`
 	InitScripts    []map[string]string `yaml:"initScripts,omitempty"`
+}
+
+// CustomBlueprintMetadata holds metadata information for a custom blueprint.
+type CustomBlueprintMetadata struct {
+	RepoName    string
+	RepoOwner   string
+	RepoAddress string
 }
 
 // K8shelld represents k8shelld configuration
