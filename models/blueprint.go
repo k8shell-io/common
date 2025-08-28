@@ -58,7 +58,6 @@ type BlueprintMetadata struct {
 type K8shelld struct {
 	Image           string   `yaml:"image" validate:"required"`
 	ImagePullPolicy string   `yaml:"imagePullPolicy,omitempty" validate:"omitempty,oneof=Always Never IfNotPresent"`
-	EncryptConfig   bool     `yaml:"encryptConfig,omitempty"`
 	IgnoreOrphans   []string `yaml:"ignoreOrphans,omitempty"`
 	Cert            Cert     `yaml:"cert" validate:"required"`
 }
