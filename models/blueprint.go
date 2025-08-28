@@ -48,9 +48,10 @@ type CustomBlueprint struct {
 
 // BlueprintMetadata holds metadata information for a blueprint.
 type BlueprintMetadata struct {
-	RepoName    string
-	RepoOwner   string
-	RepoAddress string
+	Name        string `yaml:"name"`
+	RepoName    string `yaml:"repoName"`
+	RepoOwner   string `yaml:"repoOwner"`
+	RepoAddress string `yaml:"repoAddress"`
 }
 
 // K8shelld represents k8shelld configuration
