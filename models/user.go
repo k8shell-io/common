@@ -144,6 +144,7 @@ type UserToken struct {
 
 // ExternalCredential represents external service credentials for a user
 type ExternalCredential struct {
+	ID            uint64 `json:"id"`
 	Username      string `json:"username"`
 	ServiceName   string `json:"service_name"`
 	ServiceURL    string `json:"service_url"`
