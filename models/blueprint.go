@@ -16,7 +16,8 @@ type Blueprint struct {
 	Name            string              `yaml:"name" validate:"required,min=1,max=30"`
 	Template        string              `yaml:"template"`
 	Shell           string              `yaml:"shell" validate:"required"`
-	SubDomain       string              `yaml:"subDomain,omitempty" validate:"omitempty,subdomain_no_dot"`
+	Hostname        string              `yaml:"hostname,omitempty" validate:"omitempty,plainhostname"`
+	Subdomain       string              `yaml:"subdomain,omitempty" validate:"omitempty,plainhostname"`
 	Sudo            bool                `yaml:"sudo" default:"false"`
 	Image           string              `yaml:"image" validate:"required"`
 	ImagePullSecret string              `yaml:"imagePullSecret,omitempty"`
@@ -38,7 +39,8 @@ type CustomBlueprint struct {
 	Name           string              `yaml:"name,omitempty"`
 	Template       string              `yaml:"template" validate:"required"`
 	Shell          string              `yaml:"shell,omitempty"`
-	SubDomain      string              `yaml:"subDomain,omitempty" validate:"omitempty,subdomain_no_dot"`
+	Hostname       string              `yaml:"hostname,omitempty" validate:"omitempty,plainhostname"`
+	Subdomain      string              `yaml:"subdomain,omitempty" validate:"omitempty,plainhostname"`
 	Sudo           bool                `yaml:"sudo,omitempty"`
 	Image          string              `yaml:"image,omitempty"`
 	Env            map[string]string   `yaml:"env,omitempty"`
@@ -163,11 +165,11 @@ func ValidateCustomBlueprint(blueprintYAML []byte) (*CustomBlueprint, []string) 
 
 // Register custom validator for subdomain without dots
 func RegisterSubdomainValidator(v *validator.Validate) {
-	v.RegisterValidation("subdomain_no_dot", validateSubdomainNoDot)
+	v.RegisterValidation("plainhostname", validatePlainHostname)
 }
 
-// validateSubdomainNoDot validates that a string is a valid subdomain without dots
-func validateSubdomainNoDot(fl validator.FieldLevel) bool {
+// validatePlainHostname validates that a string is a valid hostname without dots
+func validatePlainHostname(fl validator.FieldLevel) bool {
 	value := fl.Field().String()
 	if value == "" {
 		return true
