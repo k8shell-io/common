@@ -3,7 +3,6 @@ package models
 import (
 	"bytes"
 	"fmt"
-	"strings"
 
 	"github.com/go-playground/validator/v10"
 	v "github.com/k8shell-io/common/validator"
@@ -16,8 +15,8 @@ type Blueprint struct {
 	Name            string              `yaml:"name" validate:"required,min=1,max=30"`
 	Template        string              `yaml:"template"`
 	Shell           string              `yaml:"shell" validate:"required"`
-	Hostname        string              `yaml:"hostname,omitempty" validate:"omitempty,plainhostname"`
-	Subdomain       string              `yaml:"subdomain,omitempty" validate:"omitempty,plainhostname"`
+	Hostname        string              `yaml:"hostname,omitempty" validate:"omitempty,hostname_rfc1123"`
+	Subdomain       string              `yaml:"subdomain,omitempty" validate:"omitempty,hostname_rfc1123"`
 	Sudo            bool                `yaml:"sudo" default:"false"`
 	Image           string              `yaml:"image" validate:"required"`
 	ImagePullSecret string              `yaml:"imagePullSecret,omitempty"`
@@ -39,8 +38,6 @@ type CustomBlueprint struct {
 	Name           string              `yaml:"name,omitempty"`
 	Template       string              `yaml:"template" validate:"required"`
 	Shell          string              `yaml:"shell,omitempty"`
-	Hostname       string              `yaml:"hostname,omitempty" validate:"omitempty,plainhostname"`
-	Subdomain      string              `yaml:"subdomain,omitempty" validate:"omitempty,plainhostname"`
 	Sudo           bool                `yaml:"sudo,omitempty"`
 	Image          string              `yaml:"image,omitempty"`
 	Env            map[string]string   `yaml:"env,omitempty"`
@@ -161,42 +158,4 @@ func ValidateCustomBlueprint(blueprintYAML []byte) (*CustomBlueprint, []string) 
 		return nil, validationErrors
 	}
 	return &customBp, nil
-}
-
-// Register custom validator for subdomain without dots
-func RegisterSubdomainValidator(v *validator.Validate) {
-	v.RegisterValidation("plainhostname", validatePlainHostname)
-}
-
-// validatePlainHostname validates that a string is a valid hostname without dots
-func validatePlainHostname(fl validator.FieldLevel) bool {
-	value := fl.Field().String()
-	if value == "" {
-		return true
-	}
-
-	if strings.Contains(value, ".") {
-		return false
-	}
-
-	if len(value) < 1 || len(value) > 63 {
-		return false
-	}
-
-	if !isAlphanumeric(value[0]) || !isAlphanumeric(value[len(value)-1]) {
-		return false
-	}
-
-	for _, r := range value {
-		if !isAlphanumeric(byte(r)) && r != '-' {
-			return false
-		}
-	}
-
-	return true
-}
-
-// isAlphanumeric checks if a byte is an alphanumeric character
-func isAlphanumeric(b byte) bool {
-	return (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || (b >= '0' && b <= '9')
 }
