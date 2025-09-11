@@ -19,6 +19,7 @@ type Validator []ValidationError
 
 func NewValidator(s interface{}) Validator {
 	validate := validator.New()
+	RegisterCustomValidators(validate)
 	err := validate.Struct(s)
 	if err == nil {
 		return nil
@@ -85,4 +86,42 @@ func getValidationMessage(tag, field, param, value string) string {
 	default:
 		return fmt.Sprintf("%s is invalid (validation: %s) (value: %s)", field, tag, value)
 	}
+}
+
+// Register custom validators
+func RegisterCustomValidators(v *validator.Validate) {
+	v.RegisterValidation("plainhostname", validatePlainHostname)
+}
+
+// validatePlainHostname validates that a string is a valid hostname without dots
+func validatePlainHostname(fl validator.FieldLevel) bool {
+	value := fl.Field().String()
+	if value == "" {
+		return true
+	}
+
+	if strings.Contains(value, ".") {
+		return false
+	}
+
+	if len(value) < 1 || len(value) > 63 {
+		return false
+	}
+
+	if !isAlphanumeric(value[0]) || !isAlphanumeric(value[len(value)-1]) {
+		return false
+	}
+
+	for _, r := range value {
+		if !isAlphanumeric(byte(r)) && r != '-' {
+			return false
+		}
+	}
+
+	return true
+}
+
+// isAlphanumeric checks if a byte is an alphanumeric character
+func isAlphanumeric(b byte) bool {
+	return (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || (b >= '0' && b <= '9')
 }

@@ -15,8 +15,8 @@ type Blueprint struct {
 	Name            string              `yaml:"name" validate:"required,min=1,max=30"`
 	Template        string              `yaml:"template"`
 	Shell           string              `yaml:"shell" validate:"required"`
-	Hostname        string              `yaml:"hostname,omitempty" validate:"omitempty,hostname_rfc1123"`
-	Subdomain       string              `yaml:"subdomain,omitempty" validate:"omitempty,hostname_rfc1123"`
+	Hostname        string              `yaml:"hostname,omitempty" validate:"omitempty,plainhostname"`
+	Subdomain       string              `yaml:"subdomain,omitempty" validate:"omitempty,plainhostname"`
 	Sudo            bool                `yaml:"sudo" default:"false"`
 	Image           string              `yaml:"image" validate:"required"`
 	ImagePullSecret string              `yaml:"imagePullSecret,omitempty"`
@@ -149,6 +149,7 @@ func ValidateCustomBlueprint(blueprintYAML []byte) (*CustomBlueprint, []string) 
 	}
 
 	validate := validator.New()
+	v.RegisterCustomValidators(validate)
 	if err := validate.Struct(customBp); err != nil {
 		var validationErrors []string
 		for _, err := range err.(validator.ValidationErrors) {
