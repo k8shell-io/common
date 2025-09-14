@@ -13,6 +13,7 @@ import (
 type Blueprint struct {
 	Metadata        BlueprintMetadata
 	Name            string              `yaml:"name" validate:"required,min=1,max=30"`
+	IsTemplate      bool                `yaml:"isTemplate,omitempty"`
 	Template        string              `yaml:"template"`
 	Shell           string              `yaml:"shell" validate:"required"`
 	Hostname        string              `yaml:"hostname,omitempty" validate:"omitempty,plainhostname"`

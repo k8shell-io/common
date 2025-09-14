@@ -3,6 +3,7 @@ package models
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 )
 
@@ -73,6 +74,13 @@ type User struct {
 	Roles        []string  `yaml:"roles"`
 	Blueprints   []string  `yaml:"blueprints"`
 	Source       string    `yaml:"source"`
+}
+
+func (u *User) HasBlueprint(blueprintName string) bool {
+	if len(u.Blueprints) == 0 || !slices.Contains(u.Blueprints, "*") && !slices.Contains(u.Blueprints, blueprintName) {
+		return false
+	}
+	return true
 }
 
 // SSHSession represents an SSH session for a user
