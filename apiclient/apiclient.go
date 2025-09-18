@@ -97,6 +97,8 @@ func NewClient(config Config, logName string) *Client {
 // ForwardHandler returns a handler function that forwards the request to the target URL
 func (c *Client) ForwardHandler(srcPath, dstPath string) gin.HandlerFunc {
 	return func(cg *gin.Context) {
+		localDstPath := dstPath
+
 		srcParams := extractParamsFromRoute(srcPath)
 		for _, param := range srcParams {
 			value, exists := cg.Get(param)
@@ -121,11 +123,11 @@ func (c *Client) ForwardHandler(srcPath, dstPath string) gin.HandlerFunc {
 					"msg": fmt.Sprintf("Missing URL parameter: %s", param)})
 				return
 			}
-			dstPath = strings.ReplaceAll(dstPath, ":"+param, paramValue)
+			localDstPath = strings.ReplaceAll(localDstPath, ":"+param, paramValue)
 		}
 
-		c.log.Debug().Str("origPath", cg.Request.URL.Path).Str("newURL", dstPath).Msg("Forwarding request")
-		c.doForward(cg, dstPath)
+		c.log.Debug().Str("origPath", cg.Request.URL.Path).Str("newURL", localDstPath).Msg("Forwarding request")
+		c.doForward(cg, localDstPath)
 	}
 }
 
