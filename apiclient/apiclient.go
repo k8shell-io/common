@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/k8shell-io/common/logger"
+	"github.com/rs/zerolog"
 )
 
 // Config represents the client configuration
@@ -37,10 +39,11 @@ type Client struct {
 	baseURL    string
 	apiKey     string
 	httpClient *http.Client
+	log        *zerolog.Logger
 }
 
 // NewClient creates a new provisioner API client
-func NewClient(config Config) *Client {
+func NewClient(config Config, logName string) *Client {
 	if config.Timeout == 0 {
 		config.Timeout = 5
 	}
@@ -51,11 +54,47 @@ func NewClient(config Config) *Client {
 		httpClient: &http.Client{
 			Timeout: time.Duration(config.Timeout) * time.Second,
 		},
+		log: logger.NewLogger(logName),
+	}
+}
+
+// ForwardHandler returns a handler function that forwards the request to the target URL
+func (c *Client) ForwardHandler(srcPath, dstPath string) gin.HandlerFunc {
+	return func(cg *gin.Context) {
+		srcParams := extractParamsFromRoute(srcPath)
+		for _, param := range srcParams {
+			value, exists := cg.Get(param)
+			var paramValue string
+
+			if exists {
+				if str, ok := value.(string); ok {
+					paramValue = str
+				} else {
+					c.log.Error().Str("param", param).Msg("URL parameter is not a string")
+					cg.JSON(http.StatusInternalServerError, gin.H{"status": http.StatusInternalServerError,
+						"msg": "Internal server error"})
+					return
+				}
+			} else {
+				paramValue = cg.Param(param)
+			}
+
+			if paramValue == "" {
+				c.log.Error().Str("param", param).Msg("Missing URL parameter")
+				cg.JSON(http.StatusBadRequest, gin.H{"status": http.StatusBadRequest,
+					"msg": fmt.Sprintf("Missing URL parameter: %s", param)})
+				return
+			}
+			dstPath = strings.ReplaceAll(dstPath, ":"+param, paramValue)
+		}
+
+		c.log.Debug().Str("origPath", cg.Request.URL.Path).Str("newURL", dstPath).Msg("Forwarding request")
+		c.doForward(cg, dstPath)
 	}
 }
 
 // ForwardRequest forwards a HTTP request to the provisioner API
-func (c *Client) ForwardRequest(cg *gin.Context, url string) {
+func (c *Client) doForward(cg *gin.Context, url string) {
 	downstreamURL := c.baseURL + url
 
 	req, err := http.NewRequest(cg.Request.Method, downstreamURL, cg.Request.Body)
@@ -104,7 +143,7 @@ func (c *Client) MakeRequest(ctx context.Context, method, endpoint string, body 
 	}
 
 	req.Header.Set("Authorization", "Bearer "+c.apiKey)
-	req.Header.Set("User-Agent", "k8shell-provisioner-client/1.0")
+	req.Header.Set("User-Agent", "k8shell-api-client/1.0")
 
 	if contentType != "" {
 		req.Header.Set("Content-Type", contentType)
@@ -163,4 +202,21 @@ func (c *Client) HandleErrorResponse(resp *http.Response) error {
 	}
 
 	return fmt.Errorf("API error (status %d): %s", resp.StatusCode, errResp.Error)
+}
+
+// extractParamsFromRoute extracts parameter names from a route pattern like "/users/:username/sessions"
+func extractParamsFromRoute(route string) []string {
+	var params []string
+	parts := strings.Split(route, "/")
+
+	for _, part := range parts {
+		if strings.HasPrefix(part, ":") {
+			paramName := strings.TrimPrefix(part, ":")
+			if paramName != "" {
+				params = append(params, paramName)
+			}
+		}
+	}
+
+	return params
 }
