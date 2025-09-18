@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -14,15 +15,42 @@ import (
 	"github.com/rs/zerolog"
 )
 
-// Config represents the client configuration
+// Config represents the configuration for the API client.
 type Config struct {
-	BaseURL string `yaml:"baseURL"`
-	APIKey  string `yaml:"APIKey"`
-	Timeout int    `yaml:"timeout"`
+	BaseURL             string `yaml:"baseURL"`
+	APIKey              string `yaml:"APIKey"`
+	Timeout             int    `yaml:"timeout"`
+	MaxIdleConns        int    `yaml:"maxIdleConns"`
+	MaxIdleConnsPerHost int    `yaml:"maxIdleConnsPerHost"`
+	IdleConnTimeout     int    `yaml:"idleConnTimeout"`
+	DialTimeout         int    `yaml:"dialTimeout"`
+	KeepAlive           int    `yaml:"keepAlive"`
+	TLSHandshakeTimeout int    `yaml:"tlsHandshakeTimeout"`
 }
 
-type ClientInterface interface {
-	ForwardHandler(srcPath, dstPath string) gin.HandlerFunc
+// setDefaults sets default values for Config fields that are zero
+func (c *Config) setDefaults() {
+	if c.Timeout == 0 {
+		c.Timeout = 30
+	}
+	if c.MaxIdleConns == 0 {
+		c.MaxIdleConns = 20
+	}
+	if c.MaxIdleConnsPerHost == 0 {
+		c.MaxIdleConnsPerHost = 10
+	}
+	if c.IdleConnTimeout == 0 {
+		c.IdleConnTimeout = 90
+	}
+	if c.DialTimeout == 0 {
+		c.DialTimeout = 5
+	}
+	if c.KeepAlive == 0 {
+		c.KeepAlive = 30
+	}
+	if c.TLSHandshakeTimeout == 0 {
+		c.TLSHandshakeTimeout = 5
+	}
 }
 
 // ErrorResponse represents an API error response
@@ -40,18 +68,30 @@ type Client struct {
 
 // NewClient creates a new provisioner API client
 func NewClient(config Config, logName string) *Client {
-	if config.Timeout == 0 {
-		config.Timeout = 5
+	config.setDefaults()
+
+	transport := &http.Transport{
+		DialContext: (&net.Dialer{
+			Timeout:   time.Duration(config.DialTimeout) * time.Second,
+			KeepAlive: time.Duration(config.KeepAlive) * time.Second,
+		}).DialContext,
+		MaxIdleConns:        config.MaxIdleConns,
+		MaxIdleConnsPerHost: config.MaxIdleConnsPerHost,
+		IdleConnTimeout:     time.Duration(config.IdleConnTimeout) * time.Second,
+		TLSHandshakeTimeout: time.Duration(config.TLSHandshakeTimeout) * time.Second,
+		DisableKeepAlives:   false,
 	}
 
 	return &Client{
-		baseURL: strings.TrimSuffix(config.BaseURL, "/"),
+		baseURL: config.BaseURL,
 		apiKey:  config.APIKey,
 		httpClient: &http.Client{
-			Timeout: time.Duration(config.Timeout) * time.Second,
+			Timeout:   time.Duration(config.Timeout) * time.Second,
+			Transport: transport,
 		},
 		log: logger.NewLogger(logName),
 	}
+
 }
 
 // ForwardHandler returns a handler function that forwards the request to the target URL
