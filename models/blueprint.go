@@ -126,20 +126,6 @@ func (b *Blueprint) Validate() v.Validator {
 }
 
 func ValidateK8shellFile(k8shellFile K8shellFile) (*CustomBlueprint, []string) {
-	// var fullYAML map[string]interface{}
-	// if err := yaml.Unmarshal(blueprintYAML, &fullYAML); err != nil {
-	// 	return nil, []string{
-	// 		fmt.Sprintf("Invalid YAML format: %v", err),
-	// 	}
-	// }
-
-	// var blueprintData, exists = fullYAML["blueprint"]
-	// if !exists {
-	// 	return nil, []string{
-	// 		"Blueprint data is missing in the YAML",
-	// 	}
-	// }
-
 	blueprintOnlyYAML, err := yaml.Marshal(k8shellFile.Blueprint)
 	if err != nil {
 		return nil, []string{
