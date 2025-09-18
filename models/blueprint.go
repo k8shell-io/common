@@ -35,6 +35,11 @@ type Blueprint struct {
 	ExtFiles        map[string]string   `yaml:"extFiles,omitempty"`
 }
 
+// K8shellFile represents the overall structure of a k8shell YAML file
+type K8shellFile struct {
+	Blueprint CustomBlueprint `yaml:"blueprint" validate:"required"`
+}
+
 // CustomBlueprint represents a custom blueprint configuration
 type CustomBlueprint struct {
 	Metadata       BlueprintMetadata
@@ -120,22 +125,22 @@ func (b *Blueprint) Validate() v.Validator {
 	return v.NewValidator(b)
 }
 
-func ValidateCustomBlueprint(blueprintYAML []byte) (*CustomBlueprint, []string) {
-	var fullYAML map[string]interface{}
-	if err := yaml.Unmarshal(blueprintYAML, &fullYAML); err != nil {
-		return nil, []string{
-			fmt.Sprintf("Invalid YAML format: %v", err),
-		}
-	}
+func ValidateK8shellFile(k8shellFile *K8shellFile) (*CustomBlueprint, []string) {
+	// var fullYAML map[string]interface{}
+	// if err := yaml.Unmarshal(blueprintYAML, &fullYAML); err != nil {
+	// 	return nil, []string{
+	// 		fmt.Sprintf("Invalid YAML format: %v", err),
+	// 	}
+	// }
 
-	var blueprintData, exists = fullYAML["blueprint"]
-	if !exists {
-		return nil, []string{
-			"Blueprint data is missing in the YAML",
-		}
-	}
+	// var blueprintData, exists = fullYAML["blueprint"]
+	// if !exists {
+	// 	return nil, []string{
+	// 		"Blueprint data is missing in the YAML",
+	// 	}
+	// }
 
-	blueprintOnlyYAML, err := yaml.Marshal(blueprintData)
+	blueprintOnlyYAML, err := yaml.Marshal(k8shellFile.Blueprint)
 	if err != nil {
 		return nil, []string{
 			fmt.Sprintf("Failed to process blueprint data: %v", err),
