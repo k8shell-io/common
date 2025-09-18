@@ -22,11 +22,7 @@ type Config struct {
 }
 
 type ClientInterface interface {
-	ForwardRequest(cg *gin.Context, url string)
-	MakeRequest(ctx context.Context, method, endpoint string, body io.Reader,
-		contentType string) (*http.Response, error)
-	HandleResponse(resp *http.Response, v interface{}) error
-	HandleErrorResponse(resp *http.Response) error
+	ForwardHandler(srcPath, dstPath string) gin.HandlerFunc
 }
 
 // ErrorResponse represents an API error response
