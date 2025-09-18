@@ -125,7 +125,7 @@ func (b *Blueprint) Validate() v.Validator {
 	return v.NewValidator(b)
 }
 
-func ValidateK8shellFile(k8shellFile *K8shellFile) (*CustomBlueprint, []string) {
+func ValidateK8shellFile(k8shellFile K8shellFile) (*CustomBlueprint, []string) {
 	// var fullYAML map[string]interface{}
 	// if err := yaml.Unmarshal(blueprintYAML, &fullYAML); err != nil {
 	// 	return nil, []string{
