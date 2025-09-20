@@ -14,6 +14,7 @@ type Blueprint struct {
 	Metadata        BlueprintMetadata
 	Name            string              `yaml:"name" validate:"required,min=1,max=30"`
 	IsTemplate      bool                `yaml:"isTemplate,omitempty"`
+	Splash          string              `yaml:"splash,omitempty"`
 	Template        string              `yaml:"template"`
 	Shell           string              `yaml:"shell" validate:"required"`
 	Hostname        string              `yaml:"hostname,omitempty" validate:"omitempty,plainhostname"`
@@ -45,6 +46,7 @@ type CustomBlueprint struct {
 	Metadata       BlueprintMetadata
 	Name           string              `yaml:"name,omitempty"`
 	Template       string              `yaml:"template" validate:"required"`
+	Splash         string              `yaml:"splash,omitempty"`
 	Shell          string              `yaml:"shell,omitempty"`
 	Sudo           bool                `yaml:"sudo,omitempty"`
 	Image          string              `yaml:"image,omitempty"`
