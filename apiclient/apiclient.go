@@ -210,30 +210,32 @@ func (c *Client) MakeRequest(ctx context.Context, method, endpoint string, body 
 	return resp, nil
 }
 
-// handleResponse handles API response and error parsing
-func (c *Client) HandleResponse(resp *http.Response, v interface{}) error {
+// handleResponse handles API response and error parsing, returns body content
+func (c *Client) HandleResponse(resp *http.Response, v interface{}) (string, error) {
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("failed to read response body: %w", err)
+		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
+
+	bodyString := string(body)
 
 	if resp.StatusCode >= 400 {
 		var errResp ErrorResponse
 		if err := json.Unmarshal(body, &errResp); err != nil {
-			return &APIError{StatusCode: resp.StatusCode, Message: "failed to decode error response"}
+			return bodyString, &APIError{StatusCode: resp.StatusCode, Message: "failed to decode error response"}
 		}
-		return &APIError{StatusCode: resp.StatusCode, Message: errResp.Error}
+		return bodyString, &APIError{StatusCode: resp.StatusCode, Message: errResp.Error}
 	}
 
 	if v != nil {
 		if err := json.Unmarshal(body, v); err != nil {
-			return fmt.Errorf("failed to decode response: %w", err)
+			return bodyString, fmt.Errorf("failed to decode response: %w", err)
 		}
 	}
 
-	return nil
+	return bodyString, nil
 }
 
 // HandleErrorResponse handles error responses from the API
