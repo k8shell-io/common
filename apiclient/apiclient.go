@@ -58,6 +58,17 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
+// APIError represents an error returned by the API
+type APIError struct {
+	StatusCode int
+	Message    string
+}
+
+// Error implements the error interface for APIError
+func (e *APIError) Error() string {
+	return e.Message
+}
+
 // Client represents the provisioner API client
 type Client struct {
 	baseURL    string
@@ -211,9 +222,9 @@ func (c *Client) HandleResponse(resp *http.Response, v interface{}) error {
 	if resp.StatusCode >= 400 {
 		var errResp ErrorResponse
 		if err := json.Unmarshal(body, &errResp); err != nil {
-			return fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(body))
+			return &APIError{StatusCode: resp.StatusCode, Message: "failed to decode error response"}
 		}
-		return fmt.Errorf("API error (status %d): %s", resp.StatusCode, errResp.Error)
+		return &APIError{StatusCode: resp.StatusCode, Message: errResp.Error}
 	}
 
 	if v != nil {
@@ -226,21 +237,21 @@ func (c *Client) HandleResponse(resp *http.Response, v interface{}) error {
 }
 
 // HandleErrorResponse handles error responses from the API
-func (c *Client) HandleErrorResponse(resp *http.Response) error {
-	defer resp.Body.Close()
+// func (c *Client) HandleErrorResponse(resp *http.Response) error {
+// 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("API error (status %d): failed to read error response: %w", resp.StatusCode, err)
-	}
+// 	body, err := io.ReadAll(resp.Body)
+// 	if err != nil {
+// 		return &APIError{StatusCode: resp.StatusCode, Message: fmt.Sprintf("failed to read error response: %v", err)}
+// 	}
 
-	var errResp ErrorResponse
-	if err := json.Unmarshal(body, &errResp); err != nil {
-		return fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(body))
-	}
+// 	var errResp ErrorResponse
+// 	if err := json.Unmarshal(body, &errResp); err != nil {
+// 		return &APIError{StatusCode: resp.StatusCode, Message: "failed to decode error response"}
+// 	}
 
-	return fmt.Errorf("API error (status %d): %s", resp.StatusCode, errResp.Error)
-}
+// 	return &APIError{StatusCode: resp.StatusCode, Message: errResp.Error}
+// }
 
 // extractParamsFromRoute extracts parameter names from a route pattern like "/users/:username/sessions"
 func extractParamsFromRoute(route string) []string {
