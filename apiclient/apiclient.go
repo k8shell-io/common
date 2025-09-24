@@ -83,13 +83,13 @@ func NewClient(config Config, logName string) *Client {
 
 	transport := &http.Transport{
 		DialContext: (&net.Dialer{
-			// Timeout:   time.Duration(config.DialTimeout) * time.Second,
-			KeepAlive: time.Duration(config.KeepAlive) * time.Second,
+			Timeout:   time.Duration(config.DialTimeout) * time.Millisecond,
+			KeepAlive: time.Duration(config.KeepAlive) * time.Millisecond,
 		}).DialContext,
 		MaxIdleConns:        config.MaxIdleConns,
 		MaxIdleConnsPerHost: config.MaxIdleConnsPerHost,
-		// IdleConnTimeout:     time.Duration(config.IdleConnTimeout) * time.Second,
-		TLSHandshakeTimeout: time.Duration(config.TLSHandshakeTimeout) * time.Second,
+		IdleConnTimeout:     time.Duration(config.IdleConnTimeout) * time.Millisecond,
+		TLSHandshakeTimeout: time.Duration(config.TLSHandshakeTimeout) * time.Millisecond,
 		DisableKeepAlives:   false,
 	}
 
@@ -97,7 +97,7 @@ func NewClient(config Config, logName string) *Client {
 		baseURL: config.BaseURL,
 		apiKey:  config.APIKey,
 		httpClient: &http.Client{
-			Timeout:   time.Duration(config.Timeout) * time.Second,
+			Timeout:   time.Duration(config.Timeout) * time.Millisecond,
 			Transport: transport,
 		},
 		log: logger.NewLogger(logName),
