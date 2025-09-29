@@ -17,15 +17,24 @@ import (
 
 // Config represents the configuration for the API client.
 type Config struct {
-	BaseURL             string `yaml:"baseURL"`
-	APIKey              string `yaml:"APIKey"`
-	Timeout             int    `yaml:"timeout"`
-	MaxIdleConns        int    `yaml:"maxIdleConns"`
-	MaxIdleConnsPerHost int    `yaml:"maxIdleConnsPerHost"`
-	IdleConnTimeout     int    `yaml:"idleConnTimeout"`
-	DialTimeout         int    `yaml:"dialTimeout"`
-	KeepAlive           int    `yaml:"keepAlive"`
-	TLSHandshakeTimeout int    `yaml:"tlsHandshakeTimeout"`
+	BaseURL             string      `yaml:"baseURL"`
+	APIKey              string      `yaml:"APIKey"`
+	Timeout             int         `yaml:"timeout"`
+	MaxIdleConns        int         `yaml:"maxIdleConns"`
+	MaxIdleConnsPerHost int         `yaml:"maxIdleConnsPerHost"`
+	IdleConnTimeout     int         `yaml:"idleConnTimeout"`
+	DialTimeout         int         `yaml:"dialTimeout"`
+	KeepAlive           int         `yaml:"keepAlive"`
+	TLSHandshakeTimeout int         `yaml:"tlsHandshakeTimeout"`
+	Retry               RetryConfig `yaml:"retry"`
+}
+
+// RetryConfig represents retry configuration
+type RetryConfig struct {
+	MaxRetries    int           `yaml:"maxRetries"`
+	InitialDelay  time.Duration `yaml:"initialDelay"`
+	MaxDelay      time.Duration `yaml:"maxDelay"`
+	BackoffFactor float64       `yaml:"backoffFactor"`
 }
 
 // setDefaults sets default values for Config fields that are zero
@@ -51,6 +60,15 @@ func (c *Config) setDefaults() {
 	if c.TLSHandshakeTimeout == 0 {
 		c.TLSHandshakeTimeout = 5
 	}
+	if c.Retry.InitialDelay == 0 {
+		c.Retry.InitialDelay = 100 * time.Millisecond
+	}
+	if c.Retry.MaxDelay == 0 {
+		c.Retry.MaxDelay = 2 * time.Second
+	}
+	if c.Retry.BackoffFactor == 0 {
+		c.Retry.BackoffFactor = 2.0
+	}
 }
 
 // ErrorResponse represents an API error response
@@ -71,10 +89,11 @@ func (e *APIError) Error() string {
 
 // Client represents the provisioner API client
 type Client struct {
-	baseURL    string
-	apiKey     string
-	httpClient *http.Client
-	log        *zerolog.Logger
+	baseURL     string
+	apiKey      string
+	httpClient  *http.Client
+	log         *zerolog.Logger
+	retryConfig RetryConfig
 }
 
 // NewClient creates a new provisioner API client
@@ -100,9 +119,9 @@ func NewClient(config Config, logName string) *Client {
 			Timeout:   time.Duration(config.Timeout) * time.Millisecond,
 			Transport: transport,
 		},
-		log: logger.NewLogger(logName),
+		log:         logger.NewLogger(logName),
+		retryConfig: config.Retry,
 	}
-
 }
 
 // ForwardHandler returns a handler function that forwards the request to the target URL
@@ -181,8 +200,65 @@ func (c *Client) doForward(cg *gin.Context, url string) {
 	cg.Abort()
 }
 
-// MakeRequest makes an HTTP request to the API
-func (c *Client) MakeRequest(ctx context.Context, method, endpoint string, body io.Reader,
+// MakeRequestWithRetry implements retry logic
+func (c *Client) MakeRequestWithRetry(ctx context.Context, method, endpoint string, body io.Reader,
+	contentType string) (*http.Response, error) {
+	var lastErr error
+	delay := c.retryConfig.InitialDelay
+
+	for attempt := 0; attempt <= c.retryConfig.MaxRetries; attempt++ {
+		if attempt > 0 {
+			c.log.Warn().Msgf("Retrying request to %s (attempt %d/%d)", endpoint, attempt, c.retryConfig.MaxRetries)
+
+			select {
+			case <-time.After(delay):
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			}
+
+			delay = time.Duration(float64(delay) * c.retryConfig.BackoffFactor)
+			if delay > c.retryConfig.MaxDelay {
+				delay = c.retryConfig.MaxDelay
+			}
+		}
+
+		var bodyReader io.Reader
+		if body != nil {
+			if seeker, ok := body.(io.Seeker); ok {
+				seeker.Seek(0, 0)
+				bodyReader = body
+			} else if bodyBytes, ok := body.(*strings.Reader); ok {
+				bodyBytes.Seek(0, 0)
+				bodyReader = bodyBytes
+			} else {
+				if attempt > 0 {
+					return nil, fmt.Errorf("cannot retry request with non-seekable body")
+				}
+				bodyReader = body
+			}
+		}
+
+		resp, err := c.makeRequest(ctx, method, endpoint, bodyReader, contentType)
+		if err == nil {
+			if !c.isRetryableStatusCode(resp.StatusCode) {
+				return resp, nil
+			}
+			resp.Body.Close()
+			lastErr = fmt.Errorf("received non-retryable status code: %d", resp.StatusCode)
+		} else if !c.isRetryableError(err) {
+			return nil, err
+		} else {
+			lastErr = err
+		}
+
+		c.log.Warn().Msgf("Request failed: %v", lastErr)
+	}
+
+	return nil, fmt.Errorf("request failed after %d retries: %w", c.retryConfig.MaxRetries, lastErr)
+}
+
+// makeRequest makes a single HTTP request without retries
+func (c *Client) makeRequest(ctx context.Context, method, endpoint string, body io.Reader,
 	contentType string) (*http.Response, error) {
 	url := c.baseURL + endpoint
 
@@ -208,6 +284,59 @@ func (c *Client) MakeRequest(ctx context.Context, method, endpoint string, body 
 	}
 
 	return resp, nil
+}
+
+// isRetryableError determines if an error should trigger a retry
+func (c *Client) isRetryableError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	if netErr, ok := err.(net.Error); ok {
+		return netErr.Timeout()
+	}
+
+	errStr := err.Error()
+	retryableErrors := []string{
+		"connection refused",
+		"connection reset",
+		"i/o timeout",
+		"no such host",
+		"network is unreachable",
+		"connection timed out",
+	}
+
+	for _, retryableErr := range retryableErrors {
+		if strings.Contains(strings.ToLower(errStr), retryableErr) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// isRetryableStatusCode determines if an HTTP status code should trigger a retry
+func (c *Client) isRetryableStatusCode(statusCode int) bool {
+	switch statusCode {
+	case 429, // Too Many Requests
+		500, // Internal Server Error
+		502, // Bad Gateway
+		503, // Service Unavailable
+		504: // Gateway Timeout
+		return true
+	default:
+		return false
+	}
+}
+
+// MakeRequest makes an HTTP request to the API with retry functionality
+func (c *Client) MakeRequest(ctx context.Context, method, endpoint string, body io.Reader,
+	contentType string) (*http.Response, error) {
+	if c.retryConfig.MaxRetries > 0 {
+		return c.MakeRequestWithRetry(ctx, method, endpoint, body, contentType)
+	} else {
+		return c.makeRequest(ctx, method, endpoint, body, contentType)
+	}
 }
 
 func (c *Client) CheckError(resp *http.Response) error {
@@ -250,23 +379,6 @@ func (c *Client) HandleResponse(resp *http.Response, v interface{}) (string, err
 
 	return bodyString, nil
 }
-
-// HandleErrorResponse handles error responses from the API
-// func (c *Client) HandleErrorResponse(resp *http.Response) error {
-// 	defer resp.Body.Close()
-
-// 	body, err := io.ReadAll(resp.Body)
-// 	if err != nil {
-// 		return &APIError{StatusCode: resp.StatusCode, Message: fmt.Sprintf("failed to read error response: %v", err)}
-// 	}
-
-// 	var errResp ErrorResponse
-// 	if err := json.Unmarshal(body, &errResp); err != nil {
-// 		return &APIError{StatusCode: resp.StatusCode, Message: "failed to decode error response"}
-// 	}
-
-// 	return &APIError{StatusCode: resp.StatusCode, Message: errResp.Error}
-// }
 
 // extractParamsFromRoute extracts parameter names from a route pattern like "/users/:username/sessions"
 func extractParamsFromRoute(route string) []string {
