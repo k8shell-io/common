@@ -97,7 +97,6 @@ type SSHSession struct {
 	BytesIn   int64      `yaml:"bytesIn"`
 	BytesOut  int64      `yaml:"bytesOut"`
 	Channels  []string   `yaml:"channels"`
-	ProvTime  float32    `yaml:"provTime"`
 	Blueprint string     `yaml:"blueprint"`
 }
 
