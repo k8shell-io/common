@@ -60,6 +60,8 @@ func NewUserStr(input string) (*UserStr, error) {
 		return nil, fmt.Errorf("%w: local>%d", ErrTooLong, MAX_LOCAL_LEN)
 	}
 
+	input = strings.ToLower(strings.TrimSpace(input))
+
 	username, wsSpec, _ := cutOnce(input, "~")
 
 	if wsSpec == "" {
