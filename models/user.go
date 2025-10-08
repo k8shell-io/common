@@ -98,6 +98,7 @@ type SSHSession struct {
 	BytesOut  int64      `yaml:"bytesOut"`
 	Channels  []string   `yaml:"channels"`
 	Blueprint string     `yaml:"blueprint"`
+	UpdatedAt *time.Time `yaml:"updatedAt"`
 }
 
 // CreateSessionID generates a unique session ID for an SSH session
