@@ -30,7 +30,7 @@ type DBConfig struct {
 
 type DB struct {
 	config DBConfig
-	pool   *pgxpool.Pool
+	Pool   *pgxpool.Pool
 	log    *zerolog.Logger
 }
 
@@ -108,12 +108,13 @@ func NewDB(config DBConfig, migrationBaseDir string) (*DB, error) {
 	poolConfig.MaxConnLifetime = config.MaxConnLifetime
 	poolConfig.HealthCheckPeriod = config.HealthCheckPeriod
 
-	pool, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
+	ctx := context.Background()
+	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
 		return nil, fmt.Errorf("create connection pool: %w", err)
 	}
 
-	err = pool.Ping(context.Background())
+	err = pool.Ping(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("ping db pool: %w", err)
 	}
@@ -129,14 +130,14 @@ func NewDB(config DBConfig, migrationBaseDir string) (*DB, error) {
 
 	return &DB{
 		config: config,
-		pool:   pool,
+		Pool:   pool,
 		log:    log,
 	}, nil
 }
 
 func (db *DB) Close() {
-	if db.pool != nil {
-		db.pool.Close()
+	if db.Pool != nil {
+		db.Pool.Close()
 		db.log.Info().Msg("Database connection pool closed")
 	} else {
 		db.log.Warn().Msg("Attempted to close a nil database connection pool")
