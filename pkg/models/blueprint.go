@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/go-playground/validator/v10"
-	v "github.com/k8shell-io/common/validator"
+	v "github.com/k8shell-io/common/pkg/validator"
 	"gopkg.in/yaml.v3"
 )
 

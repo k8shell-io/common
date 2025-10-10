@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/k8shell-io/common/logger"
+	"github.com/k8shell-io/common/pkg/logger"
 	"github.com/rs/zerolog"
 )
 
