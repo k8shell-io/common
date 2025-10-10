@@ -16,15 +16,15 @@ type Config struct {
 }
 
 type Server struct {
-	Config     *Config
+	config     *Config
 	listener   net.Listener
-	grpcServer *grpc.Server
+	GrpcServer *grpc.Server
 }
 
 // Start starts the gRPC server with optional TLS
 func NewServer(config *Config) (*Server, error) {
 	server := &Server{
-		Config: config,
+		config: config,
 	}
 
 	var err error
@@ -38,9 +38,9 @@ func NewServer(config *Config) (*Server, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to load TLS credentials: %w", err)
 		}
-		server.grpcServer = grpc.NewServer(grpc.Creds(creds))
+		server.GrpcServer = grpc.NewServer(grpc.Creds(creds))
 	} else {
-		server.grpcServer = grpc.NewServer()
+		server.GrpcServer = grpc.NewServer()
 	}
 
 	return server, nil
