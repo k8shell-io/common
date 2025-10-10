@@ -1,47 +1,162 @@
 package gsrv
 
 import (
+	"context"
+	"crypto/tls"
+	"crypto/x509"
+	"errors"
 	"fmt"
 	"net"
+	"net/http"
+	"os"
+	"strings"
+	"time"
 
+	"github.com/coreos/go-oidc/v3/oidc"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
+type AllowedCaller struct {
+	Namespace      string `yaml:"namespace"`
+	ServiceAccount string `yaml:"serviceAccount"`
+}
+
 type Config struct {
-	Port      int    `yaml:"port"`
-	enableTLS bool   `yaml:"enableTLS"`
-	certFile  string `yaml:"certFile"`
-	keyFile   string `yaml:"keyFile"`
+	Port      int             `yaml:"port"`
+	EnableTLS bool            `yaml:"enableTLS"`
+	CertFile  string          `yaml:"certFile"`
+	KeyFile   string          `yaml:"keyFile"`
+	IssuerURL string          `yaml:"issuerURL"` // default "https://kubernetes.default.svc"
+	Audience  string          `yaml:"audience"`  // must match "aud" claim in token
+	Allowed   []AllowedCaller `yaml:"allowed"`   // list of allowed SA/ns
 }
 
 type Server struct {
 	config     *Config
 	listener   net.Listener
 	GrpcServer *grpc.Server
+
+	verifier   *oidc.IDTokenVerifier
+	httpClient *http.Client
 }
 
-// Start starts the gRPC server with optional TLS
-func NewServer(config *Config) (*Server, error) {
-	server := &Server{
-		config: config,
+func NewServer(cfg *Config) (*Server, error) {
+	if cfg.IssuerURL == "" {
+		cfg.IssuerURL = "https://kubernetes.default.svc"
 	}
+	s := &Server{config: cfg}
 
 	var err error
-	server.listener, err = net.Listen("tcp", fmt.Sprintf(":%d", config.Port))
+	s.listener, err = net.Listen("tcp", fmt.Sprintf(":%d", cfg.Port))
 	if err != nil {
-		return nil, fmt.Errorf("failed to listen: %w", err)
+		return nil, fmt.Errorf("listen: %w", err)
 	}
 
-	if config.enableTLS {
-		creds, err := credentials.NewServerTLSFromFile(config.certFile, config.keyFile)
+	caPEM, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/ca.crt")
+	if err != nil {
+		return nil, fmt.Errorf("read k8s ca: %w", err)
+	}
+	pool := x509.NewCertPool()
+	pool.AppendCertsFromPEM(caPEM)
+
+	s.httpClient = &http.Client{
+		Transport: &http.Transport{TLSClientConfig: &tls.Config{RootCAs: pool}},
+		Timeout:   10 * time.Second,
+	}
+	oidcCtx := oidc.ClientContext(context.Background(), s.httpClient)
+
+	provider, err := oidc.NewProvider(oidcCtx, cfg.IssuerURL)
+	if err != nil {
+		return nil, fmt.Errorf("oidc provider: %w", err)
+	}
+	s.verifier = provider.Verifier(&oidc.Config{ClientID: cfg.Audience})
+
+	var opts []grpc.ServerOption
+	if cfg.EnableTLS {
+		creds, err := credentials.NewServerTLSFromFile(cfg.CertFile, cfg.KeyFile)
 		if err != nil {
-			return nil, fmt.Errorf("failed to load TLS credentials: %w", err)
+			return nil, fmt.Errorf("tls creds: %w", err)
 		}
-		server.GrpcServer = grpc.NewServer(grpc.Creds(creds))
-	} else {
-		server.GrpcServer = grpc.NewServer()
+		opts = append(opts, grpc.Creds(creds))
+	}
+	opts = append(opts, grpc.ChainUnaryInterceptor(s.unaryAuthInterceptor()))
+	s.GrpcServer = grpc.NewServer(opts...)
+
+	return s, nil
+}
+
+// unaryAuthInterceptor verifies JWT and authorizes SA/namespace.
+func (s *Server) unaryAuthInterceptor() grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
+		raw, err := bearerFromMD(ctx)
+		if err != nil {
+			return nil, status.Error(codes.Unauthenticated, err.Error())
+		}
+
+		oidcCtx := oidc.ClientContext(ctx, s.httpClient)
+		idt, err := s.verifier.Verify(oidcCtx, raw)
+		if err != nil {
+			return nil, status.Error(codes.Unauthenticated, "invalid token: "+err.Error())
+		}
+
+		var kc struct {
+			Kubernetes struct {
+				Namespace      string `json:"namespace"`
+				ServiceAccount struct {
+					Name string `json:"name"`
+					UID  string `json:"uid"`
+				} `json:"serviceaccount"`
+			} `json:"kubernetes.io"`
+		}
+		_ = idt.Claims(&kc)
+		ns := kc.Kubernetes.Namespace
+		sa := kc.Kubernetes.ServiceAccount.Name
+		if ns == "" || sa == "" {
+			return nil, status.Error(codes.PermissionDenied, "missing kubernetes.io claims")
+		}
+
+		if !s.allowed(ns, sa) {
+			return nil, status.Errorf(codes.PermissionDenied, "unauthorized SA %s/%s", ns, sa)
+		}
+
+		ctx = context.WithValue(ctx, callerKey{}, Caller{Namespace: ns, ServiceAccount: sa})
+		return handler(ctx, req)
+	}
+}
+
+// *** Helpers
+
+type callerKey struct{}
+type Caller struct{ Namespace, ServiceAccount string }
+
+func (s *Server) allowed(ns, sa string) bool {
+	for _, a := range s.config.Allowed {
+		if a.Namespace == ns && a.ServiceAccount == sa {
+			return true
+		}
+	}
+	return false
+}
+
+// bearerFromMD extracts a bearer token from gRPC metadata.
+func bearerFromMD(ctx context.Context) (string, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return "", errors.New("missing metadata")
 	}
 
-	return server, nil
+	authz := md.Get("authorization")
+	if len(authz) == 0 {
+		return "", errors.New("missing authorization")
+	}
+
+	h := authz[0]
+	if !strings.HasPrefix(strings.ToLower(h), "bearer ") {
+		return "", errors.New("expected Bearer token")
+	}
+	return strings.TrimSpace(h[len("Bearer "):]), nil
 }
