@@ -1,4 +1,4 @@
-package grpc
+package gsrv
 
 import (
 	"fmt"
