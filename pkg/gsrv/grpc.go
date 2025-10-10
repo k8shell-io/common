@@ -128,6 +128,19 @@ func (s *Server) unaryAuthInterceptor() grpc.UnaryServerInterceptor {
 	}
 }
 
+func (s *Server) Start() error {
+	fmt.Printf("gRPC server listening on %s (tls=%v)\n", s.listener.Addr(), s.config.EnableTLS)
+	if err := s.GrpcServer.Serve(s.listener); err != nil {
+		return fmt.Errorf("serve: %w", err)
+	}
+	return nil
+}
+
+func (s *Server) Stop() {
+	s.GrpcServer.GracefulStop()
+	s.listener.Close()
+}
+
 // *** Helpers
 
 type callerKey struct{}
