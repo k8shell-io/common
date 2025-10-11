@@ -1,4 +1,4 @@
-package gsrv
+package gapi
 
 import (
 	"context"
