@@ -28,7 +28,7 @@ type AllowedCaller struct {
 	ServiceAccount string `yaml:"serviceAccount"`
 }
 
-type Config struct {
+type ServerConfig struct {
 	Port      int             `yaml:"port"`
 	EnableTLS bool            `yaml:"enableTLS"`
 	CertFile  string          `yaml:"certFile"`
@@ -39,7 +39,7 @@ type Config struct {
 }
 
 type Server struct {
-	config     *Config
+	config     *ServerConfig
 	log        *zerolog.Logger
 	listener   net.Listener
 	GrpcServer *grpc.Server
@@ -59,7 +59,7 @@ func (r roundTripperWithAuth) RoundTrip(req *http.Request) (*http.Response, erro
 	return r.base.RoundTrip(req2)
 }
 
-func NewServer(cfg *Config) (*Server, error) {
+func NewServer(cfg *ServerConfig) (*Server, error) {
 	if cfg.IssuerURL == "" {
 		cfg.IssuerURL = "https://kubernetes.default.svc.cluster.local"
 	}
