@@ -19,6 +19,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 )
 
@@ -102,10 +103,75 @@ func NewServer(cfg *Config) (*Server, error) {
 		}
 		opts = append(opts, grpc.Creds(creds))
 	}
-	opts = append(opts, grpc.ChainUnaryInterceptor(s.unaryAuthInterceptor(), s.unaryErrorLoggingInterceptor()))
+
+	// Add interceptors in order: logging, auth, error logging
+	opts = append(opts, grpc.ChainUnaryInterceptor(
+		s.unaryRequestLoggingInterceptor(),
+		s.unaryAuthInterceptor(),
+		s.unaryErrorLoggingInterceptor(),
+	))
 	s.GrpcServer = grpc.NewServer(opts...)
 
 	return s, nil
+}
+
+// unaryRequestLoggingInterceptor logs all gRPC requests with timing and client info
+func (s *Server) unaryRequestLoggingInterceptor() grpc.UnaryServerInterceptor {
+	return func(
+		ctx context.Context,
+		req any,
+		info *grpc.UnaryServerInfo,
+		handler grpc.UnaryHandler,
+	) (resp any, err error) {
+		start := time.Now()
+
+		clientIP := "unknown"
+		if p, ok := peer.FromContext(ctx); ok {
+			if addr := p.Addr; addr != nil {
+				if tcpAddr, ok := addr.(*net.TCPAddr); ok {
+					clientIP = tcpAddr.IP.String()
+				} else {
+					clientIP = addr.String()
+				}
+			}
+		}
+
+		var namespace, serviceAccount string
+		if caller, ok := ctx.Value(callerKey{}).(Caller); ok {
+			namespace = caller.Namespace
+			serviceAccount = caller.ServiceAccount
+		}
+
+		resp, err = handler(ctx, req)
+
+		duration := time.Since(start)
+		statusCode := codes.OK
+		if err != nil {
+			statusCode = status.Code(err)
+		}
+
+		logEvent := s.log.Info().
+			Str("component", "grpc").
+			Dur("duration", duration).
+			Str("ip", clientIP).
+			Str("method", info.FullMethod).
+			Str("status", statusCode.String()).
+			Int("pid", os.Getpid())
+
+		if namespace != "" && serviceAccount != "" {
+			logEvent = logEvent.
+				Str("namespace", namespace).
+				Str("serviceAccount", serviceAccount)
+		}
+
+		if err != nil {
+			logEvent = logEvent.Err(err)
+		}
+
+		logEvent.Msg("grpc request")
+
+		return resp, err
+	}
 }
 
 // unaryAuthInterceptor verifies JWT and authorizes SA/namespace.
