@@ -13,6 +13,8 @@ import (
 	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
+	"github.com/k8shell-io/common/pkg/logger"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
@@ -37,6 +39,7 @@ type Config struct {
 
 type Server struct {
 	config     *Config
+	log        *zerolog.Logger
 	listener   net.Listener
 	GrpcServer *grpc.Server
 
@@ -44,11 +47,22 @@ type Server struct {
 	httpClient *http.Client
 }
 
+type roundTripperWithAuth struct {
+	base http.RoundTripper
+	hdr  string
+}
+
+func (r roundTripperWithAuth) RoundTrip(req *http.Request) (*http.Response, error) {
+	req2 := req.Clone(req.Context())
+	req2.Header.Set("Authorization", r.hdr)
+	return r.base.RoundTrip(req2)
+}
+
 func NewServer(cfg *Config) (*Server, error) {
 	if cfg.IssuerURL == "" {
-		cfg.IssuerURL = "https://kubernetes.default.svc"
+		cfg.IssuerURL = "https://kubernetes.default.svc.cluster.local"
 	}
-	s := &Server{config: cfg}
+	s := &Server{config: cfg, log: logger.NewLogger("grpc")}
 
 	var err error
 	s.listener, err = net.Listen("tcp", fmt.Sprintf(":%d", cfg.Port))
@@ -63,17 +77,22 @@ func NewServer(cfg *Config) (*Server, error) {
 	pool := x509.NewCertPool()
 	pool.AppendCertsFromPEM(caPEM)
 
+	token, _ := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
+	base := &http.Transport{TLSClientConfig: &tls.Config{RootCAs: pool}}
+	authTransport := roundTripperWithAuth{
+		base: base,
+		hdr:  "Bearer " + strings.TrimSpace(string(token)),
+	}
+
 	s.httpClient = &http.Client{
-		Transport: &http.Transport{TLSClientConfig: &tls.Config{RootCAs: pool}},
+		Transport: authTransport,
 		Timeout:   10 * time.Second,
 	}
-	oidcCtx := oidc.ClientContext(context.Background(), s.httpClient)
 
-	provider, err := oidc.NewProvider(oidcCtx, cfg.IssuerURL)
-	if err != nil {
-		return nil, fmt.Errorf("oidc provider: %w", err)
-	}
-	s.verifier = provider.Verifier(&oidc.Config{ClientID: cfg.Audience})
+	oidcCtx := oidc.ClientContext(context.Background(), s.httpClient)
+	jwksURL := strings.TrimRight(cfg.IssuerURL, "/") + "/openid/v1/jwks"
+	ks := oidc.NewRemoteKeySet(oidcCtx, jwksURL)
+	s.verifier = oidc.NewVerifier(cfg.IssuerURL, ks, &oidc.Config{ClientID: cfg.Audience})
 
 	var opts []grpc.ServerOption
 	if cfg.EnableTLS {
@@ -83,7 +102,7 @@ func NewServer(cfg *Config) (*Server, error) {
 		}
 		opts = append(opts, grpc.Creds(creds))
 	}
-	opts = append(opts, grpc.ChainUnaryInterceptor(s.unaryAuthInterceptor()))
+	opts = append(opts, grpc.ChainUnaryInterceptor(s.unaryAuthInterceptor(), s.unaryErrorLoggingInterceptor()))
 	s.GrpcServer = grpc.NewServer(opts...)
 
 	return s, nil
@@ -125,6 +144,27 @@ func (s *Server) unaryAuthInterceptor() grpc.UnaryServerInterceptor {
 
 		ctx = context.WithValue(ctx, callerKey{}, Caller{Namespace: ns, ServiceAccount: sa})
 		return handler(ctx, req)
+	}
+}
+
+// UnaryErrorLoggingInterceptor logs all gRPC errors returned by handlers.
+func (s *Server) unaryErrorLoggingInterceptor() grpc.UnaryServerInterceptor {
+	return func(
+		ctx context.Context,
+		req any,
+		info *grpc.UnaryServerInfo,
+		handler grpc.UnaryHandler,
+	) (resp any, err error) {
+		resp, err = handler(ctx, req)
+		if err != nil {
+			st := status.Convert(err)
+			s.log.Error().
+				Str("method", info.FullMethod).
+				Str("code", st.Code().String()).
+				Err(err).
+				Msg("gRPC error occurred")
+		}
+		return resp, err
 	}
 }
 
