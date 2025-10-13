@@ -27,8 +27,6 @@ type DBConfig struct {
 	MaxConnIdleTime   time.Duration `yaml:"maxConnIdleTime"`
 	MaxConnLifetime   time.Duration `yaml:"maxConnLifetime"`
 	HealthCheckPeriod time.Duration `yaml:"healthCheckPeriod"`
-	ServiceName       string        `yaml:"serviceName"`
-	MigrationSubdir   string        `yaml:"migrationSubdir"`
 }
 
 type DB struct {
@@ -43,12 +41,8 @@ const (
 	MaxListLimit     = 100
 )
 
-func runDBMigrations(connString, migrationsRoot, serviceName, subdir string) error {
-	if subdir == "" {
-		subdir = serviceName
-	}
-
-	src := "file://" + filepath.ToSlash(filepath.Join(migrationsRoot, MigrationsRoot, subdir))
+func runDBMigrations(connString, migrationsRoot, serviceName string) error {
+	src := "file://" + filepath.ToSlash(filepath.Join(migrationsRoot, MigrationsRoot))
 
 	u, err := url.Parse(connString)
 	if err != nil {
@@ -104,12 +98,12 @@ func (c *DBConfig) ConnString() string {
 	)
 }
 
-func NewDB(config DBConfig, migrationsBaseDir string) (*DB, error) {
+func NewDB(config DBConfig, migrationsBaseDir, serviceName string) (*DB, error) {
 	log := log.NewLogger("db")
 	if config.Username == "" || config.Password == "" || config.Database == "" || config.Hostname == "" {
 		return nil, fmt.Errorf("database configuration is incomplete: username, password, database, and hostname are required")
 	}
-	if config.ServiceName == "" {
+	if serviceName == "" {
 		return nil, fmt.Errorf("ServiceName is required to namespace migrations")
 	}
 
@@ -137,11 +131,23 @@ func NewDB(config DBConfig, migrationsBaseDir string) (*DB, error) {
 	}
 	log.Info().Msgf("DB connection OK %s:%d/%s", config.Hostname, config.Port, config.Database)
 
-	if err := runDBMigrations(connString, migrationsBaseDir, config.ServiceName, config.MigrationSubdir); err != nil {
+	if err := runDBMigrations(connString, migrationsBaseDir, serviceName); err != nil {
 		pool.Close()
 		return nil, fmt.Errorf("run database migrations: %w", err)
 	}
 	log.Info().Msg("Database migrations applied")
 
 	return &DB{config: config, Pool: pool, log: log}, nil
+}
+
+func AdjustListLimit(limit, offset int) (int, int) {
+	if limit <= 0 {
+		limit = DefaultListLimit
+	} else if limit > MaxListLimit {
+		limit = MaxListLimit
+	}
+	if offset < 0 {
+		offset = 0
+	}
+	return limit, offset
 }
