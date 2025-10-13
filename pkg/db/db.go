@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"path/filepath"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -26,6 +27,8 @@ type DBConfig struct {
 	MaxConnIdleTime   time.Duration `yaml:"maxConnIdleTime"`
 	MaxConnLifetime   time.Duration `yaml:"maxConnLifetime"`
 	HealthCheckPeriod time.Duration `yaml:"healthCheckPeriod"`
+	ServiceName       string        `yaml:"serviceName"`
+	MigrationSubdir   string        `yaml:"migrationSubdir"`
 }
 
 type DB struct {
@@ -35,18 +38,30 @@ type DB struct {
 }
 
 const (
-	MigrationDir     = "db/migrations"
+	MigrationsRoot   = "db/migrations"
 	DefaultListLimit = 50
 	MaxListLimit     = 100
 )
 
-func runDBMigrations(connString string, migrarionBaseDir string) error {
-	m, err := migrate.New(
-		fmt.Sprintf("file:/%s/%s", migrarionBaseDir, MigrationDir),
-		connString,
-	)
+func runDBMigrations(connString, migrationsRoot, serviceName, subdir string) error {
+	if subdir == "" {
+		subdir = serviceName
+	}
+
+	src := "file://" + filepath.ToSlash(filepath.Join(migrationsRoot, MigrationsRoot, subdir))
+
+	u, err := url.Parse(connString)
 	if err != nil {
-		return fmt.Errorf("init migrate: %w", err)
+		return fmt.Errorf("parse conn string for migrate: %w", err)
+	}
+	q := u.Query()
+	q.Set("x-migrations-table", "schema_migrations_"+serviceName)
+	u.RawQuery = q.Encode()
+	dbURL := u.String()
+
+	m, err := migrate.New(src, dbURL)
+	if err != nil {
+		return fmt.Errorf("init migrate: %w (src=%s)", err, src)
 	}
 	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
 		return fmt.Errorf("apply migrate: %w", err)
@@ -77,8 +92,7 @@ func (c *DBConfig) SetDefaults() {
 
 func (c *DBConfig) ConnString() string {
 	q := url.Values{}
-	q.Add("sslmode", "disable") // or "require"
-
+	q.Add("sslmode", "disable")
 	return fmt.Sprintf(
 		"postgres://%s:%s@%s:%d/%s?%s",
 		url.QueryEscape(c.Username),
@@ -90,18 +104,22 @@ func (c *DBConfig) ConnString() string {
 	)
 }
 
-func NewDB(config DBConfig, migrationBaseDir string) (*DB, error) {
+func NewDB(config DBConfig, migrationsBaseDir string) (*DB, error) {
 	log := log.NewLogger("db")
 	if config.Username == "" || config.Password == "" || config.Database == "" || config.Hostname == "" {
 		return nil, fmt.Errorf("database configuration is incomplete: username, password, database, and hostname are required")
 	}
+	if config.ServiceName == "" {
+		return nil, fmt.Errorf("ServiceName is required to namespace migrations")
+	}
+
 	config.SetDefaults()
 	connString := config.ConnString()
+
 	poolConfig, err := pgxpool.ParseConfig(connString)
 	if err != nil {
 		return nil, fmt.Errorf("parse connection string: %w", err)
 	}
-
 	poolConfig.MaxConns = config.MaxConns
 	poolConfig.MinConns = config.MinConns
 	poolConfig.MaxConnIdleTime = config.MaxConnIdleTime
@@ -113,45 +131,17 @@ func NewDB(config DBConfig, migrationBaseDir string) (*DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("create connection pool: %w", err)
 	}
-
-	err = pool.Ping(ctx)
-	if err != nil {
+	if err := pool.Ping(ctx); err != nil {
+		pool.Close()
 		return nil, fmt.Errorf("ping db pool: %w", err)
 	}
-	log.Info().Msgf("Database connection established successfully at %s:%d/%s",
-		config.Hostname, config.Port, config.Database)
+	log.Info().Msgf("DB connection OK %s:%d/%s", config.Hostname, config.Port, config.Database)
 
-	err = runDBMigrations(connString, migrationBaseDir)
-	if err != nil {
+	if err := runDBMigrations(connString, migrationsBaseDir, config.ServiceName, config.MigrationSubdir); err != nil {
 		pool.Close()
 		return nil, fmt.Errorf("run database migrations: %w", err)
 	}
-	log.Info().Msg("Database migrations applied successfully")
+	log.Info().Msg("Database migrations applied")
 
-	return &DB{
-		config: config,
-		Pool:   pool,
-		log:    log,
-	}, nil
-}
-
-func (db *DB) Close() {
-	if db.Pool != nil {
-		db.Pool.Close()
-		db.log.Info().Msg("Database connection pool closed")
-	} else {
-		db.log.Warn().Msg("Attempted to close a nil database connection pool")
-	}
-}
-
-func AdjustListLimit(limit, offset int) (int, int) {
-	if limit <= 0 {
-		limit = DefaultListLimit
-	} else if limit > MaxListLimit {
-		limit = MaxListLimit
-	}
-	if offset < 0 {
-		offset = 0
-	}
-	return limit, offset
+	return &DB{config: config, Pool: pool, log: log}, nil
 }
