@@ -33,19 +33,19 @@ type ServerConfig struct {
 	EnableTLS bool            `yaml:"enableTLS"`
 	CertFile  string          `yaml:"certFile"`
 	KeyFile   string          `yaml:"keyFile"`
-	IssuerURL string          `yaml:"issuerURL"` // default "https://kubernetes.default.svc"
-	Audience  string          `yaml:"audience"`  // must match "aud" claim in token
-	Allowed   []AllowedCaller `yaml:"allowed"`   // list of allowed SA/ns
+	IssuerURL string          `yaml:"issuerURL"`
+	Audience  string          `yaml:"audience"`
+	Allowed   []AllowedCaller `yaml:"allowed"`
 }
 
 type Server struct {
-	config     *ServerConfig
-	log        *zerolog.Logger
-	listener   net.Listener
-	GrpcServer *grpc.Server
-
-	verifier   *oidc.IDTokenVerifier
-	httpClient *http.Client
+	config       *ServerConfig
+	log          *zerolog.Logger
+	listener     net.Listener
+	GrpcServer   *grpc.Server
+	verifier     *oidc.IDTokenVerifier
+	httpClient   *http.Client
+	podNamespace string
 }
 
 type roundTripperWithAuth struct {
@@ -65,7 +65,16 @@ func NewServer(cfg *ServerConfig) (*Server, error) {
 	}
 	s := &Server{config: cfg, log: logger.NewLogger("grpc")}
 
+	// Read the current pod's namespace
 	var err error
+	namespaceBytes, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
+	if err != nil {
+		s.log.Warn().Err(err).Msg("Failed to read pod namespace, using 'default'")
+		s.podNamespace = "default"
+	} else {
+		s.podNamespace = strings.TrimSpace(string(namespaceBytes))
+	}
+
 	s.listener, err = net.Listen("tcp", fmt.Sprintf(":%d", cfg.Port))
 	if err != nil {
 		return nil, fmt.Errorf("listen: %w", err)
@@ -254,7 +263,12 @@ type Caller struct{ Namespace, ServiceAccount string }
 
 func (s *Server) allowed(ns, sa string) bool {
 	for _, a := range s.config.Allowed {
-		if a.Namespace == ns && a.ServiceAccount == sa {
+		allowedNamespace := a.Namespace
+		if allowedNamespace == "" {
+			allowedNamespace = s.podNamespace
+		}
+
+		if allowedNamespace == ns && a.ServiceAccount == sa {
 			return true
 		}
 	}
