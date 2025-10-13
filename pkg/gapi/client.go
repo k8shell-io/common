@@ -26,7 +26,7 @@ type ClientConfig struct {
 // Client gRPC client
 type Client struct {
 	cfg  ClientConfig
-	conn *grpc.ClientConn
+	Conn *grpc.ClientConn
 }
 
 // PerRPCCredentials implementation that calls a func to fetch token.
@@ -97,12 +97,12 @@ func NewClient(cfg ClientConfig) (*Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("dial: %w", err)
 	}
-	return &Client{cfg: cfg, conn: cc}, nil
+	return &Client{cfg: cfg, Conn: cc}, nil
 }
 
 // Close the gRPC client connection.
 func (c *Client) Close() error {
-	return c.conn.Close()
+	return c.Conn.Close()
 }
 
 // WithMD returns a new context with the provided key-value pairs added to outgoing gRPC metadata.
