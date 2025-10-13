@@ -17,10 +17,10 @@ import (
 
 // ClientConfig holds configuration for gRPC client
 type ClientConfig struct {
-	Addr          string
-	ServerName    string
-	TokenFilePath string
-	CACertPath    string
+	Address       string `yaml:"address"`
+	ServerName    string `yaml:"serverName"`
+	TokenFilePath string `yaml:"tokenFilePath"`
+	CACertPath    string `yaml:"caCertPath"`
 }
 
 // Client gRPC client
@@ -60,7 +60,7 @@ func fileTokenSource(path string) func(context.Context) (string, error) {
 
 // NewClient creates and returns a new gRPC client connection.
 func NewClient(cfg ClientConfig) (*Client, error) {
-	if cfg.Addr == "" {
+	if cfg.Address == "" {
 		return nil, errors.New("addr required")
 	}
 	getTok := fileTokenSource(cfg.TokenFilePath)
@@ -89,7 +89,7 @@ func NewClient(cfg ClientConfig) (*Client, error) {
 	}
 
 	cc, err := grpc.NewClient(
-		cfg.Addr,
+		cfg.Address,
 		dialOpt,
 		grpc.WithPerRPCCredentials(creds),
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(32<<20)),
