@@ -139,6 +139,10 @@ func NewDB(config DBConfig, serviceName string) (*DB, error) {
 	return &DB{config: config, Pool: pool, log: log}, nil
 }
 
+func (db *DB) Close() {
+	db.Pool.Close()
+}
+
 func AdjustListLimit(limit, offset int) (int, int) {
 	if limit <= 0 {
 		limit = DefaultListLimit
