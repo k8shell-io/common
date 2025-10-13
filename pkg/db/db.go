@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"path/filepath"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -41,8 +40,8 @@ const (
 	MaxListLimit     = 100
 )
 
-func runDBMigrations(connString, migrationsRoot, serviceName string) error {
-	src := "file://" + filepath.ToSlash(filepath.Join(migrationsRoot, MigrationsRoot))
+func runDBMigrations(connString, serviceName string) error {
+	src := fmt.Sprintf("file://%s", MigrationsRoot)
 
 	u, err := url.Parse(connString)
 	if err != nil {
@@ -98,7 +97,7 @@ func (c *DBConfig) ConnString() string {
 	)
 }
 
-func NewDB(config DBConfig, migrationsBaseDir, serviceName string) (*DB, error) {
+func NewDB(config DBConfig, serviceName string) (*DB, error) {
 	log := log.NewLogger("db")
 	if config.Username == "" || config.Password == "" || config.Database == "" || config.Hostname == "" {
 		return nil, fmt.Errorf("database configuration is incomplete: username, password, database, and hostname are required")
@@ -131,7 +130,7 @@ func NewDB(config DBConfig, migrationsBaseDir, serviceName string) (*DB, error) 
 	}
 	log.Info().Msgf("DB connection OK %s:%d/%s", config.Hostname, config.Port, config.Database)
 
-	if err := runDBMigrations(connString, migrationsBaseDir, serviceName); err != nil {
+	if err := runDBMigrations(connString, serviceName); err != nil {
 		pool.Close()
 		return nil, fmt.Errorf("run database migrations: %w", err)
 	}
