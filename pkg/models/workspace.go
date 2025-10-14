@@ -36,7 +36,7 @@ type WorkspaceStatus struct {
 }
 
 // StreamEvent represents a streaming event response
-type StreamEvent struct {
+type WorkspaceStreamEvent struct {
 	Type       string `json:"type" example:"event"`
 	Timestamp  string `json:"timestamp,omitempty" example:"2025-08-05T10:30:00Z"`
 	ObjectName string `json:"objectName,omitempty" example:"dev-user123"`
@@ -50,7 +50,7 @@ var ErrWorkspaceNotFound = errors.New("workspace not found")
 // ErrInvalidParameters is returned when the provided parameters are invalid
 var ErrInvalidParameters = errors.New("invalid parameters")
 
-func (e StreamEvent) String() string {
+func (e WorkspaceStreamEvent) String() string {
 	if e.Type == "event" {
 		return fmt.Sprintf("[%s] [%-12s] %s",
 			e.Timestamp, e.ObjectName, e.Message)
