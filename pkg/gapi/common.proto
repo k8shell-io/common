@@ -36,3 +36,18 @@ message ExternalCredential {
     string external_id = 5;
     string external_token = 6;
 }
+
+message OnboardUserDeviceFlow {
+  string provider = 1;
+  string username = 2;
+  string user_code = 3;
+  string verification_url = 4;
+  int32 expires_in = 5;
+}
+
+message UserOnboardCapability {
+  string provider = 1;
+  string username = 2;
+  bool can_onboard = 3;
+}
+

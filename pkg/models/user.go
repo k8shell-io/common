@@ -128,7 +128,7 @@ type ProviderInfo struct {
 }
 
 // OnboardUser represents a user being onboarded
-type OnboardUser struct {
+type OnboardUserDeviceFlow struct {
 	Provider        string `json:"provider"`
 	Username        string `json:"username"`
 	UserCode        string `json:"user_code"`
