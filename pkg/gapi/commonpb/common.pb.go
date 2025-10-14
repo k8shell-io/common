@@ -430,6 +430,168 @@ func (x *UserOnboardCapability) GetCanOnboard() bool {
 	return false
 }
 
+// PodStatus represents the status of a workspace pod
+type PodStatus struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Created       *timestamp.Timestamp   `protobuf:"bytes,1,opt,name=created,proto3" json:"created,omitempty"`
+	Status        string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
+	Message       string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PodStatus) Reset() {
+	*x = PodStatus{}
+	mi := &file_pkg_gapi_common_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PodStatus) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PodStatus) ProtoMessage() {}
+
+func (x *PodStatus) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_gapi_common_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PodStatus.ProtoReflect.Descriptor instead.
+func (*PodStatus) Descriptor() ([]byte, []int) {
+	return file_pkg_gapi_common_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *PodStatus) GetCreated() *timestamp.Timestamp {
+	if x != nil {
+		return x.Created
+	}
+	return nil
+}
+
+func (x *PodStatus) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *PodStatus) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+// WorkspaceStatus represents the current status of a workspace
+type WorkspaceStatus struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PodStatus     *PodStatus             `protobuf:"bytes,1,opt,name=pod_status,json=podStatus,proto3" json:"pod_status,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Host          string                 `protobuf:"bytes,3,opt,name=host,proto3" json:"host,omitempty"`
+	PodIp         string                 `protobuf:"bytes,4,opt,name=pod_ip,json=podIp,proto3" json:"pod_ip,omitempty"`
+	Port          int32                  `protobuf:"varint,5,opt,name=port,proto3" json:"port,omitempty"`
+	AccessKey     string                 `protobuf:"bytes,6,opt,name=access_key,json=accessKey,proto3" json:"access_key,omitempty"`
+	TlsCert       string                 `protobuf:"bytes,7,opt,name=tls_cert,json=tlsCert,proto3" json:"tls_cert,omitempty"`
+	Splash        string                 `protobuf:"bytes,8,opt,name=splash,proto3" json:"splash,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WorkspaceStatus) Reset() {
+	*x = WorkspaceStatus{}
+	mi := &file_pkg_gapi_common_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WorkspaceStatus) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WorkspaceStatus) ProtoMessage() {}
+
+func (x *WorkspaceStatus) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_gapi_common_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WorkspaceStatus.ProtoReflect.Descriptor instead.
+func (*WorkspaceStatus) Descriptor() ([]byte, []int) {
+	return file_pkg_gapi_common_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *WorkspaceStatus) GetPodStatus() *PodStatus {
+	if x != nil {
+		return x.PodStatus
+	}
+	return nil
+}
+
+func (x *WorkspaceStatus) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *WorkspaceStatus) GetHost() string {
+	if x != nil {
+		return x.Host
+	}
+	return ""
+}
+
+func (x *WorkspaceStatus) GetPodIp() string {
+	if x != nil {
+		return x.PodIp
+	}
+	return ""
+}
+
+func (x *WorkspaceStatus) GetPort() int32 {
+	if x != nil {
+		return x.Port
+	}
+	return 0
+}
+
+func (x *WorkspaceStatus) GetAccessKey() string {
+	if x != nil {
+		return x.AccessKey
+	}
+	return ""
+}
+
+func (x *WorkspaceStatus) GetTlsCert() string {
+	if x != nil {
+		return x.TlsCert
+	}
+	return ""
+}
+
+func (x *WorkspaceStatus) GetSplash() string {
+	if x != nil {
+		return x.Splash
+	}
+	return ""
+}
+
 var File_pkg_gapi_common_proto protoreflect.FileDescriptor
 
 const file_pkg_gapi_common_proto_rawDesc = "" +
@@ -479,7 +641,22 @@ const file_pkg_gapi_common_proto_rawDesc = "" +
 	"\bprovider\x18\x01 \x01(\tR\bprovider\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x1f\n" +
 	"\vcan_onboard\x18\x03 \x01(\bR\n" +
-	"canOnboardB9Z7github.com/k8shell-io/common/pkg/gapi/commonpb;commonpbb\x06proto3"
+	"canOnboard\"s\n" +
+	"\tPodStatus\x124\n" +
+	"\acreated\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\acreated\x12\x16\n" +
+	"\x06status\x18\x02 \x01(\tR\x06status\x12\x18\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage\"\xe8\x01\n" +
+	"\x0fWorkspaceStatus\x120\n" +
+	"\n" +
+	"pod_status\x18\x01 \x01(\v2\x11.common.PodStatusR\tpodStatus\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
+	"\x04host\x18\x03 \x01(\tR\x04host\x12\x15\n" +
+	"\x06pod_ip\x18\x04 \x01(\tR\x05podIp\x12\x12\n" +
+	"\x04port\x18\x05 \x01(\x05R\x04port\x12\x1d\n" +
+	"\n" +
+	"access_key\x18\x06 \x01(\tR\taccessKey\x12\x19\n" +
+	"\btls_cert\x18\a \x01(\tR\atlsCert\x12\x16\n" +
+	"\x06splash\x18\b \x01(\tR\x06splashB9Z7github.com/k8shell-io/common/pkg/gapi/commonpb;commonpbb\x06proto3"
 
 var (
 	file_pkg_gapi_common_proto_rawDescOnce sync.Once
@@ -493,21 +670,25 @@ func file_pkg_gapi_common_proto_rawDescGZIP() []byte {
 	return file_pkg_gapi_common_proto_rawDescData
 }
 
-var file_pkg_gapi_common_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_pkg_gapi_common_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_pkg_gapi_common_proto_goTypes = []any{
 	(*User)(nil),                  // 0: common.User
 	(*ExternalCredential)(nil),    // 1: common.ExternalCredential
 	(*OnboardUserDeviceFlow)(nil), // 2: common.OnboardUserDeviceFlow
 	(*UserOnboardCapability)(nil), // 3: common.UserOnboardCapability
-	(*timestamp.Timestamp)(nil),   // 4: google.protobuf.Timestamp
+	(*PodStatus)(nil),             // 4: common.PodStatus
+	(*WorkspaceStatus)(nil),       // 5: common.WorkspaceStatus
+	(*timestamp.Timestamp)(nil),   // 6: google.protobuf.Timestamp
 }
 var file_pkg_gapi_common_proto_depIdxs = []int32{
-	4, // 0: common.User.expires_at:type_name -> google.protobuf.Timestamp
-	1, // [1:1] is the sub-list for method output_type
-	1, // [1:1] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	6, // 0: common.User.expires_at:type_name -> google.protobuf.Timestamp
+	6, // 1: common.PodStatus.created:type_name -> google.protobuf.Timestamp
+	4, // 2: common.WorkspaceStatus.pod_status:type_name -> common.PodStatus
+	3, // [3:3] is the sub-list for method output_type
+	3, // [3:3] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_pkg_gapi_common_proto_init() }
@@ -521,7 +702,7 @@ func file_pkg_gapi_common_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pkg_gapi_common_proto_rawDesc), len(file_pkg_gapi_common_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
