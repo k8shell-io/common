@@ -68,7 +68,7 @@ type User struct {
 	Auths        []string  `yaml:"auths"`
 	AuthKeys     []string  `yaml:"authKeys"`
 	Locked       bool      `yaml:"locked"`
-	FailedLogins int       `yaml:"failedLogins"`
+	FailedLogins uint32    `yaml:"failedLogins"`
 	Channels     []string  `yaml:"channels"`
 	Envs         []string  `yaml:"envs"`
 	Roles        []string  `yaml:"roles"`

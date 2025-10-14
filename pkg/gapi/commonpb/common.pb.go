@@ -28,8 +28,8 @@ type User struct {
 	Organization  string                 `protobuf:"bytes,2,opt,name=organization,proto3" json:"organization,omitempty"`
 	IsValid       bool                   `protobuf:"varint,3,opt,name=is_valid,json=isValid,proto3" json:"is_valid,omitempty"`
 	ExpiresAt     *timestamp.Timestamp   `protobuf:"bytes,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
-	Uid           int32                  `protobuf:"varint,5,opt,name=uid,proto3" json:"uid,omitempty"`
-	Gid           int32                  `protobuf:"varint,6,opt,name=gid,proto3" json:"gid,omitempty"`
+	Uid           uint32                 `protobuf:"varint,5,opt,name=uid,proto3" json:"uid,omitempty"`
+	Gid           uint32                 `protobuf:"varint,6,opt,name=gid,proto3" json:"gid,omitempty"`
 	Fullname      string                 `protobuf:"bytes,7,opt,name=fullname,proto3" json:"fullname,omitempty"`
 	AccessToken   string                 `protobuf:"bytes,8,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
 	Email         string                 `protobuf:"bytes,9,opt,name=email,proto3" json:"email,omitempty"`
@@ -37,7 +37,7 @@ type User struct {
 	Auths         []string               `protobuf:"bytes,11,rep,name=auths,proto3" json:"auths,omitempty"`
 	AuthKeys      []string               `protobuf:"bytes,12,rep,name=auth_keys,json=authKeys,proto3" json:"auth_keys,omitempty"`
 	Locked        bool                   `protobuf:"varint,13,opt,name=locked,proto3" json:"locked,omitempty"`
-	FailedLogins  int32                  `protobuf:"varint,14,opt,name=failed_logins,json=failedLogins,proto3" json:"failed_logins,omitempty"`
+	FailedLogins  uint32                 `protobuf:"varint,14,opt,name=failed_logins,json=failedLogins,proto3" json:"failed_logins,omitempty"`
 	Channels      []string               `protobuf:"bytes,15,rep,name=channels,proto3" json:"channels,omitempty"`
 	Envs          []string               `protobuf:"bytes,16,rep,name=envs,proto3" json:"envs,omitempty"`
 	Roles         []string               `protobuf:"bytes,17,rep,name=roles,proto3" json:"roles,omitempty"`
@@ -105,14 +105,14 @@ func (x *User) GetExpiresAt() *timestamp.Timestamp {
 	return nil
 }
 
-func (x *User) GetUid() int32 {
+func (x *User) GetUid() uint32 {
 	if x != nil {
 		return x.Uid
 	}
 	return 0
 }
 
-func (x *User) GetGid() int32 {
+func (x *User) GetGid() uint32 {
 	if x != nil {
 		return x.Gid
 	}
@@ -168,7 +168,7 @@ func (x *User) GetLocked() bool {
 	return false
 }
 
-func (x *User) GetFailedLogins() int32 {
+func (x *User) GetFailedLogins() uint32 {
 	if x != nil {
 		return x.FailedLogins
 	}
@@ -212,7 +212,7 @@ func (x *User) GetSource() string {
 
 type ExternalCredential struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id            uint32                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
 	ServiceName   string                 `protobuf:"bytes,3,opt,name=service_name,json=serviceName,proto3" json:"service_name,omitempty"`
 	ServiceUrl    string                 `protobuf:"bytes,4,opt,name=service_url,json=serviceUrl,proto3" json:"service_url,omitempty"`
@@ -252,7 +252,7 @@ func (*ExternalCredential) Descriptor() ([]byte, []int) {
 	return file_pkg_gapi_common_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *ExternalCredential) GetId() int32 {
+func (x *ExternalCredential) GetId() uint32 {
 	if x != nil {
 		return x.Id
 	}
@@ -305,8 +305,8 @@ const file_pkg_gapi_common_proto_rawDesc = "" +
 	"\bis_valid\x18\x03 \x01(\bR\aisValid\x129\n" +
 	"\n" +
 	"expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12\x10\n" +
-	"\x03uid\x18\x05 \x01(\x05R\x03uid\x12\x10\n" +
-	"\x03gid\x18\x06 \x01(\x05R\x03gid\x12\x1a\n" +
+	"\x03uid\x18\x05 \x01(\rR\x03uid\x12\x10\n" +
+	"\x03gid\x18\x06 \x01(\rR\x03gid\x12\x1a\n" +
 	"\bfullname\x18\a \x01(\tR\bfullname\x12!\n" +
 	"\faccess_token\x18\b \x01(\tR\vaccessToken\x12\x14\n" +
 	"\x05email\x18\t \x01(\tR\x05email\x12\x1a\n" +
@@ -315,7 +315,7 @@ const file_pkg_gapi_common_proto_rawDesc = "" +
 	"\x05auths\x18\v \x03(\tR\x05auths\x12\x1b\n" +
 	"\tauth_keys\x18\f \x03(\tR\bauthKeys\x12\x16\n" +
 	"\x06locked\x18\r \x01(\bR\x06locked\x12#\n" +
-	"\rfailed_logins\x18\x0e \x01(\x05R\ffailedLogins\x12\x1a\n" +
+	"\rfailed_logins\x18\x0e \x01(\rR\ffailedLogins\x12\x1a\n" +
 	"\bchannels\x18\x0f \x03(\tR\bchannels\x12\x12\n" +
 	"\x04envs\x18\x10 \x03(\tR\x04envs\x12\x14\n" +
 	"\x05roles\x18\x11 \x03(\tR\x05roles\x12\x1e\n" +
@@ -324,7 +324,7 @@ const file_pkg_gapi_common_proto_rawDesc = "" +
 	"blueprints\x12\x16\n" +
 	"\x06source\x18\x13 \x01(\tR\x06source\"\xcc\x01\n" +
 	"\x12ExternalCredential\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x1a\n" +
+	"\x02id\x18\x01 \x01(\rR\x02id\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12!\n" +
 	"\fservice_name\x18\x03 \x01(\tR\vserviceName\x12\x1f\n" +
 	"\vservice_url\x18\x04 \x01(\tR\n" +

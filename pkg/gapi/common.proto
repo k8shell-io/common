@@ -11,8 +11,8 @@ message User {
   string organization = 2;
   bool is_valid = 3;
   google.protobuf.Timestamp expires_at = 4;
-  int32 uid = 5;
-  int32 gid = 6;
+  uint32 uid = 5;
+  uint32 gid = 6;
   string fullname = 7;
   string access_token = 8;
   string email = 9;
@@ -20,7 +20,7 @@ message User {
   repeated string auths = 11;
   repeated string auth_keys = 12;
   bool locked = 13;
-  int32 failed_logins = 14;
+  uint32 failed_logins = 14;
   repeated string channels = 15;
   repeated string envs = 16;
   repeated string roles = 17;
@@ -29,7 +29,7 @@ message User {
 }
 
 message ExternalCredential {
-    int32 id = 1;
+    uint32 id = 1;
     string username = 2;
     string service_name = 3;
     string service_url = 4;
