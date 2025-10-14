@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package common;
+
+option go_package = "github.com/k8shell-io/common/pkg/gapi/commonpb;commonpb";
+
+import "google/protobuf/timestamp.proto";
+
+message User {
+  string username = 1;
+  string organization = 2;
+  bool is_valid = 3;
+  google.protobuf.Timestamp expires_at = 4;
+  int32 uid = 5;
+  int32 gid = 6;
+  string fullname = 7;
+  string access_token = 8;
+  string email = 9;
+  string password = 10;
+  repeated string auths = 11;
+  repeated string auth_keys = 12;
+  bool locked = 13;
+  int32 failed_logins = 14;
+  repeated string channels = 15;
+  repeated string envs = 16;
+  repeated string roles = 17;
+  repeated string blueprints = 18;
+  string source = 19;
+}
+
+message ExternalCredential {
+    int32 id = 1;
+    string username = 2;
+    string service_name = 3;
+    string service_url = 4;
+    string external_id = 5;
+    string external_token = 6;
+}
