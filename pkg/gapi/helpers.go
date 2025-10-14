@@ -101,3 +101,55 @@ func ProtoToExternalCredential(pb *commonpb.ExternalCredential) *models.External
 		ExternalToken: pb.GetExternalToken(),
 	}
 }
+
+// OnboardUserDeviceFlowToProto converts a Go model to a protobuf message.
+func OnboardUserDeviceFlowToProto(m *models.OnboardUserDeviceFlow) *commonpb.OnboardUserDeviceFlow {
+	if m == nil {
+		return nil
+	}
+	return &commonpb.OnboardUserDeviceFlow{
+		Provider:        m.Provider,
+		Username:        m.Username,
+		UserCode:        m.UserCode,
+		VerificationUrl: m.VerificationUrl,
+		ExpiresIn:       int32(m.ExpiresIn),
+	}
+}
+
+// ProtoToOnboardUserDeviceFlow converts a protobuf message to a Go model.
+func ProtoToOnboardUserDeviceFlow(pb *commonpb.OnboardUserDeviceFlow) *models.OnboardUserDeviceFlow {
+	if pb == nil {
+		return nil
+	}
+	return &models.OnboardUserDeviceFlow{
+		Provider:        pb.GetProvider(),
+		Username:        pb.GetUsername(),
+		UserCode:        pb.GetUserCode(),
+		VerificationUrl: pb.GetVerificationUrl(),
+		ExpiresIn:       int(pb.GetExpiresIn()),
+	}
+}
+
+// UserOnboardCapabilityToProto converts a Go model to a protobuf message.
+func UserOnboardCapabilityToProto(m *models.OnboardCapability) *commonpb.UserOnboardCapability {
+	if m == nil {
+		return nil
+	}
+	return &commonpb.UserOnboardCapability{
+		Provider:   m.Provider,
+		Username:   m.Username,
+		CanOnboard: m.CanOnboard,
+	}
+}
+
+// ProtoToUserOnboardCapability converts a protobuf message to a Go model.
+func ProtoToUserOnboardCapability(pb *commonpb.UserOnboardCapability) *models.OnboardCapability {
+	if pb == nil {
+		return nil
+	}
+	return &models.OnboardCapability{
+		Provider:   pb.GetProvider(),
+		Username:   pb.GetUsername(),
+		CanOnboard: pb.GetCanOnboard(),
+	}
+}
