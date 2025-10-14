@@ -294,6 +294,142 @@ func (x *ExternalCredential) GetExternalToken() string {
 	return ""
 }
 
+type OnboardUserDeviceFlow struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Provider        string                 `protobuf:"bytes,1,opt,name=provider,proto3" json:"provider,omitempty"`
+	Username        string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	UserCode        string                 `protobuf:"bytes,3,opt,name=user_code,json=userCode,proto3" json:"user_code,omitempty"`
+	VerificationUrl string                 `protobuf:"bytes,4,opt,name=verification_url,json=verificationUrl,proto3" json:"verification_url,omitempty"`
+	ExpiresIn       int32                  `protobuf:"varint,5,opt,name=expires_in,json=expiresIn,proto3" json:"expires_in,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *OnboardUserDeviceFlow) Reset() {
+	*x = OnboardUserDeviceFlow{}
+	mi := &file_pkg_gapi_common_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OnboardUserDeviceFlow) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OnboardUserDeviceFlow) ProtoMessage() {}
+
+func (x *OnboardUserDeviceFlow) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_gapi_common_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OnboardUserDeviceFlow.ProtoReflect.Descriptor instead.
+func (*OnboardUserDeviceFlow) Descriptor() ([]byte, []int) {
+	return file_pkg_gapi_common_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *OnboardUserDeviceFlow) GetProvider() string {
+	if x != nil {
+		return x.Provider
+	}
+	return ""
+}
+
+func (x *OnboardUserDeviceFlow) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *OnboardUserDeviceFlow) GetUserCode() string {
+	if x != nil {
+		return x.UserCode
+	}
+	return ""
+}
+
+func (x *OnboardUserDeviceFlow) GetVerificationUrl() string {
+	if x != nil {
+		return x.VerificationUrl
+	}
+	return ""
+}
+
+func (x *OnboardUserDeviceFlow) GetExpiresIn() int32 {
+	if x != nil {
+		return x.ExpiresIn
+	}
+	return 0
+}
+
+type UserOnboardCapability struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Provider      string                 `protobuf:"bytes,1,opt,name=provider,proto3" json:"provider,omitempty"`
+	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	CanOnboard    bool                   `protobuf:"varint,3,opt,name=can_onboard,json=canOnboard,proto3" json:"can_onboard,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UserOnboardCapability) Reset() {
+	*x = UserOnboardCapability{}
+	mi := &file_pkg_gapi_common_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UserOnboardCapability) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UserOnboardCapability) ProtoMessage() {}
+
+func (x *UserOnboardCapability) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_gapi_common_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UserOnboardCapability.ProtoReflect.Descriptor instead.
+func (*UserOnboardCapability) Descriptor() ([]byte, []int) {
+	return file_pkg_gapi_common_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *UserOnboardCapability) GetProvider() string {
+	if x != nil {
+		return x.Provider
+	}
+	return ""
+}
+
+func (x *UserOnboardCapability) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *UserOnboardCapability) GetCanOnboard() bool {
+	if x != nil {
+		return x.CanOnboard
+	}
+	return false
+}
+
 var File_pkg_gapi_common_proto protoreflect.FileDescriptor
 
 const file_pkg_gapi_common_proto_rawDesc = "" +
@@ -331,7 +467,19 @@ const file_pkg_gapi_common_proto_rawDesc = "" +
 	"serviceUrl\x12\x1f\n" +
 	"\vexternal_id\x18\x05 \x01(\tR\n" +
 	"externalId\x12%\n" +
-	"\x0eexternal_token\x18\x06 \x01(\tR\rexternalTokenB9Z7github.com/k8shell-io/common/pkg/gapi/commonpb;commonpbb\x06proto3"
+	"\x0eexternal_token\x18\x06 \x01(\tR\rexternalToken\"\xb6\x01\n" +
+	"\x15OnboardUserDeviceFlow\x12\x1a\n" +
+	"\bprovider\x18\x01 \x01(\tR\bprovider\x12\x1a\n" +
+	"\busername\x18\x02 \x01(\tR\busername\x12\x1b\n" +
+	"\tuser_code\x18\x03 \x01(\tR\buserCode\x12)\n" +
+	"\x10verification_url\x18\x04 \x01(\tR\x0fverificationUrl\x12\x1d\n" +
+	"\n" +
+	"expires_in\x18\x05 \x01(\x05R\texpiresIn\"p\n" +
+	"\x15UserOnboardCapability\x12\x1a\n" +
+	"\bprovider\x18\x01 \x01(\tR\bprovider\x12\x1a\n" +
+	"\busername\x18\x02 \x01(\tR\busername\x12\x1f\n" +
+	"\vcan_onboard\x18\x03 \x01(\bR\n" +
+	"canOnboardB9Z7github.com/k8shell-io/common/pkg/gapi/commonpb;commonpbb\x06proto3"
 
 var (
 	file_pkg_gapi_common_proto_rawDescOnce sync.Once
@@ -345,14 +493,16 @@ func file_pkg_gapi_common_proto_rawDescGZIP() []byte {
 	return file_pkg_gapi_common_proto_rawDescData
 }
 
-var file_pkg_gapi_common_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_pkg_gapi_common_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_pkg_gapi_common_proto_goTypes = []any{
-	(*User)(nil),                // 0: common.User
-	(*ExternalCredential)(nil),  // 1: common.ExternalCredential
-	(*timestamp.Timestamp)(nil), // 2: google.protobuf.Timestamp
+	(*User)(nil),                  // 0: common.User
+	(*ExternalCredential)(nil),    // 1: common.ExternalCredential
+	(*OnboardUserDeviceFlow)(nil), // 2: common.OnboardUserDeviceFlow
+	(*UserOnboardCapability)(nil), // 3: common.UserOnboardCapability
+	(*timestamp.Timestamp)(nil),   // 4: google.protobuf.Timestamp
 }
 var file_pkg_gapi_common_proto_depIdxs = []int32{
-	2, // 0: common.User.expires_at:type_name -> google.protobuf.Timestamp
+	4, // 0: common.User.expires_at:type_name -> google.protobuf.Timestamp
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
@@ -371,7 +521,7 @@ func file_pkg_gapi_common_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pkg_gapi_common_proto_rawDesc), len(file_pkg_gapi_common_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
