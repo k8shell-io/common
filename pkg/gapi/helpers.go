@@ -71,3 +71,33 @@ func ProtoToUser(pb *commonpb.User) *models.User {
 		Source:       pb.GetSource(),
 	}
 }
+
+// ExternalCredentialToProto converts a Go model to a protobuf message.
+func ExternalCredentialToProto(c *models.ExternalCredential) *commonpb.ExternalCredential {
+	if c == nil {
+		return nil
+	}
+	return &commonpb.ExternalCredential{
+		Id:            uint32(c.ID),
+		Username:      c.Username,
+		ServiceName:   c.ServiceName,
+		ServiceUrl:    c.ServiceURL,
+		ExternalId:    c.ExternalID,
+		ExternalToken: c.ExternalToken,
+	}
+}
+
+// ProtoToExternalCredential converts a protobuf message to a Go model.
+func ProtoToExternalCredential(pb *commonpb.ExternalCredential) *models.ExternalCredential {
+	if pb == nil {
+		return nil
+	}
+	return &models.ExternalCredential{
+		ID:            uint64(pb.GetId()),
+		Username:      pb.GetUsername(),
+		ServiceName:   pb.GetServiceName(),
+		ServiceURL:    pb.GetServiceUrl(),
+		ExternalID:    pb.GetExternalId(),
+		ExternalToken: pb.GetExternalToken(),
+	}
+}
