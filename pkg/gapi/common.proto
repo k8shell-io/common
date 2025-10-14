@@ -70,4 +70,12 @@ message WorkspaceStatus {
   string splash = 8;
 }
 
+// WorkspaceInfo represents the information of a workspace
+message WorkspaceInfo {
+  string name = 1;
+  string username = 2;
+  string blueprint = 3;
+  google.protobuf.Timestamp deployed = 4;
+}
+
 

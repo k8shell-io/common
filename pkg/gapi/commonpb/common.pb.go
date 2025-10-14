@@ -592,6 +592,75 @@ func (x *WorkspaceStatus) GetSplash() string {
 	return ""
 }
 
+// WorkspaceInfo represents the information of a workspace
+type WorkspaceInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	Blueprint     string                 `protobuf:"bytes,3,opt,name=blueprint,proto3" json:"blueprint,omitempty"`
+	Deployed      *timestamp.Timestamp   `protobuf:"bytes,4,opt,name=deployed,proto3" json:"deployed,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WorkspaceInfo) Reset() {
+	*x = WorkspaceInfo{}
+	mi := &file_pkg_gapi_common_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WorkspaceInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WorkspaceInfo) ProtoMessage() {}
+
+func (x *WorkspaceInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_gapi_common_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WorkspaceInfo.ProtoReflect.Descriptor instead.
+func (*WorkspaceInfo) Descriptor() ([]byte, []int) {
+	return file_pkg_gapi_common_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *WorkspaceInfo) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *WorkspaceInfo) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *WorkspaceInfo) GetBlueprint() string {
+	if x != nil {
+		return x.Blueprint
+	}
+	return ""
+}
+
+func (x *WorkspaceInfo) GetDeployed() *timestamp.Timestamp {
+	if x != nil {
+		return x.Deployed
+	}
+	return nil
+}
+
 var File_pkg_gapi_common_proto protoreflect.FileDescriptor
 
 const file_pkg_gapi_common_proto_rawDesc = "" +
@@ -656,7 +725,12 @@ const file_pkg_gapi_common_proto_rawDesc = "" +
 	"\n" +
 	"access_key\x18\x06 \x01(\tR\taccessKey\x12\x19\n" +
 	"\btls_cert\x18\a \x01(\tR\atlsCert\x12\x16\n" +
-	"\x06splash\x18\b \x01(\tR\x06splashB9Z7github.com/k8shell-io/common/pkg/gapi/commonpb;commonpbb\x06proto3"
+	"\x06splash\x18\b \x01(\tR\x06splash\"\x95\x01\n" +
+	"\rWorkspaceInfo\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1a\n" +
+	"\busername\x18\x02 \x01(\tR\busername\x12\x1c\n" +
+	"\tblueprint\x18\x03 \x01(\tR\tblueprint\x126\n" +
+	"\bdeployed\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\bdeployedB9Z7github.com/k8shell-io/common/pkg/gapi/commonpb;commonpbb\x06proto3"
 
 var (
 	file_pkg_gapi_common_proto_rawDescOnce sync.Once
@@ -670,7 +744,7 @@ func file_pkg_gapi_common_proto_rawDescGZIP() []byte {
 	return file_pkg_gapi_common_proto_rawDescData
 }
 
-var file_pkg_gapi_common_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_pkg_gapi_common_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_pkg_gapi_common_proto_goTypes = []any{
 	(*User)(nil),                  // 0: common.User
 	(*ExternalCredential)(nil),    // 1: common.ExternalCredential
@@ -678,17 +752,19 @@ var file_pkg_gapi_common_proto_goTypes = []any{
 	(*UserOnboardCapability)(nil), // 3: common.UserOnboardCapability
 	(*PodStatus)(nil),             // 4: common.PodStatus
 	(*WorkspaceStatus)(nil),       // 5: common.WorkspaceStatus
-	(*timestamp.Timestamp)(nil),   // 6: google.protobuf.Timestamp
+	(*WorkspaceInfo)(nil),         // 6: common.WorkspaceInfo
+	(*timestamp.Timestamp)(nil),   // 7: google.protobuf.Timestamp
 }
 var file_pkg_gapi_common_proto_depIdxs = []int32{
-	6, // 0: common.User.expires_at:type_name -> google.protobuf.Timestamp
-	6, // 1: common.PodStatus.created:type_name -> google.protobuf.Timestamp
+	7, // 0: common.User.expires_at:type_name -> google.protobuf.Timestamp
+	7, // 1: common.PodStatus.created:type_name -> google.protobuf.Timestamp
 	4, // 2: common.WorkspaceStatus.pod_status:type_name -> common.PodStatus
-	3, // [3:3] is the sub-list for method output_type
-	3, // [3:3] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	7, // 3: common.WorkspaceInfo.deployed:type_name -> google.protobuf.Timestamp
+	4, // [4:4] is the sub-list for method output_type
+	4, // [4:4] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_pkg_gapi_common_proto_init() }
@@ -702,7 +778,7 @@ func file_pkg_gapi_common_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pkg_gapi_common_proto_rawDesc), len(file_pkg_gapi_common_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

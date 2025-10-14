@@ -229,3 +229,41 @@ func ProtoToWorkspaceStatus(pb *commonpb.WorkspaceStatus) *models.WorkspaceStatu
 		Splash:    pb.GetSplash(),
 	}
 }
+
+// WorkspaceInfoToProto converts a Go WorkspaceInfo model to its protobuf message.
+func WorkspaceInfoToProto(m *models.WorkspaceInfo) *commonpb.WorkspaceInfo {
+	if m == nil {
+		return nil
+	}
+
+	var deployed *timestamppb.Timestamp
+	if !m.Deployed.IsZero() {
+		deployed = timestamppb.New(m.Deployed)
+	}
+
+	return &commonpb.WorkspaceInfo{
+		Name:      m.Name,
+		Username:  m.Username,
+		Blueprint: m.Blueprint,
+		Deployed:  deployed,
+	}
+}
+
+// ProtoToWorkspaceInfo converts a protobuf WorkspaceInfo message to its Go model.
+func ProtoToWorkspaceInfo(pb *commonpb.WorkspaceInfo) *models.WorkspaceInfo {
+	if pb == nil {
+		return nil
+	}
+
+	var deployed time.Time
+	if ts := pb.GetDeployed(); ts != nil {
+		deployed = ts.AsTime()
+	}
+
+	return &models.WorkspaceInfo{
+		Name:      pb.GetName(),
+		Username:  pb.GetUsername(),
+		Blueprint: pb.GetBlueprint(),
+		Deployed:  deployed,
+	}
+}
