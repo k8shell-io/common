@@ -8,6 +8,8 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+// *** User and related models
+
 func UserToProto(u *models.User) *commonpb.User {
 	if u == nil {
 		return nil
@@ -151,5 +153,79 @@ func ProtoToUserOnboardCapability(pb *commonpb.UserOnboardCapability) *models.On
 		Provider:   pb.GetProvider(),
 		Username:   pb.GetUsername(),
 		CanOnboard: pb.GetCanOnboard(),
+	}
+}
+
+// *** Workspace and related models
+
+// PodStatusToProto converts a Go PodStatus model to its protobuf message.
+func PodStatusToProto(m *models.PodStatus) *commonpb.PodStatus {
+	if m == nil {
+		return nil
+	}
+
+	var created *timestamppb.Timestamp
+	if !m.Created.IsZero() {
+		created = timestamppb.New(m.Created)
+	}
+
+	return &commonpb.PodStatus{
+		Created: created,
+		Status:  m.Status,
+		Message: m.Message,
+	}
+}
+
+// ProtoToPodStatus converts a protobuf PodStatus message to its Go model.
+func ProtoToPodStatus(pb *commonpb.PodStatus) *models.PodStatus {
+	if pb == nil {
+		return nil
+	}
+
+	var created time.Time
+	if ts := pb.GetCreated(); ts != nil {
+		created = ts.AsTime()
+	}
+
+	return &models.PodStatus{
+		Created: created,
+		Status:  pb.GetStatus(),
+		Message: pb.GetMessage(),
+	}
+}
+
+// WorkspaceStatusToProto converts a Go WorkspaceStatus model to its protobuf message.
+func WorkspaceStatusToProto(m *models.WorkspaceStatus) *commonpb.WorkspaceStatus {
+	if m == nil {
+		return nil
+	}
+
+	return &commonpb.WorkspaceStatus{
+		PodStatus: PodStatusToProto(&m.PodStatus),
+		Name:      m.Name,
+		Host:      m.Host,
+		PodIp:     m.PodIP,
+		Port:      int32(m.Port),
+		AccessKey: m.AccessKey,
+		TlsCert:   m.TLSCert,
+		Splash:    m.Splash,
+	}
+}
+
+// ProtoToWorkspaceStatus converts a protobuf WorkspaceStatus message to its Go model.
+func ProtoToWorkspaceStatus(pb *commonpb.WorkspaceStatus) *models.WorkspaceStatus {
+	if pb == nil {
+		return nil
+	}
+
+	return &models.WorkspaceStatus{
+		PodStatus: *ProtoToPodStatus(pb.GetPodStatus()),
+		Name:      pb.GetName(),
+		Host:      pb.GetHost(),
+		PodIP:     pb.GetPodIp(),
+		Port:      int(pb.GetPort()),
+		AccessKey: pb.GetAccessKey(),
+		TLSCert:   pb.GetTlsCert(),
+		Splash:    pb.GetSplash(),
 	}
 }
