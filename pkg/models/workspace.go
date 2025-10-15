@@ -8,10 +8,13 @@ import (
 
 // WorkspaceInfo represents information about a workspace
 type WorkspaceInfo struct {
-	Name      string    `json:"name" example:"dev-user123"`
-	Username  string    `json:"username" example:"dev-user"`
-	Blueprint string    `json:"blueprint" example:"dev"`
-	Deployed  time.Time `json:"deployed" example:"2025-08-05T10:30:00Z"`
+	Name       string    `json:"name" example:"dev-user123"`
+	Username   string    `json:"username" example:"dev-user"`
+	Blueprint  string    `json:"blueprint" example:"dev"`
+	Deployed   time.Time `json:"deployed" example:"2025-08-05T10:30:00Z"`
+	AppVersion string    `json:"appVersion" example:"1.0.0"`
+	Chart      string    `json:"chart" example:"dev"`
+	ChartVer   string    `json:"chartVer" example:"1.0.0"`
 }
 
 // PodStatus represents the status of a workspace pod
