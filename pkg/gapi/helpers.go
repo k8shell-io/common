@@ -201,14 +201,15 @@ func WorkspaceStatusToProto(m *models.WorkspaceStatus) *commonpb.WorkspaceStatus
 	}
 
 	return &commonpb.WorkspaceStatus{
-		PodStatus: PodStatusToProto(&m.PodStatus),
-		Name:      m.Name,
-		Host:      m.Host,
-		PodIp:     m.PodIP,
-		Port:      int32(m.Port),
-		AccessKey: m.AccessKey,
-		TlsCert:   m.TLSCert,
-		Splash:    m.Splash,
+		PodStatus:  PodStatusToProto(&m.PodStatus),
+		Name:       m.Name,
+		Host:       m.Host,
+		PodIp:      m.PodIP,
+		Port:       int32(m.Port),
+		AccessKey:  m.AccessKey,
+		TlsCert:    m.TLSCert,
+		Splash:     m.Splash,
+		AppVersion: m.AppVersion,
 	}
 }
 
@@ -219,14 +220,15 @@ func ProtoToWorkspaceStatus(pb *commonpb.WorkspaceStatus) *models.WorkspaceStatu
 	}
 
 	return &models.WorkspaceStatus{
-		PodStatus: *ProtoToPodStatus(pb.GetPodStatus()),
-		Name:      pb.GetName(),
-		Host:      pb.GetHost(),
-		PodIP:     pb.GetPodIp(),
-		Port:      int(pb.GetPort()),
-		AccessKey: pb.GetAccessKey(),
-		TLSCert:   pb.GetTlsCert(),
-		Splash:    pb.GetSplash(),
+		PodStatus:  *ProtoToPodStatus(pb.GetPodStatus()),
+		Name:       pb.GetName(),
+		Host:       pb.GetHost(),
+		PodIP:      pb.GetPodIp(),
+		Port:       int(pb.GetPort()),
+		AccessKey:  pb.GetAccessKey(),
+		TLSCert:    pb.GetTlsCert(),
+		Splash:     pb.GetSplash(),
+		AppVersion: pb.GetAppVersion(),
 	}
 }
 
