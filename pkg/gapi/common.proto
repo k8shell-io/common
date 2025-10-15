@@ -61,13 +61,14 @@ message PodStatus {
 // WorkspaceStatus represents the current status of a workspace
 message WorkspaceStatus {
   PodStatus pod_status = 1;
-  string name = 2;
-  string host = 3;
-  string pod_ip = 4;
-  int32 port = 5;
-  string access_key = 6;
-  string tls_cert = 7;
-  string splash = 8;
+  string app_version = 2;
+  string name = 3;
+  string host = 4;
+  string pod_ip = 5;
+  int32 port = 6;
+  string access_key = 7;
+  string tls_cert = 8;
+  string splash = 9;
 }
 
 // WorkspaceInfo represents the information of a workspace
