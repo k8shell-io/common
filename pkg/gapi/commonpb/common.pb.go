@@ -599,6 +599,9 @@ type WorkspaceInfo struct {
 	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
 	Blueprint     string                 `protobuf:"bytes,3,opt,name=blueprint,proto3" json:"blueprint,omitempty"`
 	Deployed      *timestamp.Timestamp   `protobuf:"bytes,4,opt,name=deployed,proto3" json:"deployed,omitempty"`
+	AppVersion    string                 `protobuf:"bytes,5,opt,name=app_version,json=appVersion,proto3" json:"app_version,omitempty"`
+	Chart         string                 `protobuf:"bytes,6,opt,name=chart,proto3" json:"chart,omitempty"`
+	ChartVer      string                 `protobuf:"bytes,7,opt,name=chart_ver,json=chartVer,proto3" json:"chart_ver,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -659,6 +662,27 @@ func (x *WorkspaceInfo) GetDeployed() *timestamp.Timestamp {
 		return x.Deployed
 	}
 	return nil
+}
+
+func (x *WorkspaceInfo) GetAppVersion() string {
+	if x != nil {
+		return x.AppVersion
+	}
+	return ""
+}
+
+func (x *WorkspaceInfo) GetChart() string {
+	if x != nil {
+		return x.Chart
+	}
+	return ""
+}
+
+func (x *WorkspaceInfo) GetChartVer() string {
+	if x != nil {
+		return x.ChartVer
+	}
+	return ""
 }
 
 var File_pkg_gapi_common_proto protoreflect.FileDescriptor
@@ -725,12 +749,16 @@ const file_pkg_gapi_common_proto_rawDesc = "" +
 	"\n" +
 	"access_key\x18\x06 \x01(\tR\taccessKey\x12\x19\n" +
 	"\btls_cert\x18\a \x01(\tR\atlsCert\x12\x16\n" +
-	"\x06splash\x18\b \x01(\tR\x06splash\"\x95\x01\n" +
+	"\x06splash\x18\b \x01(\tR\x06splash\"\xe9\x01\n" +
 	"\rWorkspaceInfo\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x1c\n" +
 	"\tblueprint\x18\x03 \x01(\tR\tblueprint\x126\n" +
-	"\bdeployed\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\bdeployedB9Z7github.com/k8shell-io/common/pkg/gapi/commonpb;commonpbb\x06proto3"
+	"\bdeployed\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\bdeployed\x12\x1f\n" +
+	"\vapp_version\x18\x05 \x01(\tR\n" +
+	"appVersion\x12\x14\n" +
+	"\x05chart\x18\x06 \x01(\tR\x05chart\x12\x1b\n" +
+	"\tchart_ver\x18\a \x01(\tR\bchartVerB9Z7github.com/k8shell-io/common/pkg/gapi/commonpb;commonpbb\x06proto3"
 
 var (
 	file_pkg_gapi_common_proto_rawDescOnce sync.Once

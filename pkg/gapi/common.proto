@@ -76,6 +76,9 @@ message WorkspaceInfo {
   string username = 2;
   string blueprint = 3;
   google.protobuf.Timestamp deployed = 4;
+  string app_version = 5;
+  string chart = 6;
+  string chart_ver = 7;
 }
 
 

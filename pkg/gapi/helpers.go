@@ -242,10 +242,13 @@ func WorkspaceInfoToProto(m *models.WorkspaceInfo) *commonpb.WorkspaceInfo {
 	}
 
 	return &commonpb.WorkspaceInfo{
-		Name:      m.Name,
-		Username:  m.Username,
-		Blueprint: m.Blueprint,
-		Deployed:  deployed,
+		Name:       m.Name,
+		Username:   m.Username,
+		Blueprint:  m.Blueprint,
+		Deployed:   deployed,
+		AppVersion: m.AppVersion,
+		Chart:      m.Chart,
+		ChartVer:   m.ChartVer,
 	}
 }
 
@@ -261,9 +264,12 @@ func ProtoToWorkspaceInfo(pb *commonpb.WorkspaceInfo) *models.WorkspaceInfo {
 	}
 
 	return &models.WorkspaceInfo{
-		Name:      pb.GetName(),
-		Username:  pb.GetUsername(),
-		Blueprint: pb.GetBlueprint(),
-		Deployed:  deployed,
+		Name:       pb.GetName(),
+		Username:   pb.GetUsername(),
+		Blueprint:  pb.GetBlueprint(),
+		Deployed:   deployed,
+		AppVersion: pb.GetAppVersion(),
+		Chart:      pb.GetChart(),
+		ChartVer:   pb.GetChartVer(),
 	}
 }
