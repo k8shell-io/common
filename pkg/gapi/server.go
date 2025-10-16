@@ -268,7 +268,8 @@ func (s *Server) allowed(ns, sa string) bool {
 			allowedNamespace = s.podNamespace
 		}
 
-		if allowedNamespace == ns && a.ServiceAccount == sa {
+		if (allowedNamespace == ns || allowedNamespace == "*") &&
+			(a.ServiceAccount == sa || a.ServiceAccount == "*") {
 			return true
 		}
 	}
