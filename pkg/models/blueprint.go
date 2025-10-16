@@ -31,7 +31,6 @@ type Blueprint struct {
 	Docker          Docker              `yaml:"docker" validate:"required"`
 	Storages        map[string]Storage  `yaml:"storages" validate:"required,min=1,dive"`
 	InitScripts     []map[string]string `yaml:"initScripts,omitempty"`
-	ServiceAccount  string              `yaml:"serviceAccount,omitempty"`
 	Capabilities    []string            `yaml:"capabilities,omitempty" validate:"omitempty,dive,oneof=NET_ADMIN NET_BIND_SERVICE NET_RAW SYS_ADMIN SYS_TIME SYS_MODULE SYS_RAWIO DAC_OVERRIDE FOWNER SETUID SETGID KILL CHOWN"`
 	ExtFiles        map[string]string   `yaml:"extFiles,omitempty"`
 }
