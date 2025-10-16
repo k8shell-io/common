@@ -66,12 +66,18 @@ type BlueprintMetadata struct {
 	RepoAddress string `yaml:"repoAddress"`
 }
 
+type Conn struct {
+	AllowAnyNS bool `yaml:"allowAnyNS,omitempty"`
+	AllowAnySA bool `yaml:"allowAnySA,omitempty"`
+}
+
 // K8shelld represents k8shelld configuration
 type K8shelld struct {
 	Image           string   `yaml:"image" validate:"required"`
 	ImagePullPolicy string   `yaml:"imagePullPolicy,omitempty" validate:"omitempty,oneof=Always Never IfNotPresent"`
 	IgnoreOrphans   []string `yaml:"ignoreOrphans,omitempty"`
 	Cert            Cert     `yaml:"cert" validate:"required"`
+	Connection      Conn     `yaml:"connection,omitempty"`
 }
 
 // Cert represents certificate configuration
