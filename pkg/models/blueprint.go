@@ -75,17 +75,7 @@ type K8shelld struct {
 	Image           string   `yaml:"image" validate:"required"`
 	ImagePullPolicy string   `yaml:"imagePullPolicy,omitempty" validate:"omitempty,oneof=Always Never IfNotPresent"`
 	IgnoreOrphans   []string `yaml:"ignoreOrphans,omitempty"`
-	Cert            Cert     `yaml:"cert" validate:"required"`
 	Connection      Conn     `yaml:"connection,omitempty"`
-}
-
-// Cert represents certificate configuration
-type Cert struct {
-	Country      string `yaml:"country" validate:"required,len=2"`
-	State        string `yaml:"state" validate:"required"`
-	Locality     string `yaml:"locality" validate:"required"`
-	Organization string `yaml:"organization" validate:"required"`
-	CommonName   string `yaml:"commonName" validate:"required,fqdn"`
 }
 
 // Network represents network configuration
