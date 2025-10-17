@@ -46,18 +46,18 @@ type ServerConfig struct {
 type ServiceRegistrationFunc func(*grpc.Server) error
 
 type Server struct {
-	config                *ServerConfig
-	log                   *zerolog.Logger
-	listener              net.Listener
-	GrpcServer            *grpc.Server
-	verifier              *oidc.IDTokenVerifier
-	httpClient            *http.Client
-	podNamespace          string
-	certWatcher           *config.Watcher
-	reloadMu              sync.Mutex
-	isRunning             bool
-	serviceRegistrationMu sync.RWMutex
-	serviceRegistrations  []ServiceRegistrationFunc
+	config               *ServerConfig
+	log                  *zerolog.Logger
+	listener             net.Listener
+	GrpcServer           *grpc.Server
+	verifier             *oidc.IDTokenVerifier
+	httpClient           *http.Client
+	podNamespace         string
+	certWatcher          *config.Watcher
+	reloadMu             sync.Mutex
+	isRunning            bool
+	serviceRegistrations ServiceRegistrationFunc
+	stopGracefully       bool
 }
 
 type roundTripperWithAuth struct {
@@ -71,7 +71,7 @@ func (r roundTripperWithAuth) RoundTrip(req *http.Request) (*http.Response, erro
 	return r.base.RoundTrip(req2)
 }
 
-func NewServer(cfg *ServerConfig) (*Server, error) {
+func NewServer(cfg *ServerConfig, stopGracefully bool) (*Server, error) {
 	if cfg.IssuerURL == "" {
 		cfg.IssuerURL = "https://kubernetes.default.svc.cluster.local"
 	}
@@ -82,7 +82,8 @@ func NewServer(cfg *ServerConfig) (*Server, error) {
 	s := &Server{
 		config:               cfg,
 		log:                  logger.NewLogger("grpc"),
-		serviceRegistrations: make([]ServiceRegistrationFunc, 0),
+		serviceRegistrations: nil,
+		stopGracefully:       stopGracefully,
 	}
 
 	var err error
@@ -118,10 +119,7 @@ func NewServer(cfg *ServerConfig) (*Server, error) {
 
 // RegisterService adds a service registration callback
 func (s *Server) RegisterService(regFunc ServiceRegistrationFunc) error {
-	s.serviceRegistrationMu.Lock()
-	defer s.serviceRegistrationMu.Unlock()
-
-	s.serviceRegistrations = append(s.serviceRegistrations, regFunc)
+	s.serviceRegistrations = regFunc
 
 	s.reloadMu.Lock()
 	currentServer := s.GrpcServer
@@ -134,25 +132,6 @@ func (s *Server) RegisterService(regFunc ServiceRegistrationFunc) error {
 		s.log.Debug().Msg("Service registered successfully")
 	}
 
-	return nil
-}
-
-// registerAllServices calls all registered service registration functions
-func (s *Server) registerAllServices() error {
-	s.serviceRegistrationMu.RLock()
-	defer s.serviceRegistrationMu.RUnlock()
-
-	if s.GrpcServer == nil {
-		return fmt.Errorf("no gRPC server available")
-	}
-
-	for i, regFunc := range s.serviceRegistrations {
-		if err := regFunc(s.GrpcServer); err != nil {
-			return fmt.Errorf("failed to register service %d: %w", i, err)
-		}
-	}
-
-	s.log.Debug().Int("count", len(s.serviceRegistrations)).Msg("All services registered successfully")
 	return nil
 }
 
@@ -203,8 +182,12 @@ func (s *Server) initGRPCServer() error {
 
 	s.GrpcServer = grpc.NewServer(opts...)
 
-	if err := s.registerAllServices(); err != nil {
-		return fmt.Errorf("failed to register services: %w", err)
+	if s.serviceRegistrations != nil {
+		if err := s.serviceRegistrations(s.GrpcServer); err != nil {
+			return fmt.Errorf("failed to register service: %w", err)
+		}
+	} else {
+		s.log.Warn().Msg("No services registered on gRPC server")
 	}
 
 	return nil
@@ -289,7 +272,13 @@ func (s *Server) reloadCertificates() error {
 
 	if oldServer != nil {
 		s.log.Debug().Msg("Gracefully stopping old gRPC server")
-		oldServer.GracefulStop()
+		if s.stopGracefully {
+			s.log.Debug().Msg("Waiting for ongoing RPCs to complete")
+			oldServer.GracefulStop()
+		} else {
+			s.log.Debug().Msg("Forcibly stopping old gRPC server")
+			oldServer.Stop()
+		}
 	}
 
 	oldListener := s.listener
@@ -390,7 +379,13 @@ func (s *Server) Stop() {
 	s.reloadMu.Lock()
 	s.isRunning = false
 	if s.GrpcServer != nil {
-		s.GrpcServer.GracefulStop()
+		if s.stopGracefully {
+			s.log.Debug().Msg("Waiting for ongoing RPCs to complete")
+			s.GrpcServer.GracefulStop()
+		} else {
+			s.log.Debug().Msg("Forcibly stopping old gRPC server")
+			s.GrpcServer.Stop()
+		}
 	}
 	if s.listener != nil {
 		s.listener.Close()
