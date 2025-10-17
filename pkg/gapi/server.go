@@ -46,19 +46,16 @@ type ServerConfig struct {
 type ServiceRegistrationFunc func(*grpc.Server) error
 
 type Server struct {
-	config       *ServerConfig
-	log          *zerolog.Logger
-	listener     net.Listener
-	GrpcServer   *grpc.Server
-	verifier     *oidc.IDTokenVerifier
-	httpClient   *http.Client
-	podNamespace string
-	certWatcher  *config.Watcher
-	serverMu     sync.RWMutex
-	reloadMu     sync.Mutex
-	isRunning    bool
-
-	// Service registration callbacks
+	config                *ServerConfig
+	log                   *zerolog.Logger
+	listener              net.Listener
+	GrpcServer            *grpc.Server
+	verifier              *oidc.IDTokenVerifier
+	httpClient            *http.Client
+	podNamespace          string
+	certWatcher           *config.Watcher
+	reloadMu              sync.Mutex
+	isRunning             bool
 	serviceRegistrationMu sync.RWMutex
 	serviceRegistrations  []ServiceRegistrationFunc
 }
@@ -119,17 +116,16 @@ func NewServer(cfg *ServerConfig) (*Server, error) {
 	return s, nil
 }
 
-// RegisterService adds a service registration callback that will be called
-// whenever the gRPC server is created or recreated (e.g., after certificate reload)
+// RegisterService adds a service registration callback
 func (s *Server) RegisterService(regFunc ServiceRegistrationFunc) error {
 	s.serviceRegistrationMu.Lock()
 	defer s.serviceRegistrationMu.Unlock()
 
 	s.serviceRegistrations = append(s.serviceRegistrations, regFunc)
 
-	s.serverMu.RLock()
+	s.reloadMu.Lock()
 	currentServer := s.GrpcServer
-	s.serverMu.RUnlock()
+	s.reloadMu.Unlock()
 
 	if currentServer != nil {
 		if err := regFunc(currentServer); err != nil {
@@ -146,16 +142,12 @@ func (s *Server) registerAllServices() error {
 	s.serviceRegistrationMu.RLock()
 	defer s.serviceRegistrationMu.RUnlock()
 
-	s.serverMu.RLock()
-	currentServer := s.GrpcServer
-	s.serverMu.RUnlock()
-
-	if currentServer == nil {
+	if s.GrpcServer == nil {
 		return fmt.Errorf("no gRPC server available")
 	}
 
 	for i, regFunc := range s.serviceRegistrations {
-		if err := regFunc(currentServer); err != nil {
+		if err := regFunc(s.GrpcServer); err != nil {
 			return fmt.Errorf("failed to register service %d: %w", i, err)
 		}
 	}
@@ -209,11 +201,8 @@ func (s *Server) initGRPCServer() error {
 		s.unaryErrorLoggingInterceptor(),
 	))
 
-	s.serverMu.Lock()
 	s.GrpcServer = grpc.NewServer(opts...)
-	s.serverMu.Unlock()
 
-	// Register all services on the new server
 	if err := s.registerAllServices(); err != nil {
 		return fmt.Errorf("failed to register services: %w", err)
 	}
@@ -240,7 +229,6 @@ func (s *Server) setupCertWatcher() error {
 	}
 
 	certExtensions := []string{".crt", ".cert", ".pem", ".key"}
-
 	s.certWatcher = config.NewWatcher(watchDir, s.config.CertReloadDelay, certExtensions, s.reloadCertificates)
 
 	if err := s.certWatcher.Setup(); err != nil {
@@ -296,21 +284,38 @@ func (s *Server) reloadCertificates() error {
 		return fmt.Errorf("certificate validation failed: %w", err)
 	}
 
-	s.serverMu.Lock()
 	oldServer := s.GrpcServer
-	s.serverMu.Unlock()
-
-	if err := s.initGRPCServer(); err != nil {
-		s.log.Error().Err(err).Msg("Failed to create new gRPC server")
-		return fmt.Errorf("failed to create new gRPC server: %w", err)
-	}
+	s.GrpcServer = nil
 
 	if oldServer != nil {
 		s.log.Debug().Msg("Gracefully stopping old gRPC server")
 		oldServer.GracefulStop()
 	}
 
-	s.log.Info().Msg("Successfully reloaded TLS certificates and re-registered services")
+	oldListener := s.listener
+	s.listener = nil
+
+	if oldListener != nil {
+		s.log.Debug().Msg("Closing old listener")
+		oldListener.Close()
+		time.Sleep(50 * time.Millisecond)
+	}
+
+	s.log.Debug().Msg("Creating new listener")
+	newListener, err := net.Listen("tcp", fmt.Sprintf(":%d", s.config.Port))
+	if err != nil {
+		return fmt.Errorf("failed to create new listener: %w", err)
+	}
+
+	s.listener = newListener
+
+	if err := s.initGRPCServer(); err != nil {
+		s.log.Error().Err(err).Msg("Failed to create new gRPC server")
+		newListener.Close()
+		return fmt.Errorf("failed to create new gRPC server: %w", err)
+	}
+
+	s.log.Info().Msgf("TLS certificates reloaded, address: %s", newListener.Addr().String())
 	return nil
 }
 
@@ -334,9 +339,9 @@ func (s *Server) validateCertificates() error {
 }
 
 func (s *Server) Start() error {
-	s.serverMu.Lock()
+	s.reloadMu.Lock()
 	s.isRunning = true
-	s.serverMu.Unlock()
+	s.reloadMu.Unlock()
 
 	s.log.Info().
 		Str("address", s.listener.Addr().String()).
@@ -344,28 +349,36 @@ func (s *Server) Start() error {
 		Msg("Starting gRPC server")
 
 	for {
-		s.serverMu.RLock()
+		s.reloadMu.Lock()
 		server := s.GrpcServer
+		currentListener := s.listener
 		running := s.isRunning
-		s.serverMu.RUnlock()
+		s.reloadMu.Unlock()
 
 		if !running {
 			break
 		}
 
-		if err := server.Serve(s.listener); err != nil {
-			s.log.Error().Err(err).Msg("gRPC server error")
-
-			s.serverMu.RLock()
-			stillRunning := s.isRunning
-			s.serverMu.RUnlock()
-
-			if !stillRunning {
-				break
-			}
-
+		if server == nil || currentListener == nil {
 			time.Sleep(100 * time.Millisecond)
+			continue
 		}
+
+		err := server.Serve(currentListener)
+
+		s.reloadMu.Lock()
+		stillRunning := s.isRunning
+		s.reloadMu.Unlock()
+
+		if !stillRunning {
+			break
+		}
+
+		if err != nil {
+			s.log.Debug().Err(err).Msg("Server serve ended, checking if reload occurred")
+		}
+
+		time.Sleep(100 * time.Millisecond)
 	}
 
 	return nil
@@ -374,21 +387,20 @@ func (s *Server) Start() error {
 func (s *Server) Stop() {
 	s.log.Info().Msg("Stopping gRPC server")
 
-	s.serverMu.Lock()
+	s.reloadMu.Lock()
 	s.isRunning = false
 	if s.GrpcServer != nil {
 		s.GrpcServer.GracefulStop()
 	}
-	s.serverMu.Unlock()
+	if s.listener != nil {
+		s.listener.Close()
+	}
+	s.reloadMu.Unlock()
 
 	if s.certWatcher != nil {
 		if err := s.certWatcher.Close(); err != nil {
 			s.log.Error().Err(err).Msg("Error closing certificate watcher")
 		}
-	}
-
-	if s.listener != nil {
-		s.listener.Close()
 	}
 
 	s.log.Info().Msg("gRPC server stopped")
