@@ -45,6 +45,13 @@ message OnboardUserDeviceFlow {
   int32 expires_in = 5;
 }
 
+message OnboardUserWebFlow {
+  string provider = 1;
+  string auth_url = 2;
+  string state = 3;
+  int32 expires_in = 4;
+}
+
 message UserOnboardCapability {
   string provider = 1;
   string username = 2;

@@ -132,6 +132,30 @@ func ProtoToOnboardUserDeviceFlow(pb *commonpb.OnboardUserDeviceFlow) *models.On
 	}
 }
 
+func OnboardUserWebFlowToProto(m *models.OnboardUserWebFlow) *commonpb.OnboardUserWebFlow {
+	if m == nil {
+		return nil
+	}
+	return &commonpb.OnboardUserWebFlow{
+		Provider:  m.Provider,
+		AuthUrl:   m.AuthorizationURL,
+		State:     m.State,
+		ExpiresIn: int32(m.ExpiresIn),
+	}
+}
+
+func ProtoToOnboardUserWebFlow(pb *commonpb.OnboardUserWebFlow) *models.OnboardUserWebFlow {
+	if pb == nil {
+		return nil
+	}
+	return &models.OnboardUserWebFlow{
+		Provider:         pb.GetProvider(),
+		AuthorizationURL: pb.GetAuthUrl(),
+		State:            pb.GetState(),
+		ExpiresIn:        int(pb.GetExpiresIn()),
+	}
+}
+
 // UserOnboardCapabilityToProto converts a Go model to a protobuf message.
 func UserOnboardCapabilityToProto(m *models.OnboardCapability) *commonpb.UserOnboardCapability {
 	if m == nil {
