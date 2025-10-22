@@ -127,13 +127,21 @@ type ProviderInfo struct {
 	RefreshToken    string     `yaml:"refreshToken"`
 }
 
-// OnboardUser represents a user being onboarded
+// OnboardUserDeviceFlow represents a user being onboarded via OAuth device flow
 type OnboardUserDeviceFlow struct {
 	Provider        string `json:"provider"`
 	Username        string `json:"username"`
 	UserCode        string `json:"user_code"`
 	VerificationUrl string `json:"verification_url"`
 	ExpiresIn       int    `json:"expires_in"`
+}
+
+// OnboardUserWebFlow represents a user being onboarded via OAuth web flow
+type OnboardUserWebFlow struct {
+	Provider         string `json:"provider"`
+	AuthorizationURL string `json:"authorizationUrl"`
+	State            string `json:"state"`
+	ExpiresIn        int    `json:"expiresIn"`
 }
 
 // OnboardCapability represents the capability of a user to onboard
