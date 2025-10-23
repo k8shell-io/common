@@ -52,6 +52,11 @@ message OnboardUserWebFlow {
   int32 expires_in = 4;
 }
 
+message CompleteUserWebFlow {
+  string code = 2;
+  string state = 3;
+}
+
 message UserOnboardCapability {
   string provider = 1;
   string username = 2;

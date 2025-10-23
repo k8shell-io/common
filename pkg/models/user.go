@@ -144,6 +144,12 @@ type OnboardUserWebFlow struct {
 	ExpiresIn        int    `json:"expiresIn"`
 }
 
+// CompleteUserWebFlow represents the data needed to complete a web onboarding flow
+type CompleteUserWebFlow struct {
+	Code  string `json:"code"`
+	State string `json:"state"`
+}
+
 // OnboardCapability represents the capability of a user to onboard
 type OnboardCapability struct {
 	Provider   string `json:"provider"`
