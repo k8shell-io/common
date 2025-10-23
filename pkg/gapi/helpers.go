@@ -132,6 +132,7 @@ func ProtoToOnboardUserDeviceFlow(pb *commonpb.OnboardUserDeviceFlow) *models.On
 	}
 }
 
+// OnboardUserWebFlowToProto converts a Go model to a protobuf message.
 func OnboardUserWebFlowToProto(m *models.OnboardUserWebFlow) *commonpb.OnboardUserWebFlow {
 	if m == nil {
 		return nil
@@ -144,6 +145,7 @@ func OnboardUserWebFlowToProto(m *models.OnboardUserWebFlow) *commonpb.OnboardUs
 	}
 }
 
+// ProtoToOnboardUserWebFlow converts a protobuf message to a Go model.
 func ProtoToOnboardUserWebFlow(pb *commonpb.OnboardUserWebFlow) *models.OnboardUserWebFlow {
 	if pb == nil {
 		return nil
@@ -153,6 +155,28 @@ func ProtoToOnboardUserWebFlow(pb *commonpb.OnboardUserWebFlow) *models.OnboardU
 		AuthorizationURL: pb.GetAuthUrl(),
 		State:            pb.GetState(),
 		ExpiresIn:        int(pb.GetExpiresIn()),
+	}
+}
+
+// CompleteUserWebFlowToProto converts a Go model to a protobuf message.
+func CompleteUserWebFlowToProto(m *models.CompleteUserWebFlow) *commonpb.CompleteUserWebFlow {
+	if m == nil {
+		return nil
+	}
+	return &commonpb.CompleteUserWebFlow{
+		Code:  m.Code,
+		State: m.State,
+	}
+}
+
+// ProtoToCompleteUserWebFlow converts a protobuf message to a Go model.
+func ProtoToCompleteUserWebFlow(pb *commonpb.CompleteUserWebFlow) *models.CompleteUserWebFlow {
+	if pb == nil {
+		return nil
+	}
+	return &models.CompleteUserWebFlow{
+		Code:  pb.GetCode(),
+		State: pb.GetState(),
 	}
 }
 
