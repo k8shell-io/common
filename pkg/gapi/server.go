@@ -37,6 +37,7 @@ type ServerConfig struct {
 	CertFile        string          `yaml:"certFile"`
 	KeyFile         string          `yaml:"keyFile"`
 	CertReloadDelay time.Duration   `yaml:"certReloadDelay"`
+	AuthEnabled     bool            `yaml:"authEnabled"`
 	IssuerURL       string          `yaml:"issuerURL"`
 	Audience        string          `yaml:"audience"`
 	Allowed         []AllowedCaller `yaml:"allowed"`
@@ -98,10 +99,6 @@ func NewServer(cfg *ServerConfig, stopGracefully bool) (*Server, error) {
 	s.listener, err = net.Listen("tcp", fmt.Sprintf(":%d", cfg.Port))
 	if err != nil {
 		return nil, fmt.Errorf("listen: %w", err)
-	}
-
-	if err := s.initOIDC(); err != nil {
-		return nil, fmt.Errorf("init oidc: %w", err)
 	}
 
 	if err := s.initGRPCServer(); err != nil {
@@ -174,11 +171,20 @@ func (s *Server) initGRPCServer() error {
 		opts = append(opts, grpc.Creds(creds))
 	}
 
-	opts = append(opts, grpc.ChainUnaryInterceptor(
-		s.unaryRequestLoggingInterceptor(),
-		s.unaryAuthInterceptor(),
-		s.unaryErrorLoggingInterceptor(),
-	))
+	var unaryInts []grpc.UnaryServerInterceptor
+	unaryInts = append(unaryInts, s.unaryRequestLoggingInterceptor())
+
+	if s.config.AuthEnabled {
+		if err := s.initOIDC(); err != nil {
+			return fmt.Errorf("init oidc: %w", err)
+		}
+		unaryInts = append(unaryInts, s.unaryAuthInterceptor())
+	} else {
+		s.log.Warn().Msg("Auth disabled; skipping oidc initialization and auth interceptor")
+	}
+
+	unaryInts = append(unaryInts, s.unaryErrorLoggingInterceptor())
+	opts = append(opts, grpc.ChainUnaryInterceptor(unaryInts...))
 
 	s.GrpcServer = grpc.NewServer(opts...)
 
