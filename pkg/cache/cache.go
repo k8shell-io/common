@@ -111,6 +111,38 @@ func (c *Cache) SetWithRetry(it *memcache.Item) error {
 	return mc.Set(it)
 }
 
+// DeleteWithRetry deletes a key. On failure it recreates the client and retries once.
+// ErrCacheMiss is treated as success (idempotent delete).
+func (c *Cache) DeleteWithRetry(key string) error {
+	c.mu.RLock()
+	mc := c.memcache
+	c.mu.RUnlock()
+	if mc == nil {
+		return fmt.Errorf("memcache disabled")
+	}
+
+	if err := mc.Delete(key); err == nil || err == memcache.ErrCacheMiss {
+		return nil
+	} else {
+		c.log.Warn().Err(err).Str("key", key).Msg("Memcache Delete failed; recreating client and retrying once")
+	}
+
+	c.recreateClient()
+
+	c.mu.RLock()
+	mc = c.memcache
+	c.mu.RUnlock()
+	if mc == nil {
+		return fmt.Errorf("memcache disabled after recreate")
+	}
+
+	if err := mc.Delete(key); err == memcache.ErrCacheMiss {
+		return nil
+	} else {
+		return err
+	}
+}
+
 // Fetch gets a value from memcached, or calls fetch() on miss,
 // then stores it with the given TTL. Encoding/decoding is done via JSON or directly for []byte and string types.
 func Fetch[T any](ctx context.Context, cache *Cache, key string, ttl time.Duration,
