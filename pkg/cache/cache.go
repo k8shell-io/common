@@ -58,9 +58,9 @@ func (c *Cache) recreateClient() {
 	c.log.Warn().Str("addr", addr).Msg("Memcache client recreated")
 }
 
-// getWithRetry does Get, on failure recreates client and retries once.
+// GetWithRetry does Get, on failure recreates client and retries once.
 // ErrCacheMiss is returned as-is without recreating.
-func (c *Cache) getWithRetry(key string) (*memcache.Item, error) {
+func (c *Cache) GetWithRetry(key string) (*memcache.Item, error) {
 	c.mu.RLock()
 	mc := c.memcache
 	c.mu.RUnlock()
@@ -85,8 +85,8 @@ func (c *Cache) getWithRetry(key string) (*memcache.Item, error) {
 	return mc.Get(key)
 }
 
-// setWithRetry does Set, on failure recreates client and retries once.
-func (c *Cache) setWithRetry(it *memcache.Item) error {
+// SetWithRetry does Set, on failure recreates client and retries once.
+func (c *Cache) SetWithRetry(it *memcache.Item) error {
 	c.mu.RLock()
 	mc := c.memcache
 	c.mu.RUnlock()
@@ -130,7 +130,7 @@ func Fetch[T any](ctx context.Context, cache *Cache, key string, ttl time.Durati
 		return fetch(ctx)
 	}
 
-	if it, err := cache.getWithRetry(key); err == nil && it != nil && len(it.Value) > 0 {
+	if it, err := cache.GetWithRetry(key); err == nil && it != nil && len(it.Value) > 0 {
 		cache.log.Debug().Str("key", key).Msg("Found in cache")
 		if _, ok := any(zero).([]byte); ok {
 			cp := append([]byte(nil), it.Value...)
@@ -170,7 +170,7 @@ func Fetch[T any](ctx context.Context, cache *Cache, key string, ttl time.Durati
 		}
 	}
 
-	_ = cache.setWithRetry(&memcache.Item{
+	_ = cache.SetWithRetry(&memcache.Item{
 		Key:        key,
 		Value:      bytes,
 		Expiration: int32(ttl / time.Second),
