@@ -143,6 +143,39 @@ func (c *Cache) DeleteWithRetry(key string) error {
 	}
 }
 
+// AddWithRetry adds a key only if it does not already exist.
+// On failure it recreates the client and retries once.
+// ErrNotStored (key exists) is returned as-is without recreating.
+func (c *Cache) AddWithRetry(it *memcache.Item) error {
+	c.mu.RLock()
+	mc := c.memcache
+	c.mu.RUnlock()
+	if mc == nil {
+		return fmt.Errorf("memcache disabled")
+	}
+
+	if err := mc.Add(it); err == nil || err == memcache.ErrNotStored {
+		return err
+	} else {
+		c.log.Warn().Err(err).Str("key", it.Key).Msg("Memcache Add failed; recreating client and retrying once")
+	}
+
+	c.recreateClient()
+
+	c.mu.RLock()
+	mc = c.memcache
+	c.mu.RUnlock()
+	if mc == nil {
+		return fmt.Errorf("memcache disabled after recreate")
+	}
+
+	err := mc.Add(it)
+	if err == memcache.ErrNotStored {
+		return err
+	}
+	return err
+}
+
 // Fetch gets a value from memcached, or calls fetch() on miss,
 // then stores it with the given TTL. Encoding/decoding is done via JSON or directly for []byte and string types.
 func Fetch[T any](ctx context.Context, cache *Cache, key string, ttl time.Duration,
