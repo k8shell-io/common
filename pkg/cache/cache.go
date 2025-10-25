@@ -202,11 +202,16 @@ func Fetch[T any](ctx context.Context, cache *Cache, key string, ttl time.Durati
 		}
 	}
 
-	_ = cache.SetWithRetry(&memcache.Item{
+	err = cache.SetWithRetry(&memcache.Item{
 		Key:        key,
 		Value:      bytes,
 		Expiration: int32(ttl / time.Second),
 	})
+	if err != nil {
+		cache.log.Warn().Err(err).Str("key", key).Msg("Failed to set value in cache")
+	} else {
+		cache.log.Debug().Str("key", key).Msg("Value cached")
+	}
 
 	return v, nil
 }
