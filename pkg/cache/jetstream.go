@@ -93,6 +93,7 @@ func NewJetStreamCache(cfg natsc.NATSClientConfig, bucketOpts BucketOptions) (Ca
 			// Re-create JS context and re-bind KV bucket on reconnect
 			if js, err := nc.JetStream(); err == nil {
 				c.mu.Lock()
+				c.nc = nc
 				c.js = js
 				if kv, e2 := js.KeyValue(c.bucketOpts.Bucket); e2 == nil {
 					c.kv = kv
