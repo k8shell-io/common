@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
@@ -14,6 +15,7 @@ import (
 	"github.com/rs/zerolog"
 
 	"github.com/nats-io/nats.go"
+	"github.com/nats-io/nats.go/jetstream"
 )
 
 var (
@@ -23,10 +25,11 @@ var (
 
 // BucketOptions holds options for the JetStream cache bucket.
 type BucketOptions struct {
-	Bucket    string           `yaml:"bucket" json:"bucket"`
-	BucketTTL time.Duration    `yaml:"bucketTTL" json:"bucketTTL"`
-	History   uint8            `yaml:"history" json:"history"`
-	Storage   nats.StorageType `yaml:"storage" json:"storage"`
+	Bucket    string                `yaml:"bucket" json:"bucket"`
+	BucketTTL time.Duration         `yaml:"bucketTTL" json:"bucketTTL"`
+	History   uint8                 `yaml:"history" json:"history"`
+	Storage   jetstream.StorageType `yaml:"storage" json:"storage"`
+	Replicas  int                   `yaml:"replicas" json:"replicas"`
 }
 
 // JetStreamCache is a cache client backed by NATS JetStream KV store.
@@ -34,26 +37,18 @@ type JetStreamCache struct {
 	log        *zerolog.Logger
 	cfg        natsc.NATSClientConfig
 	bucketOpts BucketOptions
-	mu         sync.RWMutex
-	nc         *nats.Conn
-	js         nats.JetStreamContext
-	kv         nats.KeyValue
+
+	mu sync.RWMutex
+	nc *nats.Conn
+	js jetstream.JetStream
+	kv jetstream.KeyValue
 }
 
-// entryEnvelope wraps cached data with optional expiration. It allows per-entry TTLs.
-type entryEnvelope struct {
-	ExpireAt int64  `json:"exp,omitempty"` // unix seconds
-	Data     []byte `json:"d"`
-}
-
-// lockEnvelope holds lock owner and expiration.
 type lockEnvelope struct {
 	Owner    string `json:"owner,omitempty"`
 	ExpireAt int64  `json:"exp,omitempty"` // unix seconds
 }
 
-// JSLock is a guard returned by TryAcquireLock.
-// Call Release() when done.
 type JSLock struct {
 	c      *JetStreamCache
 	key    string
@@ -61,25 +56,25 @@ type JSLock struct {
 	acqRev uint64
 }
 
-// NewJetStreamCache connects to NATS, ensures/binds the KV bucket.
 func NewJetStreamCache(cfg natsc.NATSClientConfig, bucketOpts BucketOptions) (Cache, error) {
 	if !cfg.Enabled {
 		return nil, nil
 	}
 	l := logger.NewLogger("cache")
 
-	opts := natsc.NatsOptionsFromConfig("k8shell-cache", cfg)
 	if bucketOpts.Bucket == "" {
 		return nil, errors.New("cache: bucket name required")
 	}
 	if bucketOpts.History == 0 {
 		bucketOpts.History = 1
 	}
-	if bucketOpts.BucketTTL == 0 {
-		bucketOpts.BucketTTL = 24 * time.Hour
+	if bucketOpts.Replicas == 0 {
+		bucketOpts.Replicas = 1
 	}
 
+	opts := natsc.NatsOptionsFromConfig("k8shell-cache", cfg)
 	c := &JetStreamCache{log: l, cfg: cfg, bucketOpts: bucketOpts}
+
 	opts = append(opts,
 		nats.DisconnectErrHandler(func(_ *nats.Conn, err error) {
 			if err != nil {
@@ -90,16 +85,16 @@ func NewJetStreamCache(cfg natsc.NATSClientConfig, bucketOpts BucketOptions) (Ca
 		}),
 		nats.ReconnectHandler(func(nc *nats.Conn) {
 			c.log.Info().Str("url", nc.ConnectedUrl()).Msg("NATS reconnected")
-			// Re-create JS context and re-bind KV bucket on reconnect
-			if js, err := nc.JetStream(); err == nil {
-				c.mu.Lock()
-				c.nc = nc
-				c.js = js
-				if kv, e2 := js.KeyValue(c.bucketOpts.Bucket); e2 == nil {
-					c.kv = kv
-				}
-				c.mu.Unlock()
+			js, err := jetstream.New(nc)
+			if err != nil {
+				return
 			}
+			c.mu.Lock()
+			c.js = js
+			if kv, e2 := js.KeyValue(context.Background(), c.bucketOpts.Bucket); e2 == nil {
+				c.kv = kv
+			}
+			c.mu.Unlock()
 		}),
 		nats.ClosedHandler(func(_ *nats.Conn) {
 			c.log.Warn().Msg("NATS connection closed")
@@ -110,21 +105,22 @@ func NewJetStreamCache(cfg natsc.NATSClientConfig, bucketOpts BucketOptions) (Ca
 	if err != nil {
 		return nil, fmt.Errorf("connect NATS: %w", err)
 	}
-	js, err := nc.JetStream()
+	js, err := jetstream.New(nc)
 	if err != nil {
 		nc.Close()
 		return nil, fmt.Errorf("jetstream: %w", err)
 	}
 
-	var kv nats.KeyValue
-	kv, err = js.KeyValue(c.bucketOpts.Bucket)
+	ctx := context.Background()
+
+	kv, err := js.KeyValue(ctx, bucketOpts.Bucket)
 	if err != nil {
-		ttl := c.bucketOpts.BucketTTL
-		kv, err = js.CreateKeyValue(&nats.KeyValueConfig{
-			Bucket:  c.bucketOpts.Bucket,
-			History: c.bucketOpts.History,
-			Storage: c.bucketOpts.Storage,
-			TTL:     ttl,
+		kv, err = js.CreateKeyValue(ctx, jetstream.KeyValueConfig{
+			Bucket:   bucketOpts.Bucket,
+			TTL:      bucketOpts.BucketTTL, // default max-age; per-key TTL can override at create-time
+			History:  bucketOpts.History,
+			Storage:  bucketOpts.Storage,
+			Replicas: bucketOpts.Replicas,
 		})
 		if err != nil {
 			nc.Close()
@@ -156,7 +152,6 @@ func (c *JetStreamCache) Close() {
 	c.mu.Unlock()
 }
 
-// Get returns the raw cached bytes or ErrCacheMiss.
 func (c *JetStreamCache) Get(key string) ([]byte, error) {
 	c.mu.RLock()
 	kv := c.kv
@@ -164,30 +159,23 @@ func (c *JetStreamCache) Get(key string) ([]byte, error) {
 	if kv == nil {
 		return nil, errors.New("cache disabled")
 	}
-	e, err := kv.Get(key)
+	e, err := kv.Get(context.Background(), key)
 	if err != nil {
-		if errors.Is(err, nats.ErrKeyNotFound) {
+		if errors.Is(err, jetstream.ErrKeyNotFound) {
 			return nil, ErrCacheMiss
 		}
 		return nil, err
 	}
-
-	var env entryEnvelope
-	if err := json.Unmarshal(e.Value(), &env); err != nil || len(env.Data) == 0 {
-		raw := e.Value()
-		if len(raw) == 0 {
-			return nil, ErrCacheMiss
-		}
-		return raw, nil
-	}
-	if env.ExpireAt > 0 && time.Now().Unix() >= env.ExpireAt {
-		_ = kv.Delete(key)
+	val := e.Value()
+	if len(val) == 0 {
 		return nil, ErrCacheMiss
 	}
-	return env.Data, nil
+	return val, nil
 }
 
-// Set stores bytes with a per-key TTL (soft; enforced by envelope).
+// Set stores bytes with a per-key TTL (set on create) or updates existing value.
+// Per-key TTL can only be set at Create-time. If the key exists, Update() will
+// reset the existing TTL countdown but cannot change the duration.
 func (c *JetStreamCache) Set(key string, value []byte, ttl time.Duration) error {
 	c.mu.RLock()
 	kv := c.kv
@@ -195,16 +183,29 @@ func (c *JetStreamCache) Set(key string, value []byte, ttl time.Duration) error 
 	if kv == nil {
 		return errors.New("cache disabled")
 	}
-	env := entryEnvelope{Data: value}
+
+	ctx := context.Background()
+
+	var opts []jetstream.KVCreateOpt
 	if ttl > 0 {
-		env.ExpireAt = time.Now().Add(ttl).Unix()
+		opts = append(opts, jetstream.KeyTTL(ttl))
 	}
-	b, _ := json.Marshal(&env)
-	_, err := kv.Put(key, b)
+	if _, err := kv.Create(ctx, key, value, opts...); err == nil {
+		return nil
+	} else if !errors.Is(err, jetstream.ErrKeyExists) {
+		return err
+	}
+
+	// Key exists: fetch revision and Update (resets countdown if key already had TTL).
+	e, err := kv.Get(ctx, key)
+	if err != nil {
+		return err
+	}
+	_, err = kv.Update(ctx, key, value, e.Revision())
 	return err
 }
 
-// Add stores only if key does not exist.
+// Add stores only if key does not exist; applies per-key TTL on create.
 func (c *JetStreamCache) Add(key string, value []byte, ttl time.Duration) error {
 	c.mu.RLock()
 	kv := c.kv
@@ -212,14 +213,14 @@ func (c *JetStreamCache) Add(key string, value []byte, ttl time.Duration) error 
 	if kv == nil {
 		return errors.New("cache disabled")
 	}
-	env := entryEnvelope{Data: value}
+	ctx := context.Background()
+	var opts []jetstream.KVCreateOpt
 	if ttl > 0 {
-		env.ExpireAt = time.Now().Add(ttl).Unix()
+		opts = append(opts, jetstream.KeyTTL(ttl))
 	}
-	b, _ := json.Marshal(&env)
-	_, err := kv.Create(key, b)
+	_, err := kv.Create(ctx, key, value, opts...)
 	if err != nil {
-		if errors.Is(err, nats.ErrKeyExists) {
+		if errors.Is(err, jetstream.ErrKeyExists) {
 			return ErrNotStored
 		}
 		return err
@@ -227,7 +228,6 @@ func (c *JetStreamCache) Add(key string, value []byte, ttl time.Duration) error 
 	return nil
 }
 
-// Delete removes a key (idempotent).
 func (c *JetStreamCache) Delete(key string) error {
 	c.mu.RLock()
 	kv := c.kv
@@ -235,14 +235,15 @@ func (c *JetStreamCache) Delete(key string) error {
 	if kv == nil {
 		return errors.New("cache disabled")
 	}
-	err := kv.Delete(key)
-	if err != nil && !errors.Is(err, nats.ErrKeyNotFound) {
+	ctx := context.Background()
+	err := kv.Delete(ctx, key)
+	if err != nil && !errors.Is(err, jetstream.ErrKeyNotFound) {
 		return err
 	}
 	return nil
 }
 
-func (c *JetStreamCache) SetString(key string, s string, ttl time.Duration) error {
+func (c *JetStreamCache) SetString(key, s string, ttl time.Duration) error {
 	return c.Set(key, []byte(s), ttl)
 }
 
@@ -254,10 +255,7 @@ func (c *JetStreamCache) GetString(key string) (string, error) {
 	return string(b), nil
 }
 
-// TryAcquireLock attempts to acquire a lock at key with TTL.
-// Returns ErrNotStored if the lock is already held and not expired.
-// On success returns a guard; call guard.Release() to release.
-// The lock is implemented using KV Create() and CAS Update() when taking over expired locks.
+// AcquireLock implements a KV-based lock with TTL using CAS.
 func (c *JetStreamCache) AcquireLock(key string, ttl time.Duration) (Lock, error) {
 	c.mu.RLock()
 	kv := c.kv
@@ -266,6 +264,7 @@ func (c *JetStreamCache) AcquireLock(key string, ttl time.Duration) (Lock, error
 		return nil, errors.New("cache disabled")
 	}
 
+	ctx := context.Background()
 	now := time.Now()
 	exp := int64(0)
 	if ttl > 0 {
@@ -274,20 +273,21 @@ func (c *JetStreamCache) AcquireLock(key string, ttl time.Duration) (Lock, error
 	owner := randToken()
 	payload, _ := json.Marshal(&lockEnvelope{Owner: owner, ExpireAt: exp})
 
-	if rev, err := kv.Create(key, payload); err == nil {
+	// Create (fast path)
+	if rev, err := kv.Create(ctx, key, payload); err == nil {
 		return &JSLock{c: c, key: key, owner: owner, acqRev: rev}, nil
-	} else if !errors.Is(err, nats.ErrKeyExists) {
+	} else if !errors.Is(err, jetstream.ErrKeyExists) {
 		return nil, err
 	}
 
-	// exists: loop a few times to try to take over if expired.
+	// Exists: attempt take-over if expired.
 	for i := 0; i < 3; i++ {
-		e, err := kv.Get(key)
+		e, err := kv.Get(ctx, key)
 		if err != nil {
-			if errors.Is(err, nats.ErrKeyNotFound) {
-				if rev, e2 := kv.Create(key, payload); e2 == nil {
+			if errors.Is(err, jetstream.ErrKeyNotFound) {
+				if rev, e2 := kv.Create(ctx, key, payload); e2 == nil {
 					return &JSLock{c: c, key: key, owner: owner, acqRev: rev}, nil
-				} else if !errors.Is(e2, nats.ErrKeyExists) {
+				} else if !errors.Is(e2, jetstream.ErrKeyExists) {
 					return nil, e2
 				}
 				continue
@@ -299,20 +299,16 @@ func (c *JetStreamCache) AcquireLock(key string, ttl time.Duration) (Lock, error
 		_ = json.Unmarshal(e.Value(), &cur)
 
 		if cur.ExpireAt > 0 && now.Unix() >= cur.ExpireAt {
-			if rev, err := kv.Update(key, payload, e.Revision()); err == nil {
+			if rev, err := kv.Update(ctx, key, payload, e.Revision()); err == nil {
 				return &JSLock{c: c, key: key, owner: owner, acqRev: rev}, nil
 			}
 			continue
 		}
-
 		return nil, ErrNotStored
 	}
-
 	return nil, ErrNotStored
 }
 
-// Release attempts to release the lock by CAS-updating it to an empty owner and no expiration.
-// It will only release if we still own the lock; otherwise it is a no-op.
 func (l *JSLock) Release() error {
 	if l == nil || l.c == nil {
 		return nil
@@ -324,9 +320,10 @@ func (l *JSLock) Release() error {
 		return nil
 	}
 
-	e, err := kv.Get(l.key)
+	ctx := context.Background()
+	e, err := kv.Get(ctx, l.key)
 	if err != nil {
-		if errors.Is(err, nats.ErrKeyNotFound) {
+		if errors.Is(err, jetstream.ErrKeyNotFound) {
 			return nil
 		}
 		return err
@@ -337,16 +334,12 @@ func (l *JSLock) Release() error {
 	if cur.Owner != l.owner {
 		return nil
 	}
-
-	cur.Owner = ""
-	cur.ExpireAt = 0
+	cur.Owner, cur.ExpireAt = "", 0
 	b, _ := json.Marshal(&cur)
-
-	_, _ = kv.Update(l.key, b, e.Revision())
+	_, _ = kv.Update(ctx, l.key, b, e.Revision())
 	return nil
 }
 
-// randToken returns a random hex token for lock owner identity.
 func randToken() string {
 	var b [16]byte
 	if _, err := rand.Read(b[:]); err != nil {
