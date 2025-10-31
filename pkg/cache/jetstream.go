@@ -1,6 +1,8 @@
 package cache
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -8,6 +10,7 @@ import (
 	"time"
 
 	"github.com/k8shell-io/common/pkg/logger"
+	natsc "github.com/k8shell-io/common/pkg/nats"
 	"github.com/rs/zerolog"
 
 	"github.com/nats-io/nats.go"
@@ -17,17 +20,6 @@ var (
 	ErrCacheMiss = errors.New("cache: miss")
 	ErrNotStored = errors.New("cache: not stored")
 )
-
-// NATSClientConfig holds NATS connection.
-type NATSClientConfig struct {
-	Enabled       bool          `yaml:"enabled" json:"enabled"`
-	URL           string        `yaml:"url" json:"url"`
-	Username      string        `yaml:"username" json:"username"`
-	Password      string        `yaml:"password" json:"password"`
-	Token         string        `yaml:"token"    json:"token"`
-	MaxReconnects int           `yaml:"maxReconnects" json:"maxReconnects"`
-	ReconnectWait time.Duration `yaml:"reconnectWait" json:"reconnectWait"`
-}
 
 // BucketOptions holds options for the JetStream cache bucket.
 type BucketOptions struct {
@@ -40,7 +32,7 @@ type BucketOptions struct {
 // JetStreamCache is a cache client backed by NATS JetStream KV store.
 type JetStreamCache struct {
 	log        *zerolog.Logger
-	cfg        NATSClientConfig
+	cfg        natsc.NATSClientConfig
 	bucketOpts BucketOptions
 	mu         sync.RWMutex
 	nc         *nats.Conn
@@ -54,32 +46,29 @@ type entryEnvelope struct {
 	Data     []byte `json:"d"`
 }
 
+// lockEnvelope holds lock owner and expiration.
+type lockEnvelope struct {
+	Owner    string `json:"owner,omitempty"`
+	ExpireAt int64  `json:"exp,omitempty"` // unix seconds
+}
+
+// JSLock is a guard returned by TryAcquireLock.
+// Call Release() when done.
+type JSLock struct {
+	c      *JetStreamCache
+	key    string
+	owner  string
+	acqRev uint64
+}
+
 // NewJetStreamCache connects to NATS, ensures/binds the KV bucket.
-func NewJetStreamCache(cfg NATSClientConfig, bucketOpts BucketOptions) (Cache, error) {
+func NewJetStreamCache(cfg natsc.NATSClientConfig, bucketOpts BucketOptions) (Cache, error) {
 	if !cfg.Enabled {
 		return nil, nil
 	}
 	l := logger.NewLogger("cache")
 
-	opts := []nats.Option{
-		nats.Name("k8shell-cache"),
-	}
-	if cfg.Token != "" {
-		opts = append(opts, nats.Token(cfg.Token))
-	} else if cfg.Username != "" {
-		opts = append(opts, nats.UserInfo(cfg.Username, cfg.Password))
-	}
-	if cfg.MaxReconnects == 0 {
-		cfg.MaxReconnects = -1 // infinite
-	}
-	if cfg.ReconnectWait == 0 {
-		cfg.ReconnectWait = 2 * time.Second
-	}
-	opts = append(opts,
-		nats.MaxReconnects(cfg.MaxReconnects),
-		nats.ReconnectWait(cfg.ReconnectWait),
-	)
-
+	opts := natsc.NatsOptionsFromConfig("k8shell-cache", cfg)
 	if bucketOpts.Bucket == "" {
 		return nil, errors.New("cache: bucket name required")
 	}
@@ -262,4 +251,105 @@ func (c *JetStreamCache) GetString(key string) (string, error) {
 		return "", err
 	}
 	return string(b), nil
+}
+
+// TryAcquireLock attempts to acquire a lock at key with TTL.
+// Returns ErrNotStored if the lock is already held and not expired.
+// On success returns a guard; call guard.Release() to release.
+// The lock is implemented using KV Create() and CAS Update() when taking over expired locks.
+func (c *JetStreamCache) AcquireLock(key string, ttl time.Duration) (Lock, error) {
+	c.mu.RLock()
+	kv := c.kv
+	c.mu.RUnlock()
+	if kv == nil {
+		return nil, errors.New("cache disabled")
+	}
+
+	now := time.Now()
+	exp := int64(0)
+	if ttl > 0 {
+		exp = now.Add(ttl).Unix()
+	}
+	owner := randToken()
+	payload, _ := json.Marshal(&lockEnvelope{Owner: owner, ExpireAt: exp})
+
+	if rev, err := kv.Create(key, payload); err == nil {
+		return &JSLock{c: c, key: key, owner: owner, acqRev: rev}, nil
+	} else if !errors.Is(err, nats.ErrKeyExists) {
+		return nil, err
+	}
+
+	// exists: loop a few times to try to take over if expired.
+	for i := 0; i < 3; i++ {
+		e, err := kv.Get(key)
+		if err != nil {
+			if errors.Is(err, nats.ErrKeyNotFound) {
+				if rev, e2 := kv.Create(key, payload); e2 == nil {
+					return &JSLock{c: c, key: key, owner: owner, acqRev: rev}, nil
+				} else if !errors.Is(e2, nats.ErrKeyExists) {
+					return nil, e2
+				}
+				continue
+			}
+			return nil, err
+		}
+
+		var cur lockEnvelope
+		_ = json.Unmarshal(e.Value(), &cur)
+
+		if cur.ExpireAt > 0 && now.Unix() >= cur.ExpireAt {
+			if rev, err := kv.Update(key, payload, e.Revision()); err == nil {
+				return &JSLock{c: c, key: key, owner: owner, acqRev: rev}, nil
+			}
+			continue
+		}
+
+		return nil, ErrNotStored
+	}
+
+	return nil, ErrNotStored
+}
+
+// Release attempts to release the lock by CAS-updating it to an empty owner and no expiration.
+// It will only release if we still own the lock; otherwise it is a no-op.
+func (l *JSLock) Release() error {
+	if l == nil || l.c == nil {
+		return nil
+	}
+	l.c.mu.RLock()
+	kv := l.c.kv
+	l.c.mu.RUnlock()
+	if kv == nil {
+		return nil
+	}
+
+	e, err := kv.Get(l.key)
+	if err != nil {
+		if errors.Is(err, nats.ErrKeyNotFound) {
+			return nil
+		}
+		return err
+	}
+
+	var cur lockEnvelope
+	_ = json.Unmarshal(e.Value(), &cur)
+	if cur.Owner != l.owner {
+		return nil
+	}
+
+	cur.Owner = ""
+	cur.ExpireAt = 0
+	b, _ := json.Marshal(&cur)
+
+	_, _ = kv.Update(l.key, b, e.Revision())
+	return nil
+}
+
+// randToken returns a random hex token for lock owner identity.
+func randToken() string {
+	var b [16]byte
+	if _, err := rand.Read(b[:]); err != nil {
+		return fmt.Sprintf("%d", time.Now().UnixNano())
+	}
+	return hex.EncodeToString(b[:])
 }

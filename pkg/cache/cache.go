@@ -6,6 +6,10 @@ import (
 	"time"
 )
 
+type Lock interface {
+	Release() error
+}
+
 type Cache interface {
 	Get(key string) ([]byte, error)
 	Set(key string, value []byte, ttl time.Duration) error
@@ -13,6 +17,7 @@ type Cache interface {
 	Delete(key string) error
 	SetString(key string, s string, ttl time.Duration) error
 	GetString(key string) (string, error)
+	AcquireLock(key string, ttl time.Duration) (Lock, error)
 }
 
 // Fetch: same semantics as before, now on top of JS KV.
@@ -24,31 +29,25 @@ func Fetch[T any](ctx context.Context, cache Cache, key string, ttl time.Duratio
 	if cache == nil {
 		return fetch(ctx)
 	}
-	// try from cache
 	if b, err := cache.Get(key); err == nil && len(b) > 0 {
-		// []byte fast-path
 		if _, ok := any(zero).([]byte); ok {
 			cp := append([]byte(nil), b...)
 			return any(cp).(T), nil
 		}
-		// string fast-path
 		if _, ok := any(zero).(string); ok {
 			return any(string(b)).(T), nil
 		}
-		// JSON decode
 		var v T
 		if err := json.Unmarshal(b, &v); err == nil {
 			return v, nil
 		}
 	}
 
-	// miss or decode error -> fetch
 	v, err := fetch(ctx)
 	if err != nil {
 		return zero, err
 	}
 
-	// encode & store
 	switch vv := any(v).(type) {
 	case []byte:
 		_ = cache.Set(key, vv, ttl)
