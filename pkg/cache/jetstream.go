@@ -127,6 +127,10 @@ func NewJetStreamCache(cfg natsc.NATSClientConfig, bucketOpts BucketOptions) (Ca
 			nc.Close()
 			return nil, fmt.Errorf("create KV bucket: %w", err)
 		}
+		if err := enablePerMessageTTL(ctx, js, bucketOpts.Bucket, 30*time.Second); err != nil {
+			nc.Close()
+			return nil, fmt.Errorf("enable per-message TTL: %w", err)
+		}
 	}
 
 	c.mu.Lock()
@@ -347,4 +351,33 @@ func randToken() string {
 		return fmt.Sprintf("%d", time.Now().UnixNano())
 	}
 	return hex.EncodeToString(b[:])
+}
+
+// enablePerMessageTTL enables AllowMsgTTL and sets SubjectDeleteMarkerTTL on the KV stream.
+func enablePerMessageTTL(ctx context.Context, js jetstream.JetStream, bucket string, markerTTL time.Duration) error {
+	streamName := "KV_" + bucket
+
+	sm := js
+	si, err := sm.Stream(ctx, streamName)
+	if err != nil {
+		return fmt.Errorf("lookup KV stream %q: %w", streamName, err)
+	}
+	sc := si.CachedInfo().Config
+
+	changed := false
+	if !sc.AllowMsgTTL {
+		sc.AllowMsgTTL = true
+		changed = true
+	}
+	if sc.SubjectDeleteMarkerTTL == 0 && markerTTL > 0 {
+		sc.SubjectDeleteMarkerTTL = markerTTL
+		changed = true
+	}
+
+	if changed {
+		if _, err := sm.UpdateStream(ctx, sc); err != nil {
+			return fmt.Errorf("update stream %q: %w", sc.Name, err)
+		}
+	}
+	return nil
 }
