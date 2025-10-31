@@ -116,11 +116,12 @@ func NewJetStreamCache(cfg natsc.NATSClientConfig, bucketOpts BucketOptions) (Ca
 	kv, err := js.KeyValue(ctx, bucketOpts.Bucket)
 	if err != nil {
 		kv, err = js.CreateKeyValue(ctx, jetstream.KeyValueConfig{
-			Bucket:   bucketOpts.Bucket,
-			TTL:      bucketOpts.BucketTTL, // default max-age; per-key TTL can override at create-time
-			History:  bucketOpts.History,
-			Storage:  bucketOpts.Storage,
-			Replicas: bucketOpts.Replicas,
+			Bucket:         bucketOpts.Bucket,
+			TTL:            bucketOpts.BucketTTL,
+			History:        bucketOpts.History,
+			Storage:        bucketOpts.Storage,
+			Replicas:       bucketOpts.Replicas,
+			LimitMarkerTTL: time.Duration(30) * time.Second,
 		})
 		if err != nil {
 			nc.Close()
