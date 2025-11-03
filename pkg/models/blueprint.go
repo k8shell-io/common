@@ -92,13 +92,14 @@ type Resources struct {
 
 // Docker represents Docker configuration
 type Docker struct {
-	Enabled        bool              `yaml:"enabled"`
-	Image          string            `yaml:"image" validate:"required_if=Enabled true"`
-	Resources      Resources         `yaml:"resources" validate:"required_if=Enabled true"`
-	GroupID        int               `yaml:"groupId" validate:"min=0,max=65535"`
-	SubGID         int               `yaml:"subgid" validate:"min=0"`
-	ParentStorages bool              `yaml:"parentStorages"`
-	ExtFiles       map[string]string `yaml:"extFiles,omitempty"`
+	Enabled        bool               `yaml:"enabled"`
+	Image          string             `yaml:"image" validate:"required_if=Enabled true"`
+	Resources      Resources          `yaml:"resources" validate:"required_if=Enabled true"`
+	GroupID        int                `yaml:"groupId" validate:"min=0,max=65535"`
+	SubGID         int                `yaml:"subgid" validate:"min=0"`
+	ParentStorages bool               `yaml:"parentStorages"`
+	ExtFiles       map[string]string  `yaml:"extFiles,omitempty"`
+	Storages       map[string]Storage `yaml:"storages,omitempty"`
 }
 
 // Storage represents storage configuration
