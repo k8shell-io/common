@@ -173,8 +173,8 @@ func (c *JetStreamCache) Set(key string, value []byte) error {
 	return err
 }
 
-// Add stores raw bytes at key only if missing. Returns nats.ErrKeyExists if already present.
-func (c *JetStreamCache) Add(key string, value []byte) error {
+// Create stores raw bytes at key only if missing. Returns nats.ErrKeyExists if already present.
+func (c *JetStreamCache) Create(key string, value []byte) error {
 	c.mu.RLock()
 	kv := c.kv
 	c.mu.RUnlock()
@@ -183,6 +183,20 @@ func (c *JetStreamCache) Add(key string, value []byte) error {
 	}
 	_, err := kv.Create(key, value)
 	return err
+}
+
+func (c *JetStreamCache) Update(key string, value []byte, revision uint64) (uint64, error) {
+	c.mu.RLock()
+	kv := c.kv
+	c.mu.RUnlock()
+	if kv == nil {
+		return 0, nats.ErrConnectionClosed
+	}
+	r, err := kv.Update(key, value, revision)
+	if err != nil {
+		return 0, err
+	}
+	return r, nil
 }
 
 // Delete removes a key. Returns nats.ErrKeyNotFound if missing.
