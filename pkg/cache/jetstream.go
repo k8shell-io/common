@@ -162,27 +162,30 @@ func (c *JetStreamCache) Get(key string) ([]byte, error) {
 }
 
 // Set stores raw bytes at key.
-func (c *JetStreamCache) Set(key string, value []byte) error {
+func (c *JetStreamCache) Set(key string, value []byte) (uint64, error) {
 	c.mu.RLock()
 	kv := c.kv
 	c.mu.RUnlock()
 	if kv == nil {
-		return nats.ErrConnectionClosed
+		return 0, nats.ErrConnectionClosed
 	}
-	_, err := kv.Put(key, value)
-	return err
+	r, err := kv.Put(key, value)
+	if err != nil {
+		return 0, err
+	}
+	return r, nil
 }
 
 // Create stores raw bytes at key only if missing. Returns nats.ErrKeyExists if already present.
-func (c *JetStreamCache) Create(key string, value []byte) error {
+func (c *JetStreamCache) Create(key string, value []byte) (uint64, error) {
 	c.mu.RLock()
 	kv := c.kv
 	c.mu.RUnlock()
 	if kv == nil {
-		return nats.ErrConnectionClosed
+		return 0, nats.ErrConnectionClosed
 	}
-	_, err := kv.Create(key, value)
-	return err
+	r, err := kv.Create(key, value)
+	return r, err
 }
 
 func (c *JetStreamCache) Update(key string, value []byte, revision uint64) (uint64, error) {
@@ -208,18 +211,6 @@ func (c *JetStreamCache) Delete(key string) error {
 		return nats.ErrConnectionClosed
 	}
 	return kv.Delete(key)
-}
-
-func (c *JetStreamCache) SetString(key string, s string) error {
-	return c.Set(key, []byte(s))
-}
-
-func (c *JetStreamCache) GetString(key string) (string, error) {
-	b, err := c.Get(key)
-	if err != nil {
-		return "", err
-	}
-	return string(b), nil
 }
 
 // AcquireLock attempts to acquire a lock at key with TTL.
