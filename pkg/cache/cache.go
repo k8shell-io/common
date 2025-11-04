@@ -3,26 +3,15 @@ package cache
 import (
 	"context"
 	"encoding/json"
-	"time"
 )
 
 type Lock interface {
 	Release() error
 }
 
-type Cache interface {
-	Get(key string) ([]byte, error)
-	Set(key string, value []byte, ttl time.Duration) error
-	Add(key string, value []byte, ttl time.Duration) error
-	Delete(key string) error
-	SetString(key string, s string, ttl time.Duration) error
-	GetString(key string) (string, error)
-	AcquireLock(key string, ttl time.Duration) (Lock, error)
-}
-
 // Fetch: same semantics as before, now on top of JS KV.
 // On miss, calls fetch(), caches result with TTL, and returns it.
-func Fetch[T any](ctx context.Context, cache Cache, key string, ttl time.Duration,
+func Fetch[T any](ctx context.Context, cache *JetStreamCache, key string,
 	fetch func(context.Context) (T, error),
 ) (T, error) {
 	var zero T
@@ -50,12 +39,12 @@ func Fetch[T any](ctx context.Context, cache Cache, key string, ttl time.Duratio
 
 	switch vv := any(v).(type) {
 	case []byte:
-		_ = cache.Set(key, vv, ttl)
+		_ = cache.Set(key, vv)
 	case string:
-		_ = cache.Set(key, []byte(vv), ttl)
+		_ = cache.Set(key, []byte(vv))
 	default:
 		if b, mErr := json.Marshal(v); mErr == nil {
-			_ = cache.Set(key, b, ttl)
+			_ = cache.Set(key, b)
 		}
 	}
 	return v, nil
