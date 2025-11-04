@@ -2,7 +2,6 @@ package models
 
 import (
 	"errors"
-	"fmt"
 	"slices"
 	"time"
 )
@@ -85,7 +84,7 @@ func (u *User) HasBlueprint(blueprintName string) bool {
 
 // SSHSession represents an SSH session for a user
 type SSHSession struct {
-	SessionID int32      `yaml:"sessionID"`
+	SessionID string     `yaml:"sessionID"`
 	Username  string     `yaml:"username"`
 	ProxyID   string     `yaml:"proxyID"`
 	ProxyPID  int        `yaml:"proxyPID"`
@@ -99,11 +98,6 @@ type SSHSession struct {
 	Channels  []string   `yaml:"channels"`
 	Blueprint string     `yaml:"blueprint"`
 	UpdatedAt *time.Time `yaml:"updatedAt"`
-}
-
-// CreateSessionID generates a unique session ID for an SSH session
-func CreateSessionID(channel string, proxyID string, proxyPID int, channelNumber int) string {
-	return fmt.Sprintf("%s-%s-%d-%d", channel, proxyID, proxyPID, channelNumber)
 }
 
 // Organization represents an organization in the system
