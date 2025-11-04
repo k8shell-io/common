@@ -18,16 +18,16 @@ func Fetch[T any](ctx context.Context, cache *JetStreamCache, key string,
 	if cache == nil {
 		return fetch(ctx)
 	}
-	if b, err := cache.Get(key); err == nil && len(b) > 0 {
+	if b, err := cache.Get(key); err == nil && len(b.Value()) > 0 {
 		if _, ok := any(zero).([]byte); ok {
-			cp := append([]byte(nil), b...)
+			cp := append([]byte(nil), b.Value()...)
 			return any(cp).(T), nil
 		}
 		if _, ok := any(zero).(string); ok {
-			return any(string(b)).(T), nil
+			return any(string(b.Value())).(T), nil
 		}
 		var v T
-		if err := json.Unmarshal(b, &v); err == nil {
+		if err := json.Unmarshal(b.Value(), &v); err == nil {
 			return v, nil
 		}
 	}
@@ -39,12 +39,12 @@ func Fetch[T any](ctx context.Context, cache *JetStreamCache, key string,
 
 	switch vv := any(v).(type) {
 	case []byte:
-		_ = cache.Set(key, vv)
+		_, _ = cache.Set(key, vv)
 	case string:
-		_ = cache.Set(key, []byte(vv))
+		_, _ = cache.Set(key, []byte(vv))
 	default:
 		if b, mErr := json.Marshal(v); mErr == nil {
-			_ = cache.Set(key, b)
+			_, _ = cache.Set(key, b)
 		}
 	}
 	return v, nil

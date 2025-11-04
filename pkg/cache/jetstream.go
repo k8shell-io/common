@@ -147,7 +147,7 @@ func (c *JetStreamCache) Close() {
 }
 
 // Get retrieves raw bytes at key.
-func (c *JetStreamCache) Get(key string) ([]byte, error) {
+func (c *JetStreamCache) Get(key string) (nats.KeyValueEntry, error) {
 	c.mu.RLock()
 	kv := c.kv
 	c.mu.RUnlock()
@@ -158,7 +158,7 @@ func (c *JetStreamCache) Get(key string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return e.Value(), nil
+	return e, nil
 }
 
 // Set stores raw bytes at key.
