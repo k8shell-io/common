@@ -84,20 +84,19 @@ func (u *User) HasBlueprint(blueprintName string) bool {
 
 // SSHSession represents an SSH session for a user
 type SSHSession struct {
-	SessionID string     `yaml:"sessionID"`
-	Username  string     `yaml:"username"`
-	ProxyID   string     `yaml:"proxyID"`
-	ProxyPID  int        `yaml:"proxyPID"`
-	Client    string     `yaml:"client"`
-	ClientIP  string     `yaml:"clientIP"`
-	StartTime *time.Time `yaml:"startTime"`
-	EndTime   *time.Time `yaml:"endTime"`
-	Workspace string     `yaml:"workspace"`
-	BytesIn   int64      `yaml:"bytesIn"`
-	BytesOut  int64      `yaml:"bytesOut"`
-	Channels  []string   `yaml:"channels"`
-	Blueprint string     `yaml:"blueprint"`
-	UpdatedAt *time.Time `yaml:"updatedAt"`
+	SessionID   string     `yaml:"sessionID"`
+	Username    string     `yaml:"username"`
+	K8shelldVer string     `yaml:"k8shelldVer"`
+	Client      string     `yaml:"client"`
+	ClientIP    string     `yaml:"clientIP"`
+	StartTime   *time.Time `yaml:"startTime"`
+	EndTime     *time.Time `yaml:"endTime"`
+	Workspace   string     `yaml:"workspace"`
+	BytesIn     int64      `yaml:"bytesIn"`
+	BytesOut    int64      `yaml:"bytesOut"`
+	Channels    []string   `yaml:"channels"`
+	Blueprint   string     `yaml:"blueprint"`
+	UpdatedAt   *time.Time `yaml:"updatedAt"`
 }
 
 // Organization represents an organization in the system
