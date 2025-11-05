@@ -1,4 +1,4 @@
-package cache
+package nats
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	natsc "github.com/k8shell-io/common/pkg/nats"
 	"github.com/nats-io/nats.go"
 )
 
@@ -33,7 +32,6 @@ type KVSubscriberOptions struct {
 
 // KVSubscriber is a NATS JetStream KV bucket subscriber.
 type KVSubscriber struct {
-	nc      *nats.Conn
 	js      nats.JetStreamContext
 	bucket  string
 	stream  string // "KV_<bucket>"
@@ -45,29 +43,27 @@ type KVSubscriber struct {
 
 // NewKVSubscriber connects to NATS using your config and prepares a subscriber.
 // Close() will drain/close the connection (since this constructor owns it).
-func NewKVSubscriber(cfg natsc.NATSClientConfig, bucket, durable string,
+func (c *NATSClient) NewKVSubscriber(bucket, durable string,
 	o KVSubscriberOptions) (*KVSubscriber, error) {
-	if !cfg.Enabled {
-		return nil, nil
-	}
 	if bucket == "" || durable == "" {
 		return nil, fmt.Errorf("bucket and durable are required")
 	}
-	setDefaults(&o)
+	setSubscriberDefaults(&o)
 
-	opts := natsc.NatsOptionsFromConfig("kv-subscriber", cfg)
-	nc, err := nats.Connect(cfg.URL, opts...)
-	if err != nil {
-		return nil, fmt.Errorf("connect NATS: %w", err)
+	var err error
+
+	if c.nc == nil {
+		return nil, fmt.Errorf("NATS connection is not established")
 	}
-	js, err := nc.JetStream()
-	if err != nil {
-		nc.Close()
-		return nil, fmt.Errorf("jetstream: %w", err)
+	if c.js == nil {
+		c.js, err = c.nc.JetStream()
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	s := &KVSubscriber{
-		nc:      nc,
-		js:      js,
+		js:      c.js,
 		bucket:  bucket,
 		stream:  "KV_" + bucket,
 		filter:  "$KV." + bucket + ".>",
@@ -78,7 +74,7 @@ func NewKVSubscriber(cfg natsc.NATSClientConfig, bucket, durable string,
 }
 
 // setDefaults fills in default values for subscriber options.
-func setDefaults(o *KVSubscriberOptions) {
+func setSubscriberDefaults(o *KVSubscriberOptions) {
 	if o.AckWait == 0 {
 		o.AckWait = 30 * time.Second
 	}
@@ -172,14 +168,6 @@ func (s *KVSubscriber) Stop() error {
 		return s.sub.Unsubscribe()
 	}
 	return nil
-}
-
-// Close drains/closes the NATS connection.
-func (s *KVSubscriber) Close() {
-	if s.nc != nil {
-		_ = s.nc.Drain()
-		s.nc.Close()
-	}
 }
 
 // toEvent converts a NATS message to a KVEvent.

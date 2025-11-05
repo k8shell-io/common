@@ -1,16 +1,12 @@
-package cache
+package nats
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"sync"
 	"time"
 
-	"github.com/k8shell-io/common/pkg/logger"
-	natsc "github.com/k8shell-io/common/pkg/nats"
 	"github.com/rs/zerolog"
 
 	"github.com/nats-io/nats.go"
@@ -25,16 +21,13 @@ type BucketOptions struct {
 	Replicas  int              `yaml:"replicas" json:"replicas"`
 }
 
-// JetStreamCache is a cache client backed by NATS JetStream KV store.
-type JetStreamCache struct {
+// JetStreamKV is a cache client backed by NATS JetStream KV store.
+type JetStreamKV struct {
 	log        *zerolog.Logger
-	cfg        natsc.NATSClientConfig
 	bucketOpts BucketOptions
 
-	mu sync.RWMutex
-	nc *nats.Conn
-	js nats.JetStreamContext
 	kv nats.KeyValue
+	mu sync.RWMutex
 }
 
 // lockEnvelope holds lock owner and expiration.
@@ -45,68 +38,50 @@ type lockEnvelope struct {
 
 // JSLock is a guard returned by AcquireLock. Call Release() when done.
 type JSLock struct {
-	c      *JetStreamCache
+	c      *JetStreamKV
 	key    string
 	owner  string
 	acqRev uint64
 }
 
-// NewJetStreamCache connects to NATS and ensures/binds the KV bucket.
-func NewJetStreamCache(cfg natsc.NATSClientConfig, bucketOpts BucketOptions) (*JetStreamCache, error) {
-	if !cfg.Enabled {
-		return nil, nil
+func setKVDefaults(o *BucketOptions) {
+	if o.History == 0 {
+		o.History = 1
 	}
-	log := logger.NewLogger("cache")
+	if o.BucketTTL == 0 {
+		o.BucketTTL = 24 * time.Hour
+	}
+	if o.Replicas <= 0 {
+		o.Replicas = 3
+	}
+}
 
-	// Defaults
+func (c *NATSClient) NewKV(bucketOpts BucketOptions) (*JetStreamKV, error) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
 	if bucketOpts.Bucket == "" {
 		return nil, errors.New("cache: bucket name required")
 	}
-	if bucketOpts.History == 0 {
-		bucketOpts.History = 1
+	setKVDefaults(&bucketOpts)
+
+	var err error
+
+	if c.nc == nil {
+		return nil, fmt.Errorf("NATS connection is not established")
 	}
-	if bucketOpts.BucketTTL == 0 {
-		bucketOpts.BucketTTL = 24 * time.Hour
-	}
-	if bucketOpts.Replicas <= 0 {
-		bucketOpts.Replicas = 3
+	if c.js == nil {
+		c.js, err = c.nc.JetStream()
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	c := &JetStreamCache{log: log, cfg: cfg, bucketOpts: bucketOpts}
+	jkv := &JetStreamKV{log: c.log, bucketOpts: bucketOpts, mu: sync.RWMutex{}}
 
-	opts := natsc.NatsOptionsFromConfig("k8shell-cache", cfg)
-	opts = append(opts,
-		nats.DisconnectErrHandler(func(_ *nats.Conn, err error) {
-			if err != nil {
-				c.log.Warn().Err(err).Msg("NATS disconnected")
-			} else {
-				c.log.Warn().Msg("NATS disconnected")
-			}
-		}),
-		nats.ReconnectHandler(func(nc *nats.Conn) {
-			c.log.Info().Str("url", nc.ConnectedUrl()).Msg("NATS reconnected")
-			c.mu.Lock()
-			c.nc = nc
-			c.mu.Unlock()
-		}),
-		nats.ClosedHandler(func(_ *nats.Conn) {
-			c.log.Warn().Msg("NATS connection closed")
-		}),
-	)
-
-	nc, err := nats.Connect(cfg.URL, opts...)
+	jkv.kv, err = c.js.KeyValue(bucketOpts.Bucket)
 	if err != nil {
-		return nil, fmt.Errorf("connect NATS: %w", err)
-	}
-	js, err := nc.JetStream()
-	if err != nil {
-		nc.Close()
-		return nil, fmt.Errorf("jetstream: %w", err)
-	}
-
-	kv, err := js.KeyValue(bucketOpts.Bucket)
-	if err != nil {
-		kv, err = js.CreateKeyValue(&nats.KeyValueConfig{
+		jkv.kv, err = c.js.CreateKeyValue(&nats.KeyValueConfig{
 			Bucket:      bucketOpts.Bucket,
 			History:     bucketOpts.History,
 			Storage:     bucketOpts.Storage,
@@ -116,38 +91,15 @@ func NewJetStreamCache(cfg natsc.NATSClientConfig, bucketOpts BucketOptions) (*J
 			Description: "",
 		})
 		if err != nil {
-			nc.Close()
 			return nil, fmt.Errorf("create KV bucket: %w", err)
 		}
 	}
 
-	c.mu.Lock()
-	c.nc, c.js, c.kv = nc, js, kv
-	c.mu.Unlock()
-
-	c.log.Info().
-		Str("bucket", bucketOpts.Bucket).
-		Str("url", cfg.URL).
-		Msg("JetStream KV ready")
-
-	return c, nil
-}
-
-// Close the JetStream cache client.
-func (c *JetStreamCache) Close() {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if c.nc != nil {
-		_ = c.nc.Drain()
-		c.nc.Close()
-	}
-	c.nc = nil
-	c.js = nil
-	c.kv = nil
+	return jkv, nil
 }
 
 // Get retrieves raw bytes at key.
-func (c *JetStreamCache) Get(key string) (nats.KeyValueEntry, error) {
+func (c *JetStreamKV) Get(key string) (nats.KeyValueEntry, error) {
 	c.mu.RLock()
 	kv := c.kv
 	c.mu.RUnlock()
@@ -162,7 +114,7 @@ func (c *JetStreamCache) Get(key string) (nats.KeyValueEntry, error) {
 }
 
 // Set stores raw bytes at key.
-func (c *JetStreamCache) Set(key string, value []byte) (uint64, error) {
+func (c *JetStreamKV) Set(key string, value []byte) (uint64, error) {
 	c.mu.RLock()
 	kv := c.kv
 	c.mu.RUnlock()
@@ -177,7 +129,7 @@ func (c *JetStreamCache) Set(key string, value []byte) (uint64, error) {
 }
 
 // Create stores raw bytes at key only if missing. Returns nats.ErrKeyExists if already present.
-func (c *JetStreamCache) Create(key string, value []byte) (uint64, error) {
+func (c *JetStreamKV) Create(key string, value []byte) (uint64, error) {
 	c.mu.RLock()
 	kv := c.kv
 	c.mu.RUnlock()
@@ -188,7 +140,7 @@ func (c *JetStreamCache) Create(key string, value []byte) (uint64, error) {
 	return r, err
 }
 
-func (c *JetStreamCache) Update(key string, value []byte, revision uint64) (uint64, error) {
+func (c *JetStreamKV) Update(key string, value []byte, revision uint64) (uint64, error) {
 	c.mu.RLock()
 	kv := c.kv
 	c.mu.RUnlock()
@@ -203,7 +155,7 @@ func (c *JetStreamCache) Update(key string, value []byte, revision uint64) (uint
 }
 
 // Delete removes a key. Returns nats.ErrKeyNotFound if missing.
-func (c *JetStreamCache) Delete(key string) error {
+func (c *JetStreamKV) Delete(key string) error {
 	c.mu.RLock()
 	kv := c.kv
 	c.mu.RUnlock()
@@ -217,7 +169,7 @@ func (c *JetStreamCache) Delete(key string) error {
 // Returns nats.ErrKeyExists if the lock is already held and not expired.
 // On success returns a guard; call guard.Release() to release.
 // Implemented using KV Create() and CAS Update() when taking over expired locks.
-func (c *JetStreamCache) AcquireLock(key string, ttl time.Duration) (*JSLock, error) {
+func (c *JetStreamKV) AcquireLock(key string, ttl time.Duration) (*JSLock, error) {
 	c.mu.RLock()
 	kv := c.kv
 	c.mu.RUnlock()
@@ -306,13 +258,4 @@ func (l *JSLock) Release() error {
 	b, _ := json.Marshal(&cur)
 	_, _ = kv.Update(l.key, b, e.Revision())
 	return nil
-}
-
-// randToken returns a random hex token for lock owner identity.
-func randToken() string {
-	var b [16]byte
-	if _, err := rand.Read(b[:]); err != nil {
-		return fmt.Sprintf("%d", time.Now().UnixNano())
-	}
-	return hex.EncodeToString(b[:])
 }
