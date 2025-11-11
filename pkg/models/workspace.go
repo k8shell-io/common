@@ -31,6 +31,8 @@ type WorkspaceStatus struct {
 	PodStatus
 	AppVersion string `json:"appVersion" example:"1.0.0"`
 	Name       string `json:"name"`
+	Username   string `json:"username"`
+	Blueprint  string `json:"blueprint"`
 	Host       string `json:"host"`
 	PodIP      string `json:"podIP"`
 	Port       int    `json:"port"`
