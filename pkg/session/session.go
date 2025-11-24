@@ -167,7 +167,7 @@ func persist(c *gin.Context, kv *natsc.JetStreamKV, s *Session, cookie CookieCon
 // writeCookie sets the session cookie in the HTTP response.
 func writeCookie(c *gin.Context, cookie CookieConfig, val string, exp time.Time) {
 	if useCookie, exists := c.Get("use_cookie"); exists && useCookie.(bool) {
-		sameSite, _ := parseSameSite(cookie.SameSite)
+		sameSite, _ := ParseSameSite(cookie.SameSite)
 		http.SetCookie(c.Writer, &http.Cookie{
 			Name:     cookie.Name,
 			Value:    val,
@@ -184,7 +184,7 @@ func writeCookie(c *gin.Context, cookie CookieConfig, val string, exp time.Time)
 
 // expireCookie expires the session cookie in the HTTP response.
 func expireCookie(c *gin.Context, cookie CookieConfig) {
-	saeSite, _ := parseSameSite(cookie.SameSite)
+	saeSite, _ := ParseSameSite(cookie.SameSite)
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     cookie.Name,
 		Value:    "",
@@ -227,7 +227,7 @@ func newSessionID() (string, error) {
 }
 
 // parseSameSite converts a string representation of SameSite to http.SameSite type.
-func parseSameSite(v string) (http.SameSite, error) {
+func ParseSameSite(v string) (http.SameSite, error) {
 	switch strings.ToLower(strings.TrimSpace(v)) {
 	case "lax":
 		return http.SameSiteLaxMode, nil
