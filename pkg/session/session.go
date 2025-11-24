@@ -167,6 +167,7 @@ func persist(c *gin.Context, kv *natsc.JetStreamKV, s *Session, cookie CookieCon
 // writeCookie sets the session cookie in the HTTP response.
 func writeCookie(c *gin.Context, cookie CookieConfig, val string, exp time.Time) {
 	if useCookie, exists := c.Get("use_cookie"); exists && useCookie.(bool) {
+		sameSite, _ := parseSameSite(cookie.SameSite)
 		http.SetCookie(c.Writer, &http.Cookie{
 			Name:     cookie.Name,
 			Value:    val,
@@ -175,7 +176,7 @@ func writeCookie(c *gin.Context, cookie CookieConfig, val string, exp time.Time)
 			Expires:  exp,
 			MaxAge:   int(time.Until(exp).Seconds()),
 			HttpOnly: cookie.HttpOnly,
-			SameSite: parseSameSite(cookie.SameSite),
+			SameSite: sameSite,
 			Secure:   cookie.Secure,
 		})
 	}
@@ -183,6 +184,7 @@ func writeCookie(c *gin.Context, cookie CookieConfig, val string, exp time.Time)
 
 // expireCookie expires the session cookie in the HTTP response.
 func expireCookie(c *gin.Context, cookie CookieConfig) {
+	saeSite, _ := parseSameSite(cookie.SameSite)
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     cookie.Name,
 		Value:    "",
@@ -191,7 +193,7 @@ func expireCookie(c *gin.Context, cookie CookieConfig) {
 		MaxAge:   -1,
 		Expires:  time.Unix(0, 0),
 		HttpOnly: cookie.HttpOnly,
-		SameSite: parseSameSite(cookie.SameSite),
+		SameSite: saeSite,
 		Secure:   cookie.Secure,
 	})
 }
@@ -225,17 +227,17 @@ func newSessionID() (string, error) {
 }
 
 // parseSameSite converts a string representation of SameSite to http.SameSite type.
-func parseSameSite(v string) http.SameSite {
+func parseSameSite(v string) (http.SameSite, error) {
 	switch strings.ToLower(strings.TrimSpace(v)) {
 	case "lax":
-		return http.SameSiteLaxMode
+		return http.SameSiteLaxMode, nil
 	case "strict":
-		return http.SameSiteStrictMode
+		return http.SameSiteStrictMode, nil
 	case "none":
-		return http.SameSiteNoneMode
+		return http.SameSiteNoneMode, nil
 	case "default", "":
-		return http.SameSiteDefaultMode
+		return http.SameSiteDefaultMode, nil
 	default:
-		return http.SameSiteDefaultMode
+		return http.SameSiteDefaultMode, fmt.Errorf("invalid SameSite value: %s", v)
 	}
 }
