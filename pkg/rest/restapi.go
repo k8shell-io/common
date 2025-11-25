@@ -167,7 +167,6 @@ func (a *RESTAPI) AuthMiddleware() gin.HandlerFunc {
 
 		user, err := a.server.GetUser(ctx, token)
 		if err != nil {
-			a.log.Error().Err(err).Msg("Failed to get user from token")
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"status": http.StatusInternalServerError,
 				"msg": "Internal Server Error"})
 			return
@@ -187,7 +186,7 @@ func (a *RESTAPI) AuthMiddleware() gin.HandlerFunc {
 	}
 }
 
-// Serve starts the REST API server and listens for incoming requests.
+// Serve starts the REST server and listens for incoming requests.
 func (a *RESTAPI) Serve(ctx context.Context) {
 	a.engine = gin.New()
 	a.server.InitializeRoutes(a.engine)
@@ -200,21 +199,21 @@ func (a *RESTAPI) Serve(ctx context.Context) {
 	idleConnsClosed := make(chan struct{})
 	go func() {
 		<-ctx.Done()
-		a.log.Info().Msg("Shutting down REST API server...")
+		a.log.Info().Msg("Shutting down server...")
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
 		if err := server.Shutdown(shutdownCtx); err != nil {
-			a.log.Error().Err(err).Msg("REST API server shutdown failed")
+			a.log.Error().Err(err).Msg("Server shutdown failed")
 		} else {
-			a.log.Info().Msg("REST API server shutdown complete")
+			a.log.Info().Msg("Server shutdown complete")
 		}
 		close(idleConnsClosed)
 	}()
 
-	a.log.Info().Msgf("Starting API server on %s", server.Addr)
+	a.log.Info().Msgf("Starting server on %s", server.Addr)
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		a.log.Error().Err(err).Msg("Failed to start API server")
+		a.log.Error().Err(err).Msg("Failed to start server")
 	}
 
 	<-idleConnsClosed
