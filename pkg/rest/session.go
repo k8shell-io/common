@@ -1,4 +1,4 @@
-package session
+package rest
 
 import (
 	"context"
@@ -198,8 +198,8 @@ func expireCookie(c *gin.Context, cookie CookieConfig) {
 	})
 }
 
-// From retrieves the session from the Gin context.
-func From(c *gin.Context) *Session {
+// GetSessionFromContext retrieves the session from the Gin context.
+func GetSessionFromContext(c *gin.Context) *Session {
 	if v := c.Request.Context().Value(sessionCtxKey); v != nil {
 		if s, ok := v.(*Session); ok {
 			return s
@@ -208,9 +208,9 @@ func From(c *gin.Context) *Session {
 	return nil
 }
 
-// Must retrieves the session from the Gin context or returns an error if not found.
-func Must(c *gin.Context) (*Session, error) {
-	s := From(c)
+// MustGetSessionFromContext retrieves the session from the Gin context or returns an error if not found.
+func MustGetSessionFromContext(c *gin.Context) (*Session, error) {
+	s := GetSessionFromContext(c)
 	if s == nil {
 		return nil, errors.New("session not found in context")
 	}
