@@ -33,7 +33,7 @@ type HTTPLoggingConfig struct {
 
 type Handler interface {
 	InitializeRoutes(r *gin.Engine)
-	GetUser(ctx context.Context, token string) *models.User
+	GetUser(ctx context.Context, token string) (*models.User, error)
 }
 
 // RESTApiService represents the REST API service
@@ -149,7 +149,14 @@ func (a *RESTAPI) AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		user := a.server.GetUser(ctx, token)
+		user, err := a.server.GetUser(ctx, token)
+		if err != nil {
+			a.log.Error().Err(err).Msg("Failed to get user from token")
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"status": http.StatusInternalServerError,
+				"msg": "Internal Server Error"})
+			return
+		}
+
 		if user == nil || user.Username == "" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"status": http.StatusUnauthorized,
 				"msg": "Unauthorized"})
