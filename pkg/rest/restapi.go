@@ -46,6 +46,22 @@ type RESTAPI struct {
 
 // NewRESTAPI creates a new REST API service
 func NewRESTAPI(httpConfig HTTPConfig, server Handler) (*RESTAPI, error) {
+	sameSite, err := ParseSameSite(httpConfig.Cookie.SameSite)
+	if err != nil {
+		return nil, fmt.Errorf("parse session cookie SameSite: %w", err)
+	}
+
+	httpConfig.Cookie.sameSite = sameSite
+	if httpConfig.Cookie.Name == "" {
+		return nil, fmt.Errorf("cookie name cannot be empty")
+	}
+	if httpConfig.Cookie.Path == "" {
+		httpConfig.Cookie.Path = "/"
+	}
+	if httpConfig.Cookie.MaxAgeSeconds == 0 {
+		httpConfig.Cookie.MaxAgeSeconds = int((8 * time.Hour).Seconds())
+	}
+
 	log := log.NewLogger("api")
 
 	gin.SetMode(gin.ReleaseMode)

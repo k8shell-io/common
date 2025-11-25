@@ -25,6 +25,8 @@ type CookieConfig struct {
 	HttpOnly      bool   `yaml:"httpOnly"`
 	MaxAgeSeconds int    `yaml:"maxAgeSeconds"`
 	SlideTTL      bool   `yaml:"slideTTL"`
+
+	sameSite http.SameSite
 }
 
 // key is the context key type for storing the session in the request context.
@@ -60,28 +62,13 @@ func (s *Session) RegenerateID() (string, error) {
 }
 
 // NewMiddleware returns a Gin middleware that provides session management using JetStream.
-func NewMiddleware(kv *natsc.JetStreamKV, cookie CookieConfig) gin.HandlerFunc {
-	if cookie.Name == "" {
-		cookie.Name = "session_id"
-	}
-	if cookie.Path == "" {
-		cookie.Path = "/"
-	}
-	if cookie.MaxAgeSeconds <= 0 {
-		cookie.MaxAgeSeconds = int((8 * time.Hour).Seconds())
-	}
-	if cookie.SameSite == "" {
-		cookie.SameSite = "lax"
-	}
-	if !cookie.HttpOnly {
-		cookie.HttpOnly = true
-	}
+func (a *RESTAPI) SessionMiddleware(kv *natsc.JetStreamKV) gin.HandlerFunc {
 
 	log := logger.NewLogger("session")
 
 	return func(c *gin.Context) {
 		s := &Session{values: make(map[string]any)}
-		if sid, err := c.Cookie(cookie.Name); err == nil && sid != "" {
+		if sid, err := c.Cookie(a.httpConfig.Cookie.Name); err == nil && sid != "" {
 			if it, err := kv.Get(sid); err == nil {
 				_ = json.Unmarshal(it.Value(), &s.values)
 				s.id = sid
@@ -102,7 +89,7 @@ func NewMiddleware(kv *natsc.JetStreamKV, cookie CookieConfig) gin.HandlerFunc {
 		sw := &commitWriter{
 			ResponseWriter: c.Writer,
 			commit: func() {
-				err := persist(c, kv, s, cookie)
+				err := persist(c, kv, s, a.httpConfig.Cookie)
 				if err != nil {
 					log.Warn().Err(err).Msgf("Failed to persist session: %v", err)
 				}
