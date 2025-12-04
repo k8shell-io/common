@@ -3,6 +3,7 @@ package models
 import (
 	"bytes"
 	"fmt"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	v "github.com/k8shell-io/common/pkg/validator"
@@ -33,6 +34,7 @@ type Blueprint struct {
 	InitScripts     []map[string]string `yaml:"initScripts,omitempty"`
 	Capabilities    []string            `yaml:"capabilities,omitempty" validate:"omitempty,dive,oneof=NET_ADMIN NET_BIND_SERVICE NET_RAW SYS_ADMIN SYS_TIME SYS_MODULE SYS_RAWIO DAC_OVERRIDE FOWNER SETUID SETGID KILL CHOWN"`
 	ExtFiles        map[string]string   `yaml:"extFiles,omitempty"`
+	Apps            map[string]AppSpec  `yaml:"apps,omitempty" validate:"omitempty,dive,keys,required,endkeys,required"`
 }
 
 // K8shellFile represents the overall structure of a k8shell YAML file
@@ -55,6 +57,7 @@ type CustomBlueprint struct {
 	Resources      Resources           `yaml:"resources,omitempty"`
 	Storages       map[string]Storage  `yaml:"storages,omitempty"`
 	InitScripts    []map[string]string `yaml:"initScripts,omitempty"`
+	Apps           map[string]AppSpec  `yaml:"apps,omitempty"`
 }
 
 // BlueprintMetadata holds metadata information for a blueprint.
@@ -110,6 +113,20 @@ type Storage struct {
 	Path         string            `yaml:"path" validate:"required_if=Enabled true,startswith=/"`
 	Readonly     bool              `yaml:"readonly"`
 	Annotations  map[string]string `yaml:"annotations,omitempty"`
+}
+
+type AppSpec struct {
+	Enabled           bool          `yaml:"enabled"`
+	Name              string        `yaml:"name"`
+	Binary            string        `yaml:"binary" validate:"required_if=Enabled true"`
+	VersionCmd        []string      `yaml:"versionCmd,omitempty" validate:"required_if=Enabled true"`
+	VersionRegex      string        `yaml:"versionRegex,omitempty" validate:"required_if=Enabled true"`
+	Install           string        `yaml:"install" validate:"required_if=Enabled true"`
+	Start             []string      `yaml:"start" validate:"required_if=Enabled true"`
+	Listen            int           `yaml:"listen" validate:"required_if=Enabled true,min=1,max=65535"`
+	RestartPolicy     string        `yaml:"restartPolicy" validate:"omitempty,oneof=always on-failure never"`
+	MaxRestartBackoff time.Duration `yaml:"maxRestartBackoff"`
+	InstallAsRoot     bool          `yaml:"installAsRoot"`
 }
 
 type Repo struct {
