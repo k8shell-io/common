@@ -34,6 +34,7 @@ type Blueprint struct {
 	InitScripts     []map[string]string `yaml:"initScripts,omitempty"`
 	Capabilities    []string            `yaml:"capabilities,omitempty" validate:"omitempty,dive,oneof=NET_ADMIN NET_BIND_SERVICE NET_RAW SYS_ADMIN SYS_TIME SYS_MODULE SYS_RAWIO DAC_OVERRIDE FOWNER SETUID SETGID KILL CHOWN"`
 	ExtFiles        map[string]string   `yaml:"extFiles,omitempty"`
+	EnableApps      bool                `yaml:"enableApps,omitempty"`
 	Apps            map[string]AppSpec  `yaml:"apps,omitempty" validate:"omitempty,dive,keys,required,endkeys,required"`
 }
 
@@ -57,6 +58,7 @@ type CustomBlueprint struct {
 	Resources      Resources           `yaml:"resources,omitempty"`
 	Storages       map[string]Storage  `yaml:"storages,omitempty"`
 	InitScripts    []map[string]string `yaml:"initScripts,omitempty"`
+	EnableApps     bool                `yaml:"enableApps,omitempty"`
 	Apps           map[string]AppSpec  `yaml:"apps,omitempty"`
 }
 
@@ -127,6 +129,7 @@ type AppSpec struct {
 	RestartPolicy     string        `yaml:"restartPolicy" validate:"omitempty,oneof=always on-failure never"`
 	MaxRestartBackoff time.Duration `yaml:"maxRestartBackoff"`
 	InstallAsRoot     bool          `yaml:"installAsRoot"`
+	AutoRun           bool          `yaml:"autoRun"`
 }
 
 type Repo struct {
