@@ -35,7 +35,7 @@ type Blueprint struct {
 	Capabilities    []string            `yaml:"capabilities,omitempty" validate:"omitempty,dive,oneof=NET_ADMIN NET_BIND_SERVICE NET_RAW SYS_ADMIN SYS_TIME SYS_MODULE SYS_RAWIO DAC_OVERRIDE FOWNER SETUID SETGID KILL CHOWN"`
 	ExtFiles        map[string]string   `yaml:"extFiles,omitempty"`
 	EnableApps      bool                `yaml:"enableApps,omitempty"`
-	Apps            map[string]AppSpec  `yaml:"apps,omitempty" validate:"omitempty,dive,keys,required,endkeys,required"`
+	Apps            map[string]AppSpec  `yaml:"apps,omitempty" validate:"omitempty,dive"`
 }
 
 // K8shellFile represents the overall structure of a k8shell YAML file
@@ -120,15 +120,15 @@ type Storage struct {
 type AppSpec struct {
 	Enabled           bool          `yaml:"enabled"`
 	Name              string        `yaml:"name"`
-	Binary            string        `yaml:"binary" validate:"required_if=Enabled true"`
-	VersionCmd        []string      `yaml:"versionCmd,omitempty" validate:"required_if=Enabled true"`
-	VersionRegex      string        `yaml:"versionRegex,omitempty" validate:"required_if=Enabled true"`
-	Install           string        `yaml:"install" validate:"required_if=Enabled true"`
-	Start             []string      `yaml:"start" validate:"required_if=Enabled true"`
-	Listen            int           `yaml:"listen" validate:"required_if=Enabled true,min=1,max=65535"`
-	RestartPolicy     string        `yaml:"restartPolicy" validate:"omitempty,oneof=always on-failure never"`
-	MaxRestartBackoff time.Duration `yaml:"maxRestartBackoff"`
-	InstallAsRoot     bool          `yaml:"installAsRoot"`
+	Binary            string        `yaml:"binary,omitempty"`
+	VersionCmd        []string      `yaml:"versionCmd,omitempty"`
+	VersionRegex      string        `yaml:"versionRegex,omitempty"`
+	Install           string        `yaml:"install,omitempty"`
+	Start             []string      `yaml:"start,omitempty"`
+	Listen            int           `yaml:"listen,omitempty"`
+	RestartPolicy     string        `yaml:"restartPolicy,omitempty" validate:"oneof=always on-failure never"`
+	MaxRestartBackoff time.Duration `yaml:"maxRestartBackoff,omitempty"`
+	InstallAsRoot     bool          `yaml:"installAsRoot,omitempty"`
 	AutoStart         bool          `yaml:"autoStart,omitempty"`
 }
 
