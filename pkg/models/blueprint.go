@@ -130,6 +130,7 @@ type AppSpec struct {
 	MaxRestartBackoff time.Duration `yaml:"maxRestartBackoff,omitempty"`
 	InstallAsRoot     bool          `yaml:"installAsRoot,omitempty"`
 	AutoStart         bool          `yaml:"autoStart,omitempty"`
+	Protocol          string        `yaml:"protocol,omitempty" validate:"omitempty,oneof=http https ws wss tcp udp"`
 }
 
 type Repo struct {
