@@ -187,7 +187,7 @@ func (a *RESTAPI) AuthMiddleware() gin.HandlerFunc {
 }
 
 // Serve starts the REST server and listens for incoming requests.
-func (a *RESTAPI) Serve(ctx context.Context) {
+func (a *RESTAPI) Serve(ctx context.Context, onClose func()) {
 	a.engine = gin.New()
 	a.server.InitializeRoutes(a.engine)
 
@@ -196,7 +196,6 @@ func (a *RESTAPI) Serve(ctx context.Context) {
 		Addr:    fmt.Sprintf(":%d", a.httpConfig.Port),
 	}
 
-	idleConnsClosed := make(chan struct{})
 	go func() {
 		<-ctx.Done()
 		a.log.Info().Msg("Shutting down server...")
@@ -208,7 +207,6 @@ func (a *RESTAPI) Serve(ctx context.Context) {
 		} else {
 			a.log.Info().Msg("Server shutdown complete")
 		}
-		close(idleConnsClosed)
 	}()
 
 	a.log.Info().Msgf("Starting server on %s", server.Addr)
@@ -216,7 +214,9 @@ func (a *RESTAPI) Serve(ctx context.Context) {
 		a.log.Error().Err(err).Msg("Failed to start server")
 	}
 
-	<-idleConnsClosed
+	if onClose != nil {
+		onClose()
+	}
 }
 
 // *** Helper functions ***
