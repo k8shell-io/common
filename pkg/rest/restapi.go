@@ -66,6 +66,7 @@ func NewRESTAPI(httpConfig HTTPConfig, handler Handler) (*RESTAPI, error) {
 	gin.SetMode(gin.ReleaseMode)
 
 	a := &RESTAPI{
+		Handler:    handler,
 		httpConfig: httpConfig,
 		log:        logger.NewLogger("api"),
 		engine:     gin.New(),
