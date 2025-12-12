@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/k8shell-io/common/pkg/logger"
+	"github.com/k8shell-io/common/pkg/logger"
 	"github.com/k8shell-io/common/pkg/models"
 	"github.com/rs/zerolog"
 
@@ -38,14 +38,15 @@ type Handler interface {
 
 // RESTApiService represents the REST API service
 type RESTAPI struct {
+	Handler
 	httpConfig HTTPConfig
 	log        *zerolog.Logger
 	engine     *gin.Engine
-	server     Handler
+	server     *http.Server
 }
 
 // NewRESTAPI creates a new REST API service
-func NewRESTAPI(httpConfig HTTPConfig, server Handler) (*RESTAPI, error) {
+func NewRESTAPI(httpConfig HTTPConfig, handler Handler) (*RESTAPI, error) {
 	sameSite, err := ParseSameSite(httpConfig.Cookie.SameSite)
 	if err != nil {
 		return nil, fmt.Errorf("parse session cookie SameSite: %w", err)
@@ -62,15 +63,20 @@ func NewRESTAPI(httpConfig HTTPConfig, server Handler) (*RESTAPI, error) {
 		httpConfig.Cookie.MaxAgeSeconds = int((8 * time.Hour).Seconds())
 	}
 
-	log := log.NewLogger("api")
-
 	gin.SetMode(gin.ReleaseMode)
 
-	return &RESTAPI{
+	a := &RESTAPI{
 		httpConfig: httpConfig,
-		log:        log,
-		server:     server,
-	}, nil
+		log:        logger.NewLogger("api"),
+		engine:     gin.New(),
+	}
+
+	a.server = &http.Server{
+		Handler: a.engine,
+		Addr:    fmt.Sprintf(":%d", a.httpConfig.Port),
+	}
+
+	return a, nil
 }
 
 func (a *RESTAPI) LoggingMiddleware() gin.HandlerFunc {
@@ -165,7 +171,7 @@ func (a *RESTAPI) AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		user, err := a.server.GetUser(ctx, token)
+		user, err := a.GetUser(ctx, token)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"status": http.StatusInternalServerError,
 				"msg": "Internal Server Error"})
@@ -187,35 +193,24 @@ func (a *RESTAPI) AuthMiddleware() gin.HandlerFunc {
 }
 
 // Serve starts the REST server and listens for incoming requests.
-func (a *RESTAPI) Serve(ctx context.Context, onClose func()) {
-	a.engine = gin.New()
-	a.server.InitializeRoutes(a.engine)
-
-	server := &http.Server{
-		Handler: a.engine,
-		Addr:    fmt.Sprintf(":%d", a.httpConfig.Port),
+func (a *RESTAPI) Serve(ctx context.Context) error {
+	a.InitializeRoutes(a.engine)
+	a.log.Info().Msgf("Starting server on %s", a.server.Addr)
+	if err := a.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		return fmt.Errorf("listen and serve: %w", err)
 	}
+	return nil
+}
 
-	go func() {
-		<-ctx.Done()
-		a.log.Info().Msg("Shutting down server...")
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
+func (a *RESTAPI) Shutdown() {
+	a.log.Info().Msg("Shutting down server...")
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-		if err := server.Shutdown(shutdownCtx); err != nil {
-			a.log.Error().Err(err).Msg("Server shutdown failed")
-		} else {
-			a.log.Info().Msg("Server shutdown complete")
-		}
-	}()
-
-	a.log.Info().Msgf("Starting server on %s", server.Addr)
-	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		a.log.Error().Err(err).Msg("Failed to start server")
-	}
-
-	if onClose != nil {
-		onClose()
+	if err := a.server.Shutdown(shutdownCtx); err != nil {
+		a.log.Error().Err(err).Msg("Server shutdown failed")
+	} else {
+		a.log.Info().Msg("Server shutdown complete")
 	}
 }
 
