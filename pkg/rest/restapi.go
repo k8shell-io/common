@@ -188,7 +188,7 @@ func (a *RESTAPI) AuthMiddleware() gin.HandlerFunc {
 		// TODO: check if the user is authorized to access the requested resource
 		// e.g., check roles/permissions/scopes
 		// For now, we just check if the username in the URL matches the authenticated user
-		username := c.Param("app_name")
+		username := c.Param("username")
 		if username != "" && username != user.Username {
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"status": http.StatusForbidden,
 				"msg": "Forbidden"})
