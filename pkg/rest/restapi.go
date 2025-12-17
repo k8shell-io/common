@@ -174,6 +174,7 @@ func (a *RESTAPI) AuthMiddleware() gin.HandlerFunc {
 
 		user, err := a.GetUser(ctx, token)
 		if err != nil {
+			a.log.Error().Err(err).Msg("Failed to get user from token")
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"status": http.StatusInternalServerError,
 				"msg": "Internal Server Error"})
 			return
