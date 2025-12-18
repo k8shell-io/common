@@ -17,6 +17,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 )
@@ -40,6 +41,7 @@ type UserStr struct {
 	RepoName           string            // shortcut for Params["repo"]
 	RepoOwner          string            // shortcut for Params["owner"]
 	RepoRef            string            // shortcut for Params["ref"]
+	RepoIssue          int               // shortcut for Params["issue"]
 	HasCustomBlueprint bool              // indicates if the blueprint is custom
 }
 
@@ -111,6 +113,15 @@ func NewUserStr(input string) (*UserStr, error) {
 		params[k] = val
 	}
 
+	var repoIssue int
+	if issue := params["issue"]; issue != "" {
+		var err error
+		repoIssue, err = strconv.Atoi(issue)
+		if err != nil {
+			return nil, fmt.Errorf("userstr: issue must be an integer")
+		}
+	}
+
 	var repoName string
 	var repoOwner string = username
 	if repo := params["repo"]; repo != "" {
@@ -138,6 +149,7 @@ func NewUserStr(input string) (*UserStr, error) {
 		RepoName:           repoName,
 		RepoOwner:          repoOwner,
 		RepoRef:            params["ref"],
+		RepoIssue:          repoIssue,
 		HasCustomBlueprint: blueprintName != "",
 	}, nil
 }

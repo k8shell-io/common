@@ -18,7 +18,7 @@ func TestDirectBlueprint(t *testing.T) {
 	}
 }
 
-func TestParams(t *testing.T) {
+func TestParams1(t *testing.T) {
 	r, err := NewUserStr("tomas~repo=org/svc+ref=feat%2Fabc+mode=inspect")
 	if err != nil {
 		t.Fatal(err)
@@ -34,6 +34,19 @@ func TestParams(t *testing.T) {
 	}
 	if r.ParamsRaw["mode"] != "inspect" {
 		t.Fatalf("mode mismatch: %q", r.ParamsRaw["mode"])
+	}
+}
+
+func TestParams2(t *testing.T) {
+	r, err := NewUserStr("bob~repo=alice/projectX+issue=22")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if r.RepoName != "projectx" || r.ParamsRaw["repo"] != "alice/projectx" {
+		t.Fatalf("repo decode failed: %q", r.RepoName)
+	}
+	if r.RepoIssue != 22 || r.ParamsRaw["issue"] != "22" {
+		t.Fatalf("issue decode failed: %d", r.RepoIssue)
 	}
 }
 
