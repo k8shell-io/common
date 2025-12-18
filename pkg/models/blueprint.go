@@ -66,6 +66,7 @@ type CustomBlueprint struct {
 type BlueprintMetadata struct {
 	Name        string `yaml:"name"`
 	RepoName    string `yaml:"repoName"`
+	RepoRef     string `yaml:"repoRef"`
 	RepoOwner   string `yaml:"repoOwner"`
 	RepoAddress string `yaml:"repoAddress"`
 }
@@ -133,11 +134,11 @@ type AppSpec struct {
 	Protocol          string        `yaml:"protocol,omitempty" validate:"omitempty,oneof=http https ws wss tcp udp"`
 }
 
-type Repo struct {
-	Address string `yaml:"address" validate:"required"`
-	Name    string `yaml:"name" validate:"required"`
-	Owner   string `yaml:"owner" validate:"required"`
-}
+// type Repo struct {
+// 	Address string `yaml:"address" validate:"required"`
+// 	Name    string `yaml:"name" validate:"required"`
+// 	Owner   string `yaml:"owner" validate:"required"`
+// }
 
 // Validate validates the blueprint and returns user-friendly errors
 func (b *Blueprint) Validate() v.Validator {
