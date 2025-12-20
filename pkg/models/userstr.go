@@ -43,6 +43,28 @@ var (
 	ErrTooLong  = errors.New("userstr: identifier too long")
 )
 
+// BlueprintKind represents the kind of blueprint used for a workspace.
+type BlueprintKind int
+
+const (
+	BlueprintKindImplicit BlueprintKind = iota // no explicit blueprint, the default user blueprint will be used
+	BlueprintKindExplicit                      // user-defined blueprint in userstr
+	BlueprintKindCustom                        // user-defined blueprint name from repo
+)
+
+func (k BlueprintKind) String() string {
+	switch k {
+	case BlueprintKindImplicit:
+		return "implicit"
+	case BlueprintKindExplicit:
+		return "explicit"
+	case BlueprintKindCustom:
+		return "custom"
+	default:
+		return "unknown"
+	}
+}
+
 type WorkspaceIdentity struct {
 	Username  string // normalized username
 	Blueprint string // computed blueprint name
@@ -55,6 +77,7 @@ type UserStr struct {
 	Raw              string            // original raw input
 	Username         string            // normalized username
 	Blueprint        string            // computed blueprint name
+	BlueprintKind    BlueprintKind     // kind of blueprint used
 	ParamsRaw        map[string]string // raw params map
 	RepoName         string            // repository name
 	RepoOwner        string            // repository owner
@@ -232,10 +255,11 @@ func NewUserStr(input string) (*UserStr, error) {
 
 	if wsSpec == "" {
 		return &UserStr{
-			Raw:       raw,
-			Username:  username,
-			Blueprint: "",
-			ParamsRaw: nil,
+			Raw:           raw,
+			Username:      username,
+			Blueprint:     "",
+			BlueprintKind: BlueprintKindImplicit,
+			ParamsRaw:     nil,
 		}, nil
 	}
 
@@ -247,10 +271,11 @@ func NewUserStr(input string) (*UserStr, error) {
 			return nil, fmt.Errorf("userstr: blueprint percent-decode: %w", err)
 		}
 		return &UserStr{
-			Raw:       raw,
-			Username:  username,
-			Blueprint: decoded,
-			ParamsRaw: nil,
+			Raw:           raw,
+			Username:      username,
+			Blueprint:     decoded,
+			BlueprintKind: BlueprintKindExplicit,
+			ParamsRaw:     nil,
 		}, nil
 	}
 
@@ -309,15 +334,20 @@ func NewUserStr(input string) (*UserStr, error) {
 		blueprintName = fmt.Sprintf("repo-%s-%s", repoOwner, repoName)
 	}
 
+	if blueprintName == "" {
+		return nil, fmt.Errorf("userstr: blueprint could not be determined")
+	}
+
 	return &UserStr{
-		Raw:       raw,
-		Username:  username,
-		Blueprint: blueprintName,
-		ParamsRaw: params,
-		RepoName:  repoName,
-		RepoOwner: repoOwner,
-		RepoRef:   params["ref"],
-		RepoIssue: repoIssue,
+		Raw:           raw,
+		Username:      username,
+		Blueprint:     blueprintName,
+		BlueprintKind: BlueprintKindCustom,
+		ParamsRaw:     params,
+		RepoName:      repoName,
+		RepoOwner:     repoOwner,
+		RepoRef:       params["ref"],
+		RepoIssue:     repoIssue,
 	}, nil
 }
 
