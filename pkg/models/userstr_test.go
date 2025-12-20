@@ -1,7 +1,6 @@
 package models
 
 import (
-	"context"
 	"testing"
 )
 
@@ -10,7 +9,7 @@ type fakeIssueResolver struct {
 	err error
 }
 
-func (f fakeIssueResolver) ResolveIssueRef(ctx context.Context, username string, repoOwner, repoName string,
+func (f fakeIssueResolver) ResolveIssueRepoRef(username string, repoOwner, repoName string,
 	issueNumber int) (string, error) {
 	return f.ref, f.err
 }
@@ -30,7 +29,7 @@ func TestDirectBlueprint(t *testing.T) {
 		t.Fatalf("expected nil params: %+v", r)
 	}
 
-	cu, err := r.Canonicalize(context.Background(), nil)
+	cu, err := r.Canonicalize(nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,7 +67,7 @@ func TestParams1(t *testing.T) {
 		t.Fatalf("mode mismatch: %q", r.ParamsRaw["mode"])
 	}
 
-	cu, err := r.Canonicalize(context.Background(), nil)
+	cu, err := r.Canonicalize(nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -104,7 +103,7 @@ func TestParams2_IssueOnly_ResolvesToRef(t *testing.T) {
 	}
 
 	resolver := fakeIssueResolver{ref: "feat/abc"}
-	cu, err := r.Canonicalize(context.Background(), resolver)
+	cu, err := r.Canonicalize(resolver)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -146,7 +145,7 @@ func TestNoSpec(t *testing.T) {
 		t.Fatalf("expected nil bp/params: %+v", r)
 	}
 
-	cu, err := r.Canonicalize(context.Background(), nil)
+	cu, err := r.Canonicalize(nil)
 	if err != nil {
 		t.Fatal(err)
 	}

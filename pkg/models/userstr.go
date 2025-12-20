@@ -21,7 +21,6 @@
 package models
 
 import (
-	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -101,9 +100,8 @@ type UserStrBuilder struct {
 }
 
 // IssueRefResolver defines an interface for resolving issue numbers to refs.
-type IssueRefResolver interface {
-	ResolveIssueRef(ctx context.Context, username string, repoOwner, repoName string,
-		issueNumber int) (ref string, err error)
+type IssueRepoRefResolver interface {
+	ResolveIssueRepoRef(username string, repoOwner, repoName string, issueNumber int) (ref string, err error)
 }
 
 // CanonicalizeOptions defines options for the Canonicalize method.
@@ -120,7 +118,7 @@ type CanonicalizeOptions struct {
 
 // Canonicalize computes Identity/CanonicalKey/CanonicalUserStr/Aliases.
 // This method may call the resolver if issue->ref resolution is enabled.
-func (u *UserStr) Canonicalize(ctx context.Context, r IssueRefResolver) (*CanonicalUserStr, error) {
+func (u *UserStr) Canonicalize(r IssueRepoRefResolver) (*CanonicalUserStr, error) {
 	owner := u.RepoOwner
 	name := u.RepoName
 
@@ -141,7 +139,7 @@ func (u *UserStr) Canonicalize(ctx context.Context, r IssueRefResolver) (*Canoni
 		if owner == "" || name == "" {
 			return nil, fmt.Errorf("userstr: cannot resolve issue->ref without repo (owner/name)")
 		}
-		ref, err := r.ResolveIssueRef(ctx, u.Username, owner, name, u.RepoIssue)
+		ref, err := r.ResolveIssueRepoRef(u.Username, owner, name, u.RepoIssue)
 		if err != nil {
 			return nil, fmt.Errorf("userstr: resolve issue->ref failed: %w", err)
 		}
