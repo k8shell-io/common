@@ -66,11 +66,12 @@ func (k BlueprintKind) String() string {
 }
 
 type WorkspaceIdentity struct {
-	Username  string // normalized username
-	Blueprint string // computed blueprint name
-	RepoOwner string // repository owner
-	RepoName  string // repository name
-	RepoRef   string // repository reference (branch/tag)
+	Username      string        // normalized username
+	Blueprint     string        // computed blueprint name
+	BlueprintKind BlueprintKind // kind of blueprint used
+	RepoOwner     string        // repository owner
+	RepoName      string        // repository name
+	RepoRef       string        // repository reference (branch/tag)
 }
 
 type UserStr struct {
@@ -159,11 +160,12 @@ func (u *UserStr) Canonicalize(ctx context.Context, r IssueRefResolver) (*Canoni
 
 	canonicalUserStr := &CanonicalUserStr{
 		Identity: WorkspaceIdentity{
-			Username:  u.Username,
-			Blueprint: blueprint,
-			RepoOwner: owner,
-			RepoName:  name,
-			RepoRef:   resolvedRef,
+			Username:      u.Username,
+			Blueprint:     blueprint,
+			BlueprintKind: u.BlueprintKind,
+			RepoOwner:     owner,
+			RepoName:      name,
+			RepoRef:       resolvedRef,
 		},
 	}
 
