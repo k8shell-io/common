@@ -74,20 +74,23 @@ type WorkspaceIdentity struct {
 }
 
 type UserStr struct {
-	Raw              string            // original raw input
-	Username         string            // normalized username
-	Blueprint        string            // computed blueprint name
-	BlueprintKind    BlueprintKind     // kind of blueprint used
-	ParamsRaw        map[string]string // raw params map
-	RepoName         string            // repository name
-	RepoOwner        string            // repository owner
-	RepoRef          string            // repository reference (branch/tag)
-	RepoIssue        int               // repository issue number
-	Identity         WorkspaceIdentity // computed identity
-	CanonicalKey     string            // computed canonical key
-	CanonicalUserStr string            // computed canonical user string
-	Aliases          []string          // computed aliases
-	WorkspaceID      string            // computed workspace ID
+	Raw           string            // original raw input
+	Username      string            // normalized username
+	Blueprint     string            // computed blueprint name
+	BlueprintKind BlueprintKind     // kind of blueprint used
+	ParamsRaw     map[string]string // raw params map
+	RepoName      string            // repository name
+	RepoOwner     string            // repository owner
+	RepoRef       string            // repository reference (branch/tag)
+	RepoIssue     int               // repository issue number
+}
+
+type CanonicalUserStr struct {
+	Identity         WorkspaceIdentity
+	CanonicalKey     string
+	CanonicalUserStr string
+	Aliases          []string
+	WorkspaceID      string
 }
 
 type UserStrBuilder struct {
@@ -115,22 +118,30 @@ type CanonicalizeOptions struct {
 
 // Canonicalize computes Identity/CanonicalKey/CanonicalUserStr/Aliases.
 // This method may call the resolver if issue->ref resolution is enabled.
-func (u *UserStr) Canonicalize(ctx context.Context, r IssueRefResolver, opt CanonicalizeOptions) error {
+func (u *UserStr) Canonicalize(ctx context.Context, r IssueRefResolver) (*CanonicalUserStr, error) {
 	owner := u.RepoOwner
 	name := u.RepoName
 
-	resolvedRef := u.RepoRef
+	opt := CanonicalizeOptions{
+		PreferExplicitRef:     true,
+		ResolveIssueToRef:     true,
+		IncludeBlueprintInKey: true,
+	}
+	if r == nil {
+		opt.ResolveIssueToRef = false
+	}
 
+	resolvedRef := u.RepoRef
 	if resolvedRef == "" && u.RepoIssue > 0 && opt.ResolveIssueToRef {
 		if r == nil {
-			return fmt.Errorf("userstr: resolver required to resolve issue->ref")
+			return nil, fmt.Errorf("userstr: resolver required to resolve issue->ref")
 		}
 		if owner == "" || name == "" {
-			return fmt.Errorf("userstr: cannot resolve issue->ref without repo (owner/name)")
+			return nil, fmt.Errorf("userstr: cannot resolve issue->ref without repo (owner/name)")
 		}
 		ref, err := r.ResolveIssueRef(ctx, owner, name, u.RepoIssue)
 		if err != nil {
-			return fmt.Errorf("userstr: resolve issue->ref failed: %w", err)
+			return nil, fmt.Errorf("userstr: resolve issue->ref failed: %w", err)
 		}
 		resolvedRef = ref
 	}
@@ -146,20 +157,22 @@ func (u *UserStr) Canonicalize(ctx context.Context, r IssueRefResolver, opt Cano
 		blueprint = fmt.Sprintf("repo-%s-%s", owner, name)
 	}
 
-	u.Identity = WorkspaceIdentity{
-		Username:  u.Username,
-		Blueprint: blueprint,
-		RepoOwner: owner,
-		RepoName:  name,
-		RepoRef:   resolvedRef,
+	canonicalUserStr := &CanonicalUserStr{
+		Identity: WorkspaceIdentity{
+			Username:  u.Username,
+			Blueprint: blueprint,
+			RepoOwner: owner,
+			RepoName:  name,
+			RepoRef:   resolvedRef,
+		},
 	}
 
-	u.CanonicalKey = buildWorkspaceKey(u.Identity, opt.IncludeBlueprintInKey)
-	u.CanonicalUserStr = buildCanonicalUserStr(u.Identity)
-	u.Aliases = buildAliases(u, resolvedRef)
-	u.WorkspaceID = buildWorkspaceID(u.Username, u.CanonicalKey)
+	canonicalUserStr.CanonicalKey = buildWorkspaceKey(&canonicalUserStr.Identity, opt.IncludeBlueprintInKey)
+	canonicalUserStr.CanonicalUserStr = buildCanonicalUserStr(&canonicalUserStr.Identity)
+	canonicalUserStr.Aliases = buildAliases(u, resolvedRef)
+	canonicalUserStr.WorkspaceID = buildWorkspaceID(u.Username, canonicalUserStr.CanonicalKey)
 
-	return nil
+	return canonicalUserStr, nil
 }
 
 func shortHash(s string, n int) string {
@@ -172,7 +185,7 @@ func buildWorkspaceID(username, canonicalKey string) string {
 	return fmt.Sprintf("%s-%s", username, shortHash(canonicalKey, hashLen))
 }
 
-func buildWorkspaceKey(id WorkspaceIdentity, includeBlueprint bool) string {
+func buildWorkspaceKey(id *WorkspaceIdentity, includeBlueprint bool) string {
 	parts := []string{"u=" + id.Username}
 	if id.RepoOwner != "" && id.RepoName != "" {
 		parts = append(parts, "r="+id.RepoOwner+"/"+id.RepoName)
@@ -187,7 +200,7 @@ func buildWorkspaceKey(id WorkspaceIdentity, includeBlueprint bool) string {
 }
 
 // BuildCanonicalUserStr builds the canonical user string from the given identity.
-func buildCanonicalUserStr(id WorkspaceIdentity) string {
+func buildCanonicalUserStr(id *WorkspaceIdentity) string {
 	if id.RepoOwner != "" && id.RepoName != "" {
 		b := NewUserStrWith(id.Username).
 			WithRepo(id.RepoOwner + "/" + id.RepoName)

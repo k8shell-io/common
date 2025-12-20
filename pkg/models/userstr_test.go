@@ -29,19 +29,22 @@ func TestDirectBlueprint(t *testing.T) {
 		t.Fatalf("expected nil params: %+v", r)
 	}
 
-	// Canonicalize blueprint-only (no resolver needed)
-	if err := r.Canonicalize(context.Background(), nil, CanonicalizeOptions{
-		PreferExplicitRef:     true,
-		ResolveIssueToRef:     true,
-		IncludeBlueprintInKey: true,
-	}); err != nil {
+	cu, err := r.Canonicalize(context.Background(), nil)
+	if err != nil {
 		t.Fatal(err)
 	}
-	if r.Identity.Blueprint != "dev" {
-		t.Fatalf("unexpected canonical blueprint: %+v", r.Identity)
+
+	if cu.Identity.Blueprint != "dev" {
+		t.Fatalf("unexpected canonical blueprint: %+v", cu.Identity)
 	}
-	if r.CanonicalKey != "u=tomas|bp=dev" {
-		t.Fatalf("unexpected canonical key: %q", r.CanonicalKey)
+	if cu.CanonicalKey != "u=tomas|bp=dev" {
+		t.Fatalf("unexpected canonical key: %q", cu.CanonicalKey)
+	}
+	if cu.CanonicalUserStr == "" {
+		t.Fatalf("expected canonical userstr")
+	}
+	if cu.WorkspaceID == "" {
+		t.Fatalf("expected workspace id")
 	}
 }
 
@@ -64,22 +67,22 @@ func TestParams1(t *testing.T) {
 		t.Fatalf("mode mismatch: %q", r.ParamsRaw["mode"])
 	}
 
-	// Canonicalize (ref already provided; no resolver needed)
-	if err := r.Canonicalize(context.Background(), nil, CanonicalizeOptions{
-		PreferExplicitRef:     true,
-		ResolveIssueToRef:     true,
-		IncludeBlueprintInKey: true,
-	}); err != nil {
+	cu, err := r.Canonicalize(context.Background(), nil)
+	if err != nil {
 		t.Fatal(err)
 	}
-	if r.Identity.RepoRef != "feat/abc" {
-		t.Fatalf("unexpected canonical ref: %+v", r.Identity)
+
+	if cu.Identity.RepoRef != "feat/abc" {
+		t.Fatalf("unexpected canonical ref: %+v", cu.Identity)
 	}
-	if r.CanonicalKey != "u=tomas|r=org/svc|ref=feat/abc|bp=repo-org-svc" {
-		t.Fatalf("unexpected canonical key: %q", r.CanonicalKey)
+	if cu.CanonicalKey != "u=tomas|r=org/svc|ref=feat/abc|bp=repo-org-svc" {
+		t.Fatalf("unexpected canonical key: %q", cu.CanonicalKey)
 	}
-	if r.CanonicalUserStr == "" {
+	if cu.CanonicalUserStr == "" {
 		t.Fatalf("expected canonical userstr")
+	}
+	if cu.WorkspaceID == "" {
+		t.Fatalf("expected workspace id")
 	}
 }
 
@@ -89,7 +92,9 @@ func TestParams2_IssueOnly_ResolvesToRef(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// NEW behavior: repo values are not lowercased globally anymore.
+	// Parsing expectations:
+	// - keys are lowercased
+	// - values are percent-decoded but not globally lowercased
 	if r.RepoName != "projectx" || r.ParamsRaw["repo"] != "alice/projectx" {
 		t.Fatalf("repo decode failed: repoName=%q paramsRepo=%q", r.RepoName, r.ParamsRaw["repo"])
 	}
@@ -97,32 +102,34 @@ func TestParams2_IssueOnly_ResolvesToRef(t *testing.T) {
 		t.Fatalf("issue decode failed: repoIssue=%d paramsIssue=%q", r.RepoIssue, r.ParamsRaw["issue"])
 	}
 
-	// Canonicalize resolves issue->ref via resolver
 	resolver := fakeIssueResolver{ref: "feat/abc"}
-	if err := r.Canonicalize(context.Background(), resolver, CanonicalizeOptions{
-		PreferExplicitRef:     true,
-		ResolveIssueToRef:     true,
-		IncludeBlueprintInKey: true,
-	}); err != nil {
+	cu, err := r.Canonicalize(context.Background(), resolver)
+	if err != nil {
 		t.Fatal(err)
 	}
 
-	if r.Identity.RepoRef != "feat/abc" {
-		t.Fatalf("expected resolved ref, got: %+v", r.Identity)
+	if cu.Identity.RepoRef != "feat/abc" {
+		t.Fatalf("expected resolved ref, got: %+v", cu.Identity)
 	}
-	if r.CanonicalKey != "u=bob|r=alice/projectx|ref=feat/abc|bp=repo-alice-projectx" {
-		t.Fatalf("unexpected canonical key: %q", r.CanonicalKey)
+	if cu.CanonicalKey != "u=bob|r=alice/projectx|ref=feat/abc|bp=repo-alice-projectx" {
+		t.Fatalf("unexpected canonical key: %q", cu.CanonicalKey)
 	}
-	// alias should include issue form
+
+	// Alias should include issue form (with the same casing as parsed repo)
 	foundIssueAlias := false
-	for _, a := range r.Aliases {
-		if a == "u=bob|r=alice/projectx|issue=22" {
+	wantIssueAlias := "u=bob|r=alice/projectx|issue=22"
+	for _, a := range cu.Aliases {
+		if a == wantIssueAlias {
 			foundIssueAlias = true
 			break
 		}
 	}
 	if !foundIssueAlias {
-		t.Fatalf("expected issue alias, got: %+v", r.Aliases)
+		t.Fatalf("expected issue alias %q, got: %+v", wantIssueAlias, cu.Aliases)
+	}
+
+	if cu.WorkspaceID == "" {
+		t.Fatalf("expected workspace id")
 	}
 }
 
@@ -138,15 +145,15 @@ func TestNoSpec(t *testing.T) {
 		t.Fatalf("expected nil bp/params: %+v", r)
 	}
 
-	if err := r.Canonicalize(context.Background(), nil, CanonicalizeOptions{
-		PreferExplicitRef:     true,
-		ResolveIssueToRef:     true,
-		IncludeBlueprintInKey: true,
-	}); err != nil {
+	cu, err := r.Canonicalize(context.Background(), nil)
+	if err != nil {
 		t.Fatal(err)
 	}
-	if r.CanonicalKey != "u=alice" {
-		t.Fatalf("unexpected canonical key: %q", r.CanonicalKey)
+	if cu.CanonicalKey != "u=alice" {
+		t.Fatalf("unexpected canonical key: %q", cu.CanonicalKey)
+	}
+	if cu.WorkspaceID == "" {
+		t.Fatalf("expected workspace id")
 	}
 }
 
