@@ -11,12 +11,23 @@
 // - Keys are normalized to lowercase.
 // - Slash "/" is allowed; when escaped as %2F it is decoded back to "/".
 // - Reserved delimiters: @ ~ + = (use %XX inside values if literal needed).
+//
+// Notes (canonicalization):
+//   - Parsing is pure and deterministic.
+//   - Canonicalize() optionally resolves issue->ref via IssueRefResolver and computes
+//     Identity + CanonicalKey + CanonicalUserStr + Aliases.
+//   - Workspace identity should be based on (user, repo, resolved ref, optionally blueprint).
+//     Issue is treated as metadata/alias, not identity.
 package models
 
 import (
+	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"net/url"
+	"sort"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -32,24 +43,177 @@ var (
 	ErrTooLong  = errors.New("userstr: identifier too long")
 )
 
-// UserStr is the parsed representation of a user string.
-type UserStr struct {
-	Raw                string            // original input
-	Username           string            // username (left of ~ or whole local if no ~)
-	Blueprint          string            // blueprint name
-	ParamsRaw          map[string]string // normalized keys to values (if params form)
-	RepoName           string            // shortcut for Params["repo"]
-	RepoOwner          string            // shortcut for Params["owner"]
-	RepoRef            string            // shortcut for Params["ref"]
-	RepoIssue          int               // shortcut for Params["issue"]
-	HasCustomBlueprint bool              // indicates if the blueprint is custom
+type WorkspaceIdentity struct {
+	Username  string // normalized username
+	Blueprint string // computed blueprint name
+	RepoOwner string // repository owner
+	RepoName  string // repository name
+	RepoRef   string // repository reference (branch/tag)
 }
 
-// UserStrBuilder is a builder for creating UserStr instances.
+type UserStr struct {
+	Raw              string            // original raw input
+	Username         string            // normalized username
+	Blueprint        string            // computed blueprint name
+	ParamsRaw        map[string]string // raw params map
+	RepoName         string            // repository name
+	RepoOwner        string            // repository owner
+	RepoRef          string            // repository reference (branch/tag)
+	RepoIssue        int               // repository issue number
+	Identity         WorkspaceIdentity // computed identity
+	CanonicalKey     string            // computed canonical key
+	CanonicalUserStr string            // computed canonical user string
+	Aliases          []string          // computed aliases
+	WorkspaceID      string            // computed workspace ID
+}
+
 type UserStrBuilder struct {
 	username  string
 	blueprint string
 	params    map[string]string
+}
+
+// IssueRefResolver defines an interface for resolving issue numbers to refs.
+type IssueRefResolver interface {
+	ResolveIssueRef(ctx context.Context, repoOwner, repoName string, issueNumber int) (ref string, err error)
+}
+
+// CanonicalizeOptions defines options for the Canonicalize method.
+type CanonicalizeOptions struct {
+	// If true and ref is present, we ignore issue for identity (issue becomes metadata/alias).
+	PreferExplicitRef bool
+
+	// If true, and issue is present with no ref, resolve issue->ref and use that ref for identity.
+	ResolveIssueToRef bool
+
+	// If true, include blueprint in the identity key.
+	IncludeBlueprintInKey bool
+}
+
+// Canonicalize computes Identity/CanonicalKey/CanonicalUserStr/Aliases.
+// This method may call the resolver if issue->ref resolution is enabled.
+func (u *UserStr) Canonicalize(ctx context.Context, r IssueRefResolver, opt CanonicalizeOptions) error {
+	owner := u.RepoOwner
+	name := u.RepoName
+
+	resolvedRef := u.RepoRef
+
+	if resolvedRef == "" && u.RepoIssue > 0 && opt.ResolveIssueToRef {
+		if r == nil {
+			return fmt.Errorf("userstr: resolver required to resolve issue->ref")
+		}
+		if owner == "" || name == "" {
+			return fmt.Errorf("userstr: cannot resolve issue->ref without repo (owner/name)")
+		}
+		ref, err := r.ResolveIssueRef(ctx, owner, name, u.RepoIssue)
+		if err != nil {
+			return fmt.Errorf("userstr: resolve issue->ref failed: %w", err)
+		}
+		resolvedRef = ref
+	}
+
+	// PreferExplicitRef: issue never affects identity if ref is given.
+	// (Issue becomes alias/metadata.) Here it’s implicit because resolvedRef is already u.RepoRef.
+	if u.RepoRef != "" && opt.PreferExplicitRef {
+		resolvedRef = u.RepoRef
+	}
+
+	blueprint := u.Blueprint
+	if blueprint == "" && owner != "" && name != "" {
+		blueprint = fmt.Sprintf("repo-%s-%s", owner, name)
+	}
+
+	u.Identity = WorkspaceIdentity{
+		Username:  u.Username,
+		Blueprint: blueprint,
+		RepoOwner: owner,
+		RepoName:  name,
+		RepoRef:   resolvedRef,
+	}
+
+	u.CanonicalKey = buildWorkspaceKey(u.Identity, opt.IncludeBlueprintInKey)
+	u.CanonicalUserStr = buildCanonicalUserStr(u.Identity)
+	u.Aliases = buildAliases(u, resolvedRef)
+	u.WorkspaceID = buildWorkspaceID(u.Username, u.CanonicalKey)
+
+	return nil
+}
+
+func shortHash(s string, n int) string {
+	h := sha256.Sum256([]byte(s))
+	return hex.EncodeToString(h[:])[:n]
+}
+
+func buildWorkspaceID(username, canonicalKey string) string {
+	const hashLen = 7
+	return fmt.Sprintf("%s-%s", username, shortHash(canonicalKey, hashLen))
+}
+
+func buildWorkspaceKey(id WorkspaceIdentity, includeBlueprint bool) string {
+	parts := []string{"u=" + id.Username}
+	if id.RepoOwner != "" && id.RepoName != "" {
+		parts = append(parts, "r="+id.RepoOwner+"/"+id.RepoName)
+	}
+	if id.RepoRef != "" {
+		parts = append(parts, "ref="+id.RepoRef)
+	}
+	if includeBlueprint && id.Blueprint != "" {
+		parts = append(parts, "bp="+id.Blueprint)
+	}
+	return strings.Join(parts, "|")
+}
+
+// BuildCanonicalUserStr builds the canonical user string from the given identity.
+func buildCanonicalUserStr(id WorkspaceIdentity) string {
+	if id.RepoOwner != "" && id.RepoName != "" {
+		b := NewUserStrWith(id.Username).
+			WithRepo(id.RepoOwner + "/" + id.RepoName)
+		if id.RepoRef != "" {
+			b.WithRef(id.RepoRef)
+		}
+		u, err := b.Build()
+		if err == nil {
+			return u.Raw
+		}
+		if id.RepoRef != "" {
+			return fmt.Sprintf("%s~repo=%s/%s+ref=%s", id.Username, id.RepoOwner, id.RepoName, url.PathEscape(id.RepoRef))
+		}
+		return fmt.Sprintf("%s~repo=%s/%s", id.Username, id.RepoOwner, id.RepoName)
+	}
+
+	if id.Blueprint != "" {
+		u, err := NewUserStrWith(id.Username).WithBlueprint(id.Blueprint).Build()
+		if err == nil {
+			return u.Raw
+		}
+		return fmt.Sprintf("%s~%s", id.Username, url.PathEscape(id.Blueprint))
+	}
+
+	return id.Username
+}
+
+// BuildAliases builds a list of aliases for the given UserStr and resolved ref.
+func buildAliases(u *UserStr, resolvedRef string) []string {
+	var aliases []string
+
+	// original raw (useful for debugging)
+	if u.Raw != "" {
+		aliases = append(aliases, "raw:"+u.Raw)
+	}
+
+	// issue-form alias key
+	if u.RepoOwner != "" && u.RepoName != "" && u.RepoIssue > 0 {
+		aliases = append(aliases, fmt.Sprintf("u=%s|r=%s/%s|issue=%d",
+			u.Username, u.RepoOwner, u.RepoName, u.RepoIssue))
+	}
+
+	// ref-form alias key (canonical)
+	if u.RepoOwner != "" && u.RepoName != "" && resolvedRef != "" {
+		aliases = append(aliases, fmt.Sprintf("u=%s|r=%s/%s|ref=%s",
+			u.Username, u.RepoOwner, u.RepoName, resolvedRef))
+	}
+
+	return aliases
 }
 
 // NewUserStr parses a user string using default length constraints.
@@ -62,18 +226,20 @@ func NewUserStr(input string) (*UserStr, error) {
 		return nil, fmt.Errorf("%w: local>%d", ErrTooLong, MAX_LOCAL_LEN)
 	}
 
-	input = strings.ToLower(strings.TrimSpace(input))
-
-	username, wsSpec, _ := cutOnce(input, "~")
+	raw := strings.TrimSpace(input)
+	usernamePart, wsSpec, _ := cutOnce(raw, "~")
+	username := strings.ToLower(strings.TrimSpace(usernamePart))
 
 	if wsSpec == "" {
 		return &UserStr{
-			Raw:       input,
+			Raw:       raw,
 			Username:  username,
 			Blueprint: "",
 			ParamsRaw: nil,
 		}, nil
 	}
+
+	wsSpec = strings.TrimSpace(wsSpec)
 
 	if !strings.Contains(wsSpec, "=") {
 		decoded, err := url.PathUnescape(wsSpec)
@@ -81,7 +247,7 @@ func NewUserStr(input string) (*UserStr, error) {
 			return nil, fmt.Errorf("userstr: blueprint percent-decode: %w", err)
 		}
 		return &UserStr{
-			Raw:       input,
+			Raw:       raw,
 			Username:  username,
 			Blueprint: decoded,
 			ParamsRaw: nil,
@@ -94,8 +260,9 @@ func NewUserStr(input string) (*UserStr, error) {
 		if p == "" {
 			return nil, fmt.Errorf("%w: empty pair", ErrBadParam)
 		}
+
 		k, v, ok := cutOnce(p, "=")
-		if !ok || k == "" {
+		if !ok || strings.TrimSpace(k) == "" {
 			return nil, fmt.Errorf("%w: %q", ErrBadParam, p)
 		}
 
@@ -103,14 +270,14 @@ func NewUserStr(input string) (*UserStr, error) {
 			return nil, fmt.Errorf("%w: unescaped '=' in value: %q", ErrBadParam, p)
 		}
 
-		k = strings.ToLower(k)
+		k = strings.ToLower(strings.TrimSpace(k))
 
-		val, err := url.PathUnescape(v)
+		val, err := url.PathUnescape(strings.TrimSpace(v))
 		if err != nil {
 			return nil, fmt.Errorf("%w: value decode failed for key %q: %v", ErrBadParam, k, err)
 		}
 
-		params[k] = val
+		params[k] = strings.ToLower(val)
 	}
 
 	var repoIssue int
@@ -123,7 +290,8 @@ func NewUserStr(input string) (*UserStr, error) {
 	}
 
 	var repoName string
-	var repoOwner string = username
+	repoOwner := username
+
 	if repo := params["repo"]; repo != "" {
 		if owner, name, found := cutOnce(repo, "/"); found {
 			repoOwner = owner
@@ -136,21 +304,20 @@ func NewUserStr(input string) (*UserStr, error) {
 		repoOwner = owner
 	}
 
-	var blueprintName = ""
+	blueprintName := ""
 	if repoOwner != "" && repoName != "" {
 		blueprintName = fmt.Sprintf("repo-%s-%s", repoOwner, repoName)
 	}
 
 	return &UserStr{
-		Raw:                input,
-		Username:           username,
-		Blueprint:          blueprintName,
-		ParamsRaw:          params,
-		RepoName:           repoName,
-		RepoOwner:          repoOwner,
-		RepoRef:            params["ref"],
-		RepoIssue:          repoIssue,
-		HasCustomBlueprint: blueprintName != "",
+		Raw:       raw,
+		Username:  username,
+		Blueprint: blueprintName,
+		ParamsRaw: params,
+		RepoName:  repoName,
+		RepoOwner: repoOwner,
+		RepoRef:   params["ref"],
+		RepoIssue: repoIssue,
 	}, nil
 }
 
@@ -168,7 +335,7 @@ func cutOnce(s, sep string) (string, string, bool) {
 // NewUserStrWith starts building a UserStr for the given username.
 func NewUserStrWith(username string) *UserStrBuilder {
 	return &UserStrBuilder{
-		username: username,
+		username: strings.ToLower(strings.TrimSpace(username)),
 		params:   make(map[string]string),
 	}
 }
@@ -194,7 +361,7 @@ func (b *UserStrBuilder) WithRef(ref string) *UserStrBuilder {
 }
 
 func (b *UserStrBuilder) WithParam(key, value string) *UserStrBuilder {
-	b.params[strings.ToLower(key)] = value
+	b.params[strings.ToLower(strings.TrimSpace(key))] = value
 	return b
 }
 
@@ -205,8 +372,15 @@ func (b *UserStrBuilder) Build() (*UserStr, error) {
 	if b.blueprint != "" && len(b.params) == 0 {
 		raw = fmt.Sprintf("%s~%s", b.username, url.PathEscape(b.blueprint))
 	} else if len(b.params) > 0 {
-		var parts []string
-		for k, v := range b.params {
+		keys := make([]string, 0, len(b.params))
+		for k := range b.params {
+			keys = append(keys, strings.ToLower(k))
+		}
+		sort.Strings(keys)
+
+		parts := make([]string, 0, len(keys))
+		for _, k := range keys {
+			v := b.params[k]
 			parts = append(parts, fmt.Sprintf("%s=%s", strings.ToLower(k), url.PathEscape(v)))
 		}
 		raw = fmt.Sprintf("%s~%s", b.username, strings.Join(parts, "+"))
