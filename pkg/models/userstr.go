@@ -102,7 +102,8 @@ type UserStrBuilder struct {
 
 // IssueRefResolver defines an interface for resolving issue numbers to refs.
 type IssueRefResolver interface {
-	ResolveIssueRef(ctx context.Context, repoOwner, repoName string, issueNumber int) (ref string, err error)
+	ResolveIssueRef(ctx context.Context, username string, repoOwner, repoName string,
+		issueNumber int) (ref string, err error)
 }
 
 // CanonicalizeOptions defines options for the Canonicalize method.
@@ -140,7 +141,7 @@ func (u *UserStr) Canonicalize(ctx context.Context, r IssueRefResolver) (*Canoni
 		if owner == "" || name == "" {
 			return nil, fmt.Errorf("userstr: cannot resolve issue->ref without repo (owner/name)")
 		}
-		ref, err := r.ResolveIssueRef(ctx, owner, name, u.RepoIssue)
+		ref, err := r.ResolveIssueRef(ctx, u.Username, owner, name, u.RepoIssue)
 		if err != nil {
 			return nil, fmt.Errorf("userstr: resolve issue->ref failed: %w", err)
 		}

@@ -10,7 +10,8 @@ type fakeIssueResolver struct {
 	err error
 }
 
-func (f fakeIssueResolver) ResolveIssueRef(ctx context.Context, repoOwner, repoName string, issueNumber int) (string, error) {
+func (f fakeIssueResolver) ResolveIssueRef(ctx context.Context, username string, repoOwner, repoName string,
+	issueNumber int) (string, error) {
 	return f.ref, f.err
 }
 
