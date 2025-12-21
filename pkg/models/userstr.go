@@ -34,7 +34,6 @@ import (
 )
 
 const (
-	MAX_LOCAL_LEN = 64
 	MAX_TOTAL_LEN = 128
 )
 
@@ -268,10 +267,6 @@ func buildAliases(u *UserStr, resolvedRef string) []string {
 func NewUserStr(input string) (*UserStr, error) {
 	if MAX_TOTAL_LEN > 0 && utf8.RuneCountInString(input) > MAX_TOTAL_LEN {
 		return nil, fmt.Errorf("%w: total>%d", ErrTooLong, MAX_TOTAL_LEN)
-	}
-
-	if MAX_LOCAL_LEN > 0 && utf8.RuneCountInString(input) > MAX_LOCAL_LEN {
-		return nil, fmt.Errorf("%w: local>%d", ErrTooLong, MAX_LOCAL_LEN)
 	}
 
 	raw := strings.TrimSpace(input)
