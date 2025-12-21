@@ -80,9 +80,8 @@ message WorkspaceStatus {
   string host = 6;
   string pod_ip = 7;
   int32 port = 8;
-  string access_key = 9;
-  string tls_cert = 10;
-  string splash = 11;
+  bool tls_enabled = 9;
+  string splash = 10;
 }
 
 // WorkspaceInfo represents the information of a workspace

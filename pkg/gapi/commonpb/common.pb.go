@@ -622,9 +622,8 @@ type WorkspaceStatus struct {
 	Host          string                 `protobuf:"bytes,6,opt,name=host,proto3" json:"host,omitempty"`
 	PodIp         string                 `protobuf:"bytes,7,opt,name=pod_ip,json=podIp,proto3" json:"pod_ip,omitempty"`
 	Port          int32                  `protobuf:"varint,8,opt,name=port,proto3" json:"port,omitempty"`
-	AccessKey     string                 `protobuf:"bytes,9,opt,name=access_key,json=accessKey,proto3" json:"access_key,omitempty"`
-	TlsCert       string                 `protobuf:"bytes,10,opt,name=tls_cert,json=tlsCert,proto3" json:"tls_cert,omitempty"`
-	Splash        string                 `protobuf:"bytes,11,opt,name=splash,proto3" json:"splash,omitempty"`
+	TlsEnabled    bool                   `protobuf:"varint,9,opt,name=tls_enabled,json=tlsEnabled,proto3" json:"tls_enabled,omitempty"`
+	Splash        string                 `protobuf:"bytes,10,opt,name=splash,proto3" json:"splash,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -715,18 +714,11 @@ func (x *WorkspaceStatus) GetPort() int32 {
 	return 0
 }
 
-func (x *WorkspaceStatus) GetAccessKey() string {
+func (x *WorkspaceStatus) GetTlsEnabled() bool {
 	if x != nil {
-		return x.AccessKey
+		return x.TlsEnabled
 	}
-	return ""
-}
-
-func (x *WorkspaceStatus) GetTlsCert() string {
-	if x != nil {
-		return x.TlsCert
-	}
-	return ""
+	return false
 }
 
 func (x *WorkspaceStatus) GetSplash() string {
@@ -891,7 +883,7 @@ const file_pkg_gapi_common_proto_rawDesc = "" +
 	"\tPodStatus\x124\n" +
 	"\acreated\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\acreated\x12\x16\n" +
 	"\x06status\x18\x02 \x01(\tR\x06status\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessage\"\xc3\x02\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage\"\xaa\x02\n" +
 	"\x0fWorkspaceStatus\x120\n" +
 	"\n" +
 	"pod_status\x18\x01 \x01(\v2\x11.common.PodStatusR\tpodStatus\x12\x1f\n" +
@@ -902,12 +894,11 @@ const file_pkg_gapi_common_proto_rawDesc = "" +
 	"\tblueprint\x18\x05 \x01(\tR\tblueprint\x12\x12\n" +
 	"\x04host\x18\x06 \x01(\tR\x04host\x12\x15\n" +
 	"\x06pod_ip\x18\a \x01(\tR\x05podIp\x12\x12\n" +
-	"\x04port\x18\b \x01(\x05R\x04port\x12\x1d\n" +
-	"\n" +
-	"access_key\x18\t \x01(\tR\taccessKey\x12\x19\n" +
-	"\btls_cert\x18\n" +
-	" \x01(\tR\atlsCert\x12\x16\n" +
-	"\x06splash\x18\v \x01(\tR\x06splash\"\xe9\x01\n" +
+	"\x04port\x18\b \x01(\x05R\x04port\x12\x1f\n" +
+	"\vtls_enabled\x18\t \x01(\bR\n" +
+	"tlsEnabled\x12\x16\n" +
+	"\x06splash\x18\n" +
+	" \x01(\tR\x06splash\"\xe9\x01\n" +
 	"\rWorkspaceInfo\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x1c\n" +

@@ -256,8 +256,7 @@ func WorkspaceStatusToProto(m *models.WorkspaceStatus) *commonpb.WorkspaceStatus
 		Host:       m.Host,
 		PodIp:      m.PodIP,
 		Port:       int32(m.Port),
-		AccessKey:  m.AccessKey,
-		TlsCert:    m.TLSCert,
+		TlsEnabled: m.TLSEnabled,
 		Splash:     m.Splash,
 		AppVersion: m.AppVersion,
 	}
@@ -277,8 +276,7 @@ func ProtoToWorkspaceStatus(pb *commonpb.WorkspaceStatus) *models.WorkspaceStatu
 		Host:       pb.GetHost(),
 		PodIP:      pb.GetPodIp(),
 		Port:       int(pb.GetPort()),
-		AccessKey:  pb.GetAccessKey(),
-		TLSCert:    pb.GetTlsCert(),
+		TLSEnabled: pb.GetTlsEnabled(),
 		Splash:     pb.GetSplash(),
 		AppVersion: pb.GetAppVersion(),
 	}
