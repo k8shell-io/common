@@ -110,7 +110,7 @@ func (c *NATSClient) Close() {
 	}
 }
 
-// Fetch: same semantics as before, now on top of JS KV.
+// Fetch retrieves a value from cache by key.
 // On miss, calls fetch(), caches result with TTL, and returns it.
 func Fetch[T any](ctx context.Context, cache *JetStreamKV, key string,
 	fetch func(context.Context) (T, error),
