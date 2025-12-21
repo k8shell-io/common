@@ -29,6 +29,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"unicode/utf8"
 )
 
@@ -104,6 +105,15 @@ type IssueRepoRefResolver interface {
 	ResolveIssueRepoRef(username string, repoOwner, repoName string, issueNumber int) (ref string, err error)
 }
 
+var issueRefResolver IssueRepoRefResolver
+var mu = &sync.Mutex{}
+
+func SetIssueRepoRefResolver(resolver IssueRepoRefResolver) {
+	mu.Lock()
+	defer mu.Unlock()
+	issueRefResolver = resolver
+}
+
 // CanonicalizeOptions defines options for the Canonicalize method.
 type CanonicalizeOptions struct {
 	// If true and ref is present, we ignore issue for identity (issue becomes metadata/alias).
@@ -118,7 +128,7 @@ type CanonicalizeOptions struct {
 
 // Canonicalize computes Identity/CanonicalKey/CanonicalUserStr/Aliases.
 // This method may call the resolver if issue->ref resolution is enabled.
-func (u *UserStr) Canonicalize(r IssueRepoRefResolver) (*CanonicalUserStr, error) {
+func (u *UserStr) Canonicalize() (*CanonicalUserStr, error) {
 	owner := u.RepoOwner
 	name := u.RepoName
 
@@ -127,12 +137,13 @@ func (u *UserStr) Canonicalize(r IssueRepoRefResolver) (*CanonicalUserStr, error
 		ResolveIssueToRef:     true,
 		IncludeBlueprintInKey: true,
 	}
-	if r == nil {
-		opt.ResolveIssueToRef = false
-	}
 
 	resolvedRef := u.RepoRef
 	if resolvedRef == "" && u.RepoIssue > 0 && opt.ResolveIssueToRef {
+		mu.Lock()
+		r := issueRefResolver
+		mu.Unlock()
+
 		if r == nil {
 			return nil, fmt.Errorf("userstr: resolver required to resolve issue->ref")
 		}
