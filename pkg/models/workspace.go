@@ -36,8 +36,7 @@ type WorkspaceStatus struct {
 	Host       string `json:"host"`
 	PodIP      string `json:"podIP"`
 	Port       int    `json:"port"`
-	AccessKey  string `json:"accessKey"`
-	TLSCert    string `json:"tlsCert"`
+	TLSEnabled bool   `json:"tlsEnabled"`
 	Splash     string `json:"splash"`
 }
 
