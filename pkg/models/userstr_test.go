@@ -43,8 +43,8 @@ func TestDirectBlueprint(t *testing.T) {
 	if cu.CanonicalUserStr == "" {
 		t.Fatalf("expected canonical userstr")
 	}
-	if cu.WorkspaceID == "" {
-		t.Fatalf("expected workspace id")
+	if cu.WorkspaceName == "" {
+		t.Fatalf("expected workspace name")
 	}
 }
 
@@ -81,8 +81,8 @@ func TestParams1(t *testing.T) {
 	if cu.CanonicalUserStr == "" {
 		t.Fatalf("expected canonical userstr")
 	}
-	if cu.WorkspaceID == "" {
-		t.Fatalf("expected workspace id")
+	if cu.WorkspaceName == "" {
+		t.Fatalf("expected workspace name")
 	}
 }
 
@@ -128,8 +128,8 @@ func TestParams2_IssueOnly_ResolvesToRef(t *testing.T) {
 		t.Fatalf("expected issue alias %q, got: %+v", wantIssueAlias, cu.Aliases)
 	}
 
-	if cu.WorkspaceID == "" {
-		t.Fatalf("expected workspace id")
+	if cu.WorkspaceName == "" {
+		t.Fatalf("expected workspace name")
 	}
 }
 
@@ -152,8 +152,8 @@ func TestNoSpec(t *testing.T) {
 	if cu.CanonicalKey != "u=alice" {
 		t.Fatalf("unexpected canonical key: %q", cu.CanonicalKey)
 	}
-	if cu.WorkspaceID == "" {
-		t.Fatalf("expected workspace id")
+	if cu.WorkspaceName == "" {
+		t.Fatalf("expected workspace name")
 	}
 }
 
