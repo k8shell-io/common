@@ -86,11 +86,12 @@ type UserStr struct {
 }
 
 type CanonicalUserStr struct {
-	Identity         WorkspaceIdentity
-	CanonicalKey     string
-	CanonicalUserStr string
-	Aliases          []string
-	WorkspaceName    string
+	Identity            WorkspaceIdentity // canonical workspace identity
+	CanonicalKey        string            // canonical workspace key
+	CanonicalUserStr    string            // canonical user string
+	CanonicalUserStrObj *UserStr          // parsed canonical user string
+	Aliases             []string          // list of alias keys
+	WorkspaceName       string            // generated workspace name
 }
 
 type UserStrBuilder struct {
@@ -182,6 +183,12 @@ func (u *UserStr) Canonicalize() (*CanonicalUserStr, error) {
 	canonicalUserStr.CanonicalUserStr = buildCanonicalUserStr(&canonicalUserStr.Identity)
 	canonicalUserStr.Aliases = buildAliases(u, resolvedRef)
 	canonicalUserStr.WorkspaceName = buildWorkspaceName(u.Username, canonicalUserStr.CanonicalKey)
+
+	var err error
+	canonicalUserStr.CanonicalUserStrObj, err = NewUserStr(canonicalUserStr.CanonicalUserStr)
+	if err != nil {
+		return nil, fmt.Errorf("userstr: failed to parse canonical userstr: %w", err)
+	}
 
 	return canonicalUserStr, nil
 }
