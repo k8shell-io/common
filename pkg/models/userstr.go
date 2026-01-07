@@ -14,10 +14,10 @@
 //
 // Notes (canonicalization):
 //   - Parsing is pure and deterministic.
-//   - Canonicalize() optionally resolves issue/pullrequest to ref via RefResolver and computes
+//   - Canonicalize() optionally resolves pullrequest to ref via RefResolver and computes
 //     Identity + CanonicalKey + CanonicalUserStr + Aliases.
 //   - Workspace identity should be based on (user, repo, resolved ref, optionally blueprint).
-//     Issue/PR are treated as metadata/alias, not identity.
+//     PR are treated as metadata/alias, not identity.
 package models
 
 import (
@@ -89,7 +89,6 @@ type UserStr struct {
 	RepoName      string            // repository name
 	RepoOwner     string            // repository owner
 	RepoRef       string            // repository reference (branch/tag)
-	RepoIssue     int               // repository issue number
 	RepoPullReq   int               // repository pull request number
 }
 
@@ -108,9 +107,8 @@ type UserStrBuilder struct {
 	params    map[string]string
 }
 
-// RefResolver defines an interface for resolving issue/PR numbers to refs.
+// RefResolver defines an interface for resolving PR numbers to refs.
 type RefResolver interface {
-	ResolveIssueRef(username string, repoOwner, repoName string, issueNumber int) (ref string, err error)
 	ResolvePullRequestRef(username string, repoOwner, repoName string, pullRequestNumber int) (ref string, err error)
 }
 
@@ -125,9 +123,6 @@ func SetRefResolver(resolver RefResolver) {
 
 // CanonicalizeOptions defines options for the Canonicalize method.
 type CanonicalizeOptions struct {
-	// If true, and issue is present with no ref, resolve issue to ref and use that ref for identity.
-	ResolveIssueToRef bool
-
 	// If true, and pullrequest is present with no ref, resolve pullrequest to ref and use that ref for identity.
 	ResolvePullRequestToRef bool
 
@@ -136,43 +131,22 @@ type CanonicalizeOptions struct {
 }
 
 // Canonicalize computes Identity/CanonicalKey/CanonicalUserStr/Aliases.
-// This method may call the resolver if issue/pr to ref resolution is enabled.
+// This method may call the resolver if pr to ref resolution is enabled.
 func (u *UserStr) Canonicalize() (*CanonicalUserStr, error) {
 	owner := u.RepoOwner
 	name := u.RepoName
 
 	opt := CanonicalizeOptions{
-		ResolveIssueToRef:       true,
 		ResolvePullRequestToRef: true,
 		IncludeBlueprintInKey:   true,
 	}
 
-	// enforce: at most one of issue/pr/ref
-	if (u.RepoIssue > 0 && u.RepoPullReq > 0) ||
-		(u.RepoRef != "" && u.RepoIssue > 0) ||
-		(u.RepoRef != "" && u.RepoPullReq > 0) {
-		return nil, fmt.Errorf("userstr: cannot specify more than one of ref, issue, pullrequest")
+	// enforce: at most one of pr/ref
+	if u.RepoRef != "" && u.RepoPullReq > 0 {
+		return nil, fmt.Errorf("userstr: cannot specify more than one of ref, pullrequest")
 	}
 
 	resolvedRef := u.RepoRef
-	if resolvedRef == "" && u.RepoIssue > 0 && opt.ResolveIssueToRef {
-		mu.Lock()
-		r := refResolver
-		mu.Unlock()
-
-		if r == nil {
-			return nil, fmt.Errorf("userstr: resolver required to resolve issue to ref")
-		}
-		if owner == "" || name == "" {
-			return nil, fmt.Errorf("userstr: cannot resolve issue to ref without repo (owner/name)")
-		}
-		ref, err := r.ResolveIssueRef(u.Username, owner, name, u.RepoIssue)
-		if err != nil {
-			return nil, fmt.Errorf("userstr: resolve issue to ref failed: %w", err)
-		}
-		resolvedRef = ref
-	}
-
 	if resolvedRef == "" && u.RepoPullReq > 0 && opt.ResolvePullRequestToRef {
 		mu.Lock()
 		r := refResolver
@@ -282,11 +256,6 @@ func buildAliases(u *UserStr, resolvedRef string) []string {
 		aliases = append(aliases, "raw:"+u.Raw)
 	}
 
-	if u.RepoOwner != "" && u.RepoName != "" && u.RepoIssue > 0 {
-		aliases = append(aliases, fmt.Sprintf("u=%s|r=%s/%s|issue=%d",
-			u.Username, u.RepoOwner, u.RepoName, u.RepoIssue))
-	}
-
 	if u.RepoOwner != "" && u.RepoName != "" && u.RepoPullReq > 0 {
 		aliases = append(aliases, fmt.Sprintf("u=%s|r=%s/%s|pr=%d",
 			u.Username, u.RepoOwner, u.RepoName, u.RepoPullReq))
@@ -381,15 +350,6 @@ func newUserStr(input string, depth int) (*UserStr, error) {
 		params[k] = strings.ToLower(val)
 	}
 
-	var repoIssue int
-	if issue := params["issue"]; issue != "" {
-		var err error
-		repoIssue, err = strconv.Atoi(issue)
-		if err != nil {
-			return nil, fmt.Errorf("userstr: issue must be an integer")
-		}
-	}
-
 	var repoPullReq int
 	if repoPullReq == 0 {
 		if pr := params["pr"]; pr != "" {
@@ -403,10 +363,8 @@ func newUserStr(input string, depth int) (*UserStr, error) {
 
 	repoRef := params["ref"]
 
-	if (repoIssue > 0 && repoPullReq > 0) ||
-		(repoRef != "" && repoIssue > 0) ||
-		(repoRef != "" && repoPullReq > 0) {
-		return nil, fmt.Errorf("userstr: cannot specify more than one of ref, issue, pr")
+	if repoRef != "" && repoPullReq > 0 {
+		return nil, fmt.Errorf("userstr: cannot specify more than one of ref, pr")
 	}
 
 	var repoName string
@@ -442,7 +400,6 @@ func newUserStr(input string, depth int) (*UserStr, error) {
 		RepoName:      repoName,
 		RepoOwner:     repoOwner,
 		RepoRef:       repoRef,
-		RepoIssue:     repoIssue,
 		RepoPullReq:   repoPullReq,
 	}, nil
 }
@@ -535,9 +492,6 @@ func (u *UserStr) Labels() map[string]string {
 	}
 	if u.RepoRef != "" {
 		lbls["k8shell.io/ref"] = u.RepoRef
-	}
-	if u.RepoIssue > 0 {
-		lbls["k8shell.io/issue"] = strconv.Itoa(u.RepoIssue)
 	}
 	if u.RepoPullReq > 0 {
 		lbls["k8shell.io/pullrequest"] = strconv.Itoa(u.RepoPullReq)

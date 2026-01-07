@@ -32,7 +32,7 @@ func TestDirectBlueprint(t *testing.T) {
 	if r.Blueprint != "dev" {
 		t.Fatalf("unexpected blueprint: %+v", r.Blueprint)
 	}
-	if r.ParamsRaw != nil || r.RepoName != "" || r.RepoOwner != "" || r.RepoRef != "" || r.RepoIssue != 0 || r.RepoPullReq != 0 {
+	if r.ParamsRaw != nil || r.RepoName != "" || r.RepoOwner != "" || r.RepoRef != "" || r.RepoPullReq != 0 {
 		t.Fatalf("expected nil params: %+v", r)
 	}
 
@@ -107,9 +107,6 @@ func TestParams2_IssueOnly_ResolvesToRef(t *testing.T) {
 	if r.RepoName != "projectx" || r.ParamsRaw["repo"] != "alice/projectx" {
 		t.Fatalf("repo decode failed: repoName=%q paramsRepo=%q", r.RepoName, r.ParamsRaw["repo"])
 	}
-	if r.RepoIssue != 22 || r.ParamsRaw["issue"] != "22" {
-		t.Fatalf("issue decode failed: repoIssue=%d paramsIssue=%q", r.RepoIssue, r.ParamsRaw["issue"])
-	}
 	if r.RepoRef != "" {
 		t.Fatalf("expected empty ref when issue is specified: %+v", r)
 	}
@@ -158,9 +155,6 @@ func TestParams3_PullRequestOnly_ResolvesToRef(t *testing.T) {
 	}
 	if r.RepoPullReq != 7 || r.ParamsRaw["pr"] != "7" {
 		t.Fatalf("pullrequest decode failed: repoPullReq=%d paramsPr=%q", r.RepoPullReq, r.ParamsRaw["pr"])
-	}
-	if r.RepoIssue != 0 {
-		t.Fatalf("expected issue=0 when pullrequest is specified: %+v", r)
 	}
 	if r.RepoRef != "" {
 		t.Fatalf("expected empty ref when pullrequest is specified: %+v", r)
@@ -230,7 +224,8 @@ func TestNoSpec(t *testing.T) {
 	if r.Username != "alice" {
 		t.Fatalf("unexpected: %+v", r)
 	}
-	if r.Blueprint != "" || r.ParamsRaw != nil || r.RepoName != "" || r.RepoOwner != "" || r.RepoRef != "" || r.RepoIssue != 0 || r.RepoPullReq != 0 {
+	if r.Blueprint != "" || r.ParamsRaw != nil || r.RepoName != "" || r.RepoOwner != "" || r.RepoRef != "" ||
+		r.RepoPullReq != 0 {
 		t.Fatalf("expected nil bp/params: %+v", r)
 	}
 
