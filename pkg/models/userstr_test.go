@@ -22,7 +22,7 @@ func (f fakeRefResolver) ResolvePullRequestRef(username string, repoOwner, repoN
 }
 
 func TestDirectBlueprint(t *testing.T) {
-	r, err := NewUserStr("tomas~dev")
+	r, err := NewUserStr("tomas~dev", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -58,7 +58,7 @@ func TestDirectBlueprint(t *testing.T) {
 func TestParams3_PullRequestOnly_ResolvesToRef(t *testing.T) {
 	SetRefResolver(nil)
 
-	r, err := NewUserStr("bob~repo=alice/projectX+pr=7")
+	r, err := NewUserStr("bob~repo=alice/projectX+pr=7", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -97,7 +97,7 @@ func TestParams3_PullRequestOnly_ResolvesToRef(t *testing.T) {
 }
 
 func TestParams4_PRShorthand_Parses(t *testing.T) {
-	r, err := NewUserStr("bob~repo=alice/projectx+pr=9")
+	r, err := NewUserStr("bob~repo=alice/projectx+pr=9", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -110,7 +110,7 @@ func TestB64Option(t *testing.T) {
 	plain := "tomas~repo=org/svc+ref=feat%2Fabc+ref=ref123"
 	token := "b64-" + base64.RawURLEncoding.EncodeToString([]byte(plain))
 
-	r, err := NewUserStr(token)
+	r, err := NewUserStr(token, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -127,7 +127,7 @@ func TestB64Option(t *testing.T) {
 }
 
 func TestNoSpec(t *testing.T) {
-	r, err := NewUserStr("alice")
+	r, err := NewUserStr("alice", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -152,29 +152,29 @@ func TestNoSpec(t *testing.T) {
 }
 
 func TestErrors(t *testing.T) {
-	_, err := NewUserStr("noat")
+	_, err := NewUserStr("noat", false)
 	if err != nil {
 		t.Fatal("expected user")
 	}
-	_, err = NewUserStr("u~a=b=c@h")
+	_, err = NewUserStr("u~a=b=c@h", false)
 	if err == nil {
 		t.Fatal("expected error for malformed kv")
 	}
 
 	// mutual exclusion: cannot specify both issue and pullrequest
-	_, err = NewUserStr("u~repo=a/b+issue=1+pr=2")
+	_, err = NewUserStr("u~repo=a/b+issue=1+pr=2", false)
 	if err == nil {
 		t.Fatal("expected error for issue+pullrequest")
 	}
 
 	// mutual exclusion: cannot specify ref with issue
-	_, err = NewUserStr("u~repo=a/b+ref=main+issue=1")
+	_, err = NewUserStr("u~repo=a/b+ref=main+issue=1", false)
 	if err == nil {
 		t.Fatal("expected error for ref+issue")
 	}
 
 	// mutual exclusion: cannot specify ref with pullrequest
-	_, err = NewUserStr("u~repo=a/b+ref=main+pr=2")
+	_, err = NewUserStr("u~repo=a/b+ref=main+pr=2", false)
 	if err == nil {
 		t.Fatal("expected error for ref+pr")
 	}

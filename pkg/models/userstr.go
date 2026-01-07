@@ -85,15 +85,16 @@ type WorkspaceIdentity struct {
 }
 
 type UserStr struct {
-	Raw           string            // original raw input
-	Username      string            // normalized username
-	Blueprint     string            // computed blueprint name
-	BlueprintKind BlueprintKind     // kind of blueprint used
-	ParamsRaw     map[string]string // raw params map
-	RepoName      string            // repository name
-	RepoOwner     string            // repository owner
-	RepoRef       string            // repository reference (branch/tag)
-	RepoPullReq   int               // repository pull request number
+	Raw             string            // original raw input
+	Username        string            // normalized username
+	Blueprint       string            // computed blueprint name
+	BlueprintKind   BlueprintKind     // kind of blueprint used
+	ParamsRaw       map[string]string // raw params map
+	RepoName        string            // repository name
+	RepoOwner       string            // repository owner
+	RepoRef         string            // repository reference (branch/tag)
+	RepoPullReq     int               // repository pull request number
+	ValidationError error             // validation error, if any
 }
 
 type CanonicalUserStr struct {
@@ -191,7 +192,7 @@ func (u *UserStr) Canonicalize() (*CanonicalUserStr, error) {
 	canonicalUserStr.WorkspaceName = buildWorkspaceName(u.Username, canonicalUserStr.CanonicalKey)
 
 	var err error
-	canonicalUserStr.CanonicalUserStrObj, err = NewUserStr(canonicalUserStr.CanonicalUserStr)
+	canonicalUserStr.CanonicalUserStrObj, err = NewUserStr(canonicalUserStr.CanonicalUserStr, false)
 	if err != nil {
 		return nil, fmt.Errorf("userstr: failed to parse canonical userstr: %w", err)
 	}
@@ -275,27 +276,31 @@ func buildAliases(u *UserStr, resolvedRef string) []string {
 
 // NewUserStr parses a user string using default length constraints.
 // If input is base64-form (e.g. b64-...), it is decoded to a real userstr first.
-func NewUserStr(input string) (*UserStr, error) {
-	return newUserStr(input, 0)
+func NewUserStr(input string, allowInvalid bool) (*UserStr, error) {
+	return newUserStr(input, 0, allowInvalid)
 }
 
 // newUserStr is the internal recursive parser with depth control.
-func newUserStr(input string, depth int) (*UserStr, error) {
+func newUserStr(input string, depth int, allowInvalid bool) (*UserStr, error) {
 	if depth > 2 {
 		return nil, fmt.Errorf("userstr: too many resolution steps")
 	}
 
+	var validationError error = nil
 	rawTrimmed := strings.TrimSpace(input)
 
 	if decoded, ok, err := tryDecodeB64UserStrToken(rawTrimmed); ok {
 		if err != nil {
 			return nil, fmt.Errorf("%w: %v", ErrB64UserStrInvalid, err)
 		}
-		return newUserStr(decoded, depth+1)
+		return newUserStr(decoded, depth+1, allowInvalid)
 	}
 
 	if MAX_TOTAL_LEN > 0 && utf8.RuneCountInString(rawTrimmed) > MAX_TOTAL_LEN {
-		return nil, fmt.Errorf("%w: total>%d", ErrTooLong, MAX_TOTAL_LEN)
+		validationError = fmt.Errorf("%w: raw>%d", ErrTooLong, MAX_TOTAL_LEN)
+		if !allowInvalid {
+			return nil, validationError
+		}
 	}
 
 	raw := rawTrimmed
@@ -304,11 +309,12 @@ func newUserStr(input string, depth int) (*UserStr, error) {
 
 	if wsSpec == "" {
 		return &UserStr{
-			Raw:           raw,
-			Username:      username,
-			Blueprint:     "",
-			BlueprintKind: BlueprintKindImplicit,
-			ParamsRaw:     nil,
+			Raw:             raw,
+			Username:        username,
+			Blueprint:       "",
+			BlueprintKind:   BlueprintKindImplicit,
+			ParamsRaw:       nil,
+			ValidationError: validationError,
 		}, nil
 	}
 
@@ -317,14 +323,19 @@ func newUserStr(input string, depth int) (*UserStr, error) {
 	if !strings.Contains(wsSpec, "=") {
 		decoded, err := url.PathUnescape(wsSpec)
 		if err != nil {
-			return nil, fmt.Errorf("userstr: blueprint percent-decode: %w", err)
+			validationError = fmt.Errorf("%w: blueprint percent-decode: %v", ErrBadParam, err)
+			if !allowInvalid {
+				return nil, validationError
+			}
+			decoded = ""
 		}
 		return &UserStr{
-			Raw:           raw,
-			Username:      username,
-			Blueprint:     decoded,
-			BlueprintKind: BlueprintKindExplicit,
-			ParamsRaw:     nil,
+			Raw:             raw,
+			Username:        username,
+			Blueprint:       decoded,
+			BlueprintKind:   BlueprintKindExplicit,
+			ParamsRaw:       nil,
+			ValidationError: validationError,
 		}, nil
 	}
 
@@ -332,27 +343,47 @@ func newUserStr(input string, depth int) (*UserStr, error) {
 	params := make(map[string]string, len(pairs))
 	for _, p := range pairs {
 		if p == "" {
-			return nil, fmt.Errorf("%w: empty pair", ErrBadParam)
+			validationError = fmt.Errorf("%w: empty pair", ErrBadParam)
+			if !allowInvalid {
+				return nil, validationError
+			}
+			continue
 		}
 
 		k, v, ok := cutOnce(p, "=")
 		if !ok || strings.TrimSpace(k) == "" {
-			return nil, fmt.Errorf("%w: %q", ErrBadParam, p)
+			validationError = fmt.Errorf("%w: %q", ErrBadParam, p)
+			if !allowInvalid {
+				return nil, validationError
+			}
+			continue
 		}
 
 		if strings.Contains(v, "=") {
-			return nil, fmt.Errorf("%w: unescaped '=' in value: %q", ErrBadParam, p)
+			validationError = fmt.Errorf("%w: unescaped '=' in value: %q", ErrBadParam, p)
+			if !allowInvalid {
+				return nil, validationError
+			}
+			continue
 		}
 
 		k = strings.ToLower(strings.TrimSpace(k))
 
 		val, err := url.PathUnescape(strings.TrimSpace(v))
 		if err != nil {
-			return nil, fmt.Errorf("%w: value decode failed for key %q: %v", ErrBadParam, k, err)
+			validationError = fmt.Errorf("%w: value decode failed for key %q: %v", ErrBadParam, k, err)
+			if !allowInvalid {
+				return nil, validationError
+			}
+			continue
 		}
 
 		if !slices.Contains(AllowedParams, k) {
-			return nil, fmt.Errorf("userstr: unsupported param key: %q", k)
+			validationError = fmt.Errorf("userstr: invalid param key: %q", k)
+			if !allowInvalid {
+				return nil, validationError
+			}
+			continue
 		}
 
 		params[k] = strings.ToLower(val)
@@ -364,14 +395,20 @@ func newUserStr(input string, depth int) (*UserStr, error) {
 			var err error
 			repoPullReq, err = strconv.Atoi(pr)
 			if err != nil {
-				return nil, fmt.Errorf("userstr: pr must be an integer")
+				validationError = fmt.Errorf("%w: pr must be an integer", ErrBadParam)
+				if !allowInvalid {
+					return nil, validationError
+				}
 			}
 		}
 	}
 
 	repoRef := params["ref"]
 	if repoRef != "" && repoPullReq > 0 {
-		return nil, fmt.Errorf("userstr: cannot specify more than one of ref, pr")
+		validationError = fmt.Errorf("%w: cannot specify more than one of ref, pr", ErrBadParam)
+		if !allowInvalid {
+			return nil, validationError
+		}
 	}
 
 	var repoName string
@@ -392,19 +429,23 @@ func newUserStr(input string, depth int) (*UserStr, error) {
 	}
 
 	if blueprintName == "" {
-		return nil, fmt.Errorf("userstr: blueprint could not be determined")
+		validationError = fmt.Errorf("%w: blueprint could not be determined", ErrBadParam)
+		if !allowInvalid {
+			return nil, validationError
+		}
 	}
 
 	return &UserStr{
-		Raw:           raw,
-		Username:      username,
-		Blueprint:     blueprintName,
-		BlueprintKind: BlueprintKindCustom,
-		ParamsRaw:     params,
-		RepoName:      repoName,
-		RepoOwner:     repoOwner,
-		RepoRef:       repoRef,
-		RepoPullReq:   repoPullReq,
+		Raw:             raw,
+		Username:        username,
+		Blueprint:       blueprintName,
+		BlueprintKind:   BlueprintKindCustom,
+		ParamsRaw:       params,
+		RepoName:        repoName,
+		RepoOwner:       repoOwner,
+		RepoRef:         repoRef,
+		RepoPullReq:     repoPullReq,
+		ValidationError: validationError,
 	}, nil
 }
 
@@ -470,7 +511,7 @@ func (b *UserStrBuilder) Build() (*UserStr, error) {
 		raw = b.username
 	}
 
-	return NewUserStr(raw)
+	return NewUserStr(raw, false)
 }
 
 // Labels returns Kubernetes/Helm-safe labels derived from the UserStr.
