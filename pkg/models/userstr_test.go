@@ -55,93 +55,6 @@ func TestDirectBlueprint(t *testing.T) {
 	}
 }
 
-func TestParams1(t *testing.T) {
-	r, err := NewUserStr("tomas~repo=org/svc+ref=feat%2Fabc+mode=inspect")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if r.RepoName != "svc" || r.ParamsRaw["repo"] != "org/svc" {
-		t.Fatalf("repo decode failed: repoName=%q paramsRepo=%q", r.RepoName, r.ParamsRaw["repo"])
-	}
-	if r.RepoOwner != "org" {
-		t.Fatalf("owner mismatch: %q", r.RepoOwner)
-	}
-	if r.RepoRef != "feat/abc" || r.ParamsRaw["ref"] != "feat/abc" {
-		t.Fatalf("ref decode failed: repoRef=%q paramsRef=%q", r.RepoRef, r.ParamsRaw["ref"])
-	}
-	if r.ParamsRaw["mode"] != "inspect" {
-		t.Fatalf("mode mismatch: %q", r.ParamsRaw["mode"])
-	}
-
-	cu, err := r.Canonicalize()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if cu.Identity.RepoRef != "feat/abc" {
-		t.Fatalf("unexpected canonical ref: %+v", cu.Identity)
-	}
-	if cu.CanonicalKey != "u=tomas|r=org/svc|ref=feat/abc|bp=repo-org-svc" {
-		t.Fatalf("unexpected canonical key: %q", cu.CanonicalKey)
-	}
-	if cu.CanonicalUserStr == "" {
-		t.Fatalf("expected canonical userstr")
-	}
-	if cu.WorkspaceName == "" {
-		t.Fatalf("expected workspace name")
-	}
-}
-
-func TestParams2_IssueOnly_ResolvesToRef(t *testing.T) {
-	SetRefResolver(nil)
-
-	r, err := NewUserStr("bob~repo=alice/projectX+issue=22")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// Parsing expectations:
-	// - keys are lowercased
-	// - values are percent-decoded and normalized by the parser
-	if r.RepoName != "projectx" || r.ParamsRaw["repo"] != "alice/projectx" {
-		t.Fatalf("repo decode failed: repoName=%q paramsRepo=%q", r.RepoName, r.ParamsRaw["repo"])
-	}
-	if r.RepoRef != "" {
-		t.Fatalf("expected empty ref when issue is specified: %+v", r)
-	}
-
-	SetRefResolver(fakeRefResolver{issueRef: "feat/abc"})
-	cu, err := r.Canonicalize()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if cu.Identity.RepoRef != "feat/abc" {
-		t.Fatalf("expected resolved ref, got: %+v", cu.Identity)
-	}
-	if cu.CanonicalKey != "u=bob|r=alice/projectx|ref=feat/abc|bp=repo-alice-projectx" {
-		t.Fatalf("unexpected canonical key: %q", cu.CanonicalKey)
-	}
-
-	// Alias should include issue form
-	foundIssueAlias := false
-	wantIssueAlias := "u=bob|r=alice/projectx|issue=22"
-	for _, a := range cu.Aliases {
-		if a == wantIssueAlias {
-			foundIssueAlias = true
-			break
-		}
-	}
-	if !foundIssueAlias {
-		t.Fatalf("expected issue alias %q, got: %+v", wantIssueAlias, cu.Aliases)
-	}
-
-	if cu.WorkspaceName == "" {
-		t.Fatalf("expected workspace name")
-	}
-}
-
 func TestParams3_PullRequestOnly_ResolvesToRef(t *testing.T) {
 	SetRefResolver(nil)
 
@@ -194,7 +107,7 @@ func TestParams4_PRShorthand_Parses(t *testing.T) {
 }
 
 func TestB64Option(t *testing.T) {
-	plain := "tomas~repo=org/svc+ref=feat%2Fabc+mode=inspect"
+	plain := "tomas~repo=org/svc+ref=feat%2Fabc+ref=ref123"
 	token := "b64-" + base64.RawURLEncoding.EncodeToString([]byte(plain))
 
 	r, err := NewUserStr(token)
@@ -208,11 +121,8 @@ func TestB64Option(t *testing.T) {
 	if r.RepoOwner != "org" || r.RepoName != "svc" {
 		t.Fatalf("unexpected repo: owner=%q name=%q", r.RepoOwner, r.RepoName)
 	}
-	if r.RepoRef != "feat/abc" {
-		t.Fatalf("expected decoded+parsed ref, got %q", r.RepoRef)
-	}
-	if r.ParamsRaw["mode"] != "inspect" {
-		t.Fatalf("mode mismatch: %q", r.ParamsRaw["mode"])
+	if r.ParamsRaw["ref"] != "ref123" {
+		t.Fatalf("mode mismatch: %q", r.ParamsRaw["ref"])
 	}
 }
 

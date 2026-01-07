@@ -27,6 +27,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -47,6 +48,9 @@ var (
 
 	// Returned when a base64-form userstr is present but cannot be decoded.
 	ErrB64UserStrInvalid = errors.New("userstr: b64 userstr invalid")
+
+	// allowed param keys in userstr
+	AllowedParams = []string{"repo", "ref", "pr"}
 )
 
 // BlueprintKind represents the kind of blueprint used for a workspace.
@@ -347,6 +351,10 @@ func newUserStr(input string, depth int) (*UserStr, error) {
 			return nil, fmt.Errorf("%w: value decode failed for key %q: %v", ErrBadParam, k, err)
 		}
 
+		if !slices.Contains(AllowedParams, k) {
+			return nil, fmt.Errorf("userstr: unsupported param key: %q", k)
+		}
+
 		params[k] = strings.ToLower(val)
 	}
 
@@ -362,7 +370,6 @@ func newUserStr(input string, depth int) (*UserStr, error) {
 	}
 
 	repoRef := params["ref"]
-
 	if repoRef != "" && repoPullReq > 0 {
 		return nil, fmt.Errorf("userstr: cannot specify more than one of ref, pr")
 	}
@@ -377,9 +384,6 @@ func newUserStr(input string, depth int) (*UserStr, error) {
 		} else {
 			repoName = repo
 		}
-	}
-	if owner := params["owner"]; owner != "" {
-		repoOwner = owner
 	}
 
 	blueprintName := ""
@@ -430,11 +434,6 @@ func (b *UserStrBuilder) WithBlueprint(bp string) *UserStrBuilder {
 
 func (b *UserStrBuilder) WithRepo(repo string) *UserStrBuilder {
 	b.params["repo"] = repo
-	return b
-}
-
-func (b *UserStrBuilder) WithOwner(owner string) *UserStrBuilder {
-	b.params["owner"] = owner
 	return b
 }
 
