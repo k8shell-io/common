@@ -22,6 +22,7 @@ package models
 
 import (
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -40,6 +41,12 @@ const (
 var (
 	ErrBadParam = errors.New("userstr: bad param (expected key=value)")
 	ErrTooLong  = errors.New("userstr: identifier too long")
+
+	// Returned when a hash-form userstr is provided but no resolver is configured.
+	ErrHashResolverRequired = errors.New("userstr: hash resolver required")
+
+	// Returned when a base64-form userstr is present but cannot be decoded.
+	ErrB64UserStrInvalid = errors.New("userstr: b64 userstr invalid")
 )
 
 // BlueprintKind represents the kind of blueprint used for a workspace.
@@ -271,12 +278,31 @@ func buildAliases(u *UserStr, resolvedRef string) []string {
 }
 
 // NewUserStr parses a user string using default length constraints.
+// If input is base64-form (e.g. b64-...), it is decoded to a real userstr first.
+// If input is a hash-form token (e.g. sha256-...), it is resolved to a real userstr first.
 func NewUserStr(input string) (*UserStr, error) {
-	if MAX_TOTAL_LEN > 0 && utf8.RuneCountInString(input) > MAX_TOTAL_LEN {
+	return newUserStr(input, 0)
+}
+
+func newUserStr(input string, depth int) (*UserStr, error) {
+	if depth > 2 {
+		return nil, fmt.Errorf("userstr: too many resolution steps")
+	}
+
+	rawTrimmed := strings.TrimSpace(input)
+
+	if decoded, ok, err := tryDecodeB64UserStrToken(rawTrimmed); ok {
+		if err != nil {
+			return nil, fmt.Errorf("%w: %v", ErrB64UserStrInvalid, err)
+		}
+		return newUserStr(decoded, depth+1)
+	}
+
+	if MAX_TOTAL_LEN > 0 && utf8.RuneCountInString(rawTrimmed) > MAX_TOTAL_LEN {
 		return nil, fmt.Errorf("%w: total>%d", ErrTooLong, MAX_TOTAL_LEN)
 	}
 
-	raw := strings.TrimSpace(input)
+	raw := rawTrimmed
 	usernamePart, wsSpec, _ := cutOnce(raw, "~")
 	username := strings.ToLower(strings.TrimSpace(usernamePart))
 
@@ -446,4 +472,65 @@ func (b *UserStrBuilder) Build() (*UserStr, error) {
 	}
 
 	return NewUserStr(raw)
+}
+
+// Labels returns Kubernetes/Helm-safe labels derived from the UserStr.
+func (u *UserStr) Labels() map[string]string {
+	lbls := make(map[string]string)
+
+	if u.Username != "" {
+		lbls["k8shell.io/username"] = u.Username
+	}
+	if u.Blueprint != "" {
+		lbls["k8shell.io/blueprint"] = u.Blueprint
+	}
+	if u.RepoOwner != "" {
+		lbls["k8shell.io/repoowner"] = u.RepoOwner
+	}
+	if u.RepoName != "" {
+		lbls["k8shell.io/reponame"] = u.RepoName
+	}
+	if u.RepoRef != "" {
+		lbls["k8shell.io/ref"] = u.RepoRef
+	}
+	if u.RepoIssue > 0 {
+		lbls["k8shell.io/issue"] = strconv.Itoa(u.RepoIssue)
+	}
+
+	return lbls
+}
+
+// tryDecodeB64UserStrToken decodes reversible whole-userstr base64url tokens. The only supported
+// encoding is raw base64url without padding, prefixed by "b64-" or "base64-" (case-insensitive).
+// Supported forms:
+//   - b64-<base64url payload without padding>
+//   - base64-<base64url payload without padding>
+func tryDecodeB64UserStrToken(s string) (string, bool, error) {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return "", false, nil
+	}
+
+	lower := strings.ToLower(s)
+	if !strings.HasPrefix(lower, "b64-") && !strings.HasPrefix(lower, "base64-") {
+		return "", false, nil
+	}
+
+	prefixLen := len("b64-")
+	if strings.HasPrefix(lower, "base64-") {
+		prefixLen = len("base64-")
+	}
+
+	payload := strings.TrimSpace(s[prefixLen:])
+	if payload == "" {
+		return "", true, fmt.Errorf("empty base64 payload")
+	}
+
+	b, err := base64.RawURLEncoding.DecodeString(payload)
+	if err != nil {
+		return "", true, fmt.Errorf("base64 decode failed: %w. Supported encoding is raw base64url without padding.",
+			err)
+	}
+
+	return string(b), true, nil
 }
