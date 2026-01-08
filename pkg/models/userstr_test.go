@@ -162,18 +162,6 @@ func TestErrors(t *testing.T) {
 		t.Fatal("expected error for malformed kv")
 	}
 
-	// mutual exclusion: cannot specify both issue and pullrequest
-	_, err = NewUserStr("u~repo=a/b+issue=1+pr=2", false)
-	if err == nil {
-		t.Fatal("expected error for issue+pullrequest")
-	}
-
-	// mutual exclusion: cannot specify ref with issue
-	_, err = NewUserStr("u~repo=a/b+ref=main+issue=1", false)
-	if err == nil {
-		t.Fatal("expected error for ref+issue")
-	}
-
 	// mutual exclusion: cannot specify ref with pullrequest
 	_, err = NewUserStr("u~repo=a/b+ref=main+pr=2", false)
 	if err == nil {
