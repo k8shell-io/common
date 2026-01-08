@@ -107,6 +107,7 @@ func TestParams4_PRShorthand_Parses(t *testing.T) {
 }
 
 func TestB64Option(t *testing.T) {
+	// Duplicate "ref" parameters to validate last-wins behavior in parameter parsing.
 	plain := "tomas~repo=org/svc+ref=feat%2Fabc+ref=ref123"
 	token := "b64-" + base64.RawURLEncoding.EncodeToString([]byte(plain))
 
