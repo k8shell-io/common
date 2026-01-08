@@ -6,14 +6,8 @@ import (
 )
 
 type fakeRefResolver struct {
-	issueRef string
-	prRef    string
-	err      error
-}
-
-func (f fakeRefResolver) ResolveIssueRef(username string, repoOwner, repoName string,
-	issueNumber int) (string, error) {
-	return f.issueRef, f.err
+	prRef string
+	err   error
 }
 
 func (f fakeRefResolver) ResolvePullRequestRef(username string, repoOwner, repoName string,
