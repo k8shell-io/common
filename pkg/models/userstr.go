@@ -362,7 +362,7 @@ func newUserStr(input string, depth int, allowInvalid bool) (*UserStr, error) {
 
 		k, v, ok := cutOnce(p, "=")
 		if !ok || strings.TrimSpace(k) == "" {
-			validationError = fmt.Errorf("%w:  expected key=value, %q", ErrBadParam, p)
+			validationError = fmt.Errorf("%w: expected key=value, %q", ErrBadParam, p)
 			if !allowInvalid {
 				return nil, validationError
 			}
