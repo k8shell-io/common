@@ -417,6 +417,11 @@ func newUserStr(input string, depth int, allowInvalid bool) (*UserStr, error) {
 		if !allowInvalid {
 			return nil, validationError
 		}
+		// In allowInvalid mode, clear conflicting values to avoid inconsistent state downstream.
+		repoRef = ""
+		repoPullReq = 0
+		delete(params, "ref")
+		delete(params, "pr")
 	}
 
 	var repoName string
