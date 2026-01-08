@@ -2,30 +2,45 @@
 //
 // Spec summary (v1.0):
 //
-//	USERSTR = user [ "~" ws-spec ]
-//	ws-spec = bp-name | param-list
-//	param-list = kv *( "+" kv )
-//	kv = key "=" value
+//	USERSTR     = user [ "~" ws-spec ]
+//	ws-spec     = bp-name | param-list
+//	param-list  = kv *( "+" kv )
+//	kv          = key "=" value
+//	key         = "repo" | "ref" | "pr"
 //
-// - Percent-decode only blueprint names and values (NOT keys).
+//	bp-name     = <url-path-escaped string>          ; decoded with url.PathUnescape
+//	value       = <url-path-escaped string>          ; decoded with url.PathUnescape
+//
+// Special input form (optional):
+//
+//	USERSTR     = ( "b64-" | "base64-" ) b64url-raw   ; decodes to USERSTR, then parsed normally
+//
+// Rules:
+// - Allowed param keys: repo, ref, pr. Any other key is an error.
 // - Keys are normalized to lowercase.
+// - Values are url.PathUnescape-decoded (keys are NOT decoded).
 // - Slash "/" is allowed; when escaped as %2F it is decoded back to "/".
-// - Reserved delimiters: @ ~ + = (use %XX inside values if literal needed).
+// - Reserved delimiters in the USERSTR syntax: @ ~ + = (escape as %XX inside values if needed).
+// - Mutual exclusion: "ref" and "pr" cannot both be specified.
+// - pr must be a base-10 integer (>0) if present.
+// - If pr is specified (and ref is not), Canonicalize() may resolve pr -> ref via RefResolver.
 //
 // Notes (canonicalization):
 //   - Parsing is pure and deterministic.
-//   - Canonicalize() optionally resolves issue to ref via IssueRefResolver and computes
+//   - Canonicalize() optionally resolves pullrequest to ref via RefResolver and computes
 //     Identity + CanonicalKey + CanonicalUserStr + Aliases.
 //   - Workspace identity should be based on (user, repo, resolved ref, optionally blueprint).
-//     Issue is treated as metadata/alias, not identity.
+//     PR is treated as metadata/alias, not identity.
 package models
 
 import (
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"net/url"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -38,8 +53,14 @@ const (
 )
 
 var (
-	ErrBadParam = errors.New("userstr: bad param (expected key=value)")
-	ErrTooLong  = errors.New("userstr: identifier too long")
+	ErrBadParam = errors.New("bad param")
+	ErrTooLong  = errors.New("identifier too long")
+
+	// Returned when a base64-form userstr is present but cannot be decoded.
+	ErrB64UserStrInvalid = errors.New("base64 userstr invalid")
+
+	// allowed param keys in userstr
+	AllowedParams = []string{"repo", "ref", "pr"}
 )
 
 // BlueprintKind represents the kind of blueprint used for a workspace.
@@ -74,15 +95,16 @@ type WorkspaceIdentity struct {
 }
 
 type UserStr struct {
-	Raw           string            // original raw input
-	Username      string            // normalized username
-	Blueprint     string            // computed blueprint name
-	BlueprintKind BlueprintKind     // kind of blueprint used
-	ParamsRaw     map[string]string // raw params map
-	RepoName      string            // repository name
-	RepoOwner     string            // repository owner
-	RepoRef       string            // repository reference (branch/tag)
-	RepoIssue     int               // repository issue number
+	Raw             string            // original raw input
+	Username        string            // normalized username
+	Blueprint       string            // computed blueprint name
+	BlueprintKind   BlueprintKind     // kind of blueprint used
+	ParamsRaw       map[string]string // raw params map
+	RepoName        string            // repository name
+	RepoOwner       string            // repository owner
+	RepoRef         string            // repository reference (branch/tag)
+	RepoPullReq     int               // repository pull request number
+	ValidationError error             // validation error when parsing with allowInvalid=true; nil otherwise
 }
 
 type CanonicalUserStr struct {
@@ -100,67 +122,62 @@ type UserStrBuilder struct {
 	params    map[string]string
 }
 
-// IssueRefResolver defines an interface for resolving issue numbers to refs.
-type IssueRepoRefResolver interface {
-	ResolveIssueRepoRef(username string, repoOwner, repoName string, issueNumber int) (ref string, err error)
+// RefResolver defines an interface for resolving PR numbers to refs.
+type RefResolver interface {
+	ResolvePullRequestRef(username string, repoOwner, repoName string, pullRequestNumber int) (ref string, err error)
 }
 
-var issueRefResolver IssueRepoRefResolver
+var refResolver RefResolver
 var mu = &sync.Mutex{}
 
-func SetIssueRepoRefResolver(resolver IssueRepoRefResolver) {
+func SetRefResolver(resolver RefResolver) {
 	mu.Lock()
 	defer mu.Unlock()
-	issueRefResolver = resolver
+	refResolver = resolver
 }
 
 // CanonicalizeOptions defines options for the Canonicalize method.
 type CanonicalizeOptions struct {
-	// If true and ref is present, we ignore issue for identity (issue becomes metadata/alias).
-	PreferExplicitRef bool
-
-	// If true, and issue is present with no ref, resolve issue to ref and use that ref for identity.
-	ResolveIssueToRef bool
+	// If true, and pullrequest is present with no ref, resolve pullrequest to ref and use that ref for identity.
+	ResolvePullRequestToRef bool
 
 	// If true, include blueprint in the identity key.
 	IncludeBlueprintInKey bool
 }
 
 // Canonicalize computes Identity/CanonicalKey/CanonicalUserStr/Aliases.
-// This method may call the resolver if issue to ref resolution is enabled.
+// This method may call the resolver if pr to ref resolution is enabled.
 func (u *UserStr) Canonicalize() (*CanonicalUserStr, error) {
 	owner := u.RepoOwner
 	name := u.RepoName
 
 	opt := CanonicalizeOptions{
-		PreferExplicitRef:     true,
-		ResolveIssueToRef:     true,
-		IncludeBlueprintInKey: true,
+		ResolvePullRequestToRef: true,
+		IncludeBlueprintInKey:   true,
+	}
+
+	// enforce: at most one of pr/ref
+	if u.RepoRef != "" && u.RepoPullReq > 0 {
+		return nil, fmt.Errorf("cannot specify more than one of ref, pullrequest")
 	}
 
 	resolvedRef := u.RepoRef
-	if resolvedRef == "" && u.RepoIssue > 0 && opt.ResolveIssueToRef {
+	if resolvedRef == "" && u.RepoPullReq > 0 && opt.ResolvePullRequestToRef {
 		mu.Lock()
-		r := issueRefResolver
+		r := refResolver
 		mu.Unlock()
 
 		if r == nil {
-			return nil, fmt.Errorf("userstr: resolver required to resolve issue to ref")
+			return nil, fmt.Errorf("resolver required to resolve pullrequest to ref")
 		}
 		if owner == "" || name == "" {
-			return nil, fmt.Errorf("userstr: cannot resolve issue to ref without repo (owner/name)")
+			return nil, fmt.Errorf("cannot resolve pullrequest to ref without repo (owner/name)")
 		}
-		ref, err := r.ResolveIssueRepoRef(u.Username, owner, name, u.RepoIssue)
+		ref, err := r.ResolvePullRequestRef(u.Username, owner, name, u.RepoPullReq)
 		if err != nil {
-			return nil, fmt.Errorf("userstr: resolve issue to ref failed: %w", err)
+			return nil, fmt.Errorf("resolve pullrequest to ref failed: %w", err)
 		}
 		resolvedRef = ref
-	}
-
-	// PreferExplicitRef: issue never affects identity if ref is given.
-	// (Issue becomes alias/metadata.) Here it’s implicit because resolvedRef is already u.RepoRef.
-	if u.RepoRef != "" && opt.PreferExplicitRef {
-		resolvedRef = u.RepoRef
 	}
 
 	blueprint := u.Blueprint
@@ -185,9 +202,9 @@ func (u *UserStr) Canonicalize() (*CanonicalUserStr, error) {
 	canonicalUserStr.WorkspaceName = buildWorkspaceName(u.Username, canonicalUserStr.CanonicalKey)
 
 	var err error
-	canonicalUserStr.CanonicalUserStrObj, err = NewUserStr(canonicalUserStr.CanonicalUserStr)
+	canonicalUserStr.CanonicalUserStrObj, err = NewUserStr(canonicalUserStr.CanonicalUserStr, false)
 	if err != nil {
-		return nil, fmt.Errorf("userstr: failed to parse canonical userstr: %w", err)
+		return nil, fmt.Errorf("failed to parse canonical userstr: %w", err)
 	}
 
 	return canonicalUserStr, nil
@@ -250,18 +267,15 @@ func buildCanonicalUserStr(id *WorkspaceIdentity) string {
 func buildAliases(u *UserStr, resolvedRef string) []string {
 	var aliases []string
 
-	// original raw (useful for debugging)
 	if u.Raw != "" {
 		aliases = append(aliases, "raw:"+u.Raw)
 	}
 
-	// issue-form alias key
-	if u.RepoOwner != "" && u.RepoName != "" && u.RepoIssue > 0 {
-		aliases = append(aliases, fmt.Sprintf("u=%s|r=%s/%s|issue=%d",
-			u.Username, u.RepoOwner, u.RepoName, u.RepoIssue))
+	if u.RepoOwner != "" && u.RepoName != "" && u.RepoPullReq > 0 {
+		aliases = append(aliases, fmt.Sprintf("u=%s|r=%s/%s|pr=%d",
+			u.Username, u.RepoOwner, u.RepoName, u.RepoPullReq))
 	}
 
-	// ref-form alias key (canonical)
 	if u.RepoOwner != "" && u.RepoName != "" && resolvedRef != "" {
 		aliases = append(aliases, fmt.Sprintf("u=%s|r=%s/%s|ref=%s",
 			u.Username, u.RepoOwner, u.RepoName, resolvedRef))
@@ -271,22 +285,46 @@ func buildAliases(u *UserStr, resolvedRef string) []string {
 }
 
 // NewUserStr parses a user string using default length constraints.
-func NewUserStr(input string) (*UserStr, error) {
-	if MAX_TOTAL_LEN > 0 && utf8.RuneCountInString(input) > MAX_TOTAL_LEN {
-		return nil, fmt.Errorf("%w: total>%d", ErrTooLong, MAX_TOTAL_LEN)
+// If input is base64-form (e.g. b64-...), it is decoded to a real userstr first.
+func NewUserStr(input string, allowInvalid bool) (*UserStr, error) {
+	return newUserStr(input, 0, allowInvalid)
+}
+
+// newUserStr is the internal recursive parser with depth control.
+func newUserStr(input string, depth int, allowInvalid bool) (*UserStr, error) {
+	if depth > 2 {
+		return nil, fmt.Errorf("too many resolution steps")
 	}
 
-	raw := strings.TrimSpace(input)
+	var validationError error = nil
+	rawTrimmed := strings.TrimSpace(input)
+
+	if decoded, ok, err := tryDecodeB64UserStrToken(rawTrimmed); ok {
+		if err != nil {
+			return nil, fmt.Errorf("%w: %v", ErrB64UserStrInvalid, err)
+		}
+		return newUserStr(decoded, depth+1, allowInvalid)
+	}
+
+	if MAX_TOTAL_LEN > 0 && utf8.RuneCountInString(rawTrimmed) > MAX_TOTAL_LEN {
+		validationError = fmt.Errorf("%w: raw>%d", ErrTooLong, MAX_TOTAL_LEN)
+		if !allowInvalid {
+			return nil, validationError
+		}
+	}
+
+	raw := rawTrimmed
 	usernamePart, wsSpec, _ := cutOnce(raw, "~")
 	username := strings.ToLower(strings.TrimSpace(usernamePart))
 
 	if wsSpec == "" {
 		return &UserStr{
-			Raw:           raw,
-			Username:      username,
-			Blueprint:     "",
-			BlueprintKind: BlueprintKindImplicit,
-			ParamsRaw:     nil,
+			Raw:             raw,
+			Username:        username,
+			Blueprint:       "",
+			BlueprintKind:   BlueprintKindImplicit,
+			ParamsRaw:       nil,
+			ValidationError: validationError,
 		}, nil
 	}
 
@@ -295,14 +333,19 @@ func NewUserStr(input string) (*UserStr, error) {
 	if !strings.Contains(wsSpec, "=") {
 		decoded, err := url.PathUnescape(wsSpec)
 		if err != nil {
-			return nil, fmt.Errorf("userstr: blueprint percent-decode: %w", err)
+			validationError = fmt.Errorf("%w: blueprint percent-decode: %v", ErrBadParam, err)
+			if !allowInvalid {
+				return nil, validationError
+			}
+			decoded = ""
 		}
 		return &UserStr{
-			Raw:           raw,
-			Username:      username,
-			Blueprint:     decoded,
-			BlueprintKind: BlueprintKindExplicit,
-			ParamsRaw:     nil,
+			Raw:             raw,
+			Username:        username,
+			Blueprint:       decoded,
+			BlueprintKind:   BlueprintKindExplicit,
+			ParamsRaw:       nil,
+			ValidationError: validationError,
 		}, nil
 	}
 
@@ -310,35 +353,75 @@ func NewUserStr(input string) (*UserStr, error) {
 	params := make(map[string]string, len(pairs))
 	for _, p := range pairs {
 		if p == "" {
-			return nil, fmt.Errorf("%w: empty pair", ErrBadParam)
+			validationError = fmt.Errorf("%w: empty pair", ErrBadParam)
+			if !allowInvalid {
+				return nil, validationError
+			}
+			continue
 		}
 
 		k, v, ok := cutOnce(p, "=")
 		if !ok || strings.TrimSpace(k) == "" {
-			return nil, fmt.Errorf("%w: %q", ErrBadParam, p)
+			validationError = fmt.Errorf("%w: expected key=value, %q", ErrBadParam, p)
+			if !allowInvalid {
+				return nil, validationError
+			}
+			continue
 		}
 
 		if strings.Contains(v, "=") {
-			return nil, fmt.Errorf("%w: unescaped '=' in value: %q", ErrBadParam, p)
+			validationError = fmt.Errorf("%w: unescaped '=' in value: %q", ErrBadParam, p)
+			if !allowInvalid {
+				return nil, validationError
+			}
+			continue
 		}
 
 		k = strings.ToLower(strings.TrimSpace(k))
 
 		val, err := url.PathUnescape(strings.TrimSpace(v))
 		if err != nil {
-			return nil, fmt.Errorf("%w: value decode failed for key %q: %v", ErrBadParam, k, err)
+			validationError = fmt.Errorf("%w: value decode failed for key %q: %v", ErrBadParam, k, err)
+			if !allowInvalid {
+				return nil, validationError
+			}
+			continue
+		}
+
+		if !slices.Contains(AllowedParams, k) {
+			validationError = fmt.Errorf("invalid param key: %q", k)
+			if !allowInvalid {
+				return nil, validationError
+			}
+			continue
 		}
 
 		params[k] = strings.ToLower(val)
 	}
 
-	var repoIssue int
-	if issue := params["issue"]; issue != "" {
+	var repoPullReq int
+	if pr := params["pr"]; pr != "" {
 		var err error
-		repoIssue, err = strconv.Atoi(issue)
+		repoPullReq, err = strconv.Atoi(pr)
 		if err != nil {
-			return nil, fmt.Errorf("userstr: issue must be an integer")
+			validationError = fmt.Errorf("%w: pr must be an integer", ErrBadParam)
+			if !allowInvalid {
+				return nil, validationError
+			}
 		}
+	}
+
+	repoRef := params["ref"]
+	if repoRef != "" && repoPullReq > 0 {
+		validationError = fmt.Errorf("%w: cannot specify more than one of ref, pr", ErrBadParam)
+		if !allowInvalid {
+			return nil, validationError
+		}
+		// In allowInvalid mode, clear conflicting values to avoid inconsistent state downstream.
+		repoRef = ""
+		repoPullReq = 0
+		delete(params, "ref")
+		delete(params, "pr")
 	}
 
 	var repoName string
@@ -352,9 +435,6 @@ func NewUserStr(input string) (*UserStr, error) {
 			repoName = repo
 		}
 	}
-	if owner := params["owner"]; owner != "" {
-		repoOwner = owner
-	}
 
 	blueprintName := ""
 	if repoOwner != "" && repoName != "" {
@@ -362,19 +442,23 @@ func NewUserStr(input string) (*UserStr, error) {
 	}
 
 	if blueprintName == "" {
-		return nil, fmt.Errorf("userstr: blueprint could not be determined")
+		validationError = fmt.Errorf("%w: blueprint could not be determined", ErrBadParam)
+		if !allowInvalid {
+			return nil, validationError
+		}
 	}
 
 	return &UserStr{
-		Raw:           raw,
-		Username:      username,
-		Blueprint:     blueprintName,
-		BlueprintKind: BlueprintKindCustom,
-		ParamsRaw:     params,
-		RepoName:      repoName,
-		RepoOwner:     repoOwner,
-		RepoRef:       params["ref"],
-		RepoIssue:     repoIssue,
+		Raw:             raw,
+		Username:        username,
+		Blueprint:       blueprintName,
+		BlueprintKind:   BlueprintKindCustom,
+		ParamsRaw:       params,
+		RepoName:        repoName,
+		RepoOwner:       repoOwner,
+		RepoRef:         repoRef,
+		RepoPullReq:     repoPullReq,
+		ValidationError: validationError,
 	}, nil
 }
 
@@ -404,11 +488,6 @@ func (b *UserStrBuilder) WithBlueprint(bp string) *UserStrBuilder {
 
 func (b *UserStrBuilder) WithRepo(repo string) *UserStrBuilder {
 	b.params["repo"] = repo
-	return b
-}
-
-func (b *UserStrBuilder) WithOwner(owner string) *UserStrBuilder {
-	b.params["owner"] = owner
 	return b
 }
 
@@ -445,5 +524,66 @@ func (b *UserStrBuilder) Build() (*UserStr, error) {
 		raw = b.username
 	}
 
-	return NewUserStr(raw)
+	return NewUserStr(raw, false)
+}
+
+// Labels returns Kubernetes/Helm-safe labels derived from the UserStr.
+func (u *UserStr) Labels() map[string]string {
+	lbls := make(map[string]string)
+
+	if u.Username != "" {
+		lbls["k8shell.io/username"] = u.Username
+	}
+	if u.Blueprint != "" {
+		lbls["k8shell.io/blueprint"] = u.Blueprint
+	}
+	if u.RepoOwner != "" {
+		lbls["k8shell.io/repoowner"] = u.RepoOwner
+	}
+	if u.RepoName != "" {
+		lbls["k8shell.io/reponame"] = u.RepoName
+	}
+	if u.RepoRef != "" {
+		lbls["k8shell.io/ref"] = u.RepoRef
+	}
+	if u.RepoPullReq > 0 {
+		lbls["k8shell.io/pullrequest"] = strconv.Itoa(u.RepoPullReq)
+	}
+
+	return lbls
+}
+
+// tryDecodeB64UserStrToken decodes reversible whole-userstr base64url tokens. The only supported
+// encoding is raw base64url without padding, prefixed by "b64-" or "base64-" (case-insensitive).
+// Supported forms:
+//   - b64-<base64url payload without padding>
+//   - base64-<base64url payload without padding>
+func tryDecodeB64UserStrToken(s string) (string, bool, error) {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return "", false, nil
+	}
+
+	lower := strings.ToLower(s)
+	if !strings.HasPrefix(lower, "b64-") && !strings.HasPrefix(lower, "base64-") {
+		return "", false, nil
+	}
+
+	prefixLen := len("b64-")
+	if strings.HasPrefix(lower, "base64-") {
+		prefixLen = len("base64-")
+	}
+
+	payload := strings.TrimSpace(s[prefixLen:])
+	if payload == "" {
+		return "", true, fmt.Errorf("empty base64 payload")
+	}
+
+	b, err := base64.RawURLEncoding.DecodeString(payload)
+	if err != nil {
+		return "", true, fmt.Errorf("base64 decode failed: %w. Supported encoding is raw base64url without padding.",
+			err)
+	}
+
+	return string(b), true, nil
 }
