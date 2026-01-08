@@ -104,7 +104,7 @@ type UserStr struct {
 	RepoOwner       string            // repository owner
 	RepoRef         string            // repository reference (branch/tag)
 	RepoPullReq     int               // repository pull request number
-	ValidationError error             // validation error, if any
+	ValidationError error             // validation error when parsing with allowInvalid=true; nil otherwise
 }
 
 type CanonicalUserStr struct {
