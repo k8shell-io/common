@@ -2,22 +2,35 @@
 //
 // Spec summary (v1.0):
 //
-//	USERSTR = user [ "~" ws-spec ]
-//	ws-spec = bp-name | param-list
-//	param-list = kv *( "+" kv )
-//	kv = key "=" value
+//	USERSTR     = user [ "~" ws-spec ]
+//	ws-spec     = bp-name | param-list
+//	param-list  = kv *( "+" kv )
+//	kv          = key "=" value
+//	key         = "repo" | "ref" | "pr"
 //
-// - Percent-decode only blueprint names and values (NOT keys).
+//	bp-name     = <url-path-escaped string>          ; decoded with url.PathUnescape
+//	value       = <url-path-escaped string>          ; decoded with url.PathUnescape
+//
+// Special input form (optional):
+//
+//	USERSTR     = ( "b64-" | "base64-" ) b64url-raw   ; decodes to USERSTR, then parsed normally
+//
+// Rules:
+// - Allowed param keys: repo, ref, pr. Any other key is an error.
 // - Keys are normalized to lowercase.
+// - Values are url.PathUnescape-decoded (keys are NOT decoded).
 // - Slash "/" is allowed; when escaped as %2F it is decoded back to "/".
-// - Reserved delimiters: @ ~ + = (use %XX inside values if literal needed).
+// - Reserved delimiters in the USERSTR syntax: @ ~ + = (escape as %XX inside values if needed).
+// - Mutual exclusion: "ref" and "pr" cannot both be specified.
+// - pr must be a base-10 integer (>0) if present.
+// - If pr is specified (and ref is not), Canonicalize() may resolve pr -> ref via RefResolver.
 //
 // Notes (canonicalization):
 //   - Parsing is pure and deterministic.
 //   - Canonicalize() optionally resolves pullrequest to ref via RefResolver and computes
 //     Identity + CanonicalKey + CanonicalUserStr + Aliases.
 //   - Workspace identity should be based on (user, repo, resolved ref, optionally blueprint).
-//     PR are treated as metadata/alias, not identity.
+//     PR is treated as metadata/alias, not identity.
 package models
 
 import (
@@ -40,14 +53,11 @@ const (
 )
 
 var (
-	ErrBadParam = errors.New("userstr: bad param (expected key=value)")
-	ErrTooLong  = errors.New("userstr: identifier too long")
-
-	// Returned when a hash-form userstr is provided but no resolver is configured.
-	ErrHashResolverRequired = errors.New("userstr: hash resolver required")
+	ErrBadParam = errors.New("bad param")
+	ErrTooLong  = errors.New("identifier too long")
 
 	// Returned when a base64-form userstr is present but cannot be decoded.
-	ErrB64UserStrInvalid = errors.New("userstr: b64 userstr invalid")
+	ErrB64UserStrInvalid = errors.New("base64 userstr invalid")
 
 	// allowed param keys in userstr
 	AllowedParams = []string{"repo", "ref", "pr"}
@@ -148,7 +158,7 @@ func (u *UserStr) Canonicalize() (*CanonicalUserStr, error) {
 
 	// enforce: at most one of pr/ref
 	if u.RepoRef != "" && u.RepoPullReq > 0 {
-		return nil, fmt.Errorf("userstr: cannot specify more than one of ref, pullrequest")
+		return nil, fmt.Errorf("cannot specify more than one of ref, pullrequest")
 	}
 
 	resolvedRef := u.RepoRef
@@ -158,14 +168,14 @@ func (u *UserStr) Canonicalize() (*CanonicalUserStr, error) {
 		mu.Unlock()
 
 		if r == nil {
-			return nil, fmt.Errorf("userstr: resolver required to resolve pullrequest to ref")
+			return nil, fmt.Errorf("resolver required to resolve pullrequest to ref")
 		}
 		if owner == "" || name == "" {
-			return nil, fmt.Errorf("userstr: cannot resolve pullrequest to ref without repo (owner/name)")
+			return nil, fmt.Errorf("cannot resolve pullrequest to ref without repo (owner/name)")
 		}
 		ref, err := r.ResolvePullRequestRef(u.Username, owner, name, u.RepoPullReq)
 		if err != nil {
-			return nil, fmt.Errorf("userstr: resolve pullrequest to ref failed: %w", err)
+			return nil, fmt.Errorf("resolve pullrequest to ref failed: %w", err)
 		}
 		resolvedRef = ref
 	}
@@ -194,7 +204,7 @@ func (u *UserStr) Canonicalize() (*CanonicalUserStr, error) {
 	var err error
 	canonicalUserStr.CanonicalUserStrObj, err = NewUserStr(canonicalUserStr.CanonicalUserStr, false)
 	if err != nil {
-		return nil, fmt.Errorf("userstr: failed to parse canonical userstr: %w", err)
+		return nil, fmt.Errorf("failed to parse canonical userstr: %w", err)
 	}
 
 	return canonicalUserStr, nil
@@ -283,7 +293,7 @@ func NewUserStr(input string, allowInvalid bool) (*UserStr, error) {
 // newUserStr is the internal recursive parser with depth control.
 func newUserStr(input string, depth int, allowInvalid bool) (*UserStr, error) {
 	if depth > 2 {
-		return nil, fmt.Errorf("userstr: too many resolution steps")
+		return nil, fmt.Errorf("too many resolution steps")
 	}
 
 	var validationError error = nil
@@ -352,7 +362,7 @@ func newUserStr(input string, depth int, allowInvalid bool) (*UserStr, error) {
 
 		k, v, ok := cutOnce(p, "=")
 		if !ok || strings.TrimSpace(k) == "" {
-			validationError = fmt.Errorf("%w: %q", ErrBadParam, p)
+			validationError = fmt.Errorf("%w:  expected key=value, %q", ErrBadParam, p)
 			if !allowInvalid {
 				return nil, validationError
 			}
@@ -379,7 +389,7 @@ func newUserStr(input string, depth int, allowInvalid bool) (*UserStr, error) {
 		}
 
 		if !slices.Contains(AllowedParams, k) {
-			validationError = fmt.Errorf("userstr: invalid param key: %q", k)
+			validationError = fmt.Errorf("invalid param key: %q", k)
 			if !allowInvalid {
 				return nil, validationError
 			}
