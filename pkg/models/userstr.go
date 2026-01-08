@@ -400,15 +400,13 @@ func newUserStr(input string, depth int, allowInvalid bool) (*UserStr, error) {
 	}
 
 	var repoPullReq int
-	if repoPullReq == 0 {
-		if pr := params["pr"]; pr != "" {
-			var err error
-			repoPullReq, err = strconv.Atoi(pr)
-			if err != nil {
-				validationError = fmt.Errorf("%w: pr must be an integer", ErrBadParam)
-				if !allowInvalid {
-					return nil, validationError
-				}
+	if pr := params["pr"]; pr != "" {
+		var err error
+		repoPullReq, err = strconv.Atoi(pr)
+		if err != nil {
+			validationError = fmt.Errorf("%w: pr must be an integer", ErrBadParam)
+			if !allowInvalid {
+				return nil, validationError
 			}
 		}
 	}
