@@ -1,0 +1,98 @@
+syntax = "proto3";
+
+package common;
+
+option go_package = "github.com/k8shell-io/common/pkg/gapi/commonpb;commonpb";
+
+import "google/protobuf/timestamp.proto";
+
+message User {
+  string username = 1;
+  string organization = 2;
+  bool is_valid = 3;
+  google.protobuf.Timestamp expires_at = 4;
+  uint32 uid = 5;
+  uint32 gid = 6;
+  string fullname = 7;
+  string access_token = 8;
+  string email = 9;
+  string password = 10;
+  repeated string auths = 11;
+  repeated string auth_keys = 12;
+  bool locked = 13;
+  uint32 failed_logins = 14;
+  repeated string channels = 15;
+  repeated string envs = 16;
+  repeated string roles = 17;
+  repeated string blueprints = 18;
+  string source = 19;
+}
+
+message ExternalCredential {
+    uint32 id = 1;
+    string username = 2;
+    string service_name = 3;
+    string service_url = 4;
+    string external_id = 5;
+    string external_token = 6;
+}
+
+message OnboardUserDeviceFlow {
+  string provider = 1;
+  string username = 2;
+  string user_code = 3;
+  string verification_url = 4;
+  int32 expires_in = 5;
+}
+
+message OnboardUserWebFlow {
+  string provider = 1;
+  string auth_url = 2;
+  string state = 3;
+  int32 expires_in = 4;
+}
+
+message CompleteUserWebFlow {
+  string code = 2;
+  string state = 3;
+}
+
+message UserOnboardCapability {
+  string provider = 1;
+  string username = 2;
+  bool can_onboard = 3;
+}
+
+// PodStatus represents the status of a workspace pod
+message PodStatus {
+  google.protobuf.Timestamp created = 1;
+  string status = 2;
+  string message = 3;
+}
+
+// WorkspaceStatus represents the current status of a workspace
+message WorkspaceStatus {
+  PodStatus pod_status = 1;
+  string app_version = 2;
+  string name = 3;
+  string username = 4;
+  string blueprint = 5;
+  string host = 6;
+  string pod_ip = 7;
+  int32 port = 8;
+  bool tls_enabled = 9;
+  string splash = 10;
+}
+
+// WorkspaceInfo represents the information of a workspace
+message WorkspaceInfo {
+  string name = 1;
+  string username = 2;
+  string blueprint = 3;
+  google.protobuf.Timestamp deployed = 4;
+  string app_version = 5;
+  string chart = 6;
+  string chart_ver = 7;
+}
+
+

@@ -15,24 +15,29 @@ var JsonLogger = true
 // Time format with milliseconds
 const TimeFormat = "2006-01-02T15:04:05.000"
 
-// NewLogger creates a new zerolog logger with a console output format.
-func NewLogger(component string) *zerolog.Logger {
-	var output = io.Writer(os.Stdout)
+func CreateWriter() io.Writer {
 	if !JsonLogger {
-		output = zerolog.ConsoleWriter{
+		return zerolog.ConsoleWriter{
 			Out:        os.Stdout,
 			TimeFormat: TimeFormat,
 		}
 	} else {
-		output = os.Stdout
+		return os.Stdout
 	}
+}
 
+func CreateLogger(component string, writer io.Writer) *zerolog.Logger {
 	zerolog.TimeFieldFormat = TimeFormat
-
-	log := zerolog.New(output).With().
+	log := zerolog.New(writer).With().
 		Timestamp().
 		Str("pid", fmt.Sprintf("%d", os.Getpid())).
 		Str("component", component).
 		Logger()
 	return &log
+}
+
+// NewLogger creates a new zerolog logger with a console output format.
+func NewLogger(component string) *zerolog.Logger {
+	var writer = CreateWriter()
+	return CreateLogger(component, writer)
 }

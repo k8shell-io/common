@@ -2,7 +2,6 @@ package models
 
 import (
 	"errors"
-	"fmt"
 	"slices"
 	"time"
 )
@@ -68,7 +67,7 @@ type User struct {
 	Auths        []string  `yaml:"auths"`
 	AuthKeys     []string  `yaml:"authKeys"`
 	Locked       bool      `yaml:"locked"`
-	FailedLogins int       `yaml:"failedLogins"`
+	FailedLogins uint32    `yaml:"failedLogins"`
 	Channels     []string  `yaml:"channels"`
 	Envs         []string  `yaml:"envs"`
 	Roles        []string  `yaml:"roles"`
@@ -85,25 +84,19 @@ func (u *User) HasBlueprint(blueprintName string) bool {
 
 // SSHSession represents an SSH session for a user
 type SSHSession struct {
-	SessionID int32      `yaml:"sessionID"`
-	Username  string     `yaml:"username"`
-	ProxyID   string     `yaml:"proxyID"`
-	ProxyPID  int        `yaml:"proxyPID"`
-	Client    string     `yaml:"client"`
-	ClientIP  string     `yaml:"clientIP"`
-	StartTime *time.Time `yaml:"startTime"`
-	EndTime   *time.Time `yaml:"endTime"`
-	Workspace string     `yaml:"workspace"`
-	BytesIn   int64      `yaml:"bytesIn"`
-	BytesOut  int64      `yaml:"bytesOut"`
-	Channels  []string   `yaml:"channels"`
-	Blueprint string     `yaml:"blueprint"`
-	UpdatedAt *time.Time `yaml:"updatedAt"`
-}
-
-// CreateSessionID generates a unique session ID for an SSH session
-func CreateSessionID(channel string, proxyID string, proxyPID int, channelNumber int) string {
-	return fmt.Sprintf("%s-%s-%d-%d", channel, proxyID, proxyPID, channelNumber)
+	SessionID   string     `yaml:"sessionID"`
+	Username    string     `yaml:"username"`
+	K8shelldVer string     `yaml:"k8shelldVer"`
+	Client      string     `yaml:"client"`
+	ClientIP    string     `yaml:"clientIP"`
+	StartTime   *time.Time `yaml:"startTime"`
+	EndTime     *time.Time `yaml:"endTime"`
+	Workspace   string     `yaml:"workspace"`
+	BytesIn     int64      `yaml:"bytesIn"`
+	BytesOut    int64      `yaml:"bytesOut"`
+	Channels    []string   `yaml:"channels"`
+	Blueprint   string     `yaml:"blueprint"`
+	UpdatedAt   *time.Time `yaml:"updatedAt"`
 }
 
 // Organization represents an organization in the system
@@ -127,13 +120,27 @@ type ProviderInfo struct {
 	RefreshToken    string     `yaml:"refreshToken"`
 }
 
-// OnboardUser represents a user being onboarded
-type OnboardUser struct {
+// OnboardUserDeviceFlow represents a user being onboarded via OAuth device flow
+type OnboardUserDeviceFlow struct {
 	Provider        string `json:"provider"`
 	Username        string `json:"username"`
 	UserCode        string `json:"user_code"`
 	VerificationUrl string `json:"verification_url"`
 	ExpiresIn       int    `json:"expires_in"`
+}
+
+// OnboardUserWebFlow represents a user being onboarded via OAuth web flow
+type OnboardUserWebFlow struct {
+	Provider         string `json:"provider"`
+	AuthorizationURL string `json:"authorizationUrl"`
+	State            string `json:"state"`
+	ExpiresIn        int    `json:"expiresIn"`
+}
+
+// CompleteUserWebFlow represents the data needed to complete a web onboarding flow
+type CompleteUserWebFlow struct {
+	Code  string `json:"code"`
+	State string `json:"state"`
 }
 
 // OnboardCapability represents the capability of a user to onboard

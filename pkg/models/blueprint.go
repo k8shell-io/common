@@ -3,9 +3,10 @@ package models
 import (
 	"bytes"
 	"fmt"
+	"time"
 
 	"github.com/go-playground/validator/v10"
-	v "github.com/k8shell-io/common/validator"
+	v "github.com/k8shell-io/common/pkg/validator"
 	"gopkg.in/yaml.v3"
 )
 
@@ -31,9 +32,10 @@ type Blueprint struct {
 	Docker          Docker              `yaml:"docker" validate:"required"`
 	Storages        map[string]Storage  `yaml:"storages" validate:"required,min=1,dive"`
 	InitScripts     []map[string]string `yaml:"initScripts,omitempty"`
-	ServiceAccount  string              `yaml:"serviceAccount,omitempty"`
 	Capabilities    []string            `yaml:"capabilities,omitempty" validate:"omitempty,dive,oneof=NET_ADMIN NET_BIND_SERVICE NET_RAW SYS_ADMIN SYS_TIME SYS_MODULE SYS_RAWIO DAC_OVERRIDE FOWNER SETUID SETGID KILL CHOWN"`
 	ExtFiles        map[string]string   `yaml:"extFiles,omitempty"`
+	EnableApps      bool                `yaml:"enableApps,omitempty"`
+	Apps            map[string]AppSpec  `yaml:"apps,omitempty" validate:"omitempty,dive"`
 }
 
 // K8shellFile represents the overall structure of a k8shell YAML file
@@ -56,14 +58,22 @@ type CustomBlueprint struct {
 	Resources      Resources           `yaml:"resources,omitempty"`
 	Storages       map[string]Storage  `yaml:"storages,omitempty"`
 	InitScripts    []map[string]string `yaml:"initScripts,omitempty"`
+	EnableApps     bool                `yaml:"enableApps,omitempty"`
+	Apps           map[string]AppSpec  `yaml:"apps,omitempty"`
 }
 
 // BlueprintMetadata holds metadata information for a blueprint.
 type BlueprintMetadata struct {
 	Name        string `yaml:"name"`
 	RepoName    string `yaml:"repoName"`
+	RepoRef     string `yaml:"repoRef"`
 	RepoOwner   string `yaml:"repoOwner"`
 	RepoAddress string `yaml:"repoAddress"`
+}
+
+type Conn struct {
+	AllowAnyNS bool `yaml:"allowAnyNS,omitempty"`
+	AllowAnySA bool `yaml:"allowAnySA,omitempty"`
 }
 
 // K8shelld represents k8shelld configuration
@@ -71,16 +81,7 @@ type K8shelld struct {
 	Image           string   `yaml:"image" validate:"required"`
 	ImagePullPolicy string   `yaml:"imagePullPolicy,omitempty" validate:"omitempty,oneof=Always Never IfNotPresent"`
 	IgnoreOrphans   []string `yaml:"ignoreOrphans,omitempty"`
-	Cert            Cert     `yaml:"cert" validate:"required"`
-}
-
-// Cert represents certificate configuration
-type Cert struct {
-	Country      string `yaml:"country" validate:"required,len=2"`
-	State        string `yaml:"state" validate:"required"`
-	Locality     string `yaml:"locality" validate:"required"`
-	Organization string `yaml:"organization" validate:"required"`
-	CommonName   string `yaml:"commonName" validate:"required,fqdn"`
+	Connection      Conn     `yaml:"connection,omitempty"`
 }
 
 // Network represents network configuration
@@ -97,13 +98,14 @@ type Resources struct {
 
 // Docker represents Docker configuration
 type Docker struct {
-	Enabled        bool              `yaml:"enabled"`
-	Image          string            `yaml:"image" validate:"required_if=Enabled true"`
-	Resources      Resources         `yaml:"resources" validate:"required_if=Enabled true"`
-	GroupID        int               `yaml:"groupId" validate:"min=0,max=65535"`
-	SubGID         int               `yaml:"subgid" validate:"min=0"`
-	ParentStorages bool              `yaml:"parentStorages"`
-	ExtFiles       map[string]string `yaml:"extFiles,omitempty"`
+	Enabled        bool               `yaml:"enabled"`
+	Image          string             `yaml:"image" validate:"required_if=Enabled true"`
+	Resources      Resources          `yaml:"resources" validate:"required_if=Enabled true"`
+	GroupID        int                `yaml:"groupId" validate:"min=0,max=65535"`
+	SubGID         int                `yaml:"subgid" validate:"min=0"`
+	ParentStorages bool               `yaml:"parentStorages"`
+	ExtFiles       map[string]string  `yaml:"extFiles,omitempty"`
+	Storages       map[string]Storage `yaml:"storages,omitempty"`
 }
 
 // Storage represents storage configuration
@@ -116,11 +118,27 @@ type Storage struct {
 	Annotations  map[string]string `yaml:"annotations,omitempty"`
 }
 
-type Repo struct {
-	Address string `yaml:"address" validate:"required"`
-	Name    string `yaml:"name" validate:"required"`
-	Owner   string `yaml:"owner" validate:"required"`
+type AppSpec struct {
+	Enabled           bool          `yaml:"enabled"`
+	Name              string        `yaml:"name"`
+	Binary            string        `yaml:"binary,omitempty"`
+	VersionCmd        []string      `yaml:"versionCmd,omitempty"`
+	VersionRegex      string        `yaml:"versionRegex,omitempty"`
+	Install           string        `yaml:"install,omitempty"`
+	Start             []string      `yaml:"start,omitempty"`
+	Listen            int           `yaml:"listen,omitempty"`
+	RestartPolicy     string        `yaml:"restartPolicy,omitempty" validate:"oneof=always on-failure never"`
+	MaxRestartBackoff time.Duration `yaml:"maxRestartBackoff,omitempty"`
+	InstallAsRoot     bool          `yaml:"installAsRoot,omitempty"`
+	AutoStart         bool          `yaml:"autoStart,omitempty"`
+	Protocol          string        `yaml:"protocol,omitempty" validate:"omitempty,oneof=http https ws wss tcp udp"`
 }
+
+// type Repo struct {
+// 	Address string `yaml:"address" validate:"required"`
+// 	Name    string `yaml:"name" validate:"required"`
+// 	Owner   string `yaml:"owner" validate:"required"`
+// }
 
 // Validate validates the blueprint and returns user-friendly errors
 func (b *Blueprint) Validate() v.Validator {
