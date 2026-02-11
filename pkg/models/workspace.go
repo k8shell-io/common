@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+const WORKSPACE_PORT = 2822 // port that workspace containers listen on for grpc connections
+
 // WorkspaceInfo represents information about a workspace
 type WorkspaceInfo struct {
 	Name       string    `json:"name" example:"dev-user123"`
@@ -35,7 +37,7 @@ type WorkspaceStatus struct {
 	Blueprint  string `json:"blueprint"`
 	Host       string `json:"host"`
 	PodIP      string `json:"podIP"`
-	Port       int    `json:"port"`
+	Port       int    `json:"port" example:"2822"`
 	TLSEnabled bool   `json:"tlsEnabled"`
 	Splash     string `json:"splash"`
 }
