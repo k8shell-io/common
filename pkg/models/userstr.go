@@ -527,32 +527,6 @@ func (b *UserStrBuilder) Build() (*UserStr, error) {
 	return NewUserStr(raw, false)
 }
 
-// Labels returns Kubernetes/Helm-safe labels derived from the UserStr.
-func (u *UserStr) Labels() map[string]string {
-	lbls := make(map[string]string)
-
-	if u.Username != "" {
-		lbls["k8shell.io/username"] = u.Username
-	}
-	if u.Blueprint != "" {
-		lbls["k8shell.io/blueprint"] = u.Blueprint
-	}
-	if u.RepoOwner != "" {
-		lbls["k8shell.io/repoowner"] = u.RepoOwner
-	}
-	if u.RepoName != "" {
-		lbls["k8shell.io/reponame"] = u.RepoName
-	}
-	if u.RepoRef != "" {
-		lbls["k8shell.io/ref"] = u.RepoRef
-	}
-	if u.RepoPullReq > 0 {
-		lbls["k8shell.io/pullrequest"] = strconv.Itoa(u.RepoPullReq)
-	}
-
-	return lbls
-}
-
 // tryDecodeB64UserStrToken decodes reversible whole-userstr base64url tokens. The only supported
 // encoding is raw base64url without padding, prefixed by "b64-" or "base64-" (case-insensitive).
 // Supported forms:
@@ -586,4 +560,78 @@ func tryDecodeB64UserStrToken(s string) (string, bool, error) {
 	}
 
 	return string(b), true, nil
+}
+
+// Base64Token returns a reversible base64url (raw, no padding) representation of the
+// canonical user string, prefixed with "b64-".
+// Used where the raw canonical user string may be too long or contain unsafe characters.
+func (c *CanonicalUserStr) Base64Token() string {
+	if c == nil || c.CanonicalUserStr == "" {
+		return ""
+	}
+	return "b64-" + base64.RawURLEncoding.EncodeToString([]byte(c.CanonicalUserStr))
+}
+
+// NewCanonicalUserStrFromBase64 decodes a base64url (raw, no padding) string/token into a USERSTR,
+// parses it, then canonicalizes it.
+// Accepted inputs:
+//   - "b64-<payload>"
+//   - "base64-<payload>"
+//   - "<payload>" (raw base64url without padding)
+func NewCanonicalUserStrFromBase64(s string) (*CanonicalUserStr, error) {
+	decoded, err := decodeBase64UserStrFlexible(s)
+	if err != nil {
+		return nil, err
+	}
+
+	u, err := NewUserStr(decoded, false)
+	if err != nil {
+		return nil, err
+	}
+	return u.Canonicalize()
+}
+
+// Labels returns Kubernetes/Helm-safe labels derived from the UserStr.
+func (u *CanonicalUserStr) Labels() map[string]string {
+	lbls := make(map[string]string)
+
+	if u.Identity.Username != "" {
+		lbls["k8shell.io/username"] = u.Identity.Username
+	}
+	if u.Identity.Blueprint != "" {
+		lbls["k8shell.io/blueprint"] = u.Identity.Blueprint
+	}
+	if u.Identity.RepoOwner != "" {
+		lbls["k8shell.io/repoowner"] = u.Identity.RepoOwner
+	}
+	if u.Identity.RepoName != "" {
+		lbls["k8shell.io/reponame"] = u.Identity.RepoName
+	}
+	if u.Identity.RepoRef != "" {
+		lbls["k8shell.io/ref"] = u.Identity.RepoRef
+	}
+	return lbls
+}
+
+// decodeBase64UserStrFlexible decodes a base64url (raw, no padding) string/token into a USERSTR.
+func decodeBase64UserStrFlexible(s string) (string, error) {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return "", fmt.Errorf("%w: empty base64 input", ErrB64UserStrInvalid)
+	}
+
+	// If it is already a supported token form, reuse the existing decoder.
+	if decoded, ok, err := tryDecodeB64UserStrToken(s); ok {
+		if err != nil {
+			return "", fmt.Errorf("%w: %v", ErrB64UserStrInvalid, err)
+		}
+		return decoded, nil
+	}
+
+	// Otherwise treat s as the raw base64url payload (no padding).
+	b, err := base64.RawURLEncoding.DecodeString(s)
+	if err != nil {
+		return "", fmt.Errorf("%w: base64 decode failed: %v", ErrB64UserStrInvalid, err)
+	}
+	return string(b), nil
 }
