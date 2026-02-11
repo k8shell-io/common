@@ -31,15 +31,16 @@ type PodStatus struct {
 // the workspace-specific details such host, port and access key and TLS certificate.
 type WorkspaceStatus struct {
 	PodStatus
-	AppVersion string `json:"appVersion" example:"1.0.0"`
-	Name       string `json:"name"`
-	Username   string `json:"username"`
-	Blueprint  string `json:"blueprint"`
-	Host       string `json:"host"`
-	PodIP      string `json:"podIP"`
-	Port       int    `json:"port" example:"2822"`
-	TLSEnabled bool   `json:"tlsEnabled"`
-	Splash     string `json:"splash"`
+	AppVersion   string `json:"appVersion" example:"1.0.0"`
+	Name         string `json:"name"`
+	Username     string `json:"username"`
+	Blueprint    string `json:"blueprint"`
+	Organization string `json:"organization"`
+	Host         string `json:"host"`
+	PodIP        string `json:"podIP"`
+	Port         int    `json:"port" example:"2822"`
+	TLSEnabled   bool   `json:"tlsEnabled"`
+	Splash       string `json:"splash"`
 }
 
 // StreamEvent represents a streaming event response
