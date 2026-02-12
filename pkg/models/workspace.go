@@ -34,6 +34,8 @@ type WorkspaceStatus struct {
 	AppVersion   string `json:"appVersion" example:"1.0.0"`
 	Name         string `json:"name"`
 	Username     string `json:"username"`
+	Repo         string `json:"repoName"`
+	RepoRef      string `json:"repoRef"`
 	Blueprint    string `json:"blueprint"`
 	Organization string `json:"organization"`
 	Host         string `json:"host"`
