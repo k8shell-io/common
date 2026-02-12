@@ -562,14 +562,13 @@ func tryDecodeB64UserStrToken(s string) (string, bool, error) {
 	return string(b), true, nil
 }
 
-// Base64Token returns a reversible base64url (raw, no padding) representation of the
-// canonical user string, prefixed with "b64-".
+// Base64 returns a reversible base64url (raw, no padding) representation of the canonical user string.
 // Used where the raw canonical user string may be too long or contain unsafe characters.
-func (c *CanonicalUserStr) Base64Token() string {
+func (c *CanonicalUserStr) Base64() string {
 	if c == nil || c.CanonicalUserStr == "" {
 		return ""
 	}
-	return "b64-" + base64.RawURLEncoding.EncodeToString([]byte(c.CanonicalUserStr))
+	return base64.RawURLEncoding.EncodeToString([]byte(c.CanonicalUserStr))
 }
 
 // NewCanonicalUserStrFromBase64 decodes a base64url (raw, no padding) string/token into a USERSTR,
@@ -594,6 +593,8 @@ func NewCanonicalUserStrFromBase64(s string) (*CanonicalUserStr, error) {
 // Labels returns Kubernetes/Helm-safe labels derived from the UserStr.
 func (u *CanonicalUserStr) Labels() map[string]string {
 	lbls := make(map[string]string)
+
+	lbls["k8shell.io/userstr"] = u.Base64()
 
 	if u.Identity.Username != "" {
 		lbls["k8shell.io/username"] = u.Identity.Username
