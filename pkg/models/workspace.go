@@ -12,12 +12,11 @@ const WORKSPACE_PORT = 2822 // port that workspace containers listen on for grpc
 type WorkspacePodStatus string
 
 const (
-	WorkspaceStatusUnknown      WorkspacePodStatus = "Unknown"
 	WorkspaceStatusProvisioning WorkspacePodStatus = "Starting"
 	WorkspaceStatusRunning      WorkspacePodStatus = "Running"
-	WorkspaceStatusReady        WorkspacePodStatus = "Ready"
 	WorkspaceStatusFailing      WorkspacePodStatus = "Failing"
 	WorkspaceStatusStopped      WorkspacePodStatus = "Stopped"
+	WorkspaceStatusUnknown      WorkspacePodStatus = "Unknown"
 )
 
 // PodStatus represents the status of a workspace pod
