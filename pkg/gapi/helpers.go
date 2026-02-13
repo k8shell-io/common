@@ -249,16 +249,20 @@ func WorkspaceStatusToProto(m *models.WorkspaceStatus) *commonpb.WorkspaceStatus
 	}
 
 	return &commonpb.WorkspaceStatus{
-		PodStatus:  PodStatusToProto(&m.PodStatus),
-		Name:       m.Name,
-		Username:   m.Username,
-		Blueprint:  m.Blueprint,
-		Host:       m.Host,
-		PodIp:      m.PodIP,
-		Port:       int32(m.Port),
-		TlsEnabled: m.TLSEnabled,
-		Splash:     m.Splash,
-		AppVersion: m.AppVersion,
+		PodStatus:    PodStatusToProto(&m.PodStatus),
+		Name:         m.Name,
+		Username:     m.Username,
+		Blueprint:    m.Blueprint,
+		Organization: m.Organization,
+		RepoOwner:    m.RepoOwner,
+		RepoName:     m.RepoName,
+		RepoRef:      m.RepoRef,
+		Host:         m.Host,
+		PodIp:        m.PodIP,
+		Port:         int32(m.Port),
+		TlsEnabled:   m.TLSEnabled,
+		Splash:       m.Splash,
+		AppVersion:   m.AppVersion,
 	}
 }
 
@@ -269,16 +273,20 @@ func ProtoToWorkspaceStatus(pb *commonpb.WorkspaceStatus) *models.WorkspaceStatu
 	}
 
 	return &models.WorkspaceStatus{
-		PodStatus:  *ProtoToPodStatus(pb.GetPodStatus()),
-		Name:       pb.GetName(),
-		Username:   pb.GetUsername(),
-		Blueprint:  pb.GetBlueprint(),
-		Host:       pb.GetHost(),
-		PodIP:      pb.GetPodIp(),
-		Port:       int(pb.GetPort()),
-		TLSEnabled: pb.GetTlsEnabled(),
-		Splash:     pb.GetSplash(),
-		AppVersion: pb.GetAppVersion(),
+		PodStatus:    *ProtoToPodStatus(pb.GetPodStatus()),
+		Name:         pb.GetName(),
+		Username:     pb.GetUsername(),
+		Organization: pb.GetOrganization(),
+		RepoOwner:    pb.GetRepoOwner(),
+		RepoName:     pb.GetRepoName(),
+		RepoRef:      pb.GetRepoRef(),
+		Blueprint:    pb.GetBlueprint(),
+		Host:         pb.GetHost(),
+		PodIP:        pb.GetPodIp(),
+		Port:         int(pb.GetPort()),
+		TLSEnabled:   pb.GetTlsEnabled(),
+		Splash:       pb.GetSplash(),
+		AppVersion:   pb.GetAppVersion(),
 	}
 }
 
