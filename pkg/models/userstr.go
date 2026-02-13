@@ -636,3 +636,101 @@ func decodeBase64UserStrFlexible(s string) (string, error) {
 	}
 	return string(b), nil
 }
+
+// UserStrFields is a JSON-friendly representation
+type UserStrFields struct {
+	Username    string `json:"username"`
+	Blueprint   string `json:"blueprint,omitempty"`
+	RepoOwner   string `json:"repoOwner,omitempty"`
+	RepoName    string `json:"repoName,omitempty"`
+	RepoRef     string `json:"repoRef,omitempty"`
+	RepoPullReq int    `json:"repoPullReq,omitempty"`
+}
+
+// ToUserStr builds a userstr from the fields and parses it (single source of validation truth).
+func (f UserStrFields) ToUserStr() (*UserStr, error) {
+	raw, err := f.ToRawUserStr()
+	if err != nil {
+		return nil, err
+	}
+	return NewUserStr(raw, true)
+}
+
+// ToRawUserStr returns the serialized userstr that would be parsed.
+func (f UserStrFields) ToRawUserStr() (string, error) {
+	username := strings.ToLower(strings.TrimSpace(f.Username))
+	if username == "" {
+		return "", fmt.Errorf("%w: username is required", ErrBadParam)
+	}
+
+	repoOwner := strings.ToLower(strings.TrimSpace(f.RepoOwner))
+	repoName := strings.ToLower(strings.TrimSpace(f.RepoName))
+	repoRef := strings.TrimSpace(f.RepoRef)
+	repoPullReq := f.RepoPullReq
+	blueprint := strings.TrimSpace(f.Blueprint)
+
+	if repoPullReq < 0 {
+		return "", fmt.Errorf("%w: repoPullReq must be >= 0", ErrBadParam)
+	}
+	if repoRef != "" && repoPullReq > 0 {
+		return "", fmt.Errorf("%w: cannot specify more than one of repoRef, repoPullReq", ErrBadParam)
+	}
+
+	hasAnyRepoField := repoOwner != "" || repoName != "" || repoRef != "" || repoPullReq > 0
+
+	b := NewUserStrWith(username)
+
+	if hasAnyRepoField {
+		if repoName == "" {
+			return "", fmt.Errorf("%w: repoName is required when specifying repo fields", ErrBadParam)
+		}
+		if repoOwner == "" {
+			repoOwner = username
+		}
+
+		b.WithRepo(repoOwner + "/" + repoName)
+
+		if repoRef != "" && repoPullReq > 0 {
+			return "", fmt.Errorf("%w: cannot specify more than one of repoRef, repoPullReq", ErrBadParam)
+		}
+
+		if repoRef != "" {
+			b.WithRef(repoRef)
+		}
+		if repoPullReq > 0 {
+			b.WithParam("pr", strconv.Itoa(repoPullReq))
+		}
+
+		u, err := b.Build()
+		if err != nil {
+			return "", err
+		}
+		return u.Raw, nil
+	}
+
+	if blueprint != "" {
+		b.WithBlueprint(blueprint)
+	}
+
+	u, err := b.Build()
+	if err != nil {
+		return "", err
+	}
+	return u.Raw, nil
+}
+
+// UserStrFieldsFromUserStr creates a payload from a parsed *UserStr.
+// Note: Blueprint will be populated from u.Blueprint (even for repo-derived blueprints).
+func UserStrFieldsFromUserStr(u *UserStr) UserStrFields {
+	if u == nil {
+		return UserStrFields{}
+	}
+	return UserStrFields{
+		Username:    u.Username,
+		Blueprint:   u.Blueprint,
+		RepoOwner:   u.RepoOwner,
+		RepoName:    u.RepoName,
+		RepoRef:     u.RepoRef,
+		RepoPullReq: u.RepoPullReq,
+	}
+}
