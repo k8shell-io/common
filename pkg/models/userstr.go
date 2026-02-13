@@ -681,6 +681,9 @@ func (f UserStrFields) ToRawUserStr() (string, error) {
 	b := NewUserStrWith(username)
 
 	if hasAnyRepoField {
+		if blueprint != "" {
+			return "", fmt.Errorf("%w: blueprint cannot be specified when repo fields are present", ErrBadParam)
+		}
 		if repoName == "" {
 			return "", fmt.Errorf("%w: repoName is required when specifying repo fields", ErrBadParam)
 		}
