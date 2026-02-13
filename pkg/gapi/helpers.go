@@ -219,7 +219,7 @@ func PodStatusToProto(m *models.PodStatus) *commonpb.PodStatus {
 
 	return &commonpb.PodStatus{
 		Created: created,
-		Status:  m.Status,
+		Status:  string(m.Status),
 		Message: m.Message,
 	}
 }
@@ -237,7 +237,7 @@ func ProtoToPodStatus(pb *commonpb.PodStatus) *models.PodStatus {
 
 	return &models.PodStatus{
 		Created: created,
-		Status:  pb.GetStatus(),
+		Status:  models.WorkspacePodStatus(pb.GetStatus()),
 		Message: pb.GetMessage(),
 	}
 }

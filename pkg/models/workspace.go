@@ -8,6 +8,18 @@ import (
 
 const WORKSPACE_PORT = 2822 // port that workspace containers listen on for grpc connections
 
+// WorkspacePodStatus is the user-friendly status reported for a workspace pod.
+type WorkspacePodStatus string
+
+const (
+	WorkspaceStatusUnknown      WorkspacePodStatus = "Unknown"
+	WorkspaceStatusProvisioning WorkspacePodStatus = "Provisioning"
+	WorkspaceStatusRunning      WorkspacePodStatus = "Running"
+	WorkspaceStatusReady        WorkspacePodStatus = "Ready"
+	WorkspaceStatusFailing      WorkspacePodStatus = "Failing"
+	WorkspaceStatusStopped      WorkspacePodStatus = "Stopped"
+)
+
 // WorkspaceInfo represents information about a workspace
 type WorkspaceInfo struct {
 	Name       string    `json:"name" example:"dev-user123"`
@@ -21,9 +33,9 @@ type WorkspaceInfo struct {
 
 // PodStatus represents the status of a workspace pod
 type PodStatus struct {
-	Created time.Time `json:"created" example:"2025-08-05T10:30:00Z"`
-	Status  string    `json:"status" example:"Running"`
-	Message string    `json:"message" example:"Workspace is running"`
+	Created time.Time          `json:"created" example:"2025-08-05T10:30:00Z"`
+	Status  WorkspacePodStatus `json:"status" example:"Running"`
+	Message string             `json:"message" example:"Workspace is running"`
 }
 
 // WorkspaceStatus represents the current status of a workspace
@@ -48,11 +60,11 @@ type WorkspaceStatus struct {
 
 // StreamEvent represents a streaming event response
 type WorkspaceStreamEvent struct {
-	Type       string `json:"type" example:"event"`
-	Timestamp  string `json:"timestamp,omitempty" example:"2025-08-05T10:30:00Z"`
-	ObjectName string `json:"objectName,omitempty" example:"dev-user123"`
-	Message    string `json:"message,omitempty" example:"Pod is starting"`
-	Status     string `json:"status,omitempty" example:"Running"`
+	Type       string             `json:"type" example:"event"`
+	Timestamp  string             `json:"timestamp,omitempty" example:"2025-08-05T10:30:00Z"`
+	ObjectName string             `json:"objectName,omitempty" example:"dev-user123"`
+	Message    string             `json:"message,omitempty" example:"Pod is starting"`
+	Status     WorkspacePodStatus `json:"status,omitempty" example:"Running"`
 }
 
 // ErrWorkspaceNotFound is returned when a workspace is not found
