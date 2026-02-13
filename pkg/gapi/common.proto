@@ -76,12 +76,16 @@ message WorkspaceStatus {
   string app_version = 2;
   string name = 3;
   string username = 4;
-  string blueprint = 5;
-  string host = 6;
-  string pod_ip = 7;
-  int32 port = 8;
-  bool tls_enabled = 9;
-  string splash = 10;
+  string organization = 5;
+  string repo_owner = 6;
+  string repo_name = 7;
+  string repo_ref = 8;
+  string blueprint = 9;
+  string host = 10;
+  string pod_ip = 11;
+  int32 port = 12;
+  bool tls_enabled = 13;
+  string splash = 14;
 }
 
 // WorkspaceInfo represents the information of a workspace

@@ -618,12 +618,16 @@ type WorkspaceStatus struct {
 	AppVersion    string                 `protobuf:"bytes,2,opt,name=app_version,json=appVersion,proto3" json:"app_version,omitempty"`
 	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
 	Username      string                 `protobuf:"bytes,4,opt,name=username,proto3" json:"username,omitempty"`
-	Blueprint     string                 `protobuf:"bytes,5,opt,name=blueprint,proto3" json:"blueprint,omitempty"`
-	Host          string                 `protobuf:"bytes,6,opt,name=host,proto3" json:"host,omitempty"`
-	PodIp         string                 `protobuf:"bytes,7,opt,name=pod_ip,json=podIp,proto3" json:"pod_ip,omitempty"`
-	Port          int32                  `protobuf:"varint,8,opt,name=port,proto3" json:"port,omitempty"`
-	TlsEnabled    bool                   `protobuf:"varint,9,opt,name=tls_enabled,json=tlsEnabled,proto3" json:"tls_enabled,omitempty"`
-	Splash        string                 `protobuf:"bytes,10,opt,name=splash,proto3" json:"splash,omitempty"`
+	Organization  string                 `protobuf:"bytes,5,opt,name=organization,proto3" json:"organization,omitempty"`
+	RepoOwner     string                 `protobuf:"bytes,6,opt,name=repo_owner,json=repoOwner,proto3" json:"repo_owner,omitempty"`
+	RepoName      string                 `protobuf:"bytes,7,opt,name=repo_name,json=repoName,proto3" json:"repo_name,omitempty"`
+	RepoRef       string                 `protobuf:"bytes,8,opt,name=repo_ref,json=repoRef,proto3" json:"repo_ref,omitempty"`
+	Blueprint     string                 `protobuf:"bytes,9,opt,name=blueprint,proto3" json:"blueprint,omitempty"`
+	Host          string                 `protobuf:"bytes,10,opt,name=host,proto3" json:"host,omitempty"`
+	PodIp         string                 `protobuf:"bytes,11,opt,name=pod_ip,json=podIp,proto3" json:"pod_ip,omitempty"`
+	Port          int32                  `protobuf:"varint,12,opt,name=port,proto3" json:"port,omitempty"`
+	TlsEnabled    bool                   `protobuf:"varint,13,opt,name=tls_enabled,json=tlsEnabled,proto3" json:"tls_enabled,omitempty"`
+	Splash        string                 `protobuf:"bytes,14,opt,name=splash,proto3" json:"splash,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -682,6 +686,34 @@ func (x *WorkspaceStatus) GetName() string {
 func (x *WorkspaceStatus) GetUsername() string {
 	if x != nil {
 		return x.Username
+	}
+	return ""
+}
+
+func (x *WorkspaceStatus) GetOrganization() string {
+	if x != nil {
+		return x.Organization
+	}
+	return ""
+}
+
+func (x *WorkspaceStatus) GetRepoOwner() string {
+	if x != nil {
+		return x.RepoOwner
+	}
+	return ""
+}
+
+func (x *WorkspaceStatus) GetRepoName() string {
+	if x != nil {
+		return x.RepoName
+	}
+	return ""
+}
+
+func (x *WorkspaceStatus) GetRepoRef() string {
+	if x != nil {
+		return x.RepoRef
 	}
 	return ""
 }
@@ -883,22 +915,27 @@ const file_pkg_gapi_common_proto_rawDesc = "" +
 	"\tPodStatus\x124\n" +
 	"\acreated\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\acreated\x12\x16\n" +
 	"\x06status\x18\x02 \x01(\tR\x06status\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessage\"\xaa\x02\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage\"\xa5\x03\n" +
 	"\x0fWorkspaceStatus\x120\n" +
 	"\n" +
 	"pod_status\x18\x01 \x01(\v2\x11.common.PodStatusR\tpodStatus\x12\x1f\n" +
 	"\vapp_version\x18\x02 \x01(\tR\n" +
 	"appVersion\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12\x1a\n" +
-	"\busername\x18\x04 \x01(\tR\busername\x12\x1c\n" +
-	"\tblueprint\x18\x05 \x01(\tR\tblueprint\x12\x12\n" +
-	"\x04host\x18\x06 \x01(\tR\x04host\x12\x15\n" +
-	"\x06pod_ip\x18\a \x01(\tR\x05podIp\x12\x12\n" +
-	"\x04port\x18\b \x01(\x05R\x04port\x12\x1f\n" +
-	"\vtls_enabled\x18\t \x01(\bR\n" +
+	"\busername\x18\x04 \x01(\tR\busername\x12\"\n" +
+	"\forganization\x18\x05 \x01(\tR\forganization\x12\x1d\n" +
+	"\n" +
+	"repo_owner\x18\x06 \x01(\tR\trepoOwner\x12\x1b\n" +
+	"\trepo_name\x18\a \x01(\tR\brepoName\x12\x19\n" +
+	"\brepo_ref\x18\b \x01(\tR\arepoRef\x12\x1c\n" +
+	"\tblueprint\x18\t \x01(\tR\tblueprint\x12\x12\n" +
+	"\x04host\x18\n" +
+	" \x01(\tR\x04host\x12\x15\n" +
+	"\x06pod_ip\x18\v \x01(\tR\x05podIp\x12\x12\n" +
+	"\x04port\x18\f \x01(\x05R\x04port\x12\x1f\n" +
+	"\vtls_enabled\x18\r \x01(\bR\n" +
 	"tlsEnabled\x12\x16\n" +
-	"\x06splash\x18\n" +
-	" \x01(\tR\x06splash\"\xe9\x01\n" +
+	"\x06splash\x18\x0e \x01(\tR\x06splash\"\xe9\x01\n" +
 	"\rWorkspaceInfo\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x1c\n" +
