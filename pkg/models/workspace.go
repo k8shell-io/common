@@ -50,6 +50,7 @@ type WorkspaceStatus struct {
 	Port         int    `json:"port" example:"2822"`
 	TLSEnabled   bool   `json:"tlsEnabled"`
 	Splash       string `json:"splash"`
+	Fqdn         string `json:"fqdn"`
 }
 
 // WorkspaceCreateRequest represents workspace resources (CPU and memory)

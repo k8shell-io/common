@@ -269,6 +269,7 @@ func WorkspaceStatusToProto(m *models.WorkspaceStatus) *commonpb.WorkspaceStatus
 		AppVersion:   m.AppVersion,
 		Cpu:          m.CPU,
 		Memory:       m.Memory,
+		Fqdn:         m.Fqdn,
 	}
 }
 
@@ -295,5 +296,6 @@ func ProtoToWorkspaceStatus(pb *commonpb.WorkspaceStatus) *models.WorkspaceStatu
 		AppVersion:   pb.GetAppVersion(),
 		CPU:          pb.GetCpu(),
 		Memory:       pb.GetMemory(),
+		Fqdn:         pb.GetFqdn(),
 	}
 }

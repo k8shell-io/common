@@ -90,6 +90,7 @@ message WorkspaceStatus {
   string splash = 14;
   string cpu = 15;
   string memory = 16;
+  string fqdn = 17;
 }
 
 // WorkspaceInfo represents the information of a workspace
