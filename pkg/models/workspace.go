@@ -15,7 +15,9 @@ const (
 	WorkspaceStatusProvisioning WorkspacePodStatus = "Starting"
 	WorkspaceStatusRunning      WorkspacePodStatus = "Running"
 	WorkspaceStatusFailing      WorkspacePodStatus = "Failing"
+	WorkspaceStatusTerminating  WorkspacePodStatus = "Terminating"
 	WorkspaceStatusStopped      WorkspacePodStatus = "Stopped"
+	WorkspaceStatusError        WorkspacePodStatus = "Error"
 	WorkspaceStatusUnknown      WorkspacePodStatus = "Unknown"
 )
 
@@ -46,13 +48,21 @@ type WorkspaceStatus struct {
 	Splash       string `json:"splash"`
 }
 
+type WorkspaceStreamEventType string
+
+const (
+	WorkspaceStreamEventTypeEvent    WorkspaceStreamEventType = "event"
+	WorkspaceStreamEventTypeStatus   WorkspaceStreamEventType = "status"
+	WorkspaceStreamEventTypeProgress WorkspaceStreamEventType = "progress"
+)
+
 // StreamEvent represents a streaming event response
 type WorkspaceStreamEvent struct {
-	Type       string             `json:"type" example:"event"`
-	Timestamp  string             `json:"timestamp,omitempty" example:"2025-08-05T10:30:00Z"`
-	ObjectName string             `json:"objectName,omitempty" example:"dev-user123"`
-	Message    string             `json:"message,omitempty" example:"Pod is starting"`
-	Status     WorkspacePodStatus `json:"status,omitempty" example:"Running"`
+	Type       WorkspaceStreamEventType `json:"type" example:"event"`
+	Timestamp  string                   `json:"timestamp,omitempty" example:"2025-08-05T10:30:00Z"`
+	ObjectName string                   `json:"objectName,omitempty" example:"dev-user123"`
+	Message    string                   `json:"message,omitempty" example:"Pod is starting"`
+	Status     WorkspacePodStatus       `json:"status,omitempty" example:"Running"`
 }
 
 // ErrWorkspaceNotFound is returned when a workspace is not found
