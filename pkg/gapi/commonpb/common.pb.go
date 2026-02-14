@@ -552,12 +552,14 @@ func (x *UserOnboardCapability) GetCanOnboard() bool {
 
 // PodStatus represents the status of a workspace pod
 type PodStatus struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Created       *timestamp.Timestamp   `protobuf:"bytes,1,opt,name=created,proto3" json:"created,omitempty"`
-	Status        string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
-	Message       string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Created         *timestamp.Timestamp   `protobuf:"bytes,1,opt,name=created,proto3" json:"created,omitempty"`
+	Status          string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
+	Message         string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
+	Restarts        int32                  `protobuf:"varint,4,opt,name=restarts,proto3" json:"restarts,omitempty"`
+	LastFailMessage string                 `protobuf:"bytes,5,opt,name=last_fail_message,json=lastFailMessage,proto3" json:"last_fail_message,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *PodStatus) Reset() {
@@ -607,6 +609,20 @@ func (x *PodStatus) GetStatus() string {
 func (x *PodStatus) GetMessage() string {
 	if x != nil {
 		return x.Message
+	}
+	return ""
+}
+
+func (x *PodStatus) GetRestarts() int32 {
+	if x != nil {
+		return x.Restarts
+	}
+	return 0
+}
+
+func (x *PodStatus) GetLastFailMessage() string {
+	if x != nil {
+		return x.LastFailMessage
 	}
 	return ""
 }
@@ -927,11 +943,13 @@ const file_pkg_gapi_common_proto_rawDesc = "" +
 	"\bprovider\x18\x01 \x01(\tR\bprovider\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x1f\n" +
 	"\vcan_onboard\x18\x03 \x01(\bR\n" +
-	"canOnboard\"s\n" +
+	"canOnboard\"\xbb\x01\n" +
 	"\tPodStatus\x124\n" +
 	"\acreated\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\acreated\x12\x16\n" +
 	"\x06status\x18\x02 \x01(\tR\x06status\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessage\"\xcf\x03\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage\x12\x1a\n" +
+	"\brestarts\x18\x04 \x01(\x05R\brestarts\x12*\n" +
+	"\x11last_fail_message\x18\x05 \x01(\tR\x0flastFailMessage\"\xcf\x03\n" +
 	"\x0fWorkspaceStatus\x120\n" +
 	"\n" +
 	"pod_status\x18\x01 \x01(\v2\x11.common.PodStatusR\tpodStatus\x12\x1f\n" +

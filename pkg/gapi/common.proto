@@ -68,6 +68,8 @@ message PodStatus {
   google.protobuf.Timestamp created = 1;
   string status = 2;
   string message = 3;
+  int32 restarts = 4;
+  string last_fail_message = 5;
 }
 
 // WorkspaceStatus represents the current status of a workspace
