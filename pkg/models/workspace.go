@@ -38,19 +38,19 @@ type WorkspaceStatus struct {
 	AppVersion   string `json:"appVersion" example:"1.0.0"`
 	Name         string `json:"name"`
 	Username     string `json:"username"`
-	RepoOwner    string `json:"repoOwner"`
-	RepoName     string `json:"repoName"`
-	RepoRef      string `json:"repoRef"`
+	RepoOwner    string `json:"repoOwner,omitempty"`
+	RepoName     string `json:"repoName,omitempty"`
+	RepoRef      string `json:"repoRef,omitempty"`
 	Blueprint    string `json:"blueprint"`
 	Organization string `json:"organization"`
 	CPU          string `json:"cpu" example:"500m"`
 	Memory       string `json:"memory" example:"256Mi"`
 	Host         string `json:"host"`
 	PodIP        string `json:"podIP"`
-	Port         int    `json:"port" example:"2822"`
+	Port         int    `json:"port"`
 	TLSEnabled   bool   `json:"tlsEnabled"`
-	Splash       string `json:"splash"`
-	Fqdn         string `json:"fqdn"`
+	Splash       string `json:"splash,omitempty"`
+	Fqdn         string `json:"fqdn,omitempty"`
 }
 
 // WorkspaceCreateRequest represents workspace resources (CPU and memory)
