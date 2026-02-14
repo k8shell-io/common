@@ -48,6 +48,13 @@ type WorkspaceStatus struct {
 	Splash       string `json:"splash"`
 }
 
+// WorkspaceCreateRequest represents workspace resources (CPU and memory)
+// It is used when updating the workspace resources via the API
+type WorkspaceResources struct {
+	CPU    string `json:"cpu" example:"500m"`
+	Memory string `json:"memory" example:"256Mi"`
+}
+
 type WorkspaceStreamEventType string
 
 const (
