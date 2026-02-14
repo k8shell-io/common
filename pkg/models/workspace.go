@@ -23,11 +23,11 @@ const (
 
 // PodStatus represents the status of a workspace pod
 type PodStatus struct {
-	Created          time.Time          `json:"created" example:"2025-08-05T10:30:00Z"`
-	Status           WorkspacePodStatus `json:"status" example:"Running"`
-	Message          string             `json:"message" example:"Workspace is running"`
-	Restarts         int32              `json:"restarts" example:"0"`
-	LastFailedReason string             `json:"lastFailedReason,omitempty" example:""`
+	Created         time.Time          `json:"created" example:"2025-08-05T10:30:00Z"`
+	Status          WorkspacePodStatus `json:"status" example:"Running"`
+	Message         string             `json:"message" example:"Workspace is running"`
+	Restarts        int32              `json:"restarts" example:"0"`
+	LastFailMessage string             `json:"lastFailMessage,omitempty" example:""`
 }
 
 // WorkspaceStatus represents the current status of a workspace
