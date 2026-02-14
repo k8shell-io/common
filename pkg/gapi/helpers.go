@@ -263,6 +263,8 @@ func WorkspaceStatusToProto(m *models.WorkspaceStatus) *commonpb.WorkspaceStatus
 		TlsEnabled:   m.TLSEnabled,
 		Splash:       m.Splash,
 		AppVersion:   m.AppVersion,
+		Cpu:          m.CPU,
+		Memory:       m.Memory,
 	}
 }
 
@@ -287,5 +289,7 @@ func ProtoToWorkspaceStatus(pb *commonpb.WorkspaceStatus) *models.WorkspaceStatu
 		TLSEnabled:   pb.GetTlsEnabled(),
 		Splash:       pb.GetSplash(),
 		AppVersion:   pb.GetAppVersion(),
+		CPU:          pb.GetCpu(),
+		Memory:       pb.GetMemory(),
 	}
 }

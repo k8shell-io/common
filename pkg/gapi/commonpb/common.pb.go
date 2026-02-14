@@ -628,6 +628,8 @@ type WorkspaceStatus struct {
 	Port          int32                  `protobuf:"varint,12,opt,name=port,proto3" json:"port,omitempty"`
 	TlsEnabled    bool                   `protobuf:"varint,13,opt,name=tls_enabled,json=tlsEnabled,proto3" json:"tls_enabled,omitempty"`
 	Splash        string                 `protobuf:"bytes,14,opt,name=splash,proto3" json:"splash,omitempty"`
+	Cpu           string                 `protobuf:"bytes,15,opt,name=cpu,proto3" json:"cpu,omitempty"`
+	Memory        string                 `protobuf:"bytes,16,opt,name=memory,proto3" json:"memory,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -756,6 +758,20 @@ func (x *WorkspaceStatus) GetTlsEnabled() bool {
 func (x *WorkspaceStatus) GetSplash() string {
 	if x != nil {
 		return x.Splash
+	}
+	return ""
+}
+
+func (x *WorkspaceStatus) GetCpu() string {
+	if x != nil {
+		return x.Cpu
+	}
+	return ""
+}
+
+func (x *WorkspaceStatus) GetMemory() string {
+	if x != nil {
+		return x.Memory
 	}
 	return ""
 }
@@ -915,7 +931,7 @@ const file_pkg_gapi_common_proto_rawDesc = "" +
 	"\tPodStatus\x124\n" +
 	"\acreated\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\acreated\x12\x16\n" +
 	"\x06status\x18\x02 \x01(\tR\x06status\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessage\"\xa5\x03\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage\"\xcf\x03\n" +
 	"\x0fWorkspaceStatus\x120\n" +
 	"\n" +
 	"pod_status\x18\x01 \x01(\v2\x11.common.PodStatusR\tpodStatus\x12\x1f\n" +
@@ -935,7 +951,9 @@ const file_pkg_gapi_common_proto_rawDesc = "" +
 	"\x04port\x18\f \x01(\x05R\x04port\x12\x1f\n" +
 	"\vtls_enabled\x18\r \x01(\bR\n" +
 	"tlsEnabled\x12\x16\n" +
-	"\x06splash\x18\x0e \x01(\tR\x06splash\"\xe9\x01\n" +
+	"\x06splash\x18\x0e \x01(\tR\x06splash\x12\x10\n" +
+	"\x03cpu\x18\x0f \x01(\tR\x03cpu\x12\x16\n" +
+	"\x06memory\x18\x10 \x01(\tR\x06memory\"\xe9\x01\n" +
 	"\rWorkspaceInfo\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x1c\n" +

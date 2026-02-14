@@ -41,6 +41,8 @@ type WorkspaceStatus struct {
 	RepoRef      string `json:"repoRef"`
 	Blueprint    string `json:"blueprint"`
 	Organization string `json:"organization"`
+	CPU          string `json:"cpu" example:"500m"`
+	Memory       string `json:"memory" example:"256Mi"`
 	Host         string `json:"host"`
 	PodIP        string `json:"podIP"`
 	Port         int    `json:"port" example:"2822"`

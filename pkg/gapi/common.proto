@@ -86,6 +86,8 @@ message WorkspaceStatus {
   int32 port = 12;
   bool tls_enabled = 13;
   string splash = 14;
+  string cpu = 15;
+  string memory = 16;
 }
 
 // WorkspaceInfo represents the information of a workspace
