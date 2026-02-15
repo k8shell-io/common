@@ -30,10 +30,9 @@ type PodStatus struct {
 	LastFailMessage string             `json:"lastFailMessage,omitempty" example:""`
 }
 
-// WorkspaceStatus represents the current status of a workspace
+// WorkspaceDetails represents the details of a workspace
 // It contains information about the workspace pod status and in addition
-// the workspace-specific details such host, port and access key and TLS certificate.
-type WorkspaceStatus struct {
+type WorkspaceDetails struct {
 	PodStatus
 	AppVersion   string `json:"appVersion" example:"1.0.0"`
 	Name         string `json:"name"`
