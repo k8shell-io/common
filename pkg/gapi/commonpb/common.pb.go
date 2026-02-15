@@ -627,8 +627,8 @@ func (x *PodStatus) GetLastFailMessage() string {
 	return ""
 }
 
-// WorkspaceStatus represents the current status of a workspace
-type WorkspaceStatus struct {
+// WorkspaceDetails represents the details of a workspace
+type WorkspaceDetails struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	PodStatus     *PodStatus             `protobuf:"bytes,1,opt,name=pod_status,json=podStatus,proto3" json:"pod_status,omitempty"`
 	AppVersion    string                 `protobuf:"bytes,2,opt,name=app_version,json=appVersion,proto3" json:"app_version,omitempty"`
@@ -651,20 +651,20 @@ type WorkspaceStatus struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *WorkspaceStatus) Reset() {
-	*x = WorkspaceStatus{}
+func (x *WorkspaceDetails) Reset() {
+	*x = WorkspaceDetails{}
 	mi := &file_pkg_gapi_common_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *WorkspaceStatus) String() string {
+func (x *WorkspaceDetails) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*WorkspaceStatus) ProtoMessage() {}
+func (*WorkspaceDetails) ProtoMessage() {}
 
-func (x *WorkspaceStatus) ProtoReflect() protoreflect.Message {
+func (x *WorkspaceDetails) ProtoReflect() protoreflect.Message {
 	mi := &file_pkg_gapi_common_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -676,219 +676,126 @@ func (x *WorkspaceStatus) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use WorkspaceStatus.ProtoReflect.Descriptor instead.
-func (*WorkspaceStatus) Descriptor() ([]byte, []int) {
+// Deprecated: Use WorkspaceDetails.ProtoReflect.Descriptor instead.
+func (*WorkspaceDetails) Descriptor() ([]byte, []int) {
 	return file_pkg_gapi_common_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *WorkspaceStatus) GetPodStatus() *PodStatus {
+func (x *WorkspaceDetails) GetPodStatus() *PodStatus {
 	if x != nil {
 		return x.PodStatus
 	}
 	return nil
 }
 
-func (x *WorkspaceStatus) GetAppVersion() string {
+func (x *WorkspaceDetails) GetAppVersion() string {
 	if x != nil {
 		return x.AppVersion
 	}
 	return ""
 }
 
-func (x *WorkspaceStatus) GetName() string {
+func (x *WorkspaceDetails) GetName() string {
 	if x != nil {
 		return x.Name
 	}
 	return ""
 }
 
-func (x *WorkspaceStatus) GetUsername() string {
+func (x *WorkspaceDetails) GetUsername() string {
 	if x != nil {
 		return x.Username
 	}
 	return ""
 }
 
-func (x *WorkspaceStatus) GetOrganization() string {
+func (x *WorkspaceDetails) GetOrganization() string {
 	if x != nil {
 		return x.Organization
 	}
 	return ""
 }
 
-func (x *WorkspaceStatus) GetRepoOwner() string {
+func (x *WorkspaceDetails) GetRepoOwner() string {
 	if x != nil {
 		return x.RepoOwner
 	}
 	return ""
 }
 
-func (x *WorkspaceStatus) GetRepoName() string {
+func (x *WorkspaceDetails) GetRepoName() string {
 	if x != nil {
 		return x.RepoName
 	}
 	return ""
 }
 
-func (x *WorkspaceStatus) GetRepoRef() string {
+func (x *WorkspaceDetails) GetRepoRef() string {
 	if x != nil {
 		return x.RepoRef
 	}
 	return ""
 }
 
-func (x *WorkspaceStatus) GetBlueprint() string {
+func (x *WorkspaceDetails) GetBlueprint() string {
 	if x != nil {
 		return x.Blueprint
 	}
 	return ""
 }
 
-func (x *WorkspaceStatus) GetHost() string {
+func (x *WorkspaceDetails) GetHost() string {
 	if x != nil {
 		return x.Host
 	}
 	return ""
 }
 
-func (x *WorkspaceStatus) GetPodIp() string {
+func (x *WorkspaceDetails) GetPodIp() string {
 	if x != nil {
 		return x.PodIp
 	}
 	return ""
 }
 
-func (x *WorkspaceStatus) GetPort() int32 {
+func (x *WorkspaceDetails) GetPort() int32 {
 	if x != nil {
 		return x.Port
 	}
 	return 0
 }
 
-func (x *WorkspaceStatus) GetTlsEnabled() bool {
+func (x *WorkspaceDetails) GetTlsEnabled() bool {
 	if x != nil {
 		return x.TlsEnabled
 	}
 	return false
 }
 
-func (x *WorkspaceStatus) GetSplash() string {
+func (x *WorkspaceDetails) GetSplash() string {
 	if x != nil {
 		return x.Splash
 	}
 	return ""
 }
 
-func (x *WorkspaceStatus) GetCpu() string {
+func (x *WorkspaceDetails) GetCpu() string {
 	if x != nil {
 		return x.Cpu
 	}
 	return ""
 }
 
-func (x *WorkspaceStatus) GetMemory() string {
+func (x *WorkspaceDetails) GetMemory() string {
 	if x != nil {
 		return x.Memory
 	}
 	return ""
 }
 
-func (x *WorkspaceStatus) GetFqdn() string {
+func (x *WorkspaceDetails) GetFqdn() string {
 	if x != nil {
 		return x.Fqdn
-	}
-	return ""
-}
-
-// WorkspaceInfo represents the information of a workspace
-type WorkspaceInfo struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
-	Blueprint     string                 `protobuf:"bytes,3,opt,name=blueprint,proto3" json:"blueprint,omitempty"`
-	Deployed      *timestamp.Timestamp   `protobuf:"bytes,4,opt,name=deployed,proto3" json:"deployed,omitempty"`
-	AppVersion    string                 `protobuf:"bytes,5,opt,name=app_version,json=appVersion,proto3" json:"app_version,omitempty"`
-	Chart         string                 `protobuf:"bytes,6,opt,name=chart,proto3" json:"chart,omitempty"`
-	ChartVer      string                 `protobuf:"bytes,7,opt,name=chart_ver,json=chartVer,proto3" json:"chart_ver,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *WorkspaceInfo) Reset() {
-	*x = WorkspaceInfo{}
-	mi := &file_pkg_gapi_common_proto_msgTypes[8]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *WorkspaceInfo) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*WorkspaceInfo) ProtoMessage() {}
-
-func (x *WorkspaceInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_gapi_common_proto_msgTypes[8]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use WorkspaceInfo.ProtoReflect.Descriptor instead.
-func (*WorkspaceInfo) Descriptor() ([]byte, []int) {
-	return file_pkg_gapi_common_proto_rawDescGZIP(), []int{8}
-}
-
-func (x *WorkspaceInfo) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *WorkspaceInfo) GetUsername() string {
-	if x != nil {
-		return x.Username
-	}
-	return ""
-}
-
-func (x *WorkspaceInfo) GetBlueprint() string {
-	if x != nil {
-		return x.Blueprint
-	}
-	return ""
-}
-
-func (x *WorkspaceInfo) GetDeployed() *timestamp.Timestamp {
-	if x != nil {
-		return x.Deployed
-	}
-	return nil
-}
-
-func (x *WorkspaceInfo) GetAppVersion() string {
-	if x != nil {
-		return x.AppVersion
-	}
-	return ""
-}
-
-func (x *WorkspaceInfo) GetChart() string {
-	if x != nil {
-		return x.Chart
-	}
-	return ""
-}
-
-func (x *WorkspaceInfo) GetChartVer() string {
-	if x != nil {
-		return x.ChartVer
 	}
 	return ""
 }
@@ -957,8 +864,8 @@ const file_pkg_gapi_common_proto_rawDesc = "" +
 	"\x06status\x18\x02 \x01(\tR\x06status\x12\x18\n" +
 	"\amessage\x18\x03 \x01(\tR\amessage\x12\x1a\n" +
 	"\brestarts\x18\x04 \x01(\x05R\brestarts\x12*\n" +
-	"\x11last_fail_message\x18\x05 \x01(\tR\x0flastFailMessage\"\xe3\x03\n" +
-	"\x0fWorkspaceStatus\x120\n" +
+	"\x11last_fail_message\x18\x05 \x01(\tR\x0flastFailMessage\"\xe4\x03\n" +
+	"\x10WorkspaceDetails\x120\n" +
 	"\n" +
 	"pod_status\x18\x01 \x01(\v2\x11.common.PodStatusR\tpodStatus\x12\x1f\n" +
 	"\vapp_version\x18\x02 \x01(\tR\n" +
@@ -980,16 +887,7 @@ const file_pkg_gapi_common_proto_rawDesc = "" +
 	"\x06splash\x18\x0e \x01(\tR\x06splash\x12\x10\n" +
 	"\x03cpu\x18\x0f \x01(\tR\x03cpu\x12\x16\n" +
 	"\x06memory\x18\x10 \x01(\tR\x06memory\x12\x12\n" +
-	"\x04fqdn\x18\x11 \x01(\tR\x04fqdn\"\xe9\x01\n" +
-	"\rWorkspaceInfo\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1a\n" +
-	"\busername\x18\x02 \x01(\tR\busername\x12\x1c\n" +
-	"\tblueprint\x18\x03 \x01(\tR\tblueprint\x126\n" +
-	"\bdeployed\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\bdeployed\x12\x1f\n" +
-	"\vapp_version\x18\x05 \x01(\tR\n" +
-	"appVersion\x12\x14\n" +
-	"\x05chart\x18\x06 \x01(\tR\x05chart\x12\x1b\n" +
-	"\tchart_ver\x18\a \x01(\tR\bchartVerB9Z7github.com/k8shell-io/common/pkg/gapi/commonpb;commonpbb\x06proto3"
+	"\x04fqdn\x18\x11 \x01(\tR\x04fqdnB9Z7github.com/k8shell-io/common/pkg/gapi/commonpb;commonpbb\x06proto3"
 
 var (
 	file_pkg_gapi_common_proto_rawDescOnce sync.Once
@@ -1003,7 +901,7 @@ func file_pkg_gapi_common_proto_rawDescGZIP() []byte {
 	return file_pkg_gapi_common_proto_rawDescData
 }
 
-var file_pkg_gapi_common_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_pkg_gapi_common_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_pkg_gapi_common_proto_goTypes = []any{
 	(*User)(nil),                  // 0: common.User
 	(*ExternalCredential)(nil),    // 1: common.ExternalCredential
@@ -1012,20 +910,18 @@ var file_pkg_gapi_common_proto_goTypes = []any{
 	(*CompleteUserWebFlow)(nil),   // 4: common.CompleteUserWebFlow
 	(*UserOnboardCapability)(nil), // 5: common.UserOnboardCapability
 	(*PodStatus)(nil),             // 6: common.PodStatus
-	(*WorkspaceStatus)(nil),       // 7: common.WorkspaceStatus
-	(*WorkspaceInfo)(nil),         // 8: common.WorkspaceInfo
-	(*timestamp.Timestamp)(nil),   // 9: google.protobuf.Timestamp
+	(*WorkspaceDetails)(nil),      // 7: common.WorkspaceDetails
+	(*timestamp.Timestamp)(nil),   // 8: google.protobuf.Timestamp
 }
 var file_pkg_gapi_common_proto_depIdxs = []int32{
-	9, // 0: common.User.expires_at:type_name -> google.protobuf.Timestamp
-	9, // 1: common.PodStatus.created:type_name -> google.protobuf.Timestamp
-	6, // 2: common.WorkspaceStatus.pod_status:type_name -> common.PodStatus
-	9, // 3: common.WorkspaceInfo.deployed:type_name -> google.protobuf.Timestamp
-	4, // [4:4] is the sub-list for method output_type
-	4, // [4:4] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	8, // 0: common.User.expires_at:type_name -> google.protobuf.Timestamp
+	8, // 1: common.PodStatus.created:type_name -> google.protobuf.Timestamp
+	6, // 2: common.WorkspaceDetails.pod_status:type_name -> common.PodStatus
+	3, // [3:3] is the sub-list for method output_type
+	3, // [3:3] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_pkg_gapi_common_proto_init() }
@@ -1039,7 +935,7 @@ func file_pkg_gapi_common_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pkg_gapi_common_proto_rawDesc), len(file_pkg_gapi_common_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   9,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

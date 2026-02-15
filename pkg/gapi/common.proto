@@ -72,8 +72,8 @@ message PodStatus {
   string last_fail_message = 5;
 }
 
-// WorkspaceStatus represents the current status of a workspace
-message WorkspaceStatus {
+// WorkspaceDetails represents the details of a workspace
+message WorkspaceDetails {
   PodStatus pod_status = 1;
   string app_version = 2;
   string name = 3;
@@ -92,16 +92,3 @@ message WorkspaceStatus {
   string memory = 16;
   string fqdn = 17;
 }
-
-// WorkspaceInfo represents the information of a workspace
-message WorkspaceInfo {
-  string name = 1;
-  string username = 2;
-  string blueprint = 3;
-  google.protobuf.Timestamp deployed = 4;
-  string app_version = 5;
-  string chart = 6;
-  string chart_ver = 7;
-}
-
-

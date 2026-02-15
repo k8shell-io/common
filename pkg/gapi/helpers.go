@@ -246,13 +246,13 @@ func ProtoToPodStatus(pb *commonpb.PodStatus) *models.PodStatus {
 	}
 }
 
-// WorkspaceStatusToProto converts a Go WorkspaceStatus model to its protobuf message.
-func WorkspaceStatusToProto(m *models.WorkspaceStatus) *commonpb.WorkspaceStatus {
+// WorkspaceDetailsToProto converts a Go WorkspaceDetails model to its protobuf message.
+func WorkspaceDetailsToProto(m *models.WorkspaceDetails) *commonpb.WorkspaceDetails {
 	if m == nil {
 		return nil
 	}
 
-	return &commonpb.WorkspaceStatus{
+	return &commonpb.WorkspaceDetails{
 		PodStatus:    PodStatusToProto(&m.PodStatus),
 		Name:         m.Name,
 		Username:     m.Username,
@@ -273,13 +273,13 @@ func WorkspaceStatusToProto(m *models.WorkspaceStatus) *commonpb.WorkspaceStatus
 	}
 }
 
-// ProtoToWorkspaceStatus converts a protobuf WorkspaceStatus message to its Go model.
-func ProtoToWorkspaceStatus(pb *commonpb.WorkspaceStatus) *models.WorkspaceStatus {
+// ProtoToWorkspaceDetails converts a protobuf WorkspaceDetails message to its Go model.
+func ProtoToWorkspaceDetails(pb *commonpb.WorkspaceDetails) *models.WorkspaceDetails {
 	if pb == nil {
 		return nil
 	}
 
-	return &models.WorkspaceStatus{
+	return &models.WorkspaceDetails{
 		PodStatus:    *ProtoToPodStatus(pb.GetPodStatus()),
 		Name:         pb.GetName(),
 		Username:     pb.GetUsername(),
