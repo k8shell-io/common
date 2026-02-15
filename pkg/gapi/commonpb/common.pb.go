@@ -639,14 +639,14 @@ type WorkspaceDetails struct {
 	RepoName      string                 `protobuf:"bytes,7,opt,name=repo_name,json=repoName,proto3" json:"repo_name,omitempty"`
 	RepoRef       string                 `protobuf:"bytes,8,opt,name=repo_ref,json=repoRef,proto3" json:"repo_ref,omitempty"`
 	Blueprint     string                 `protobuf:"bytes,9,opt,name=blueprint,proto3" json:"blueprint,omitempty"`
-	Host          string                 `protobuf:"bytes,10,opt,name=host,proto3" json:"host,omitempty"`
+	ServerName    string                 `protobuf:"bytes,10,opt,name=server_name,json=serverName,proto3" json:"server_name,omitempty"`
 	PodIp         string                 `protobuf:"bytes,11,opt,name=pod_ip,json=podIp,proto3" json:"pod_ip,omitempty"`
 	Port          int32                  `protobuf:"varint,12,opt,name=port,proto3" json:"port,omitempty"`
 	TlsEnabled    bool                   `protobuf:"varint,13,opt,name=tls_enabled,json=tlsEnabled,proto3" json:"tls_enabled,omitempty"`
 	Splash        string                 `protobuf:"bytes,14,opt,name=splash,proto3" json:"splash,omitempty"`
 	Cpu           string                 `protobuf:"bytes,15,opt,name=cpu,proto3" json:"cpu,omitempty"`
 	Memory        string                 `protobuf:"bytes,16,opt,name=memory,proto3" json:"memory,omitempty"`
-	Fqdn          string                 `protobuf:"bytes,17,opt,name=fqdn,proto3" json:"fqdn,omitempty"`
+	Hostname      string                 `protobuf:"bytes,17,opt,name=hostname,proto3" json:"hostname,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -744,9 +744,9 @@ func (x *WorkspaceDetails) GetBlueprint() string {
 	return ""
 }
 
-func (x *WorkspaceDetails) GetHost() string {
+func (x *WorkspaceDetails) GetServerName() string {
 	if x != nil {
-		return x.Host
+		return x.ServerName
 	}
 	return ""
 }
@@ -793,9 +793,9 @@ func (x *WorkspaceDetails) GetMemory() string {
 	return ""
 }
 
-func (x *WorkspaceDetails) GetFqdn() string {
+func (x *WorkspaceDetails) GetHostname() string {
 	if x != nil {
-		return x.Fqdn
+		return x.Hostname
 	}
 	return ""
 }
@@ -864,7 +864,7 @@ const file_pkg_gapi_common_proto_rawDesc = "" +
 	"\x06status\x18\x02 \x01(\tR\x06status\x12\x18\n" +
 	"\amessage\x18\x03 \x01(\tR\amessage\x12\x1a\n" +
 	"\brestarts\x18\x04 \x01(\x05R\brestarts\x12*\n" +
-	"\x11last_fail_message\x18\x05 \x01(\tR\x0flastFailMessage\"\xe4\x03\n" +
+	"\x11last_fail_message\x18\x05 \x01(\tR\x0flastFailMessage\"\xf9\x03\n" +
 	"\x10WorkspaceDetails\x120\n" +
 	"\n" +
 	"pod_status\x18\x01 \x01(\v2\x11.common.PodStatusR\tpodStatus\x12\x1f\n" +
@@ -877,17 +877,18 @@ const file_pkg_gapi_common_proto_rawDesc = "" +
 	"repo_owner\x18\x06 \x01(\tR\trepoOwner\x12\x1b\n" +
 	"\trepo_name\x18\a \x01(\tR\brepoName\x12\x19\n" +
 	"\brepo_ref\x18\b \x01(\tR\arepoRef\x12\x1c\n" +
-	"\tblueprint\x18\t \x01(\tR\tblueprint\x12\x12\n" +
-	"\x04host\x18\n" +
-	" \x01(\tR\x04host\x12\x15\n" +
+	"\tblueprint\x18\t \x01(\tR\tblueprint\x12\x1f\n" +
+	"\vserver_name\x18\n" +
+	" \x01(\tR\n" +
+	"serverName\x12\x15\n" +
 	"\x06pod_ip\x18\v \x01(\tR\x05podIp\x12\x12\n" +
 	"\x04port\x18\f \x01(\x05R\x04port\x12\x1f\n" +
 	"\vtls_enabled\x18\r \x01(\bR\n" +
 	"tlsEnabled\x12\x16\n" +
 	"\x06splash\x18\x0e \x01(\tR\x06splash\x12\x10\n" +
 	"\x03cpu\x18\x0f \x01(\tR\x03cpu\x12\x16\n" +
-	"\x06memory\x18\x10 \x01(\tR\x06memory\x12\x12\n" +
-	"\x04fqdn\x18\x11 \x01(\tR\x04fqdnB9Z7github.com/k8shell-io/common/pkg/gapi/commonpb;commonpbb\x06proto3"
+	"\x06memory\x18\x10 \x01(\tR\x06memory\x12\x1a\n" +
+	"\bhostname\x18\x11 \x01(\tR\bhostnameB9Z7github.com/k8shell-io/common/pkg/gapi/commonpb;commonpbb\x06proto3"
 
 var (
 	file_pkg_gapi_common_proto_rawDescOnce sync.Once

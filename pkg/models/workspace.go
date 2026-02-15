@@ -44,12 +44,12 @@ type WorkspaceDetails struct {
 	Organization string `json:"organization"`
 	CPU          string `json:"cpu" example:"500m"`
 	Memory       string `json:"memory" example:"256Mi"`
-	Host         string `json:"host"`
+	ServerName   string `json:"serverName"`
 	PodIP        string `json:"podIP"`
 	Port         int    `json:"port"`
 	TLSEnabled   bool   `json:"tlsEnabled"`
 	Splash       string `json:"splash,omitempty"`
-	Fqdn         string `json:"fqdn,omitempty"`
+	Hostname     string `json:"hostname,omitempty"`
 }
 
 // WorkspaceCreateRequest represents workspace resources (CPU and memory)

@@ -261,7 +261,7 @@ func WorkspaceDetailsToProto(m *models.WorkspaceDetails) *commonpb.WorkspaceDeta
 		RepoOwner:    m.RepoOwner,
 		RepoName:     m.RepoName,
 		RepoRef:      m.RepoRef,
-		Host:         m.Host,
+		ServerName:   m.ServerName,
 		PodIp:        m.PodIP,
 		Port:         int32(m.Port),
 		TlsEnabled:   m.TLSEnabled,
@@ -269,7 +269,7 @@ func WorkspaceDetailsToProto(m *models.WorkspaceDetails) *commonpb.WorkspaceDeta
 		AppVersion:   m.AppVersion,
 		Cpu:          m.CPU,
 		Memory:       m.Memory,
-		Fqdn:         m.Fqdn,
+		Hostname:     m.Hostname,
 	}
 }
 
@@ -288,7 +288,7 @@ func ProtoToWorkspaceDetails(pb *commonpb.WorkspaceDetails) *models.WorkspaceDet
 		RepoName:     pb.GetRepoName(),
 		RepoRef:      pb.GetRepoRef(),
 		Blueprint:    pb.GetBlueprint(),
-		Host:         pb.GetHost(),
+		ServerName:   pb.GetServerName(),
 		PodIP:        pb.GetPodIp(),
 		Port:         int(pb.GetPort()),
 		TLSEnabled:   pb.GetTlsEnabled(),
@@ -296,6 +296,6 @@ func ProtoToWorkspaceDetails(pb *commonpb.WorkspaceDetails) *models.WorkspaceDet
 		AppVersion:   pb.GetAppVersion(),
 		CPU:          pb.GetCpu(),
 		Memory:       pb.GetMemory(),
-		Fqdn:         pb.GetFqdn(),
+		Hostname:     pb.GetHostname(),
 	}
 }

@@ -83,12 +83,12 @@ message WorkspaceDetails {
   string repo_name = 7;
   string repo_ref = 8;
   string blueprint = 9;
-  string host = 10;
+  string server_name = 10;
   string pod_ip = 11;
   int32 port = 12;
   bool tls_enabled = 13;
   string splash = 14;
   string cpu = 15;
   string memory = 16;
-  string fqdn = 17;
+  string hostname = 17;
 }
