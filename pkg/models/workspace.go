@@ -81,10 +81,8 @@ type WorkspaceStreamEvent struct {
 type ProvisionJobStatus string
 
 const (
-	ProvisionJobAccepted  ProvisionJobStatus = "accepted"
 	ProvisionJobRunning   ProvisionJobStatus = "running"
-	ProvisionJobSucceeded ProvisionJobStatus = "succeeded"
-	ProvisionJobFailed    ProvisionJobStatus = "failed"
+	ProvisionJobCompleted ProvisionJobStatus = "completed"
 )
 
 // ProvisionJob represents the state of a workspace provisioning job,
@@ -97,7 +95,6 @@ type ProvisionJob struct {
 	CreatedAt     time.Time              `json:"createdAt"`
 	UpdatedAt     time.Time              `json:"updatedAt"`
 	FinishedAt    *time.Time             `json:"finishedAt,omitempty"`
-	Error         string                 `json:"error,omitempty"`
 	Events        []WorkspaceStreamEvent `json:"events,omitempty"`
 }
 
