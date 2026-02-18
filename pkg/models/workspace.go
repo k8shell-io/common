@@ -69,6 +69,7 @@ const (
 
 // StreamEvent represents a streaming event response
 type WorkspaceStreamEvent struct {
+	Id         int64                    `json:"id" example:"123456789"`
 	Type       WorkspaceStreamEventType `json:"type" example:"event"`
 	Timestamp  string                   `json:"timestamp,omitempty" example:"2025-08-05T10:30:00Z"`
 	ObjectName string                   `json:"objectName,omitempty" example:"dev-user123"`
