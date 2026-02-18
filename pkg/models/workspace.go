@@ -78,6 +78,29 @@ type WorkspaceStreamEvent struct {
 	Status     WorkspacePodStatus       `json:"status,omitempty" example:"Running"`
 }
 
+type ProvisionJobStatus string
+
+const (
+	ProvisionJobAccepted  ProvisionJobStatus = "accepted"
+	ProvisionJobRunning   ProvisionJobStatus = "running"
+	ProvisionJobSucceeded ProvisionJobStatus = "succeeded"
+	ProvisionJobFailed    ProvisionJobStatus = "failed"
+)
+
+// ProvisionJob represents the state of a workspace provisioning job,
+// The provisioning job is stored in a JetStream KV store, and updated as new events are received
+// from the provisioner service.
+type ProvisionJob struct {
+	ID            string                 `json:"id"`
+	WorkspaceName string                 `json:"workspaceName,omitempty"`
+	Status        ProvisionJobStatus     `json:"status"`
+	CreatedAt     time.Time              `json:"createdAt"`
+	UpdatedAt     time.Time              `json:"updatedAt"`
+	FinishedAt    *time.Time             `json:"finishedAt,omitempty"`
+	Error         string                 `json:"error,omitempty"`
+	Events        []WorkspaceStreamEvent `json:"events,omitempty"`
+}
+
 // ErrWorkspaceNotFound is returned when a workspace is not found
 var ErrWorkspaceNotFound = errors.New("workspace not found")
 
