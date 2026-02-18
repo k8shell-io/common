@@ -91,4 +91,5 @@ message WorkspaceDetails {
   string cpu = 15;
   string memory = 16;
   string hostname = 17;
+  string job_id = 18;
 }

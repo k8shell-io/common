@@ -270,6 +270,7 @@ func WorkspaceDetailsToProto(m *models.WorkspaceDetails) *commonpb.WorkspaceDeta
 		Cpu:          m.CPU,
 		Memory:       m.Memory,
 		Hostname:     m.Hostname,
+		JobId:        m.JobId,
 	}
 }
 
@@ -297,5 +298,6 @@ func ProtoToWorkspaceDetails(pb *commonpb.WorkspaceDetails) *models.WorkspaceDet
 		CPU:          pb.GetCpu(),
 		Memory:       pb.GetMemory(),
 		Hostname:     pb.GetHostname(),
+		JobId:        pb.GetJobId(),
 	}
 }

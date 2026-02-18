@@ -50,6 +50,7 @@ type WorkspaceDetails struct {
 	TLSEnabled   bool   `json:"tlsEnabled"`
 	Splash       string `json:"splash,omitempty"`
 	Hostname     string `json:"hostname,omitempty"`
+	JobId        string `json:"jobId,omitempty"`
 }
 
 // WorkspaceCreateRequest represents workspace resources (CPU and memory)

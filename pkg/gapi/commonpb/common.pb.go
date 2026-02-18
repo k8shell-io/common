@@ -647,6 +647,7 @@ type WorkspaceDetails struct {
 	Cpu           string                 `protobuf:"bytes,15,opt,name=cpu,proto3" json:"cpu,omitempty"`
 	Memory        string                 `protobuf:"bytes,16,opt,name=memory,proto3" json:"memory,omitempty"`
 	Hostname      string                 `protobuf:"bytes,17,opt,name=hostname,proto3" json:"hostname,omitempty"`
+	JobId         string                 `protobuf:"bytes,18,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -800,6 +801,13 @@ func (x *WorkspaceDetails) GetHostname() string {
 	return ""
 }
 
+func (x *WorkspaceDetails) GetJobId() string {
+	if x != nil {
+		return x.JobId
+	}
+	return ""
+}
+
 var File_pkg_gapi_common_proto protoreflect.FileDescriptor
 
 const file_pkg_gapi_common_proto_rawDesc = "" +
@@ -864,7 +872,7 @@ const file_pkg_gapi_common_proto_rawDesc = "" +
 	"\x06status\x18\x02 \x01(\tR\x06status\x12\x18\n" +
 	"\amessage\x18\x03 \x01(\tR\amessage\x12\x1a\n" +
 	"\brestarts\x18\x04 \x01(\x05R\brestarts\x12*\n" +
-	"\x11last_fail_message\x18\x05 \x01(\tR\x0flastFailMessage\"\xf9\x03\n" +
+	"\x11last_fail_message\x18\x05 \x01(\tR\x0flastFailMessage\"\x90\x04\n" +
 	"\x10WorkspaceDetails\x120\n" +
 	"\n" +
 	"pod_status\x18\x01 \x01(\v2\x11.common.PodStatusR\tpodStatus\x12\x1f\n" +
@@ -888,7 +896,8 @@ const file_pkg_gapi_common_proto_rawDesc = "" +
 	"\x06splash\x18\x0e \x01(\tR\x06splash\x12\x10\n" +
 	"\x03cpu\x18\x0f \x01(\tR\x03cpu\x12\x16\n" +
 	"\x06memory\x18\x10 \x01(\tR\x06memory\x12\x1a\n" +
-	"\bhostname\x18\x11 \x01(\tR\bhostnameB9Z7github.com/k8shell-io/common/pkg/gapi/commonpb;commonpbb\x06proto3"
+	"\bhostname\x18\x11 \x01(\tR\bhostname\x12\x15\n" +
+	"\x06job_id\x18\x12 \x01(\tR\x05jobIdB9Z7github.com/k8shell-io/common/pkg/gapi/commonpb;commonpbb\x06proto3"
 
 var (
 	file_pkg_gapi_common_proto_rawDescOnce sync.Once
