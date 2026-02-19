@@ -91,10 +91,11 @@ const (
 type ProvisionJob struct {
 	ID            string                 `json:"id"`
 	WorkspaceName string                 `json:"workspaceName,omitempty"`
+	Username      string                 `json:"username,omitempty"`
 	Status        ProvisionJobStatus     `json:"status"`
 	CreatedAt     time.Time              `json:"createdAt"`
 	UpdatedAt     time.Time              `json:"updatedAt"`
-	FinishedAt    *time.Time             `json:"finishedAt,omitempty"`
+	FinishedAt    time.Time              `json:"finishedAt,omitempty"`
 	Events        []WorkspaceStreamEvent `json:"events,omitempty"`
 }
 
