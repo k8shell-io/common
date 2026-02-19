@@ -14,6 +14,7 @@ import (
 type Blueprint struct {
 	Metadata        BlueprintMetadata
 	Name            string              `yaml:"name" validate:"required,min=1,max=40"`
+	Description     string              `yaml:"description,omitempty" validate:"max=500"`
 	IsTemplate      bool                `yaml:"isTemplate,omitempty"`
 	Splash          string              `yaml:"splash,omitempty"`
 	Template        string              `yaml:"template"`
