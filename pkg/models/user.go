@@ -54,25 +54,25 @@ var ErrUserTokenNotSupported = errors.New("user token not supported by provider"
 
 // User represents a user in the system
 type User struct {
-	Username     string    `yaml:"username"`
-	Organization string    `yaml:"organization"`
-	IsValid      bool      `yaml:"isValid"`
-	ExpiresAt    time.Time `yaml:"expiresAt"`
-	UID          uint32    `yaml:"uid"`
-	GID          uint32    `yaml:"gid"`
-	Fullname     string    `yaml:"fullname"`
-	AccessToken  string    `yaml:"accessToken"`
-	Email        string    `yaml:"email"`
-	Password     string    `yaml:"password,omitempty"`
-	Auths        []string  `yaml:"auths"`
-	AuthKeys     []string  `yaml:"authKeys"`
-	Locked       bool      `yaml:"locked"`
-	FailedLogins uint32    `yaml:"failedLogins"`
-	Channels     []string  `yaml:"channels"`
-	Envs         []string  `yaml:"envs"`
-	Roles        []string  `yaml:"roles"`
-	Blueprints   []string  `yaml:"blueprints"`
-	Source       string    `yaml:"source"`
+	Username     string    `yaml:"username" json:"username"`
+	Organization string    `yaml:"organization" json:"organization"`
+	IsValid      bool      `yaml:"isValid" json:"isValid"`
+	ExpiresAt    time.Time `yaml:"expiresAt" json:"expiresAt"`
+	UID          uint32    `yaml:"uid" json:"uid"`
+	GID          uint32    `yaml:"gid" json:"gid"`
+	Fullname     string    `yaml:"fullname" json:"fullname"`
+	AccessToken  string    `yaml:"accessToken" json:"accessToken"`
+	Email        string    `yaml:"email" json:"email"`
+	Password     string    `yaml:"password,omitempty" json:"password,omitempty"`
+	Auths        []string  `yaml:"auths" json:"auths"`
+	AuthKeys     []string  `yaml:"authKeys" json:"authKeys"`
+	Locked       bool      `yaml:"locked" json:"locked"`
+	FailedLogins uint32    `yaml:"failedLogins" json:"failedLogins"`
+	Channels     []string  `yaml:"channels" json:"channels"`
+	Envs         []string  `yaml:"envs" json:"envs"`
+	Roles        []string  `yaml:"roles" json:"roles"`
+	Blueprints   []string  `yaml:"blueprints" json:"blueprints"`
+	Source       string    `yaml:"source" json:"source"`
 }
 
 func (u *User) HasBlueprint(blueprintName string) bool {
@@ -84,40 +84,40 @@ func (u *User) HasBlueprint(blueprintName string) bool {
 
 // SSHSession represents an SSH session for a user
 type SSHSession struct {
-	SessionID   string     `yaml:"sessionID"`
-	Username    string     `yaml:"username"`
-	K8shelldVer string     `yaml:"k8shelldVer"`
-	Client      string     `yaml:"client"`
-	ClientIP    string     `yaml:"clientIP"`
-	StartTime   *time.Time `yaml:"startTime"`
-	EndTime     *time.Time `yaml:"endTime"`
-	Workspace   string     `yaml:"workspace"`
-	BytesIn     int64      `yaml:"bytesIn"`
-	BytesOut    int64      `yaml:"bytesOut"`
-	Channels    []string   `yaml:"channels"`
-	Blueprint   string     `yaml:"blueprint"`
-	UpdatedAt   *time.Time `yaml:"updatedAt"`
+	SessionID   string     `yaml:"sessionID" json:"sessionID"`
+	Username    string     `yaml:"username" json:"username"`
+	K8shelldVer string     `yaml:"k8shelldVer" json:"k8shelldVer"`
+	Client      string     `yaml:"client" json:"client"`
+	ClientIP    string     `yaml:"clientIP" json:"clientIP"`
+	StartTime   *time.Time `yaml:"startTime" json:"startTime"`
+	EndTime     *time.Time `yaml:"endTime" json:"endTime"`
+	Workspace   string     `yaml:"workspace" json:"workspace"`
+	BytesIn     int64      `yaml:"bytesIn" json:"bytesIn"`
+	BytesOut    int64      `yaml:"bytesOut" json:"bytesOut"`
+	Channels    []string   `yaml:"channels" json:"channels"`
+	Blueprint   string     `yaml:"blueprint" json:"blueprint"`
+	UpdatedAt   *time.Time `yaml:"updatedAt" json:"updatedAt"`
 }
 
 // Organization represents an organization in the system
 type Organization struct {
-	Name        string `yaml:"name"`
-	Description string `yaml:"description"`
+	Name        string `yaml:"name" json:"name"`
+	Description string `yaml:"description" json:"description"`
 }
 
 // ProviderInfo holds information about a identity provider
 type ProviderInfo struct {
-	Status          string     `yaml:"status"`
-	CreatedAt       time.Time  `yaml:"createdAt"`
-	UpdatedAt       time.Time  `yaml:"updatedAt"`
-	Username        string     `yaml:"username"`
-	Provider        string     `yaml:"provider"`
-	UserCode        string     `yaml:"userCode"`
-	DeviceCode      string     `yaml:"deviceCode"`
-	ExpiresAt       *time.Time `yaml:"expiresAt"`
-	VerificationURI string     `yaml:"verificationURI"`
-	AccessToken     string     `yaml:"accessToken"`
-	RefreshToken    string     `yaml:"refreshToken"`
+	Status          string     `yaml:"status" json:"status"`
+	CreatedAt       time.Time  `yaml:"createdAt" json:"createdAt"`
+	UpdatedAt       time.Time  `yaml:"updatedAt" json:"updatedAt"`
+	Username        string     `yaml:"username" json:"username"`
+	Provider        string     `yaml:"provider" json:"provider"`
+	UserCode        string     `yaml:"userCode" json:"userCode"`
+	DeviceCode      string     `yaml:"deviceCode" json:"deviceCode"`
+	ExpiresAt       *time.Time `yaml:"expiresAt" json:"expiresAt"`
+	VerificationURI string     `yaml:"verificationURI" json:"verificationURI"`
+	AccessToken     string     `yaml:"accessToken" json:"accessToken"`
+	RefreshToken    string     `yaml:"refreshToken" json:"refreshToken"`
 }
 
 // OnboardUserDeviceFlow represents a user being onboarded via OAuth device flow
