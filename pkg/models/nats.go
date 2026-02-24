@@ -2,10 +2,10 @@ package models
 
 // FailedConnectionEvent represents a failed SSH connection attempt
 type FailedConnectionEvent struct {
-	ClientIP    string   `json:"client_ip"`
-	ClientPort  int      `json:"client_port"`
+	ClientIP    string   `json:"clientIP"`
+	ClientPort  int      `json:"clientPort"`
 	Username    string   `json:"username"`
 	Timestamp   string   `json:"timestamp"`
-	FailureInfo []string `json:"failure_info"`
-	ProxyID     string   `json:"proxy_id"`
+	FailureInfo []string `json:"failureInfo"`
+	ProxyID     string   `json:"proxyID"`
 }

@@ -124,9 +124,9 @@ type ProviderInfo struct {
 type OnboardUserDeviceFlow struct {
 	Provider        string `json:"provider"`
 	Username        string `json:"username"`
-	UserCode        string `json:"user_code"`
-	VerificationUrl string `json:"verification_url"`
-	ExpiresIn       int    `json:"expires_in"`
+	UserCode        string `json:"userCode"`
+	VerificationUrl string `json:"verificationUrl"`
+	ExpiresIn       int    `json:"expiresIn"`
 }
 
 // OnboardUserWebFlow represents a user being onboarded via OAuth web flow
@@ -147,7 +147,7 @@ type CompleteUserWebFlow struct {
 type OnboardCapability struct {
 	Provider   string `json:"provider"`
 	Username   string `json:"username"`
-	CanOnboard bool   `json:"can_onboard"`
+	CanOnboard bool   `json:"canOnboard"`
 }
 
 // UserToken represents a token for a user
@@ -162,8 +162,8 @@ type UserToken struct {
 type ExternalCredential struct {
 	ID            uint64 `json:"id"`
 	Username      string `json:"username"`
-	ServiceName   string `json:"service_name"`
-	ServiceURL    string `json:"service_url"`
-	ExternalID    string `json:"external_id"`
-	ExternalToken string `json:"external_token"`
+	ServiceName   string `json:"serviceName"`
+	ServiceURL    string `json:"serviceUrl"`
+	ExternalID    string `json:"externalId"`
+	ExternalToken string `json:"externalToken"`
 }
