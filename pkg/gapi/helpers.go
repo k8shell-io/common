@@ -301,3 +301,29 @@ func ProtoToWorkspaceDetails(pb *commonpb.WorkspaceDetails) *models.WorkspaceDet
 		JobId:        pb.GetJobId(),
 	}
 }
+
+// BlueprintSummaryToProto converts a Go BlueprintSummary model to its protobuf message.
+func BlueprintSummaryToProto(m *models.BlueprintSummary) *commonpb.BlueprintSummary {
+	if m == nil {
+		return nil
+	}
+	return &commonpb.BlueprintSummary{
+		Name:        m.Name,
+		Description: m.Description,
+		IsTemplate:  m.IsTemplate,
+		Splash:      m.Splash,
+	}
+}
+
+// ProtoToBlueprintSummary converts a protobuf BlueprintSummary message to its Go model.
+func ProtoToBlueprintSummary(pb *commonpb.BlueprintSummary) *models.BlueprintSummary {
+	if pb == nil {
+		return nil
+	}
+	return &models.BlueprintSummary{
+		Name:        pb.GetName(),
+		Description: pb.GetDescription(),
+		IsTemplate:  pb.GetIsTemplate(),
+		Splash:      pb.GetSplash(),
+	}
+}

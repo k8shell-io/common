@@ -93,3 +93,10 @@ message WorkspaceDetails {
   string hostname = 17;
   string job_id = 18;
 }
+
+message BlueprintSummary {
+  string name = 1;
+  string description = 2;
+  bool is_template = 3;
+  string splash = 4;
+}

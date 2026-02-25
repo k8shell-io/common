@@ -808,6 +808,74 @@ func (x *WorkspaceDetails) GetJobId() string {
 	return ""
 }
 
+type BlueprintSummary struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Description   string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	IsTemplate    bool                   `protobuf:"varint,3,opt,name=is_template,json=isTemplate,proto3" json:"is_template,omitempty"`
+	Splash        string                 `protobuf:"bytes,4,opt,name=splash,proto3" json:"splash,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BlueprintSummary) Reset() {
+	*x = BlueprintSummary{}
+	mi := &file_pkg_gapi_common_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BlueprintSummary) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BlueprintSummary) ProtoMessage() {}
+
+func (x *BlueprintSummary) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_gapi_common_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BlueprintSummary.ProtoReflect.Descriptor instead.
+func (*BlueprintSummary) Descriptor() ([]byte, []int) {
+	return file_pkg_gapi_common_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *BlueprintSummary) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *BlueprintSummary) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *BlueprintSummary) GetIsTemplate() bool {
+	if x != nil {
+		return x.IsTemplate
+	}
+	return false
+}
+
+func (x *BlueprintSummary) GetSplash() string {
+	if x != nil {
+		return x.Splash
+	}
+	return ""
+}
+
 var File_pkg_gapi_common_proto protoreflect.FileDescriptor
 
 const file_pkg_gapi_common_proto_rawDesc = "" +
@@ -897,7 +965,13 @@ const file_pkg_gapi_common_proto_rawDesc = "" +
 	"\x03cpu\x18\x0f \x01(\tR\x03cpu\x12\x16\n" +
 	"\x06memory\x18\x10 \x01(\tR\x06memory\x12\x1a\n" +
 	"\bhostname\x18\x11 \x01(\tR\bhostname\x12\x15\n" +
-	"\x06job_id\x18\x12 \x01(\tR\x05jobIdB9Z7github.com/k8shell-io/common/pkg/gapi/commonpb;commonpbb\x06proto3"
+	"\x06job_id\x18\x12 \x01(\tR\x05jobId\"\x81\x01\n" +
+	"\x10BlueprintSummary\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
+	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x1f\n" +
+	"\vis_template\x18\x03 \x01(\bR\n" +
+	"isTemplate\x12\x16\n" +
+	"\x06splash\x18\x04 \x01(\tR\x06splashB9Z7github.com/k8shell-io/common/pkg/gapi/commonpb;commonpbb\x06proto3"
 
 var (
 	file_pkg_gapi_common_proto_rawDescOnce sync.Once
@@ -911,7 +985,7 @@ func file_pkg_gapi_common_proto_rawDescGZIP() []byte {
 	return file_pkg_gapi_common_proto_rawDescData
 }
 
-var file_pkg_gapi_common_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_pkg_gapi_common_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_pkg_gapi_common_proto_goTypes = []any{
 	(*User)(nil),                  // 0: common.User
 	(*ExternalCredential)(nil),    // 1: common.ExternalCredential
@@ -921,11 +995,12 @@ var file_pkg_gapi_common_proto_goTypes = []any{
 	(*UserOnboardCapability)(nil), // 5: common.UserOnboardCapability
 	(*PodStatus)(nil),             // 6: common.PodStatus
 	(*WorkspaceDetails)(nil),      // 7: common.WorkspaceDetails
-	(*timestamp.Timestamp)(nil),   // 8: google.protobuf.Timestamp
+	(*BlueprintSummary)(nil),      // 8: common.BlueprintSummary
+	(*timestamp.Timestamp)(nil),   // 9: google.protobuf.Timestamp
 }
 var file_pkg_gapi_common_proto_depIdxs = []int32{
-	8, // 0: common.User.expires_at:type_name -> google.protobuf.Timestamp
-	8, // 1: common.PodStatus.created:type_name -> google.protobuf.Timestamp
+	9, // 0: common.User.expires_at:type_name -> google.protobuf.Timestamp
+	9, // 1: common.PodStatus.created:type_name -> google.protobuf.Timestamp
 	6, // 2: common.WorkspaceDetails.pod_status:type_name -> common.PodStatus
 	3, // [3:3] is the sub-list for method output_type
 	3, // [3:3] is the sub-list for method input_type
@@ -945,7 +1020,7 @@ func file_pkg_gapi_common_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pkg_gapi_common_proto_rawDesc), len(file_pkg_gapi_common_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
