@@ -311,7 +311,6 @@ func BlueprintSummaryToProto(m *models.BlueprintSummary) *commonpb.BlueprintSumm
 		Name:        m.Name,
 		Description: m.Description,
 		IsTemplate:  m.IsTemplate,
-		Splash:      m.Splash,
 	}
 }
 
@@ -324,6 +323,5 @@ func ProtoToBlueprintSummary(pb *commonpb.BlueprintSummary) *models.BlueprintSum
 		Name:        pb.GetName(),
 		Description: pb.GetDescription(),
 		IsTemplate:  pb.GetIsTemplate(),
-		Splash:      pb.GetSplash(),
 	}
 }

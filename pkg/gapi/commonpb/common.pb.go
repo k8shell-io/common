@@ -813,7 +813,6 @@ type BlueprintSummary struct {
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	Description   string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
 	IsTemplate    bool                   `protobuf:"varint,3,opt,name=is_template,json=isTemplate,proto3" json:"is_template,omitempty"`
-	Splash        string                 `protobuf:"bytes,4,opt,name=splash,proto3" json:"splash,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -867,13 +866,6 @@ func (x *BlueprintSummary) GetIsTemplate() bool {
 		return x.IsTemplate
 	}
 	return false
-}
-
-func (x *BlueprintSummary) GetSplash() string {
-	if x != nil {
-		return x.Splash
-	}
-	return ""
 }
 
 var File_pkg_gapi_common_proto protoreflect.FileDescriptor
@@ -965,13 +957,12 @@ const file_pkg_gapi_common_proto_rawDesc = "" +
 	"\x03cpu\x18\x0f \x01(\tR\x03cpu\x12\x16\n" +
 	"\x06memory\x18\x10 \x01(\tR\x06memory\x12\x1a\n" +
 	"\bhostname\x18\x11 \x01(\tR\bhostname\x12\x15\n" +
-	"\x06job_id\x18\x12 \x01(\tR\x05jobId\"\x81\x01\n" +
+	"\x06job_id\x18\x12 \x01(\tR\x05jobId\"i\n" +
 	"\x10BlueprintSummary\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x1f\n" +
 	"\vis_template\x18\x03 \x01(\bR\n" +
-	"isTemplate\x12\x16\n" +
-	"\x06splash\x18\x04 \x01(\tR\x06splashB9Z7github.com/k8shell-io/common/pkg/gapi/commonpb;commonpbb\x06proto3"
+	"isTemplateB9Z7github.com/k8shell-io/common/pkg/gapi/commonpb;commonpbb\x06proto3"
 
 var (
 	file_pkg_gapi_common_proto_rawDescOnce sync.Once

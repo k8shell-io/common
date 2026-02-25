@@ -98,5 +98,4 @@ message BlueprintSummary {
   string name = 1;
   string description = 2;
   bool is_template = 3;
-  string splash = 4;
 }

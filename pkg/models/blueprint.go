@@ -76,7 +76,6 @@ type BlueprintSummary struct {
 	Name        string `json:"name"`
 	Description string `json:"description,omitempty"`
 	IsTemplate  bool   `json:"isTemplate,omitempty"`
-	Splash      string `json:"splash,omitempty"`
 }
 
 type Conn struct {
