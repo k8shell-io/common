@@ -16,6 +16,7 @@ import (
 )
 
 type DBConfig struct {
+	Enabled           bool          `yaml:"enabled"`
 	Username          string        `yaml:"username"`
 	Password          string        `yaml:"password"`
 	Database          string        `yaml:"database"`
@@ -99,6 +100,9 @@ func (c *DBConfig) ConnString() string {
 
 func NewDB(config DBConfig, serviceName string) (*DB, error) {
 	log := log.NewLogger("db")
+	if !config.Enabled {
+		return nil, fmt.Errorf("database is disabled")
+	}
 	if config.Username == "" || config.Password == "" || config.Database == "" || config.Hostname == "" {
 		return nil, fmt.Errorf("database configuration is incomplete: username, password, database, and hostname are required")
 	}
