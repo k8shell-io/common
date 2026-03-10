@@ -15,27 +15,27 @@ type Blueprint struct {
 	Metadata        BlueprintMetadata
 	Name            string              `yaml:"name" validate:"required,min=1,max=40"`
 	Description     string              `yaml:"description,omitempty" validate:"max=500"`
-	IsTemplate      bool                `yaml:"isTemplate,omitempty default:false"`
+	IsTemplate      bool                `yaml:"isTemplate,omitempty" default:"false"`
 	Splash          string              `yaml:"splash,omitempty"`
 	Template        string              `yaml:"template"`
 	Shell           string              `yaml:"shell" validate:"required"`
 	Hostname        string              `yaml:"hostname,omitempty" validate:"omitempty,plainhostname"`
 	Subdomain       string              `yaml:"subdomain,omitempty" validate:"omitempty,plainhostname"`
-	Sudo            bool                `yaml:"sudo,omitempty default:false"`
+	Sudo            bool                `yaml:"sudo,omitempty" default:"false"`
 	Image           string              `yaml:"image" validate:"required"`
 	ImagePullSecret string              `yaml:"imagePullSecret,omitempty"`
 	ImagePullPolicy string              `yaml:"imagePullPolicy,omitempty" validate:"omitempty,oneof=Always Never IfNotPresent"`
 	K8shelld        K8shelld            `yaml:"k8shelld" validate:"required"`
-	Env             map[string]string   `yaml:"env,omitempty default:{}"`
-	PortForwarding  []string            `yaml:"portForwarding,omitempty default:[localnetworks:0]"`
-	Network         Network             `yaml:"network,omitempty default:{networkPolicy:workspace}}"`
-	Resources       Resources           `yaml:"resources,omitempty default:{limits:{cpu:500m,memory:512Mi}}"`
-	Docker          Docker              `yaml:"docker,omitempty default:{enabled:false}"`
-	Storages        map[string]Storage  `yaml:"storages,omitempty default:{}"`
-	InitScripts     []map[string]string `yaml:"initScripts,omitempty, default:[]}"`
+	Env             map[string]string   `yaml:"env,omitempty" default:"{}"`
+	PortForwarding  []string            `yaml:"portForwarding,omitempty" default:"[localnetworks:0]"`
+	Network         Network             `yaml:"network,omitempty" default:"{networkPolicy:workspace}"`
+	Resources       Resources           `yaml:"resources,omitempty" default:"{limits:{cpu:500m,memory:512Mi}}"`
+	Docker          Docker              `yaml:"docker,omitempty" default:"{enabled:false}"`
+	Storages        map[string]Storage  `yaml:"storages,omitempty" default:"{}"`
+	InitScripts     []map[string]string `yaml:"initScripts,omitempty" default:"[]"`
 	Capabilities    []string            `yaml:"capabilities,omitempty" validate:"omitempty,dive,oneof=NET_ADMIN NET_BIND_SERVICE NET_RAW SYS_ADMIN SYS_TIME SYS_MODULE SYS_RAWIO DAC_OVERRIDE FOWNER SETUID SETGID KILL CHOWN"`
-	ExtFiles        map[string]string   `yaml:"extFiles,omitempty default:{}"`
-	EnableApps      bool                `yaml:"enableApps,omitempty default:false"`
+	ExtFiles        map[string]string   `yaml:"extFiles,omitempty" default:"{}"`
+	EnableApps      bool                `yaml:"enableApps,omitempty" default:"false"`
 	Apps            map[string]AppSpec  `yaml:"apps,omitempty" default:"{}"`
 }
 
@@ -87,7 +87,7 @@ type Conn struct {
 type K8shelld struct {
 	Image           string   `yaml:"image" validate:"required"`
 	ImagePullPolicy string   `yaml:"imagePullPolicy,omitempty" validate:"omitempty,oneof=Always Never IfNotPresent"`
-	IgnoreOrphans   []string `yaml:"ignoreOrphans,omitempty default:[]"`
+	IgnoreOrphans   []string `yaml:"ignoreOrphans,omitempty" default:"[]"`
 	Connection      Conn     `yaml:"connection,omitempty"`
 }
 
@@ -105,39 +105,39 @@ type Resources struct {
 
 // Docker represents Docker configuration
 type Docker struct {
-	Enabled        bool               `yaml:"enabled default:false"`
+	Enabled        bool               `yaml:"enabled" default:"false"`
 	Image          string             `yaml:"image" validate:"required_if=Enabled true"`
 	Resources      Resources          `yaml:"resources" default:"{cpu:500m,memory:512Mi}"`
 	GroupID        int                `yaml:"groupId" validate:"required_if=Enabled true,min=0,max=65535"`
 	SubGID         int                `yaml:"subgid" validate:"min=0" default:"0"`
-	ParentStorages bool               `yaml:"parentStorages default:true"`
+	ParentStorages bool               `yaml:"parentStorages" default:"true"`
 	ExtFiles       map[string]string  `yaml:"extFiles,omitempty" default:"{}"`
 	Storages       map[string]Storage `yaml:"storages,omitempty" default:"{}"`
 }
 
 // Storage represents storage configuration
 type Storage struct {
-	Enabled      bool              `yaml:"enabled default:false"`
-	StorageClass string            `yaml:"storageClass,default:''"`
+	Enabled      bool              `yaml:"enabled" default:"false"`
+	StorageClass string            `yaml:"storageClass,omitempty" default:""`
 	Size         string            `yaml:"size" validate:"required_if=Enabled true"`
 	Path         string            `yaml:"path" validate:"required_if=Enabled true,startswith=/"`
-	Readonly     bool              `yaml:"readonly default:false"`
-	Annotations  map[string]string `yaml:"annotations,omitempty default:{}"`
+	Readonly     bool              `yaml:"readonly" default:"false"`
+	Annotations  map[string]string `yaml:"annotations,omitempty" default:"{}"`
 }
 
 type AppSpec struct {
-	Enabled           bool          `yaml:"enabled default:false"`
-	Name              string        `yaml:"name,required_if=Enabled true"`
-	Binary            string        `yaml:"binary,required_if=Enabled true"`
+	Enabled           bool          `yaml:"enabled" default:"false"`
+	Name              string        `yaml:"name" validate:"required_if=Enabled true"`
+	Binary            string        `yaml:"binary" validate:"required_if=Enabled true"`
 	VersionCmd        []string      `yaml:"versionCmd,omitempty"`
 	VersionRegex      string        `yaml:"versionRegex,omitempty"`
 	Install           string        `yaml:"install,omitempty"`
-	Start             []string      `yaml:"start,required_if=Enabled true"`
+	Start             []string      `yaml:"start" validate:"required_if=Enabled true"`
 	Listen            int           `yaml:"listen,omitempty"`
 	RestartPolicy     string        `yaml:"restartPolicy,omitempty" validate:"oneof=always on-failure never"`
 	MaxRestartBackoff time.Duration `yaml:"maxRestartBackoff,omitempty"`
-	InstallAsRoot     bool          `yaml:"installAsRoot,omitempty default:false"`
-	AutoStart         bool          `yaml:"autoStart,omitempty default:false"`
+	InstallAsRoot     bool          `yaml:"installAsRoot,omitempty" default:"false"`
+	AutoStart         bool          `yaml:"autoStart,omitempty" default:"false"`
 	Protocol          string        `yaml:"protocol,omitempty" validate:"omitempty,oneof=http https ws wss tcp udp"`
 }
 
@@ -167,6 +167,16 @@ func ValidateK8shellFile(k8shellFile K8shellFile) (*CustomBlueprint, []string) {
 		return nil, []string{
 			fmt.Sprintf("Failed to decode blueprint: %v", err),
 		}
+	}
+
+	if customBp.Storages == nil {
+		customBp.Storages = map[string]Storage{}
+	}
+	if customBp.Env == nil {
+		customBp.Env = map[string]string{}
+	}
+	if customBp.Apps == nil {
+		customBp.Apps = map[string]AppSpec{}
 	}
 
 	validate := validator.New()
