@@ -6,7 +6,7 @@
 //	ws-spec     = bp-name | param-list
 //	param-list  = kv *( "+" kv )
 //	kv          = key "=" value
-//	key         = "repo" | "ref" | "pr"
+//	key         = "repo" | "ref" | "pr" | "user"
 //
 //	bp-name     = <url-path-escaped string>          ; decoded with url.PathUnescape
 //	value       = <url-path-escaped string>          ; decoded with url.PathUnescape
@@ -16,12 +16,13 @@
 //	USERSTR     = ( "b64-" | "base64-" ) b64url-raw   ; decodes to USERSTR, then parsed normally
 //
 // Rules:
-// - Allowed param keys: repo, ref, pr. Any other key is an error.
+// - Allowed param keys: repo, ref, pr, user. Any other key is an error.
 // - Keys are normalized to lowercase.
 // - Values are url.PathUnescape-decoded (keys are NOT decoded).
 // - Slash "/" is allowed; when escaped as %2F it is decoded back to "/".
 // - Reserved delimiters in the USERSTR syntax: @ ~ + = (escape as %XX inside values if needed).
 // - Mutual exclusion: "ref" and "pr" cannot both be specified.
+// - user must be exactly "root" when present.
 // - pr must be a base-10 integer (>0) if present.
 // - If pr is specified (and ref is not), Canonicalize() may resolve pr -> ref via RefResolver.
 //
@@ -60,7 +61,7 @@ var (
 	ErrB64UserStrInvalid = errors.New("base64 userstr invalid")
 
 	// allowed param keys in userstr
-	AllowedParams = []string{"repo", "ref", "pr"}
+	AllowedParams = []string{"repo", "ref", "pr", "user"}
 )
 
 // BlueprintKind represents the kind of blueprint used for a workspace.
@@ -97,6 +98,7 @@ type WorkspaceIdentity struct {
 type UserStr struct {
 	Raw             string            // original raw input
 	Username        string            // normalized username
+	User            string            // optional user param value (currently only "root")
 	Blueprint       string            // computed blueprint name
 	BlueprintKind   BlueprintKind     // kind of blueprint used
 	ParamsRaw       map[string]string // raw params map
@@ -197,7 +199,7 @@ func (u *UserStr) Canonicalize() (*CanonicalUserStr, error) {
 	}
 
 	canonicalUserStr.CanonicalKey = buildWorkspaceKey(&canonicalUserStr.Identity, opt.IncludeBlueprintInKey)
-	canonicalUserStr.CanonicalUserStr = buildCanonicalUserStr(&canonicalUserStr.Identity)
+	canonicalUserStr.CanonicalUserStr = buildCanonicalUserStr(&canonicalUserStr.Identity, u.User)
 	canonicalUserStr.Aliases = buildAliases(u, resolvedRef)
 	canonicalUserStr.WorkspaceName = buildWorkspaceName(u.Username, canonicalUserStr.CanonicalKey)
 
@@ -235,19 +237,32 @@ func buildWorkspaceKey(id *WorkspaceIdentity, includeBlueprint bool) string {
 }
 
 // BuildCanonicalUserStr builds the canonical user string from the given identity.
-func buildCanonicalUserStr(id *WorkspaceIdentity) string {
+func buildCanonicalUserStr(id *WorkspaceIdentity, user string) string {
+	canonicalUser := strings.ToLower(strings.TrimSpace(user))
+
 	if id.RepoOwner != "" && id.RepoName != "" {
 		b := NewUserStrWith(id.Username).
 			WithRepo(id.RepoOwner + "/" + id.RepoName)
 		if id.RepoRef != "" {
 			b.WithRef(id.RepoRef)
 		}
+		if canonicalUser != "" {
+			b.WithParam("user", canonicalUser)
+		}
 		u, err := b.Build()
 		if err == nil {
 			return u.Raw
 		}
 		if id.RepoRef != "" {
+			if canonicalUser != "" {
+				return fmt.Sprintf("%s~repo=%s/%s+ref=%s+user=%s", id.Username, id.RepoOwner, id.RepoName,
+					url.PathEscape(id.RepoRef), url.PathEscape(canonicalUser))
+			}
 			return fmt.Sprintf("%s~repo=%s/%s+ref=%s", id.Username, id.RepoOwner, id.RepoName, url.PathEscape(id.RepoRef))
+		}
+		if canonicalUser != "" {
+			return fmt.Sprintf("%s~repo=%s/%s+user=%s", id.Username, id.RepoOwner, id.RepoName,
+				url.PathEscape(canonicalUser))
 		}
 		return fmt.Sprintf("%s~repo=%s/%s", id.Username, id.RepoOwner, id.RepoName)
 	}
@@ -411,6 +426,16 @@ func newUserStr(input string, depth int, allowInvalid bool) (*UserStr, error) {
 		}
 	}
 
+	if user := params["user"]; user != "" && user != "root" {
+		validationError = fmt.Errorf("%w: user must be root", ErrBadParam)
+		if !allowInvalid {
+			return nil, validationError
+		}
+		delete(params, "user")
+	}
+
+	user := params["user"]
+
 	repoRef := params["ref"]
 	if repoRef != "" && repoPullReq > 0 {
 		validationError = fmt.Errorf("%w: cannot specify more than one of ref, pr", ErrBadParam)
@@ -451,6 +476,7 @@ func newUserStr(input string, depth int, allowInvalid bool) (*UserStr, error) {
 	return &UserStr{
 		Raw:             raw,
 		Username:        username,
+		User:            user,
 		Blueprint:       blueprintName,
 		BlueprintKind:   BlueprintKindCustom,
 		ParamsRaw:       params,

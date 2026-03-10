@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/base64"
+	"strings"
 	"testing"
 )
 
@@ -25,6 +26,9 @@ func TestDirectBlueprint(t *testing.T) {
 	}
 	if r.Blueprint != "dev" {
 		t.Fatalf("unexpected blueprint: %+v", r.Blueprint)
+	}
+	if r.User != "" {
+		t.Fatalf("expected empty user param field: %+v", r.User)
 	}
 	if r.ParamsRaw != nil || r.RepoName != "" || r.RepoOwner != "" || r.RepoRef != "" || r.RepoPullReq != 0 {
 		t.Fatalf("expected nil params: %+v", r)
@@ -146,6 +150,48 @@ func TestNoSpec(t *testing.T) {
 	}
 }
 
+func TestUserParamRootAllowed_NotPartOfIdentity(t *testing.T) {
+	withUser, err := NewUserStr("alice~repo=org/proj+ref=main+user=ROOT", false)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	withoutUser, err := NewUserStr("alice~repo=org/proj+ref=main", false)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if withUser.ParamsRaw["user"] != "root" {
+		t.Fatalf("expected user param root, got %q", withUser.ParamsRaw["user"])
+	}
+	if withUser.User != "root" {
+		t.Fatalf("expected user field root, got %q", withUser.User)
+	}
+	if withoutUser.User != "" {
+		t.Fatalf("expected empty user field when param not set, got %q", withoutUser.User)
+	}
+
+	cuWithUser, err := withUser.Canonicalize()
+	if err != nil {
+		t.Fatal(err)
+	}
+	cuWithoutUser, err := withoutUser.Canonicalize()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if cuWithUser.CanonicalKey != cuWithoutUser.CanonicalKey {
+		t.Fatalf("expected same canonical key, got withUser=%q withoutUser=%q", cuWithUser.CanonicalKey,
+			cuWithoutUser.CanonicalKey)
+	}
+	if !strings.Contains(cuWithUser.CanonicalUserStr, "user=root") {
+		t.Fatalf("expected canonical userstr to include lowercase user=root, got %q", cuWithUser.CanonicalUserStr)
+	}
+	if strings.Contains(cuWithUser.CanonicalUserStr, "user=ROOT") {
+		t.Fatalf("expected canonical userstr user to be lowercase, got %q", cuWithUser.CanonicalUserStr)
+	}
+}
+
 func TestErrors(t *testing.T) {
 	_, err := NewUserStr("noat", false)
 	if err != nil {
@@ -160,5 +206,10 @@ func TestErrors(t *testing.T) {
 	_, err = NewUserStr("u~repo=a/b+ref=main+pr=2", false)
 	if err == nil {
 		t.Fatal("expected error for ref+pr")
+	}
+
+	_, err = NewUserStr("u~repo=a/b+user=admin", false)
+	if err == nil {
+		t.Fatal("expected error for non-root user value")
 	}
 }
