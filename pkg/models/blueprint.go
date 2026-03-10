@@ -41,11 +41,11 @@ type Blueprint struct {
 
 // BlueprintMetadata holds metadata information for a blueprint.
 type BlueprintMetadata struct {
-	Name        string `yaml:"name,omitempty" default:""`
-	RepoName    string `yaml:"repoName,omitempty" default:""`
-	RepoRef     string `yaml:"repoRef,omitempty" default:""`
-	RepoOwner   string `yaml:"repoOwner,omitempty" default:""`
-	RepoAddress string `yaml:"repoAddress,omitempty" default:""`
+	Name        string `yaml:"name"`
+	RepoName    string `yaml:"repoName"`
+	RepoRef     string `yaml:"repoRef"`
+	RepoOwner   string `yaml:"repoOwner"`
+	RepoAddress string `yaml:"repoAddress"`
 }
 
 // K8shellFile represents the overall structure of a k8shell YAML file
