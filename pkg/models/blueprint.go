@@ -41,7 +41,7 @@ type Blueprint struct {
 
 // BlueprintMetadata holds metadata information for a blueprint.
 type BlueprintMetadata struct {
-	Name        string `yaml:"name" validate:"required"`
+	Name        string `yaml:"name,omitempty"`
 	RepoName    string `yaml:"repoName,omitempty"`
 	RepoRef     string `yaml:"repoRef,omitempty"`
 	RepoOwner   string `yaml:"repoOwner,omitempty"`
