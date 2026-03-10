@@ -3,10 +3,11 @@
 // Spec summary (v1.0):
 //
 //	USERSTR     = user [ "~" ws-spec ]
-//	ws-spec     = bp-name | param-list
+//	ws-spec     = bp-name [ "+" user-kv ] | param-list
 //	param-list  = kv *( "+" kv )
 //	kv          = key "=" value
 //	key         = "repo" | "ref" | "pr" | "user"
+//	user-kv     = "user=root"
 //
 //	bp-name     = <url-path-escaped string>          ; decoded with url.PathUnescape
 //	value       = <url-path-escaped string>          ; decoded with url.PathUnescape
@@ -23,6 +24,8 @@
 // - Reserved delimiters in the USERSTR syntax: @ ~ + = (escape as %XX inside values if needed).
 // - Mutual exclusion: "ref" and "pr" cannot both be specified.
 // - user must be exactly "root" when present.
+// - ref and pr are valid only when repo is specified.
+// - user is valid in both repo and blueprint forms.
 // - pr must be a base-10 integer (>0) if present.
 // - If pr is specified (and ref is not), Canonicalize() may resolve pr -> ref via RefResolver.
 //
@@ -268,6 +271,11 @@ func buildCanonicalUserStr(id *WorkspaceIdentity, user string) string {
 	}
 
 	if id.Blueprint != "" {
+		if canonicalUser != "" {
+			return fmt.Sprintf("%s~%s+user=%s", id.Username, url.PathEscape(id.Blueprint),
+				url.PathEscape(canonicalUser))
+		}
+
 		u, err := NewUserStrWith(id.Username).WithBlueprint(id.Blueprint).Build()
 		if err == nil {
 			return u.Raw
@@ -365,6 +373,97 @@ func newUserStr(input string, depth int, allowInvalid bool) (*UserStr, error) {
 	}
 
 	pairs := strings.Split(wsSpec, "+")
+
+	if first := strings.TrimSpace(pairs[0]); first != "" && !strings.Contains(first, "=") {
+		decodedBlueprint, err := url.PathUnescape(first)
+		if err != nil {
+			validationError = fmt.Errorf("%w: blueprint percent-decode: %v", ErrBadParam, err)
+			if !allowInvalid {
+				return nil, validationError
+			}
+			decodedBlueprint = ""
+		}
+
+		params := make(map[string]string, len(pairs)-1)
+		for _, p := range pairs[1:] {
+			if p == "" {
+				validationError = fmt.Errorf("%w: empty pair", ErrBadParam)
+				if !allowInvalid {
+					return nil, validationError
+				}
+				continue
+			}
+
+			k, v, ok := cutOnce(p, "=")
+			if !ok || strings.TrimSpace(k) == "" {
+				validationError = fmt.Errorf("%w: expected key=value, %q", ErrBadParam, p)
+				if !allowInvalid {
+					return nil, validationError
+				}
+				continue
+			}
+
+			if strings.Contains(v, "=") {
+				validationError = fmt.Errorf("%w: unescaped '=' in value: %q", ErrBadParam, p)
+				if !allowInvalid {
+					return nil, validationError
+				}
+				continue
+			}
+
+			k = strings.ToLower(strings.TrimSpace(k))
+
+			val, err := url.PathUnescape(strings.TrimSpace(v))
+			if err != nil {
+				validationError = fmt.Errorf("%w: value decode failed for key %q: %v", ErrBadParam, k, err)
+				if !allowInvalid {
+					return nil, validationError
+				}
+				continue
+			}
+
+			if !slices.Contains(AllowedParams, k) {
+				validationError = fmt.Errorf("invalid param key: %q", k)
+				if !allowInvalid {
+					return nil, validationError
+				}
+				continue
+			}
+
+			if k != "user" {
+				validationError = fmt.Errorf("%w: only user param is allowed with blueprint form", ErrBadParam)
+				if !allowInvalid {
+					return nil, validationError
+				}
+				continue
+			}
+
+			params[k] = strings.ToLower(val)
+		}
+
+		if user := params["user"]; user != "" && user != "root" {
+			validationError = fmt.Errorf("%w: user must be root", ErrBadParam)
+			if !allowInvalid {
+				return nil, validationError
+			}
+			delete(params, "user")
+		}
+
+		if len(params) == 0 {
+			params = nil
+		}
+
+		return &UserStr{
+			Raw:             raw,
+			Username:        username,
+			User:            mapValue(params, "user"),
+			Blueprint:       decodedBlueprint,
+			BlueprintKind:   BlueprintKindExplicit,
+			ParamsRaw:       params,
+			ValidationError: validationError,
+		}, nil
+	}
+
 	params := make(map[string]string, len(pairs))
 	for _, p := range pairs {
 		if p == "" {
@@ -434,6 +533,8 @@ func newUserStr(input string, depth int, allowInvalid bool) (*UserStr, error) {
 		delete(params, "user")
 	}
 
+	hasRepo := params["repo"] != ""
+
 	user := params["user"]
 
 	repoRef := params["ref"]
@@ -443,6 +544,17 @@ func newUserStr(input string, depth int, allowInvalid bool) (*UserStr, error) {
 			return nil, validationError
 		}
 		// In allowInvalid mode, clear conflicting values to avoid inconsistent state downstream.
+		repoRef = ""
+		repoPullReq = 0
+		delete(params, "ref")
+		delete(params, "pr")
+	}
+
+	if !hasRepo && (repoRef != "" || repoPullReq > 0) {
+		validationError = fmt.Errorf("%w: ref/pr require repo", ErrBadParam)
+		if !allowInvalid {
+			return nil, validationError
+		}
 		repoRef = ""
 		repoPullReq = 0
 		delete(params, "ref")
@@ -486,6 +598,13 @@ func newUserStr(input string, depth int, allowInvalid bool) (*UserStr, error) {
 		RepoPullReq:     repoPullReq,
 		ValidationError: validationError,
 	}, nil
+}
+
+func mapValue(m map[string]string, key string) string {
+	if m == nil {
+		return ""
+	}
+	return m[key]
 }
 
 // cutOnce splits s at the first instance of sep. Returns before, after, and whether sep was found.

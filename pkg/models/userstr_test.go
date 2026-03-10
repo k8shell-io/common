@@ -150,6 +150,37 @@ func TestNoSpec(t *testing.T) {
 	}
 }
 
+func TestBlueprintWithRootUserParam_Valid(t *testing.T) {
+	r, err := NewUserStr("admin~alp+user=ROOT", false)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if r.Username != "admin" {
+		t.Fatalf("unexpected username: %q", r.Username)
+	}
+	if r.Blueprint != "alp" {
+		t.Fatalf("unexpected blueprint: %q", r.Blueprint)
+	}
+	if r.User != "root" {
+		t.Fatalf("unexpected user field: %q", r.User)
+	}
+	if r.ParamsRaw["user"] != "root" {
+		t.Fatalf("unexpected user param raw: %q", r.ParamsRaw["user"])
+	}
+
+	cu, err := r.Canonicalize()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cu.CanonicalKey != "u=admin|bp=alp" {
+		t.Fatalf("unexpected canonical key: %q", cu.CanonicalKey)
+	}
+	if !strings.Contains(cu.CanonicalUserStr, "user=root") {
+		t.Fatalf("expected canonical userstr to include lowercase user=root, got %q", cu.CanonicalUserStr)
+	}
+}
+
 func TestUserParamRootAllowed_NotPartOfIdentity(t *testing.T) {
 	withUser, err := NewUserStr("alice~repo=org/proj+ref=main+user=ROOT", false)
 	if err != nil {
@@ -211,5 +242,33 @@ func TestErrors(t *testing.T) {
 	_, err = NewUserStr("u~repo=a/b+user=admin", false)
 	if err == nil {
 		t.Fatal("expected error for non-root user value")
+	}
+
+	r, err := NewUserStr("u~repo=a/b+user=root", false)
+	if err != nil {
+		t.Fatalf("expected repo+user=root to be valid, got error: %v", err)
+	}
+	if r.User != "root" {
+		t.Fatalf("expected user=root for repo form, got %q", r.User)
+	}
+
+	_, err = NewUserStr("u~alp+ref=main", false)
+	if err == nil {
+		t.Fatal("expected error for ref with blueprint form")
+	}
+
+	_, err = NewUserStr("u~alp+pr=2", false)
+	if err == nil {
+		t.Fatal("expected error for pr with blueprint form")
+	}
+
+	_, err = NewUserStr("u~ref=main", false)
+	if err == nil {
+		t.Fatal("expected error for ref without repo")
+	}
+
+	_, err = NewUserStr("u~pr=2", false)
+	if err == nil {
+		t.Fatal("expected error for pr without repo")
 	}
 }
