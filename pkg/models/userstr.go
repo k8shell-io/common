@@ -7,7 +7,6 @@
 //	param-list  = kv *( "+" kv )
 //	kv          = key "=" value
 //	key         = "repo" | "ref" | "pr" | "user"
-//	user-kv     = "user=root"
 //
 //	bp-name     = <url-path-escaped string>          ; decoded with url.PathUnescape
 //	value       = <url-path-escaped string>          ; decoded with url.PathUnescape
@@ -23,7 +22,6 @@
 // - Slash "/" is allowed; when escaped as %2F it is decoded back to "/".
 // - Reserved delimiters in the USERSTR syntax: @ ~ + = (escape as %XX inside values if needed).
 // - Mutual exclusion: "ref" and "pr" cannot both be specified.
-// - user must be exactly "root" when present.
 // - ref and pr are valid only when repo is specified.
 // - user is valid in both repo and blueprint forms.
 // - pr must be a base-10 integer (>0) if present.
@@ -101,7 +99,7 @@ type WorkspaceIdentity struct {
 type UserStr struct {
 	Raw             string            // original raw input
 	Username        string            // normalized username
-	User            string            // optional user param value (currently only "root")
+	User            string            // optional user param value
 	Blueprint       string            // computed blueprint name
 	BlueprintKind   BlueprintKind     // kind of blueprint used
 	ParamsRaw       map[string]string // raw params map
@@ -441,14 +439,6 @@ func newUserStr(input string, depth int, allowInvalid bool) (*UserStr, error) {
 			params[k] = strings.ToLower(val)
 		}
 
-		if user := params["user"]; user != "" && user != "root" {
-			validationError = fmt.Errorf("%w: user must be root", ErrBadParam)
-			if !allowInvalid {
-				return nil, validationError
-			}
-			delete(params, "user")
-		}
-
 		if len(params) == 0 {
 			params = nil
 		}
@@ -523,14 +513,6 @@ func newUserStr(input string, depth int, allowInvalid bool) (*UserStr, error) {
 				return nil, validationError
 			}
 		}
-	}
-
-	if user := params["user"]; user != "" && user != "root" {
-		validationError = fmt.Errorf("%w: user must be root", ErrBadParam)
-		if !allowInvalid {
-			return nil, validationError
-		}
-		delete(params, "user")
 	}
 
 	hasRepo := params["repo"] != ""
