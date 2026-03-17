@@ -4,11 +4,8 @@
 package authz
 
 import (
-	"crypto/ecdsa"
-	"crypto/rsa"
 	"errors"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -55,7 +52,7 @@ type JWTIssuerConfig struct {
 
 	// PrivateKeyFile is the path to a PEM-encoded RSA or ECDSA private key
 	// (used with rs256 / es256).
-	PrivateKeyFile string `yaml:"privateKeyFile"`
+	PrivateKey string `yaml:"privateKey"`
 }
 
 // JWTVerifierConfig contains configuration for JWT token verification.
@@ -77,7 +74,7 @@ type JWTVerifierConfig struct {
 
 	// PublicKeyFile is the path to a PEM-encoded RSA or ECDSA public key
 	// (used with rs256 / es256). Takes precedence over PrivateKeyFile.
-	PublicKeyFile string `yaml:"publicKeyFile"`
+	PublicKey string `yaml:"publicKey"`
 }
 
 // UserClaims are the JWT claims embedded in tokens issued for a user.
@@ -139,7 +136,7 @@ func NewJWTIssuer(cfg JWTIssuerConfig) (*JWTIssuer, error) {
 		issuer.signingKey = []byte(cfg.SecretKey)
 
 	case "rs256":
-		key, err := loadRSAPrivateKey(cfg.PrivateKeyFile)
+		key, err := jwt.ParseRSAPrivateKeyFromPEM([]byte(cfg.PrivateKey))
 		if err != nil {
 			return nil, fmt.Errorf("jwt: load RSA private key: %w", err)
 		}
@@ -147,7 +144,7 @@ func NewJWTIssuer(cfg JWTIssuerConfig) (*JWTIssuer, error) {
 		issuer.signingKey = key
 
 	case "es256":
-		key, err := loadECPrivateKey(cfg.PrivateKeyFile)
+		key, err := jwt.ParseECPrivateKeyFromPEM([]byte(cfg.PrivateKey))
 		if err != nil {
 			return nil, fmt.Errorf("jwt: load EC private key: %w", err)
 		}
@@ -197,42 +194,6 @@ func (j *JWTIssuer) IssueToken(user *models.User) (string, error) {
 	return signed, nil
 }
 
-// loadRSAPrivateKey reads and parses a PEM-encoded RSA private key from path.
-func loadRSAPrivateKey(path string) (*rsa.PrivateKey, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	return jwt.ParseRSAPrivateKeyFromPEM(data)
-}
-
-// loadECPrivateKey reads and parses a PEM-encoded ECDSA private key from path.
-func loadECPrivateKey(path string) (*ecdsa.PrivateKey, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	return jwt.ParseECPrivateKeyFromPEM(data)
-}
-
-// loadRSAPublicKey reads and parses a PEM-encoded RSA public key from path.
-func loadRSAPublicKey(path string) (*rsa.PublicKey, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	return jwt.ParseRSAPublicKeyFromPEM(data)
-}
-
-// loadECPublicKey reads and parses a PEM-encoded ECDSA public key from path.
-func loadECPublicKey(path string) (*ecdsa.PublicKey, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	return jwt.ParseECPublicKeyFromPEM(data)
-}
-
 // JWTVerifier validates JWT tokens, checking both signature integrity and
 // expiration. It can be used independently from JWTIssuer.
 type JWTVerifier struct {
@@ -269,25 +230,25 @@ func NewJWTVerifier(cfg JWTVerifierConfig) (*JWTVerifier, error) {
 		v.verificationKey = []byte(cfg.SecretKey)
 
 	case "rs256":
-		if cfg.PublicKeyFile != "" {
-			pub, err := loadRSAPublicKey(cfg.PublicKeyFile)
+		if cfg.PublicKey != "" {
+			pub, err := jwt.ParseRSAPublicKeyFromPEM([]byte(cfg.PublicKey))
 			if err != nil {
 				return nil, fmt.Errorf("jwt: load RSA public key: %w", err)
 			}
 			v.verificationKey = pub
 		} else {
-			return nil, fmt.Errorf("jwt: rs256 requires publicKeyFile")
+			return nil, fmt.Errorf("jwt: rs256 requires publicKey")
 		}
 
 	case "es256":
-		if cfg.PublicKeyFile != "" {
-			pub, err := loadECPublicKey(cfg.PublicKeyFile)
+		if cfg.PublicKey != "" {
+			pub, err := jwt.ParseECPublicKeyFromPEM([]byte(cfg.PublicKey))
 			if err != nil {
 				return nil, fmt.Errorf("jwt: load EC public key: %w", err)
 			}
 			v.verificationKey = pub
 		} else {
-			return nil, fmt.Errorf("jwt: es256 requires publicKeyFile")
+			return nil, fmt.Errorf("jwt: es256 requires publicKey")
 		}
 
 	default:
