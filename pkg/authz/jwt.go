@@ -7,6 +7,8 @@ import (
 	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"os"
@@ -84,6 +86,54 @@ type JWTVerifierConfig struct {
 	// The public key is extracted from it and used for verification when
 	// PublicKeyFile is not set.
 	PrivateKeyFile string `yaml:"privateKeyFile"`
+}
+
+// GetPublicKey returns the public key material for this JWT configuration.
+// It returns the PEM-encoded public key string, either
+// read directly from PublicKeyFile or extracted from PrivateKeyFile.
+func (c JWTVerifierConfig) GetPublicKey() (string, error) {
+	if pkFile := c.PublicKeyFile; pkFile != "" {
+		pkContent, err := os.ReadFile(pkFile)
+		if err != nil {
+			return "", fmt.Errorf("failed to read jwt public key file %s: %w", pkFile, err)
+		}
+		return string(pkContent), nil
+	} else if privFile := c.PrivateKeyFile; privFile != "" {
+		privPEM, err := os.ReadFile(privFile)
+		if err != nil {
+			return "", fmt.Errorf("failed to read jwt private key file %s: %w", privFile, err)
+		}
+		block, _ := pem.Decode(privPEM)
+		if block == nil {
+			return "", fmt.Errorf("failed to decode PEM block from %s", privFile)
+		}
+		var pubKeyDER []byte
+		switch c.SigningMethod {
+		case "rs256":
+			priv, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+			if err != nil {
+				return "", fmt.Errorf("failed to parse RSA private key from %s: %w", privFile, err)
+			}
+			pubKeyDER, err = x509.MarshalPKIXPublicKey(&priv.PublicKey)
+			if err != nil {
+				return "", fmt.Errorf("failed to marshal RSA public key: %w", err)
+			}
+		case "es256":
+			priv, err := x509.ParseECPrivateKey(block.Bytes)
+			if err != nil {
+				return "", fmt.Errorf("failed to parse EC private key from %s: %w", privFile, err)
+			}
+			pubKeyDER, err = x509.MarshalPKIXPublicKey(&priv.PublicKey)
+			if err != nil {
+				return "", fmt.Errorf("failed to marshal EC public key: %w", err)
+			}
+		}
+		return string(pem.EncodeToMemory(&pem.Block{
+			Type:  "PUBLIC KEY",
+			Bytes: pubKeyDER,
+		})), nil
+	}
+	return "", fmt.Errorf("no key file specified in JWT config")
 }
 
 // UserClaims are the JWT claims embedded in tokens issued for a user.
