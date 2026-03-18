@@ -79,6 +79,11 @@ type JWTVerifierConfig struct {
 	// PublicKeyFile is the path to a PEM-encoded RSA or ECDSA public key
 	// (used with rs256 / es256). Takes precedence over PrivateKeyFile.
 	PublicKeyFile string `yaml:"publicKeyFile"`
+
+	// PrivateKeyFile is the path to a PEM-encoded RSA or ECDSA private key.
+	// The public key is extracted from it and used for verification when
+	// PublicKeyFile is not set.
+	PrivateKeyFile string `yaml:"privateKeyFile"`
 }
 
 // UserClaims are the JWT claims embedded in tokens issued for a user.
@@ -294,8 +299,14 @@ func NewJWTVerifier(cfg JWTVerifierConfig) (*JWTVerifier, error) {
 				return nil, fmt.Errorf("jwt: load RSA public key: %w", err)
 			}
 			v.verificationKey = pub
+		} else if cfg.PrivateKeyFile != "" {
+			priv, err := loadRSAPrivateKey(cfg.PrivateKeyFile)
+			if err != nil {
+				return nil, fmt.Errorf("jwt: load RSA private key: %w", err)
+			}
+			v.verificationKey = &priv.PublicKey
 		} else {
-			return nil, fmt.Errorf("jwt: rs256 requires publicKeyFile")
+			return nil, fmt.Errorf("jwt: rs256 requires publicKeyFile or privateKeyFile")
 		}
 
 	case "es256":
@@ -305,8 +316,14 @@ func NewJWTVerifier(cfg JWTVerifierConfig) (*JWTVerifier, error) {
 				return nil, fmt.Errorf("jwt: load EC public key: %w", err)
 			}
 			v.verificationKey = pub
+		} else if cfg.PrivateKeyFile != "" {
+			priv, err := loadECPrivateKey(cfg.PrivateKeyFile)
+			if err != nil {
+				return nil, fmt.Errorf("jwt: load EC private key: %w", err)
+			}
+			v.verificationKey = &priv.PublicKey
 		} else {
-			return nil, fmt.Errorf("jwt: es256 requires publicKeyFile")
+			return nil, fmt.Errorf("jwt: es256 requires publicKeyFile or privateKeyFile")
 		}
 
 	default:
