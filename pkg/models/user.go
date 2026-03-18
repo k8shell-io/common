@@ -61,14 +61,11 @@ type User struct {
 	UID          uint32    `yaml:"uid" json:"uid"`
 	GID          uint32    `yaml:"gid" json:"gid"`
 	Fullname     string    `yaml:"fullname" json:"fullname"`
-	AccessToken  string    `yaml:"accessToken" json:"accessToken"`
 	Email        string    `yaml:"email" json:"email"`
 	Password     string    `yaml:"password,omitempty" json:"password,omitempty"`
 	Auths        []string  `yaml:"auths" json:"auths"`
 	AuthKeys     []string  `yaml:"authKeys" json:"authKeys"`
 	Locked       bool      `yaml:"locked" json:"locked"`
-	FailedLogins uint32    `yaml:"failedLogins" json:"failedLogins"`
-	Channels     []string  `yaml:"channels" json:"channels"`
 	Envs         []string  `yaml:"envs" json:"envs"`
 	Roles        []string  `yaml:"roles" json:"roles"`
 	Blueprints   []string  `yaml:"blueprints" json:"blueprints"`

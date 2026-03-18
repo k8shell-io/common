@@ -14,14 +14,11 @@ message User {
   uint32 uid = 5;
   uint32 gid = 6;
   string fullname = 7;
-  string access_token = 8;
   string email = 9;
   string password = 10;
   repeated string auths = 11;
   repeated string auth_keys = 12;
   bool locked = 13;
-  uint32 failed_logins = 14;
-  repeated string channels = 15;
   repeated string envs = 16;
   repeated string roles = 17;
   repeated string blueprints = 18;

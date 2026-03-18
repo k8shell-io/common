@@ -31,14 +31,11 @@ type User struct {
 	Uid           uint32                 `protobuf:"varint,5,opt,name=uid,proto3" json:"uid,omitempty"`
 	Gid           uint32                 `protobuf:"varint,6,opt,name=gid,proto3" json:"gid,omitempty"`
 	Fullname      string                 `protobuf:"bytes,7,opt,name=fullname,proto3" json:"fullname,omitempty"`
-	AccessToken   string                 `protobuf:"bytes,8,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
 	Email         string                 `protobuf:"bytes,9,opt,name=email,proto3" json:"email,omitempty"`
 	Password      string                 `protobuf:"bytes,10,opt,name=password,proto3" json:"password,omitempty"`
 	Auths         []string               `protobuf:"bytes,11,rep,name=auths,proto3" json:"auths,omitempty"`
 	AuthKeys      []string               `protobuf:"bytes,12,rep,name=auth_keys,json=authKeys,proto3" json:"auth_keys,omitempty"`
 	Locked        bool                   `protobuf:"varint,13,opt,name=locked,proto3" json:"locked,omitempty"`
-	FailedLogins  uint32                 `protobuf:"varint,14,opt,name=failed_logins,json=failedLogins,proto3" json:"failed_logins,omitempty"`
-	Channels      []string               `protobuf:"bytes,15,rep,name=channels,proto3" json:"channels,omitempty"`
 	Envs          []string               `protobuf:"bytes,16,rep,name=envs,proto3" json:"envs,omitempty"`
 	Roles         []string               `protobuf:"bytes,17,rep,name=roles,proto3" json:"roles,omitempty"`
 	Blueprints    []string               `protobuf:"bytes,18,rep,name=blueprints,proto3" json:"blueprints,omitempty"`
@@ -126,13 +123,6 @@ func (x *User) GetFullname() string {
 	return ""
 }
 
-func (x *User) GetAccessToken() string {
-	if x != nil {
-		return x.AccessToken
-	}
-	return ""
-}
-
 func (x *User) GetEmail() string {
 	if x != nil {
 		return x.Email
@@ -166,20 +156,6 @@ func (x *User) GetLocked() bool {
 		return x.Locked
 	}
 	return false
-}
-
-func (x *User) GetFailedLogins() uint32 {
-	if x != nil {
-		return x.FailedLogins
-	}
-	return 0
-}
-
-func (x *User) GetChannels() []string {
-	if x != nil {
-		return x.Channels
-	}
-	return nil
 }
 
 func (x *User) GetEnvs() []string {
@@ -872,7 +848,7 @@ var File_pkg_gapi_common_proto protoreflect.FileDescriptor
 
 const file_pkg_gapi_common_proto_rawDesc = "" +
 	"\n" +
-	"\x15pkg/gapi/common.proto\x12\x06common\x1a\x1fgoogle/protobuf/timestamp.proto\"\x9f\x04\n" +
+	"\x15pkg/gapi/common.proto\x12\x06common\x1a\x1fgoogle/protobuf/timestamp.proto\"\xbb\x03\n" +
 	"\x04User\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\"\n" +
 	"\forganization\x18\x02 \x01(\tR\forganization\x12\x19\n" +
@@ -881,16 +857,13 @@ const file_pkg_gapi_common_proto_rawDesc = "" +
 	"expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12\x10\n" +
 	"\x03uid\x18\x05 \x01(\rR\x03uid\x12\x10\n" +
 	"\x03gid\x18\x06 \x01(\rR\x03gid\x12\x1a\n" +
-	"\bfullname\x18\a \x01(\tR\bfullname\x12!\n" +
-	"\faccess_token\x18\b \x01(\tR\vaccessToken\x12\x14\n" +
+	"\bfullname\x18\a \x01(\tR\bfullname\x12\x14\n" +
 	"\x05email\x18\t \x01(\tR\x05email\x12\x1a\n" +
 	"\bpassword\x18\n" +
 	" \x01(\tR\bpassword\x12\x14\n" +
 	"\x05auths\x18\v \x03(\tR\x05auths\x12\x1b\n" +
 	"\tauth_keys\x18\f \x03(\tR\bauthKeys\x12\x16\n" +
-	"\x06locked\x18\r \x01(\bR\x06locked\x12#\n" +
-	"\rfailed_logins\x18\x0e \x01(\rR\ffailedLogins\x12\x1a\n" +
-	"\bchannels\x18\x0f \x03(\tR\bchannels\x12\x12\n" +
+	"\x06locked\x18\r \x01(\bR\x06locked\x12\x12\n" +
 	"\x04envs\x18\x10 \x03(\tR\x04envs\x12\x14\n" +
 	"\x05roles\x18\x11 \x03(\tR\x05roles\x12\x1e\n" +
 	"\n" +
