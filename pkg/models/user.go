@@ -30,15 +30,18 @@ const (
 )
 
 const (
-	RoleAdmin          string = "admin"
-	RoleOrgAdmin       string = "org-admin"
-	RoleWorkspaceAdmin string = "workspace-admin"
-	RoleWorkspaceUser  string = "workspace-user"
-)
-
-const (
 	AuthMethodPublicKey string = "publickey"
 	AuthMethodPassword  string = "password"
+)
+
+// User roles
+type Role string
+
+const (
+	RoleAdmin          Role = "admin"
+	RoleOrgAdmin       Role = "org-admin"
+	RoleWorkspaceAdmin Role = "workspace-admin"
+	RoleWorkspaceUser  Role = "workspace-user"
 )
 
 var ErrMethodNotSupported = errors.New("method not supported")
@@ -67,7 +70,7 @@ type User struct {
 	AuthKeys     []string  `yaml:"authKeys" json:"authKeys"`
 	Locked       bool      `yaml:"locked" json:"locked"`
 	Envs         []string  `yaml:"envs" json:"envs"`
-	Roles        []string  `yaml:"roles" json:"roles"`
+	Roles        []Role    `yaml:"roles" json:"roles"`
 	Blueprints   []string  `yaml:"blueprints" json:"blueprints"`
 	Source       string    `yaml:"source" json:"source"`
 	Shell        string    `yaml:"shell" json:"shell"`

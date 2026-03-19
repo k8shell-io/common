@@ -155,7 +155,7 @@ type UserClaims struct {
 	GID uint32 `json:"gid"`
 
 	// Roles lists the roles granted to the user.
-	Roles []string `json:"roles,omitempty"`
+	Roles []models.Role `json:"roles,omitempty"`
 
 	// Organization is the user's organisation.
 	Organization string `json:"org,omitempty"`

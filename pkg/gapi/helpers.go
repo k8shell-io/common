@@ -18,6 +18,12 @@ func UserToProto(u *models.User) *commonpb.User {
 	if !u.ExpiresAt.IsZero() {
 		expires = timestamppb.New(u.ExpiresAt)
 	}
+
+	roles := make([]string, len(u.Roles))
+	for i, r := range u.Roles {
+		roles[i] = string(r)
+	}
+
 	return &commonpb.User{
 		Username:     u.Username,
 		Organization: u.Organization,
@@ -32,7 +38,7 @@ func UserToProto(u *models.User) *commonpb.User {
 		AuthKeys:     u.AuthKeys,
 		Locked:       u.Locked,
 		Envs:         u.Envs,
-		Roles:        u.Roles,
+		Roles:        roles,
 		Blueprints:   u.Blueprints,
 		Source:       u.Source,
 	}
@@ -46,6 +52,12 @@ func ProtoToUser(pb *commonpb.User) *models.User {
 	if ts := pb.GetExpiresAt(); ts != nil {
 		expires = ts.AsTime()
 	}
+
+	roles := make([]models.Role, len(pb.GetRoles()))
+	for i, r := range pb.GetRoles() {
+		roles[i] = models.Role(r)
+	}
+
 	return &models.User{
 		Username:     pb.GetUsername(),
 		Organization: pb.GetOrganization(),
@@ -62,7 +74,7 @@ func ProtoToUser(pb *commonpb.User) *models.User {
 		AuthKeys:   pb.GetAuthKeys(),
 		Locked:     pb.GetLocked(),
 		Envs:       pb.GetEnvs(),
-		Roles:      pb.GetRoles(),
+		Roles:      roles,
 		Blueprints: pb.GetBlueprints(),
 		Source:     pb.GetSource(),
 	}
