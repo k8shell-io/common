@@ -59,6 +59,7 @@ type Server struct {
 	isRunning            bool
 	serviceRegistrations ServiceRegistrationFunc
 	stopGracefully       bool
+	customInterceptors   []grpc.UnaryServerInterceptor
 }
 
 type roundTripperWithAuth struct {
@@ -85,6 +86,7 @@ func NewServer(cfg *ServerConfig, stopGracefully bool) (*Server, error) {
 		log:                  logger.NewLogger("grpc"),
 		serviceRegistrations: nil,
 		stopGracefully:       stopGracefully,
+		customInterceptors:   []grpc.UnaryServerInterceptor{},
 	}
 
 	var err error
@@ -112,6 +114,10 @@ func NewServer(cfg *ServerConfig, stopGracefully bool) (*Server, error) {
 	}
 
 	return s, nil
+}
+
+func (s *Server) AddInterceptor(interceptor grpc.UnaryServerInterceptor) {
+	s.customInterceptors = append(s.customInterceptors, interceptor)
 }
 
 // RegisterService adds a service registration callback
@@ -184,6 +190,7 @@ func (s *Server) initGRPCServer() error {
 	}
 
 	unaryInts = append(unaryInts, s.unaryErrorLoggingInterceptor())
+	unaryInts = append(unaryInts, s.customInterceptors...)
 	opts = append(opts, grpc.ChainUnaryInterceptor(unaryInts...))
 
 	s.GrpcServer = grpc.NewServer(opts...)
