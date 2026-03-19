@@ -162,6 +162,12 @@ type UserClaims struct {
 
 	// Source identifies the identity provider that owns this user record.
 	Source string `json:"source,omitempty"`
+
+	// Shell is the user's default login shell.
+	Shell string `json:"shell,omitempty"`
+
+	// Sudo indicates whether the user has sudo privileges.
+	Sudo bool `json:"sudo,omitempty"`
 }
 
 // JWTIssuer creates and signs JWT tokens for authenticated users.
@@ -254,6 +260,8 @@ func (j *JWTIssuer) IssueToken(user *models.User) (jti string, signed string, er
 		GID:          user.GID,
 		Roles:        user.Roles,
 		Organization: user.Organization,
+		Shell:        user.Shell,
+		Sudo:         user.Sudo,
 		Source:       user.Source,
 	}
 

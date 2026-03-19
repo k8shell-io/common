@@ -70,6 +70,8 @@ type User struct {
 	Roles        []string  `yaml:"roles" json:"roles"`
 	Blueprints   []string  `yaml:"blueprints" json:"blueprints"`
 	Source       string    `yaml:"source" json:"source"`
+	Shell        string    `yaml:"shell" json:"shell"`
+	Sudo         bool      `yaml:"sudo" json:"sudo"`
 }
 
 func (u *User) HasBlueprint(blueprintName string) bool {
