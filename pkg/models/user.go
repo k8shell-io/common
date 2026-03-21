@@ -99,6 +99,7 @@ type SSHSession struct {
 	Channels    []string   `yaml:"channels" json:"channels"`
 	Blueprint   string     `yaml:"blueprint" json:"blueprint"`
 	UpdatedAt   *time.Time `yaml:"updatedAt" json:"updatedAt"`
+	Pty         string     `yaml:"pty" json:"pty"`
 }
 
 // Organization represents an organization in the system
