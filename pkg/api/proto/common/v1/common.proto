@@ -38,8 +38,6 @@ message User {
   repeated string auth_keys = 12;
   // locked indicates whether the account has been administratively locked.
   bool locked = 13;
-  // envs lists additional environment variables injected into the user's workspaces.
-  repeated string envs = 16;
   // roles lists the RBAC roles assigned to this user.
   repeated string roles = 17;
   // blueprints lists the blueprints the user is permitted to use.
