@@ -61,7 +61,11 @@ type User struct {
 	// blueprints lists the blueprints the user is permitted to use.
 	Blueprints []string `protobuf:"bytes,18,rep,name=blueprints,proto3" json:"blueprints,omitempty"`
 	// source identifies the identity provider that created this user (e.g. "github", "ldap").
-	Source        string `protobuf:"bytes,19,opt,name=source,proto3" json:"source,omitempty"`
+	Source string `protobuf:"bytes,19,opt,name=source,proto3" json:"source,omitempty"`
+	// shell is the user's preferred shell environment (e.g. "bash", "zsh").
+	Shell string `protobuf:"bytes,20,opt,name=shell,proto3" json:"shell,omitempty"`
+	// sudo indicates whether the user has permission to use sudo in their workspace.
+	Sudo          bool `protobuf:"varint,21,opt,name=sudo,proto3" json:"sudo,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -199,6 +203,20 @@ func (x *User) GetSource() string {
 		return x.Source
 	}
 	return ""
+}
+
+func (x *User) GetShell() string {
+	if x != nil {
+		return x.Shell
+	}
+	return ""
+}
+
+func (x *User) GetSudo() bool {
+	if x != nil {
+		return x.Sudo
+	}
+	return false
 }
 
 // ExternalCredential stores a token or credential issued by an external
@@ -925,7 +943,7 @@ var File_common_v1_common_proto protoreflect.FileDescriptor
 
 const file_common_v1_common_proto_rawDesc = "" +
 	"\n" +
-	"\x16common/v1/common.proto\x12\tcommon.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa7\x03\n" +
+	"\x16common/v1/common.proto\x12\tcommon.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd1\x03\n" +
 	"\x04User\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\"\n" +
 	"\forganization\x18\x02 \x01(\tR\forganization\x12\x19\n" +
@@ -945,7 +963,9 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"\n" +
 	"blueprints\x18\x12 \x03(\tR\n" +
 	"blueprints\x12\x16\n" +
-	"\x06source\x18\x13 \x01(\tR\x06source\"\xcc\x01\n" +
+	"\x06source\x18\x13 \x01(\tR\x06source\x12\x14\n" +
+	"\x05shell\x18\x14 \x01(\tR\x05shell\x12\x12\n" +
+	"\x04sudo\x18\x15 \x01(\bR\x04sudo\"\xcc\x01\n" +
 	"\x12ExternalCredential\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\rR\x02id\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12!\n" +

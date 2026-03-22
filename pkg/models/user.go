@@ -69,7 +69,6 @@ type User struct {
 	Auths        []string  `yaml:"auths" json:"auths"`
 	AuthKeys     []string  `yaml:"authKeys" json:"authKeys"`
 	Locked       bool      `yaml:"locked" json:"locked"`
-	Envs         []string  `yaml:"envs" json:"envs"`
 	Roles        []Role    `yaml:"roles" json:"roles"`
 	Blueprints   []string  `yaml:"blueprints" json:"blueprints"`
 	Source       string    `yaml:"source" json:"source"`

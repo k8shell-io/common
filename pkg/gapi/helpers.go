@@ -40,6 +40,8 @@ func UserToProto(u *models.User) *commonv1.User {
 		Roles:        roles,
 		Blueprints:   u.Blueprints,
 		Source:       u.Source,
+		Shell:        u.Shell,
+		Sudo:         u.Sudo,
 	}
 }
 
@@ -75,6 +77,8 @@ func ProtoToUser(pb *commonv1.User) *models.User {
 		Roles:      roles,
 		Blueprints: pb.GetBlueprints(),
 		Source:     pb.GetSource(),
+		Shell:      pb.GetShell(),
+		Sudo:       pb.GetSudo(),
 	}
 }
 

@@ -44,6 +44,10 @@ message User {
   repeated string blueprints = 18;
   // source identifies the identity provider that created this user (e.g. "github", "ldap").
   string source = 19;
+  // shell is the user's preferred shell environment (e.g. "bash", "zsh").
+  string shell = 20;
+  // sudo indicates whether the user has permission to use sudo in their workspace.
+  bool sudo = 21;
 }
 
 // ExternalCredential stores a token or credential issued by an external
