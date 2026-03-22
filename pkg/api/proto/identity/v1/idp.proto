@@ -1,0 +1,61 @@
+// Copyright 2025 the k8Shell authors.
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+syntax = "proto3";
+
+package identity.v1;
+
+option go_package = "github.com/k8shell-io/common/pkg/api/gen/go/identity/v1;identityv1";
+
+import "common/v1/common.proto";
+import "identity/v1/types.proto";
+
+// IdentityProviderService defines the gRPC service for identity provider operations
+service IdentityProviderService {
+  // ProviderInfo returns metadata about the identity provider, including its name,
+  // capabilities, user max age, and address.
+  rpc ProviderInfo(ProviderInfoRequest) returns (ProviderInfoResponse);
+
+  // FindUser retrieves a user by username. It can be used for authentication and user lookup.
+  rpc FindUser(FindUserRequest) returns (common.v1.User);
+
+  // OnboardCapability returns the onboarding capability details for a user.
+  rpc OnboardUserCapability(Username) returns (common.v1.UserOnboardCapability);
+
+  // OnboardUserDeviceFlow initiates the device flow onboarding process for a user.
+  rpc OnboardUserDeviceFlow(Username) returns (common.v1.OnboardUserDeviceFlow);
+
+  // OnboardUserWebFlow initiates the web flow onboarding process for a user.
+  rpc OnboardUserWebFlow(OnboardUserWebFlowRequest) returns (common.v1.OnboardUserWebFlow);
+
+  // CompleteUserWebFlow completes the web flow onboarding process using the provided state and code.
+  rpc CompleteUserWebFlow(CompleteUserWebFlowRequest) returns (common.v1.User);
+
+  // AuthUserPublicKey authenticates a user using a public key and returns the authentication result
+  rpc AuthUserPublicKey(AuthUserPublicKeyRequest) returns (AuthUserResponse);
+
+  // GetUserToken retrieves an authentication token for a user.
+  rpc GetUserToken(Username) returns (UserToken);
+
+  // GetBlueprintByUserStr retrieves a blueprint associated with a user string identifier.
+  rpc GetBlueprintByUserStr(UserStr) returns (Blueprint);
+
+  // ResolvePullRequestToRef resolves a pull request to a repository reference (e.g., branch or commit).
+  rpc ResolvePullRequestToRef(RepoPullRequestRequest) returns (RepoRefResponse);
+}
+
+// ProviderInfoRequest is an empty request message used to query provider metadata.
+message ProviderInfoRequest {}
+
+// ProviderInfoResponse carries metadata about the identity provider.
+message ProviderInfoResponse {
+  string          name         = 1;
+  repeated string capabilities = 2;
+  uint32          user_max_age = 3;
+  string          address      = 4;
+}
+
+// UserToken holds a provider-issued authentication token for a user.
+message UserToken {
+  string token = 1;
+}
