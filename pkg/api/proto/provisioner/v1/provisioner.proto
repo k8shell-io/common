@@ -1,0 +1,217 @@
+// Copyright 2025 the k8Shell authors.
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+syntax = "proto3";
+
+// Package provisioner.v1 defines the gRPC API for the k8shell provisioner
+// service, which manages the full lifecycle of user workspaces including
+// provisioning, upgrading, stopping, and deletion.
+package provisioner.v1;
+
+option go_package = "github.com/k8shell-io/common/pkg/api/gen/go/provisioner/v1;provisionerv1";
+
+import "common/v1/common.proto";
+
+// ProvisionerService manages the full lifecycle of user workspaces.
+// Clients interact with this service to provision new workspaces, upgrade
+// existing ones, query workspace state, and tear down workspaces.
+service ProvisionerService {
+  // GetWorkspaces returns all workspaces matching the given filter criteria.
+  rpc GetWorkspaces(GetWorkspacesRequest) returns (GetWorkspacesResponse);
+
+  // FindWorkspace returns the details of a single workspace by name.
+  rpc FindWorkspace(FindWorkspaceRequest) returns (common.v1.WorkspaceDetails);
+
+  // GetUserBlueprints returns the list of blueprints available to a user.
+  rpc GetUserBlueprints(GetUserBlueprintsRequest) returns (GetUserBlueprintsResponse);
+
+  // ProvisionWorkspaceStream provisions a new workspace and streams progress
+  // events back to the caller until the workspace is ready or an error occurs.
+  rpc ProvisionWorkspaceStream(ProvisionWorkspaceRequest) returns (stream ProvisionWorkspaceResponse);
+
+  // UpgradeWorkspaceStream upgrades an existing workspace (e.g. new blueprint
+  // version) and streams progress events back to the caller.
+  rpc UpgradeWorkspaceStream(UpgradeWorkspaceRequest) returns (stream ProvisionWorkspaceResponse);
+
+  // CanUpgradeWorkspace checks whether a workspace is eligible for an upgrade.
+  rpc CanUpgradeWorkspace(CanUpgradeWorkspaceRequest) returns (CanUpgradeWorkspaceResponse);
+
+  // UpgradeWorkspaceResources updates the CPU and memory allocation of a
+  // running workspace without reprovisioning it.
+  rpc UpgradeWorkspaceResources(UpgradeWorkspaceResourcesRequest) returns (UpgradeWorkspaceResourcesResponse);
+
+  // DeleteWorkspace deprovisions and permanently removes a workspace.
+  rpc DeleteWorkspace(DeleteWorkspaceRequest) returns (DeleteWorkspaceResponse);
+
+  // StopWorkspace suspends a running workspace without removing its state.
+  rpc StopWorkspace(StopWorkspaceRequest) returns (StopWorkspaceResponse);
+}
+
+// FindWorkspaceRequest identifies a single workspace to look up.
+message FindWorkspaceRequest {
+  // workspace is the unique name of the workspace.
+  string workspace = 1;
+}
+
+// GetWorkspacesRequest filters the list of workspaces to return.
+// All fields are optional; omitting a field disables that filter.
+message GetWorkspacesRequest {
+  // workspace filters by workspace name (partial match allowed).
+  string workspace = 1;
+  // username filters by the owning user.
+  string username = 2;
+  // organization filters by the owning organization.
+  string organization = 3;
+  // blueprint filters by the blueprint used to create the workspace.
+  string blueprint = 4;
+  // repo_name filters by the source repository name.
+  string repo_name = 5;
+  // repo_owner filters by the source repository owner.
+  string repo_owner = 6;
+  // repo_ref filters by the source repository ref (branch, tag, or commit).
+  string repo_ref = 7;
+}
+
+// GetWorkspacesResponse contains the list of matching workspaces.
+message GetWorkspacesResponse {
+  // workspaces holds the details of each matched workspace.
+  repeated common.v1.WorkspaceDetails workspaces = 1;
+}
+
+// GetUserBlueprintsRequest identifies the user whose blueprints to fetch.
+message GetUserBlueprintsRequest {
+  // username is the user whose available blueprints are requested.
+  string username = 1;
+}
+
+// GetUserBlueprintsResponse contains the blueprints available to the user.
+message GetUserBlueprintsResponse {
+  // blueprints is the list of blueprints the user may provision.
+  repeated common.v1.BlueprintSummary blueprints = 1;
+}
+
+// ProvisionWorkspaceRequest initiates provisioning of a new workspace.
+message ProvisionWorkspaceRequest {
+  // userstr is the serialised user context string used to configure the workspace.
+  string userstr = 1;
+  // timeout is the maximum number of seconds to wait for provisioning to complete.
+  int32 timeout = 2;
+  // send_progress controls whether progress in percents are streamed.
+  bool send_progress = 3;
+  // send_events controls whether Kubernetes object events are included in the stream.
+  bool send_events = 4;
+}
+
+// ProvisionWorkspaceResponse is a single message in the provisioning stream.
+// It carries either the initial handshake or a subsequent provisioning event.
+message ProvisionWorkspaceResponse {
+  oneof data {
+    // handshake is the first message in the stream, confirming the workspace
+    // name and job ID assigned to this provisioning run.
+    HandshakeResponse handshake = 1;
+    // event is a subsequent message carrying a provisioning lifecycle event.
+    ProvisionEvent event = 2;
+  }
+}
+
+// HandshakeResponse is the first message returned in a provisioning or upgrade
+// stream, confirming the job has been accepted.
+message HandshakeResponse {
+  // workspace is the name assigned to the workspace being provisioned.
+  string workspace = 1;
+  // jobid is the unique identifier for this provisioning job.
+  string jobid = 2;
+  // error is non-empty when the server rejects the request before streaming begins.
+  string error = 3;
+}
+
+// UpgradeWorkspaceRequest initiates an upgrade of an existing workspace.
+message UpgradeWorkspaceRequest {
+  // workspace is the name of the workspace to upgrade.
+  string workspace = 1;
+  // timeout is the maximum number of seconds to wait for the upgrade to complete.
+  int32 timeout = 2;
+  // send_progress controls whether intermediate progress updates are streamed.
+  bool send_progress = 3;
+  // send_events controls whether Kubernetes object events are included in the stream.
+  bool send_events = 4;
+  // force bypasses upgrade eligibility checks when true.
+  bool force = 5;
+}
+
+// UpgradeWorkspaceResourcesRequest changes the resource allocation of a workspace.
+message UpgradeWorkspaceResourcesRequest {
+  // workspace is the name of the workspace whose resources will be updated.
+  string workspace = 1;
+  // cpu is the new CPU request/limit in Kubernetes resource quantity format (e.g. "500m", "2").
+  string cpu = 2;
+  // memory is the new memory request/limit in Kubernetes resource quantity format (e.g. "512Mi", "2Gi").
+  string memory = 3;
+}
+
+// UpgradeWorkspaceResourcesResponse reports the result of the resource update.
+message UpgradeWorkspaceResourcesResponse {
+  // status is a short machine-readable result code (e.g. "ok", "error").
+  string status = 1;
+  // message provides a human-readable description of the result.
+  string message = 2;
+}
+
+// ProvisionEvent represents a single lifecycle event emitted during
+// workspace provisioning or upgrade.
+message ProvisionEvent {
+  // type is the event category (e.g. "pod", "deployment", "job").
+  string type = 1;
+  // timestamp is the RFC 3339 time at which the event occurred.
+  string timestamp = 2;
+  // object_name is the Kubernetes object name associated with this event.
+  string object_name = 3;
+  // status is the observed status of the object (e.g. "Running", "Failed").
+  string status = 4;
+  // message provides additional human-readable detail about the event.
+  string message = 5;
+}
+
+// DeleteWorkspaceRequest identifies the workspace to delete.
+message DeleteWorkspaceRequest {
+  // workspace is the name of the workspace to delete.
+  string workspace = 1;
+  // delay_seconds defers deletion by the given number of seconds, allowing
+  // in-flight operations to complete gracefully. Use 0 for immediate deletion.
+  uint32 delay_seconds = 2;
+}
+
+// DeleteWorkspaceResponse reports the outcome of the delete operation.
+message DeleteWorkspaceResponse {
+  // message provides a human-readable description of the result.
+  string message = 1;
+}
+
+// StopWorkspaceRequest identifies the workspace to stop.
+message StopWorkspaceRequest {
+  // workspace is the name of the workspace to stop.
+  string workspace = 1;
+  // delay_seconds defers the stop by the given number of seconds. Use 0 for
+  // an immediate stop.
+  uint32 delay_seconds = 2;
+}
+
+// StopWorkspaceResponse reports the outcome of the stop operation.
+message StopWorkspaceResponse {
+  // message provides a human-readable description of the result.
+  string message = 1;
+}
+
+// CanUpgradeWorkspaceRequest identifies the workspace to check.
+message CanUpgradeWorkspaceRequest {
+  // workspace is the name of the workspace to check for upgrade eligibility.
+  string workspace = 1;
+}
+
+// CanUpgradeWorkspaceResponse reports whether the workspace can be upgraded.
+message CanUpgradeWorkspaceResponse {
+  // can_upgrade is true when the workspace is eligible for an upgrade.
+  bool can_upgrade = 1;
+  // message explains why an upgrade is or is not possible.
+  string message = 2;
+}

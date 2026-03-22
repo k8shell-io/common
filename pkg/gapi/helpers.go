@@ -3,14 +3,14 @@ package gapi
 import (
 	"time"
 
-	commonpb "github.com/k8shell-io/common/pkg/gapi/commonpb"
+	commonv1 "github.com/k8shell-io/common/pkg/api/gen/go/common/v1"
 	"github.com/k8shell-io/common/pkg/models"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // *** User and related models
 
-func UserToProto(u *models.User) *commonpb.User {
+func UserToProto(u *models.User) *commonv1.User {
 	if u == nil {
 		return nil
 	}
@@ -24,7 +24,7 @@ func UserToProto(u *models.User) *commonpb.User {
 		roles[i] = string(r)
 	}
 
-	return &commonpb.User{
+	return &commonv1.User{
 		Username:     u.Username,
 		Organization: u.Organization,
 		IsValid:      u.IsValid,
@@ -44,7 +44,7 @@ func UserToProto(u *models.User) *commonpb.User {
 	}
 }
 
-func ProtoToUser(pb *commonpb.User) *models.User {
+func ProtoToUser(pb *commonv1.User) *models.User {
 	if pb == nil {
 		return nil
 	}
@@ -81,11 +81,11 @@ func ProtoToUser(pb *commonpb.User) *models.User {
 }
 
 // ExternalCredentialToProto converts a Go model to a protobuf message.
-func ExternalCredentialToProto(c *models.ExternalCredential) *commonpb.ExternalCredential {
+func ExternalCredentialToProto(c *models.ExternalCredential) *commonv1.ExternalCredential {
 	if c == nil {
 		return nil
 	}
-	return &commonpb.ExternalCredential{
+	return &commonv1.ExternalCredential{
 		Id:            uint32(c.ID),
 		Username:      c.Username,
 		ServiceName:   c.ServiceName,
@@ -96,7 +96,7 @@ func ExternalCredentialToProto(c *models.ExternalCredential) *commonpb.ExternalC
 }
 
 // ProtoToExternalCredential converts a protobuf message to a Go model.
-func ProtoToExternalCredential(pb *commonpb.ExternalCredential) *models.ExternalCredential {
+func ProtoToExternalCredential(pb *commonv1.ExternalCredential) *models.ExternalCredential {
 	if pb == nil {
 		return nil
 	}
@@ -111,11 +111,11 @@ func ProtoToExternalCredential(pb *commonpb.ExternalCredential) *models.External
 }
 
 // OnboardUserDeviceFlowToProto converts a Go model to a protobuf message.
-func OnboardUserDeviceFlowToProto(m *models.OnboardUserDeviceFlow) *commonpb.OnboardUserDeviceFlow {
+func OnboardUserDeviceFlowToProto(m *models.OnboardUserDeviceFlow) *commonv1.OnboardUserDeviceFlow {
 	if m == nil {
 		return nil
 	}
-	return &commonpb.OnboardUserDeviceFlow{
+	return &commonv1.OnboardUserDeviceFlow{
 		Provider:        m.Provider,
 		Username:        m.Username,
 		UserCode:        m.UserCode,
@@ -125,7 +125,7 @@ func OnboardUserDeviceFlowToProto(m *models.OnboardUserDeviceFlow) *commonpb.Onb
 }
 
 // ProtoToOnboardUserDeviceFlow converts a protobuf message to a Go model.
-func ProtoToOnboardUserDeviceFlow(pb *commonpb.OnboardUserDeviceFlow) *models.OnboardUserDeviceFlow {
+func ProtoToOnboardUserDeviceFlow(pb *commonv1.OnboardUserDeviceFlow) *models.OnboardUserDeviceFlow {
 	if pb == nil {
 		return nil
 	}
@@ -139,11 +139,11 @@ func ProtoToOnboardUserDeviceFlow(pb *commonpb.OnboardUserDeviceFlow) *models.On
 }
 
 // OnboardUserWebFlowToProto converts a Go model to a protobuf message.
-func OnboardUserWebFlowToProto(m *models.OnboardUserWebFlow) *commonpb.OnboardUserWebFlow {
+func OnboardUserWebFlowToProto(m *models.OnboardUserWebFlow) *commonv1.OnboardUserWebFlow {
 	if m == nil {
 		return nil
 	}
-	return &commonpb.OnboardUserWebFlow{
+	return &commonv1.OnboardUserWebFlow{
 		Provider:  m.Provider,
 		AuthUrl:   m.AuthorizationURL,
 		State:     m.State,
@@ -152,7 +152,7 @@ func OnboardUserWebFlowToProto(m *models.OnboardUserWebFlow) *commonpb.OnboardUs
 }
 
 // ProtoToOnboardUserWebFlow converts a protobuf message to a Go model.
-func ProtoToOnboardUserWebFlow(pb *commonpb.OnboardUserWebFlow) *models.OnboardUserWebFlow {
+func ProtoToOnboardUserWebFlow(pb *commonv1.OnboardUserWebFlow) *models.OnboardUserWebFlow {
 	if pb == nil {
 		return nil
 	}
@@ -165,18 +165,18 @@ func ProtoToOnboardUserWebFlow(pb *commonpb.OnboardUserWebFlow) *models.OnboardU
 }
 
 // CompleteUserWebFlowToProto converts a Go model to a protobuf message.
-func CompleteUserWebFlowToProto(m *models.CompleteUserWebFlow) *commonpb.CompleteUserWebFlow {
+func CompleteUserWebFlowToProto(m *models.CompleteUserWebFlow) *commonv1.CompleteUserWebFlow {
 	if m == nil {
 		return nil
 	}
-	return &commonpb.CompleteUserWebFlow{
+	return &commonv1.CompleteUserWebFlow{
 		Code:  m.Code,
 		State: m.State,
 	}
 }
 
 // ProtoToCompleteUserWebFlow converts a protobuf message to a Go model.
-func ProtoToCompleteUserWebFlow(pb *commonpb.CompleteUserWebFlow) *models.CompleteUserWebFlow {
+func ProtoToCompleteUserWebFlow(pb *commonv1.CompleteUserWebFlow) *models.CompleteUserWebFlow {
 	if pb == nil {
 		return nil
 	}
@@ -187,11 +187,11 @@ func ProtoToCompleteUserWebFlow(pb *commonpb.CompleteUserWebFlow) *models.Comple
 }
 
 // UserOnboardCapabilityToProto converts a Go model to a protobuf message.
-func UserOnboardCapabilityToProto(m *models.OnboardCapability) *commonpb.UserOnboardCapability {
+func UserOnboardCapabilityToProto(m *models.OnboardCapability) *commonv1.UserOnboardCapability {
 	if m == nil {
 		return nil
 	}
-	return &commonpb.UserOnboardCapability{
+	return &commonv1.UserOnboardCapability{
 		Provider:   m.Provider,
 		Username:   m.Username,
 		CanOnboard: m.CanOnboard,
@@ -199,7 +199,7 @@ func UserOnboardCapabilityToProto(m *models.OnboardCapability) *commonpb.UserOnb
 }
 
 // ProtoToUserOnboardCapability converts a protobuf message to a Go model.
-func ProtoToUserOnboardCapability(pb *commonpb.UserOnboardCapability) *models.OnboardCapability {
+func ProtoToUserOnboardCapability(pb *commonv1.UserOnboardCapability) *models.OnboardCapability {
 	if pb == nil {
 		return nil
 	}
@@ -213,7 +213,7 @@ func ProtoToUserOnboardCapability(pb *commonpb.UserOnboardCapability) *models.On
 // *** Workspace and related models
 
 // PodStatusToProto converts a Go PodStatus model to its protobuf message.
-func PodStatusToProto(m *models.PodStatus) *commonpb.PodStatus {
+func PodStatusToProto(m *models.PodStatus) *commonv1.PodStatus {
 	if m == nil {
 		return nil
 	}
@@ -223,7 +223,7 @@ func PodStatusToProto(m *models.PodStatus) *commonpb.PodStatus {
 		created = timestamppb.New(m.Created)
 	}
 
-	return &commonpb.PodStatus{
+	return &commonv1.PodStatus{
 		Created:         created,
 		Status:          string(m.Status),
 		Message:         m.Message,
@@ -233,7 +233,7 @@ func PodStatusToProto(m *models.PodStatus) *commonpb.PodStatus {
 }
 
 // ProtoToPodStatus converts a protobuf PodStatus message to its Go model.
-func ProtoToPodStatus(pb *commonpb.PodStatus) *models.PodStatus {
+func ProtoToPodStatus(pb *commonv1.PodStatus) *models.PodStatus {
 	if pb == nil {
 		return nil
 	}
@@ -253,12 +253,12 @@ func ProtoToPodStatus(pb *commonpb.PodStatus) *models.PodStatus {
 }
 
 // WorkspaceDetailsToProto converts a Go WorkspaceDetails model to its protobuf message.
-func WorkspaceDetailsToProto(m *models.WorkspaceDetails) *commonpb.WorkspaceDetails {
+func WorkspaceDetailsToProto(m *models.WorkspaceDetails) *commonv1.WorkspaceDetails {
 	if m == nil {
 		return nil
 	}
 
-	return &commonpb.WorkspaceDetails{
+	return &commonv1.WorkspaceDetails{
 		PodStatus:    PodStatusToProto(&m.PodStatus),
 		Name:         m.Name,
 		Username:     m.Username,
@@ -281,7 +281,7 @@ func WorkspaceDetailsToProto(m *models.WorkspaceDetails) *commonpb.WorkspaceDeta
 }
 
 // ProtoToWorkspaceDetails converts a protobuf WorkspaceDetails message to its Go model.
-func ProtoToWorkspaceDetails(pb *commonpb.WorkspaceDetails) *models.WorkspaceDetails {
+func ProtoToWorkspaceDetails(pb *commonv1.WorkspaceDetails) *models.WorkspaceDetails {
 	if pb == nil {
 		return nil
 	}
@@ -309,11 +309,11 @@ func ProtoToWorkspaceDetails(pb *commonpb.WorkspaceDetails) *models.WorkspaceDet
 }
 
 // BlueprintSummaryToProto converts a Go BlueprintSummary model to its protobuf message.
-func BlueprintSummaryToProto(m *models.BlueprintSummary) *commonpb.BlueprintSummary {
+func BlueprintSummaryToProto(m *models.BlueprintSummary) *commonv1.BlueprintSummary {
 	if m == nil {
 		return nil
 	}
-	return &commonpb.BlueprintSummary{
+	return &commonv1.BlueprintSummary{
 		Name:        m.Name,
 		Description: m.Description,
 		IsTemplate:  m.IsTemplate,
@@ -321,7 +321,7 @@ func BlueprintSummaryToProto(m *models.BlueprintSummary) *commonpb.BlueprintSumm
 }
 
 // ProtoToBlueprintSummary converts a protobuf BlueprintSummary message to its Go model.
-func ProtoToBlueprintSummary(pb *commonpb.BlueprintSummary) *models.BlueprintSummary {
+func ProtoToBlueprintSummary(pb *commonv1.BlueprintSummary) *models.BlueprintSummary {
 	if pb == nil {
 		return nil
 	}

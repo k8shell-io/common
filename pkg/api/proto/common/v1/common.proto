@@ -1,0 +1,183 @@
+// Copyright 2025 the k8Shell authors.
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+syntax = "proto3";
+
+// Package common.v1 defines shared message types used across all k8Shell
+// gRPC services. These types represent core domain objects such as users,
+// workspaces, blueprints, and onboarding flows.
+package common.v1;
+
+option go_package = "github.com/k8shell-io/common/pkg/api/gen/go/common/v1;commonv1";
+
+import "google/protobuf/timestamp.proto";
+
+// User represents an authenticated k8Shell user account.
+message User {
+  // username is the unique login name of the user.
+  string username = 1;
+  // organization is the tenant the user belongs to.
+  string organization = 2;
+  // is_valid indicates whether the user's session or token is currently valid.
+  bool is_valid = 3;
+  // expires_at is the time at which the user's session expires.
+  google.protobuf.Timestamp expires_at = 4;
+  // uid is the POSIX user ID assigned to the user.
+  uint32 uid = 5;
+  // gid is the POSIX primary group ID assigned to the user.
+  uint32 gid = 6;
+  // fullname is the display name of the user.
+  string fullname = 7;
+  // email is the user's email address.
+  string email = 9;
+  // password is the hashed password. Never populated in read responses.
+  string password = 10;
+  // auths lists the authentication providers linked to this account.
+  repeated string auths = 11;
+  // auth_keys lists the public SSH or API keys registered for this user.
+  repeated string auth_keys = 12;
+  // locked indicates whether the account has been administratively locked.
+  bool locked = 13;
+  // envs lists additional environment variables injected into the user's workspaces.
+  repeated string envs = 16;
+  // roles lists the RBAC roles assigned to this user.
+  repeated string roles = 17;
+  // blueprints lists the blueprints the user is permitted to use.
+  repeated string blueprints = 18;
+  // source identifies the identity provider that created this user (e.g. "github", "ldap").
+  string source = 19;
+}
+
+// ExternalCredential stores a token or credential issued by an external
+// service on behalf of a user (e.g. a GitHub OAuth token).
+message ExternalCredential {
+  // id is the internal database identifier for this credential.
+  uint32 id = 1;
+  // username is the k8Shell user that owns this credential.
+  string username = 2;
+  // service_name is the human-readable name of the external service (e.g. "github").
+  string service_name = 3;
+  // service_url is the base URL of the external service.
+  string service_url = 4;
+  // external_id is the user's identity on the external service.
+  string external_id = 5;
+  // external_token is the access token for the external service.
+  // Treat as a secret — never log or expose this value.
+  string external_token = 6;
+}
+
+// OnboardUserDeviceFlow carries the data needed to complete a Device
+// Authorization Grant (RFC 8628) onboarding flow.
+message OnboardUserDeviceFlow {
+  // provider identifies the OAuth/OIDC provider initiating the flow (e.g. "github").
+  string provider = 1;
+  // username is the k8Shell user being onboarded.
+  string username = 2;
+  // user_code is the short code the user enters on the verification page.
+  string user_code = 3;
+  // verification_url is the URL the user visits to authorise the device.
+  string verification_url = 4;
+  // expires_in is the number of seconds until the user_code expires.
+  int32 expires_in = 5;
+}
+
+// OnboardUserWebFlow carries the data needed to initiate an Authorization
+// Code (web redirect) onboarding flow.
+message OnboardUserWebFlow {
+  // provider identifies the OAuth/OIDC provider (e.g. "github").
+  string provider = 1;
+  // auth_url is the provider's authorization endpoint the user should be
+  // redirected to.
+  string auth_url = 2;
+  // state is the CSRF token that must be verified when the callback is received.
+  string state = 3;
+  // expires_in is the number of seconds until the flow expires.
+  int32 expires_in = 4;
+}
+
+// CompleteUserWebFlow carries the callback parameters returned by the
+// provider after the user completes the web authorization flow.
+message CompleteUserWebFlow {
+  // code is the authorization code returned by the provider.
+  string code = 2;
+  // state is the CSRF token that must match the value from OnboardUserWebFlow.
+  string state = 3;
+}
+
+// UserOnboardCapability reports whether a user can be onboarded via a
+// specific provider.
+message UserOnboardCapability {
+  // provider is the OAuth/OIDC provider being queried.
+  string provider = 1;
+  // username is the user being checked.
+  string username = 2;
+  // can_onboard is true when the user is eligible to onboard via this provider.
+  bool can_onboard = 3;
+}
+
+// PodStatus represents the observed status of a workspace's Kubernetes pod.
+message PodStatus {
+  // created is the time the pod was created.
+  google.protobuf.Timestamp created = 1;
+  // status is the current pod phase (e.g. "Pending", "Running", "Failed").
+  string status = 2;
+  // message provides additional human-readable detail about the current status.
+  string message = 3;
+  // restarts is the number of times the pod's primary container has restarted.
+  int32 restarts = 4;
+  // last_fail_message is the termination message from the last container failure,
+  // if any.
+  string last_fail_message = 5;
+}
+
+// WorkspaceDetails describes a user workspace and its current runtime state.
+message WorkspaceDetails {
+  // pod_status holds the observed Kubernetes pod state for this workspace.
+  PodStatus pod_status = 1;
+  // app_version is the version of the workspace application image in use.
+  string app_version = 2;
+  // name is the unique name of the workspace.
+  string name = 3;
+  // username is the owner of this workspace.
+  string username = 4;
+  // organization is the tenant that owns this workspace.
+  string organization = 5;
+  // repo_owner is the VCS owner of the repository attached to this workspace.
+  string repo_owner = 6;
+  // repo_name is the name of the repository attached to this workspace.
+  string repo_name = 7;
+  // repo_ref is the branch, tag, or commit SHA the workspace is based on.
+  string repo_ref = 8;
+  // blueprint is the name of the blueprint used to provision this workspace.
+  string blueprint = 9;
+  // server_name is the k8Shell server node this workspace is scheduled on.
+  string server_name = 10;
+  // pod_ip is the cluster-internal IP address of the workspace pod.
+  string pod_ip = 11;
+  // port is the port on which the workspace IDE or application is listening.
+  int32 port = 12;
+  // tls_enabled indicates whether TLS is enabled for the workspace endpoint.
+  bool tls_enabled = 13;
+  // splash is the URL or path of the workspace splash/loading screen asset.
+  string splash = 14;
+  // cpu is the CPU resource allocation in Kubernetes quantity format (e.g. "500m").
+  string cpu = 15;
+  // memory is the memory resource allocation in Kubernetes quantity format (e.g. "1Gi").
+  string memory = 16;
+  // hostname is the externally reachable hostname of the workspace.
+  string hostname = 17;
+  // job_id is the identifier of the provisioning job that created this workspace.
+  string job_id = 18;
+}
+
+// BlueprintSummary is a lightweight representation of a blueprint used in
+// listing responses.
+message BlueprintSummary {
+  // name is the unique identifier of the blueprint.
+  string name = 1;
+  // description is a short human-readable summary of what the blueprint provides.
+  string description = 2;
+  // is_template indicates whether this blueprint is a base template that other
+  // blueprints may derive from.
+  bool is_template = 3;
+}
