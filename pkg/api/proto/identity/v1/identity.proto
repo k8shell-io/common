@@ -3,58 +3,58 @@
 
 syntax = "proto3";
 
-package identity;
+package identity.v1;
 
-option go_package = "github.com/k8shell-io/identity/pkg/api/identitypb;identitypb";
+option go_package = "github.com/k8shell-io/common/pkg/api/gen/go/identity/v1;identityv1";
 
-import ".proto_deps/common/pkg/gapi/common.proto";
-import "pkg/api/types.proto";
+import "common/v1/common.proto";
+import "identity/v1/types.proto";
 
 // IdentityService provides operations for user management, authentication,
 // onboarding, and external credential management.
 service IdentityService {
   // FindUser retrieves a user by username. It can be used for authentication and user lookup.
-  rpc FindUser (types.v1.FindUserRequest) returns (common.v1.User);
+  rpc FindUser (FindUserRequest) returns (common.v1.User);
 
   // GetUsers retrieves a list of users with pagination support.
-  rpc GetUsers (types.v1.GetUsersRequest) returns (types.v1.UserList);
+  rpc GetUsers (GetUsersRequest) returns (UserList);
 
   // GetUserAccessToken returns the current JWT access token for a user.
-  rpc GetUserAccessToken (types.v1.GetUserAccessTokenRequest) returns (types.v1.GetUserAccessTokenResponse);
+  rpc GetUserAccessToken (GetUserAccessTokenRequest) returns (GetUserAccessTokenResponse);
 
   // GetUserOnboardCapability checks if the identity provider supports onboarding and returns the capability details.
-  rpc GetUserOnboardCapability (types.v1.Username) returns (common.v1.UserOnboardCapability);
+  rpc GetUserOnboardCapability (Username) returns (common.v1.UserOnboardCapability);
 
   // OnboardUserDeviceFlow initiates the device flow onboarding process for a user.
-  rpc OnboardUserDeviceFlow (types.v1.Username) returns (common.v1.OnboardUserDeviceFlow);
+  rpc OnboardUserDeviceFlow (Username) returns (common.v1.OnboardUserDeviceFlow);
 
   // OnboardUserWebFlow initiates the web flow onboarding process for a user.
-  rpc OnboardUserWebFlow (types.v1.OnboardUserWebFlowRequest) returns (common.v1.OnboardUserWebFlow);
+  rpc OnboardUserWebFlow (OnboardUserWebFlowRequest) returns (common.v1.OnboardUserWebFlow);
 
   // CompleteUserWebFlow completes the web flow onboarding process using the provided state and code.
-  rpc CompleteUserWebFlow (types.v1.CompleteUserWebFlowRequest) returns (common.v1.User);
+  rpc CompleteUserWebFlow (CompleteUserWebFlowRequest) returns (common.v1.User);
 
   // AuthUserPublicKey authenticates a user using a public key and returns the authentication result
   // along with user details if valid.
-  rpc AuthUserPublicKey (types.v1.AuthUserPublicKeyRequest) returns (types.v1.AuthUserResponse);
+  rpc AuthUserPublicKey (AuthUserPublicKeyRequest) returns (AuthUserResponse);
 
   // GetBlueprintByUserStr retrieves a blueprint associated with a user string identifier.
-  rpc GetBlueprintByUserStr (types.v1.UserStr) returns (types.v1.Blueprint);
+  rpc GetBlueprintByUserStr (UserStr) returns (Blueprint);
 
   // ResolvePullRequestToRef resolves a pull request to a repository reference (e.g., branch or commit).
-  rpc ResolvePullRequestToRef (types.v1.RepoPullRequestRequest) returns (types.v1.RepoRefResponse);
+  rpc ResolvePullRequestToRef (RepoPullRequestRequest) returns (RepoRefResponse);
 
   // GetUserCredentials retrieves all external credentials associated with a user.
-  rpc GetUserCredentials (types.v1.Username) returns (types.v1.GetUserCredentialsResponse);
+  rpc GetUserCredentials (Username) returns (GetUserCredentialsResponse);
 
   // AddUserCredential adds a new external credential for a user.
-  rpc AddUserCredential (common.v1.ExternalCredential) returns (types.v1.AddUserCredentialResponse);
+  rpc AddUserCredential (common.v1.ExternalCredential) returns (AddUserCredentialResponse);
 
   // UpdateUserCredential updates an existing external credential for a user.
-  rpc UpdateUserCredential (common.v1.ExternalCredential) returns (types.v1.UpdateUserCredentialResponse);
+  rpc UpdateUserCredential (common.v1.ExternalCredential) returns (UpdateUserCredentialResponse);
 
   // DeleteUserCredential deletes an external credential by its ID.
-  rpc DeleteUserCredential (types.v1.DeleteUserCredentialRequest) returns (types.v1.DeleteUserCredentialResponse);
+  rpc DeleteUserCredential (DeleteUserCredentialRequest) returns (DeleteUserCredentialResponse);
 }
 
 // Messages
