@@ -189,7 +189,6 @@ func (s *Server) initGRPCServer() error {
 		s.log.Warn().Msg("Auth disabled; skipping oidc initialization and auth interceptor")
 	}
 
-	unaryInts = append(unaryInts, s.unaryErrorLoggingInterceptor())
 	unaryInts = append(unaryInts, s.customInterceptors...)
 	opts = append(opts, grpc.ChainUnaryInterceptor(unaryInts...))
 
@@ -449,7 +448,14 @@ func (s *Server) unaryRequestLoggingInterceptor() grpc.UnaryServerInterceptor {
 			statusCode = status.Code(err)
 		}
 
-		logEvent := s.log.Info().
+		var logEvent *zerolog.Event
+		if err != nil {
+			logEvent = s.log.Error().Err(err)
+		} else {
+			logEvent = s.log.Info()
+		}
+
+		logEvent = logEvent.
 			Str("component", "grpc").
 			Dur("duration", duration).
 			Str("ip", clientIP).
@@ -461,10 +467,6 @@ func (s *Server) unaryRequestLoggingInterceptor() grpc.UnaryServerInterceptor {
 			logEvent = logEvent.
 				Str("namespace", namespace).
 				Str("serviceAccount", serviceAccount)
-		}
-
-		if err != nil {
-			logEvent = logEvent.Err(err)
 		}
 
 		logEvent.Msg("grpc request")
@@ -509,27 +511,6 @@ func (s *Server) unaryAuthInterceptor() grpc.UnaryServerInterceptor {
 
 		ctx = context.WithValue(ctx, callerKey{}, Caller{Namespace: ns, ServiceAccount: sa})
 		return handler(ctx, req)
-	}
-}
-
-// UnaryErrorLoggingInterceptor logs all gRPC errors returned by handlers.
-func (s *Server) unaryErrorLoggingInterceptor() grpc.UnaryServerInterceptor {
-	return func(
-		ctx context.Context,
-		req any,
-		info *grpc.UnaryServerInfo,
-		handler grpc.UnaryHandler,
-	) (resp any, err error) {
-		resp, err = handler(ctx, req)
-		if err != nil {
-			st := status.Convert(err)
-			s.log.Error().
-				Str("method", info.FullMethod).
-				Str("code", st.Code().String()).
-				Err(err).
-				Msg("gRPC error occurred")
-		}
-		return resp, err
 	}
 }
 
