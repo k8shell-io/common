@@ -1,4 +1,4 @@
-package api
+package k8shelld
 
 import (
 	"context"

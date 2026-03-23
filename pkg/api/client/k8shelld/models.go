@@ -1,4 +1,4 @@
-package api
+package k8shelld
 
 import (
 	k8shelldv1 "github.com/k8shell-io/common/pkg/api/gen/go/k8shelld/v1"
