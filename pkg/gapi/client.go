@@ -38,7 +38,7 @@ type ClientConfig struct {
 }
 
 // ErrNotEnabled is returned by NewClient when the client is explicitly disabled.
-var ErrNotEnabled = errors.New("not enabled")
+var ErrNotEnabled = errors.New("grpc api client is not enabled")
 
 // Client gRPC client
 type Client struct {
@@ -78,7 +78,7 @@ func fileTokenSource(path string) func(context.Context) (string, error) {
 // NewClient creates and returns a new gRPC client connection.
 func NewClient(cfg ClientConfig) (*Client, error) {
 	if !cfg.Enabled {
-		return nil, fmt.Errorf("%w: grpc api client is not enabled for address %s", ErrNotEnabled, cfg.Address)
+		return nil, ErrNotEnabled
 	}
 	if cfg.Address == "" {
 		return nil, errors.New("addr required")
