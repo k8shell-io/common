@@ -103,18 +103,6 @@ message EndSessionRequest {
 
 // *** Recording
 
-// StreamType identifies the kind of SSH channel being recorded.
-enum StreamType {
-  // STREAM_TYPE_SHELL is a PTY shell session.
-  STREAM_TYPE_SHELL = 0;
-  // STREAM_TYPE_EXEC is a non-PTY exec request.
-  STREAM_TYPE_EXEC = 1;
-  // STREAM_TYPE_DIRECT_TCPIP is a port-forward channel.
-  STREAM_TYPE_DIRECT_TCPIP = 2;
-  // STREAM_TYPE_SFTP is an SFTP subsystem session.
-  STREAM_TYPE_SFTP = 3;
-}
-
 // Direction indicates which side of the channel produced the data.
 enum Direction {
   // DIRECTION_OUTPUT is data flowing from the workspace to the client
@@ -125,49 +113,29 @@ enum Direction {
   DIRECTION_INPUT = 1;
 }
 
-// RecordingService accepts a stream of recording frames from k8shelld and
-// persists them for later playback.
+// RecordingService accepts client-streaming recording frames from k8shelld
+// and persists them for later playback. Each RPC corresponds to a distinct
+// SSH channel type with its own typed header and frame set.
 service RecordingService {
-  // StreamRecording receives a client-streaming sequence of RecordingFrames
-  // for a single channel and stores them. The first frame must be a header.
-  rpc StreamRecording(stream RecordingFrame) returns (google.protobuf.Empty);
+  // StreamShellRecording records a PTY shell session. The first frame must
+  // be a ShellRecordingHeader; subsequent frames carry data chunks or
+  // terminal resize events.
+  rpc StreamShellRecording(stream ShellRecordingFrame) returns (google.protobuf.Empty);
+
+  // StreamExecRecording records a non-PTY exec channel. The first frame must
+  // be an ExecRecordingHeader; subsequent frames carry data chunks.
+  rpc StreamExecRecording(stream ExecRecordingFrame) returns (google.protobuf.Empty);
+
+  // StreamTcpipRecording records a direct-tcpip port-forward channel. The
+  // first frame must be a TcpipRecordingHeader; subsequent frames carry data chunks.
+  rpc StreamTcpipRecording(stream TcpipRecordingFrame) returns (google.protobuf.Empty);
 }
 
-// RecordingFrame is a single unit in a recording stream. The first frame
-// sent must carry a RecordingHeader; subsequent frames carry data or resize
-// events.
-message RecordingFrame {
-  oneof payload {
-    // header is the first frame and carries session metadata.
-    RecordingHeader header = 1;
-    // chunk carries a block of raw channel data.
-    DataChunk chunk = 2;
-    // resize carries a terminal resize event; only valid for PTY shell sessions.
-    TerminalResize resize = 3;
-  }
-}
-
-// RecordingHeader is the mandatory first frame of a recording stream.
-message RecordingHeader {
-  // session_id ties this recording to a SessionService session record.
-  string session_id = 1;
-  // username is the owner of the session being recorded.
-  string username = 2;
-  // started_at is the channel start time as a Unix timestamp (seconds).
-  int64 started_at = 3;
-  // stream_type identifies the kind of SSH channel being recorded.
-  StreamType stream_type = 4;
-  // width is the initial terminal width in columns.
-  // Only meaningful when stream_type is STREAM_TYPE_SHELL.
-  uint32 width = 5;
-  // height is the initial terminal height in rows.
-  // Only meaningful when stream_type is STREAM_TYPE_SHELL.
-  uint32 height = 6;
-}
+// *** Shared recording types
 
 // DataChunk carries a block of raw channel data with timing information.
 message DataChunk {
-  // time_offset_ms is the number of milliseconds elapsed since started_at.
+  // time_offset_ms is the number of milliseconds elapsed since the recording started_at.
   int64 time_offset_ms = 1;
   // data is the raw bytes transferred on the channel.
   bytes data = 2;
@@ -177,11 +145,93 @@ message DataChunk {
 
 // TerminalResize records a PTY window-change event.
 message TerminalResize {
-  // time_offset_ms is the number of milliseconds elapsed since started_at.
+  // time_offset_ms is the number of milliseconds elapsed since the recording started_at.
   int64 time_offset_ms = 1;
   // width is the new terminal width in columns.
   uint32 width = 2;
   // height is the new terminal height in rows.
   uint32 height = 3;
+}
+
+// *** Shell recording
+
+// ShellRecordingHeader is the mandatory first frame of a shell recording stream.
+message ShellRecordingHeader {
+  // session_id ties this recording to a SessionService session record.
+  string session_id = 1;
+  // username is the owner of the session being recorded.
+  string username = 2;
+  // started_at is the channel start time as a Unix timestamp (seconds).
+  int64 started_at = 3;
+  // width is the initial terminal width in columns.
+  uint32 width = 4;
+  // height is the initial terminal height in rows.
+  uint32 height = 5;
+}
+
+// ShellRecordingFrame is a single unit in a shell recording stream.
+message ShellRecordingFrame {
+  oneof payload {
+    // header is the first frame and carries PTY session metadata.
+    ShellRecordingHeader header = 1;
+    // chunk carries a block of raw terminal data.
+    DataChunk chunk = 2;
+    // resize carries a terminal window-change event.
+    TerminalResize resize = 3;
+  }
+}
+
+// *** Exec recording
+
+// ExecRecordingHeader is the mandatory first frame of an exec recording stream.
+message ExecRecordingHeader {
+  // session_id ties this recording to a SessionService session record.
+  string session_id = 1;
+  // username is the owner of the session being recorded.
+  string username = 2;
+  // started_at is the channel start time as a Unix timestamp (seconds).
+  int64 started_at = 3;
+  // command is the command that was executed.
+  string command = 4;
+}
+
+// ExecRecordingFrame is a single unit in an exec recording stream.
+message ExecRecordingFrame {
+  oneof payload {
+    // header is the first frame and carries exec session metadata.
+    ExecRecordingHeader header = 1;
+    // chunk carries a block of raw stdout/stderr data.
+    DataChunk chunk = 2;
+  }
+}
+
+// *** Direct-tcpip recording
+
+// TcpipRecordingHeader is the mandatory first frame of a direct-tcpip recording stream.
+message TcpipRecordingHeader {
+  // session_id ties this recording to a SessionService session record.
+  string session_id = 1;
+  // username is the owner of the session being recorded.
+  string username = 2;
+  // started_at is the channel start time as a Unix timestamp (seconds).
+  int64 started_at = 3;
+  // src_host is the originating host of the port-forward request.
+  string src_host = 4;
+  // src_port is the originating port of the port-forward request.
+  uint32 src_port = 5;
+  // dst_host is the destination host of the port-forward request.
+  string dst_host = 6;
+  // dst_port is the destination port of the port-forward request.
+  uint32 dst_port = 7;
+}
+
+// TcpipRecordingFrame is a single unit in a direct-tcpip recording stream.
+message TcpipRecordingFrame {
+  oneof payload {
+    // header is the first frame and carries port-forward metadata.
+    TcpipRecordingHeader header = 1;
+    // chunk carries a block of raw forwarded data.
+    DataChunk chunk = 2;
+  }
 }
 

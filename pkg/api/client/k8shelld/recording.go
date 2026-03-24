@@ -39,15 +39,14 @@ type Recorder struct {
 	log  *zerolog.Logger
 }
 
-// NewRecorder opens a streaming session to the recording service and starts a
-// background sender goroutine. The RecordingHeader is sent as the first frame.
-// Returns nil when client is nil (recording disabled), which all methods treat
-// as a no-op.
-func NewRecorder(
+// NewShellRecorder opens a shell-channel streaming session to the recording service
+// and starts a background sender goroutine. The ShellRecordingHeader is sent as the
+// first frame. Returns nil when client is nil (recording disabled), which all methods
+// treat as a no-op.
+func NewShellRecorder(
 	ctx context.Context,
 	client sessionv1.RecordingServiceClient,
 	sessionID, username string,
-	streamType sessionv1.StreamType,
 	width, height uint32,
 	startedAt time.Time,
 	log *zerolog.Logger,
@@ -55,14 +54,58 @@ func NewRecorder(
 	if client == nil {
 		return nil
 	}
-
 	r := &Recorder{
 		ch:   make(chan recorderFrame, recorderFrameChanSize),
 		done: make(chan struct{}),
 		log:  log,
 	}
+	go r.runShell(ctx, client, sessionID, username, width, height, startedAt)
+	return r
+}
 
-	go r.run(ctx, client, sessionID, username, streamType, width, height, startedAt)
+// NewExecRecorder opens an exec-channel streaming session to the recording service
+// and starts a background sender goroutine. The ExecRecordingHeader is sent as the
+// first frame. Returns nil when client is nil.
+func NewExecRecorder(
+	ctx context.Context,
+	client sessionv1.RecordingServiceClient,
+	sessionID, username, command string,
+	startedAt time.Time,
+	log *zerolog.Logger,
+) *Recorder {
+	if client == nil {
+		return nil
+	}
+	r := &Recorder{
+		ch:   make(chan recorderFrame, recorderFrameChanSize),
+		done: make(chan struct{}),
+		log:  log,
+	}
+	go r.runExec(ctx, client, sessionID, username, command, startedAt)
+	return r
+}
+
+// NewTcpipRecorder opens a TCP/IP-channel streaming session to the recording service
+// and starts a background sender goroutine. The TcpipRecordingHeader is sent as the
+// first frame. Returns nil when client is nil.
+func NewTcpipRecorder(
+	ctx context.Context,
+	client sessionv1.RecordingServiceClient,
+	sessionID, username string,
+	srcHost string, srcPort uint32,
+	dstHost string, dstPort uint32,
+	startedAt time.Time,
+	log *zerolog.Logger,
+) *Recorder {
+	if client == nil {
+		return nil
+	}
+	r := &Recorder{
+		ch:   make(chan recorderFrame, recorderFrameChanSize),
+		done: make(chan struct{}),
+		log:  log,
+	}
+	go r.runTcpip(ctx, client, sessionID, username, srcHost, srcPort, dstHost, dstPort, startedAt)
 	return r
 }
 
@@ -159,37 +202,35 @@ func (w *recordingWriter) Write(p []byte) (int, error) {
 	return n, err
 }
 
-func (r *Recorder) run(
+func (r *Recorder) runShell(
 	ctx context.Context,
 	client sessionv1.RecordingServiceClient,
 	sessionID, username string,
-	streamType sessionv1.StreamType,
 	width, height uint32,
 	startedAt time.Time,
 ) {
 	defer close(r.done)
 
-	stream, err := client.StreamRecording(ctx)
+	stream, err := client.StreamShellRecording(ctx)
 	if err != nil {
-		r.log.Warn().Msgf("Failed to open recording stream for session %s: %v", sessionID, err)
+		r.log.Warn().Msgf("Failed to open shell recording stream for session %s: %v", sessionID, err)
 		for range r.ch {
 		}
 		return
 	}
 
-	if err = stream.Send(&sessionv1.RecordingFrame{
-		Payload: &sessionv1.RecordingFrame_Header{
-			Header: &sessionv1.RecordingHeader{
-				SessionId:  sessionID,
-				Username:   username,
-				StartedAt:  startedAt.Unix(),
-				StreamType: streamType,
-				Width:      width,
-				Height:     height,
+	if err = stream.Send(&sessionv1.ShellRecordingFrame{
+		Payload: &sessionv1.ShellRecordingFrame_Header{
+			Header: &sessionv1.ShellRecordingHeader{
+				SessionId: sessionID,
+				Username:  username,
+				StartedAt: startedAt.Unix(),
+				Width:     width,
+				Height:    height,
 			},
 		},
 	}); err != nil {
-		r.log.Warn().Msgf("Failed to send recording header for session %s: %v", sessionID, err)
+		r.log.Warn().Msgf("Failed to send shell recording header for session %s: %v", sessionID, err)
 		for range r.ch {
 		}
 		return
@@ -208,8 +249,8 @@ func (r *Recorder) run(
 		if batchLen == 0 {
 			return
 		}
-		if sendErr := stream.Send(&sessionv1.RecordingFrame{
-			Payload: &sessionv1.RecordingFrame_Chunk{
+		if sendErr := stream.Send(&sessionv1.ShellRecordingFrame{
+			Payload: &sessionv1.ShellRecordingFrame_Chunk{
 				Chunk: &sessionv1.DataChunk{
 					TimeOffsetMs: batchOffset,
 					Data:         batchData,
@@ -217,7 +258,7 @@ func (r *Recorder) run(
 				},
 			},
 		}); sendErr != nil {
-			r.log.Debug().Msgf("Failed to send recording chunk for session %s: %v", sessionID, sendErr)
+			r.log.Debug().Msgf("Failed to send shell recording chunk for session %s: %v", sessionID, sendErr)
 		}
 		batchData = nil
 		batchLen = 0
@@ -229,15 +270,15 @@ func (r *Recorder) run(
 			if !ok {
 				flush()
 				if _, closeErr := stream.CloseAndRecv(); closeErr != nil {
-					r.log.Debug().Msgf("Recording stream closed for session %s: %v", sessionID, closeErr)
+					r.log.Debug().Msgf("Shell recording stream closed for session %s: %v", sessionID, closeErr)
 				}
 				return
 			}
 
 			if frame.resize != nil {
 				flush()
-				if sendErr := stream.Send(&sessionv1.RecordingFrame{
-					Payload: &sessionv1.RecordingFrame_Resize{
+				if sendErr := stream.Send(&sessionv1.ShellRecordingFrame{
+					Payload: &sessionv1.ShellRecordingFrame_Resize{
 						Resize: &sessionv1.TerminalResize{
 							TimeOffsetMs: frame.offset,
 							Width:        frame.resize.width,
@@ -245,8 +286,195 @@ func (r *Recorder) run(
 						},
 					},
 				}); sendErr != nil {
-					r.log.Debug().Msgf("Failed to send resize frame for session %s: %v", sessionID, sendErr)
+					r.log.Debug().Msgf("Failed to send shell resize frame for session %s: %v", sessionID, sendErr)
 				}
+				continue
+			}
+
+			if batchLen == 0 {
+				batchOffset = frame.offset
+			}
+			batchData = append(batchData, frame.data...)
+			batchLen += len(frame.data)
+			if batchLen >= recorderMaxBatchBytes {
+				flush()
+			}
+
+		case <-ticker.C:
+			flush()
+		}
+	}
+}
+
+func (r *Recorder) runExec(
+	ctx context.Context,
+	client sessionv1.RecordingServiceClient,
+	sessionID, username, command string,
+	startedAt time.Time,
+) {
+	defer close(r.done)
+
+	stream, err := client.StreamExecRecording(ctx)
+	if err != nil {
+		r.log.Warn().Msgf("Failed to open exec recording stream for session %s: %v", sessionID, err)
+		for range r.ch {
+		}
+		return
+	}
+
+	if err = stream.Send(&sessionv1.ExecRecordingFrame{
+		Payload: &sessionv1.ExecRecordingFrame_Header{
+			Header: &sessionv1.ExecRecordingHeader{
+				SessionId: sessionID,
+				Username:  username,
+				StartedAt: startedAt.Unix(),
+				Command:   command,
+			},
+		},
+	}); err != nil {
+		r.log.Warn().Msgf("Failed to send exec recording header for session %s: %v", sessionID, err)
+		for range r.ch {
+		}
+		return
+	}
+
+	ticker := time.NewTicker(recorderFlushInterval)
+	defer ticker.Stop()
+
+	var (
+		batchData   []byte
+		batchOffset int64
+		batchLen    int
+	)
+
+	flush := func() {
+		if batchLen == 0 {
+			return
+		}
+		if sendErr := stream.Send(&sessionv1.ExecRecordingFrame{
+			Payload: &sessionv1.ExecRecordingFrame_Chunk{
+				Chunk: &sessionv1.DataChunk{
+					TimeOffsetMs: batchOffset,
+					Data:         batchData,
+					Direction:    sessionv1.Direction_DIRECTION_OUTPUT,
+				},
+			},
+		}); sendErr != nil {
+			r.log.Debug().Msgf("Failed to send exec recording chunk for session %s: %v", sessionID, sendErr)
+		}
+		batchData = nil
+		batchLen = 0
+	}
+
+	for {
+		select {
+		case frame, ok := <-r.ch:
+			if !ok {
+				flush()
+				if _, closeErr := stream.CloseAndRecv(); closeErr != nil {
+					r.log.Debug().Msgf("Exec recording stream closed for session %s: %v", sessionID, closeErr)
+				}
+				return
+			}
+
+			// exec channels don't have resize events; discard
+			if frame.resize != nil {
+				continue
+			}
+
+			if batchLen == 0 {
+				batchOffset = frame.offset
+			}
+			batchData = append(batchData, frame.data...)
+			batchLen += len(frame.data)
+			if batchLen >= recorderMaxBatchBytes {
+				flush()
+			}
+
+		case <-ticker.C:
+			flush()
+		}
+	}
+}
+
+func (r *Recorder) runTcpip(
+	ctx context.Context,
+	client sessionv1.RecordingServiceClient,
+	sessionID, username string,
+	srcHost string, srcPort uint32,
+	dstHost string, dstPort uint32,
+	startedAt time.Time,
+) {
+	defer close(r.done)
+
+	stream, err := client.StreamTcpipRecording(ctx)
+	if err != nil {
+		r.log.Warn().Msgf("Failed to open tcpip recording stream for session %s: %v", sessionID, err)
+		for range r.ch {
+		}
+		return
+	}
+
+	if err = stream.Send(&sessionv1.TcpipRecordingFrame{
+		Payload: &sessionv1.TcpipRecordingFrame_Header{
+			Header: &sessionv1.TcpipRecordingHeader{
+				SessionId: sessionID,
+				Username:  username,
+				StartedAt: startedAt.Unix(),
+				SrcHost:   srcHost,
+				SrcPort:   srcPort,
+				DstHost:   dstHost,
+				DstPort:   dstPort,
+			},
+		},
+	}); err != nil {
+		r.log.Warn().Msgf("Failed to send tcpip recording header for session %s: %v", sessionID, err)
+		for range r.ch {
+		}
+		return
+	}
+
+	ticker := time.NewTicker(recorderFlushInterval)
+	defer ticker.Stop()
+
+	var (
+		batchData   []byte
+		batchOffset int64
+		batchLen    int
+	)
+
+	flush := func() {
+		if batchLen == 0 {
+			return
+		}
+		if sendErr := stream.Send(&sessionv1.TcpipRecordingFrame{
+			Payload: &sessionv1.TcpipRecordingFrame_Chunk{
+				Chunk: &sessionv1.DataChunk{
+					TimeOffsetMs: batchOffset,
+					Data:         batchData,
+					Direction:    sessionv1.Direction_DIRECTION_OUTPUT,
+				},
+			},
+		}); sendErr != nil {
+			r.log.Debug().Msgf("Failed to send tcpip recording chunk for session %s: %v", sessionID, sendErr)
+		}
+		batchData = nil
+		batchLen = 0
+	}
+
+	for {
+		select {
+		case frame, ok := <-r.ch:
+			if !ok {
+				flush()
+				if _, closeErr := stream.CloseAndRecv(); closeErr != nil {
+					r.log.Debug().Msgf("Tcpip recording stream closed for session %s: %v", sessionID, closeErr)
+				}
+				return
+			}
+
+			// TCP/IP channels don't have resize events; discard
+			if frame.resize != nil {
 				continue
 			}
 

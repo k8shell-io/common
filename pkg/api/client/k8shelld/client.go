@@ -11,7 +11,6 @@ import (
 
 	"github.com/k8shell-io/common/pkg/api/client/session"
 	k8shelldv1 "github.com/k8shell-io/common/pkg/api/gen/go/k8shelld/v1"
-	sessionv1 "github.com/k8shell-io/common/pkg/api/gen/go/session/v1"
 	"github.com/k8shell-io/common/pkg/gapi"
 	"github.com/k8shell-io/common/pkg/logger"
 	"github.com/rs/zerolog"
@@ -52,6 +51,7 @@ type K8shelld struct {
 	shellRecorderStart time.Time
 }
 
+// TokenRetrieve is a function that returns a bearer token for authenticating gRPC requests.
 type TokenRetrieve func() (string, error)
 
 // ConnCounters holds counters for bytes sent and received.
@@ -71,8 +71,15 @@ func (c *ConnCounters) Snapshot() (in, out int64) {
 	return atomic.LoadInt64(&c.inTotal), atomic.LoadInt64(&c.outTotal)
 }
 
-func NewClient(cfg gapi.ClientConfig, counters *ConnCounters, tokenRetrieve TokenRetrieve,
-	sessionClient *session.Client) (*K8shelld, error) {
+// NewClient constructs a K8shelld client using the provided gRPC config. All sub-service
+// clients are initialised on the shared connection. Pass a non-nil sessionClient to
+// enable session recording.
+func NewClient(
+	cfg gapi.ClientConfig,
+	counters *ConnCounters,
+	tokenRetrieve TokenRetrieve,
+	sessionClient *session.Client,
+) (*K8shelld, error) {
 	gapiClient, err := gapi.NewClient(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create gRPC client: %w", err)
@@ -108,6 +115,7 @@ func (c *K8shelld) Handshake(ctx context.Context) (*k8shelldv1.HandshakeResponse
 	return c.systemClient.Handshake(ctx, req)
 }
 
+// GetSystemInfo returns system-level information from the k8shelld agent.
 func (c *K8shelld) GetSystemInfo(ctx context.Context) (*SystemInfo, error) {
 	resp, err := c.systemClient.SystemInfo(ctx, &k8shelldv1.SystemInfoRequest{})
 	if err != nil {
@@ -116,18 +124,50 @@ func (c *K8shelld) GetSystemInfo(ctx context.Context) (*SystemInfo, error) {
 	return ProtoToSystemInfo(resp), nil
 }
 
-// startRecording creates a Recorder for the given stream and returns a (possibly wrapped)
-// BufferedReadWriter. When recording is disabled (nil recordingClient), the original rw is
-// returned unchanged and recorder is nil — the caller must handle a nil recorder gracefully.
-func (c *K8shelld) startRecording(
+// startShellRecording creates a shell Recorder and returns a (possibly wrapped) BufferedReadWriter.
+// Also returns the session start time for use with ObserveResize offsets.
+func (c *K8shelld) startShellRecording(
 	ctx context.Context,
 	rw BufferedReadWriter,
 	sessionID, username string,
-	streamType sessionv1.StreamType,
 	width, height uint32,
 ) (start time.Time, recorder *Recorder, wrappedRW BufferedReadWriter) {
 	start = time.Now()
-	recorder = NewRecorder(ctx, c.sessionClient, sessionID, username, streamType, width, height, start, c.log)
+	recorder = NewShellRecorder(ctx, c.sessionClient, sessionID, username, width, height, start, c.log)
+	if recorder != nil {
+		wrappedRW = NewRecordingAdapter(rw, start, recorder.Observe)
+	} else {
+		wrappedRW = rw
+	}
+	return
+}
+
+// startExecRecording creates an exec Recorder and returns a (possibly wrapped) BufferedReadWriter.
+func (c *K8shelld) startExecRecording(
+	ctx context.Context,
+	rw BufferedReadWriter,
+	sessionID, username, command string,
+) (recorder *Recorder, wrappedRW BufferedReadWriter) {
+	start := time.Now()
+	recorder = NewExecRecorder(ctx, c.sessionClient, sessionID, username, command, start, c.log)
+	if recorder != nil {
+		wrappedRW = NewRecordingAdapter(rw, start, recorder.Observe)
+	} else {
+		wrappedRW = rw
+	}
+	return
+}
+
+// startTcpipRecording creates a TCP/IP Recorder and returns a (possibly wrapped) BufferedReadWriter.
+func (c *K8shelld) startTcpipRecording(
+	ctx context.Context,
+	rw BufferedReadWriter,
+	sessionID, username string,
+	srcHost string, srcPort uint32,
+	dstHost string, dstPort uint32,
+) (recorder *Recorder, wrappedRW BufferedReadWriter) {
+	start := time.Now()
+	recorder = NewTcpipRecorder(ctx, c.sessionClient, sessionID, username, srcHost, srcPort, dstHost, dstPort, start, c.log)
 	if recorder != nil {
 		wrappedRW = NewRecordingAdapter(rw, start, recorder.Observe)
 	} else {
@@ -139,8 +179,17 @@ func (c *K8shelld) startRecording(
 // RunShell creates a PTY shell session over gRPC and bridges it with the BufferedReadWriter.
 // onStart is called once the server sends the ShellStartResponse; it receives the PTY device
 // name (e.g. "/dev/pts/3") or an empty string when no PTY was allocated. onStart may be nil.
-func (c *K8shelld) RunShell(ctx context.Context, rw BufferedReadWriter, sessionId string, envVars []string,
-	width, height uint32, usePty bool, username string, record bool, onStart func(ptyName string)) error {
+func (c *K8shelld) RunShell(
+	ctx context.Context,
+	rw BufferedReadWriter,
+	sessionId string,
+	envVars []string,
+	width, height uint32,
+	usePty bool,
+	username string,
+	record bool,
+	onStart func(ptyName string),
+) error {
 	token, err := c.tokenRetrieve()
 	if err != nil {
 		return fmt.Errorf("failed to retrieve token: %w", err)
@@ -156,8 +205,7 @@ func (c *K8shelld) RunShell(ctx context.Context, rw BufferedReadWriter, sessionI
 	defer cancel()
 
 	if c.sessionClient != nil && record {
-		c.shellRecorderStart, c.shellRecorder, rw = c.startRecording(ctx, rw, sessionId, username,
-			sessionv1.StreamType_STREAM_TYPE_SHELL, width, height)
+		c.shellRecorderStart, c.shellRecorder, rw = c.startShellRecording(ctx, rw, sessionId, username, width, height)
 		defer c.shellRecorder.Close()
 	}
 
@@ -258,7 +306,8 @@ func (c *K8shelld) RunShell(ctx context.Context, rw BufferedReadWriter, sessionI
 	return err
 }
 
-// ResizeTerminal resizes the terminal
+// ResizeTerminal sends a terminal resize event to the running shell session and, if
+// session recording is active, records the resize with the correct time offset.
 func (c *K8shelld) ResizeTerminal(ctx context.Context, sessionId string, width, height uint32) error {
 	md := metadata.Pairs("session-id", sessionId)
 	ctx = metadata.NewOutgoingContext(ctx, md)
@@ -276,8 +325,13 @@ func (c *K8shelld) ResizeTerminal(ctx context.Context, sessionId string, width, 
 }
 
 // RunUnixSocket creates a Unix socket connection over gRPC and bridges it with the RW channel.
-func (c *K8shelld) RunUnixSocket(ctx context.Context, upstream BufferedReadWriter, unixSocketId,
-	socketPath string, mode string) error {
+func (c *K8shelld) RunUnixSocket(
+	ctx context.Context,
+	upstream BufferedReadWriter,
+	unixSocketId string,
+	socketPath string,
+	mode string,
+) error {
 
 	token, err := c.tokenRetrieve()
 	if err != nil {
@@ -399,8 +453,17 @@ func (c *K8shelld) RunUnixSocket(ctx context.Context, upstream BufferedReadWrite
 }
 
 // RunPortForward sets up a port forward over gRPC and bridges it with the upstream channel.
-func (c *K8shelld) RunPortForward(ctx context.Context, upstream BufferedReadWriter, portForwardID,
-	destinationIP string, destinationPort uint32, username string, record bool) error {
+func (c *K8shelld) RunPortForward(
+	ctx context.Context,
+	upstream BufferedReadWriter,
+	portForwardID string,
+	sourceIP string,
+	sourcePort uint32,
+	destinationIP string,
+	destinationPort uint32,
+	username string,
+	record bool,
+) error {
 	if destinationIP == "" {
 		destinationIP = "localhost"
 	}
@@ -421,8 +484,8 @@ func (c *K8shelld) RunPortForward(ctx context.Context, upstream BufferedReadWrit
 
 	if c.sessionClient != nil && record {
 		var recorder *Recorder
-		_, recorder, upstream = c.startRecording(ctx, upstream, portForwardID, username,
-			sessionv1.StreamType_STREAM_TYPE_DIRECT_TCPIP, 0, 0)
+		recorder, upstream = c.startTcpipRecording(ctx, upstream, portForwardID, username,
+			sourceIP, sourcePort, destinationIP, destinationPort)
 		if recorder != nil {
 			defer recorder.Close()
 		}
@@ -507,10 +570,20 @@ func (c *K8shelld) RunPortForward(ctx context.Context, upstream BufferedReadWrit
 	return err
 }
 
-// RunExec executes a command in a remote shell over gRPC.
-func (c *K8shelld) RunExec(ctx context.Context, upstream BufferedReadWriter, execID string,
-	command string, shellBinary string, envVars []string, signalChan <-chan string,
-	username string, record bool) (int32, error) {
+// RunExec runs command via the remote exec service, bridging stdin/stdout/stderr through
+// upstream. signalChan may be used to forward OS signals (e.g. SIGINT) to the remote
+// process. Returns the process exit code together with any transport error.
+func (c *K8shelld) RunExec(
+	ctx context.Context,
+	upstream BufferedReadWriter,
+	execID string,
+	command string,
+	shellBinary string,
+	envVars []string,
+	signalChan <-chan string,
+	username string,
+	record bool,
+) (int32, error) {
 
 	token, err := c.tokenRetrieve()
 	if err != nil {
@@ -525,8 +598,7 @@ func (c *K8shelld) RunExec(ctx context.Context, upstream BufferedReadWriter, exe
 
 	if c.sessionClient != nil && record {
 		var recorder *Recorder
-		_, recorder, upstream = c.startRecording(ctx, upstream, execID, username,
-			sessionv1.StreamType_STREAM_TYPE_EXEC, 0, 0)
+		recorder, upstream = c.startExecRecording(ctx, upstream, execID, username, command)
 		if recorder != nil {
 			defer recorder.Close()
 		}
@@ -702,7 +774,9 @@ func (c *K8shelld) RunExec(ctx context.Context, upstream BufferedReadWriter, exe
 // It receives the command string and returns the reply string (or an error).
 type CommandHandler func(ctx context.Context, command string) (string, error)
 
-// RunCommandProcessor starts a command processing loop.
+// RunCommandProcessor subscribes to the server-side command stream and dispatches each
+// incoming command to handler, sending the reply back on the same stream. Blocks until
+// ctx is cancelled, the stream closes, or a transport error occurs.
 func (k *K8shelld) RunCommandProcessor(ctx context.Context, handler CommandHandler) error {
 	if handler == nil {
 		return fmt.Errorf("nil command handler")
@@ -760,7 +834,7 @@ func (k *K8shelld) RunCommandProcessor(ctx context.Context, handler CommandHandl
 	}
 }
 
-// ListApps retrieves the list of applications from the k8shelld service
+// ListApps returns all applications known to the k8shelld agent.
 func (wc *K8shelld) ListApps(ctx context.Context) ([]*AppStatus, error) {
 	resp, err := wc.app.ListApps(ctx, &k8shelldv1.ListAppsRequest{})
 	if err != nil {
@@ -773,6 +847,7 @@ func (wc *K8shelld) ListApps(ctx context.Context) ([]*AppStatus, error) {
 	return apps, nil
 }
 
+// InstallApp installs the named application on the remote k8shelld agent.
 func (wc *K8shelld) InstallApp(ctx context.Context, appName string) error {
 	_, err := wc.app.InstallApp(ctx, &k8shelldv1.InstallAppRequest{Name: appName})
 	if err != nil {
@@ -781,13 +856,13 @@ func (wc *K8shelld) InstallApp(ctx context.Context, appName string) error {
 	return nil
 }
 
-// StartApp starts an application in the k8shelld service
+// StartApp starts the named application on the remote k8shelld agent.
 func (wc *K8shelld) StartApp(ctx context.Context, appName string) error {
 	_, err := wc.app.StartApp(ctx, &k8shelldv1.StartAppRequest{Name: appName})
 	return err
 }
 
-// StopApp stops an application in the k8shelld service
+// StopApp stops the named application on the remote k8shelld agent.
 func (wc *K8shelld) StopApp(ctx context.Context, appName string) error {
 	_, err := wc.app.StopApp(ctx, &k8shelldv1.StopAppRequest{Name: appName})
 	return err
@@ -824,6 +899,7 @@ func (wc *K8shelld) GetAppLogsStream(ctx context.Context, appName string) (io.Re
 	return pr, nil
 }
 
+// GetAppLogs returns the full log output for the named application as a single string.
 func (wc *K8shelld) GetAppLogs(ctx context.Context, appName string) (string, error) {
 	logs, err := wc.app.GetLogs(ctx, &k8shelldv1.GetLogsRequest{Name: appName})
 	if err != nil {
@@ -832,7 +908,7 @@ func (wc *K8shelld) GetAppLogs(ctx context.Context, appName string) (string, err
 	return logs.GetLog(), nil
 }
 
-// Close closes the gRPC client connection
+// Close closes the underlying gRPC connection and releases associated resources.
 func (c *K8shelld) Close() error {
 	return c.client.Close()
 }

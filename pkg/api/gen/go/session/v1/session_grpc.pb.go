@@ -217,19 +217,29 @@ var SessionService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	RecordingService_StreamRecording_FullMethodName = "/session.v1.RecordingService/StreamRecording"
+	RecordingService_StreamShellRecording_FullMethodName = "/session.v1.RecordingService/StreamShellRecording"
+	RecordingService_StreamExecRecording_FullMethodName  = "/session.v1.RecordingService/StreamExecRecording"
+	RecordingService_StreamTcpipRecording_FullMethodName = "/session.v1.RecordingService/StreamTcpipRecording"
 )
 
 // RecordingServiceClient is the client API for RecordingService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// RecordingService accepts a stream of recording frames from k8shelld and
-// persists them for later playback.
+// RecordingService accepts client-streaming recording frames from k8shelld
+// and persists them for later playback. Each RPC corresponds to a distinct
+// SSH channel type with its own typed header and frame set.
 type RecordingServiceClient interface {
-	// StreamRecording receives a client-streaming sequence of RecordingFrames
-	// for a single channel and stores them. The first frame must be a header.
-	StreamRecording(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[RecordingFrame, emptypb.Empty], error)
+	// StreamShellRecording records a PTY shell session. The first frame must
+	// be a ShellRecordingHeader; subsequent frames carry data chunks or
+	// terminal resize events.
+	StreamShellRecording(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[ShellRecordingFrame, emptypb.Empty], error)
+	// StreamExecRecording records a non-PTY exec channel. The first frame must
+	// be an ExecRecordingHeader; subsequent frames carry data chunks.
+	StreamExecRecording(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[ExecRecordingFrame, emptypb.Empty], error)
+	// StreamTcpipRecording records a direct-tcpip port-forward channel. The
+	// first frame must be a TcpipRecordingHeader; subsequent frames carry data chunks.
+	StreamTcpipRecording(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[TcpipRecordingFrame, emptypb.Empty], error)
 }
 
 type recordingServiceClient struct {
@@ -240,29 +250,63 @@ func NewRecordingServiceClient(cc grpc.ClientConnInterface) RecordingServiceClie
 	return &recordingServiceClient{cc}
 }
 
-func (c *recordingServiceClient) StreamRecording(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[RecordingFrame, emptypb.Empty], error) {
+func (c *recordingServiceClient) StreamShellRecording(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[ShellRecordingFrame, emptypb.Empty], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &RecordingService_ServiceDesc.Streams[0], RecordingService_StreamRecording_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &RecordingService_ServiceDesc.Streams[0], RecordingService_StreamShellRecording_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &grpc.GenericClientStream[RecordingFrame, emptypb.Empty]{ClientStream: stream}
+	x := &grpc.GenericClientStream[ShellRecordingFrame, emptypb.Empty]{ClientStream: stream}
 	return x, nil
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type RecordingService_StreamRecordingClient = grpc.ClientStreamingClient[RecordingFrame, emptypb.Empty]
+type RecordingService_StreamShellRecordingClient = grpc.ClientStreamingClient[ShellRecordingFrame, emptypb.Empty]
+
+func (c *recordingServiceClient) StreamExecRecording(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[ExecRecordingFrame, emptypb.Empty], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &RecordingService_ServiceDesc.Streams[1], RecordingService_StreamExecRecording_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[ExecRecordingFrame, emptypb.Empty]{ClientStream: stream}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type RecordingService_StreamExecRecordingClient = grpc.ClientStreamingClient[ExecRecordingFrame, emptypb.Empty]
+
+func (c *recordingServiceClient) StreamTcpipRecording(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[TcpipRecordingFrame, emptypb.Empty], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &RecordingService_ServiceDesc.Streams[2], RecordingService_StreamTcpipRecording_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[TcpipRecordingFrame, emptypb.Empty]{ClientStream: stream}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type RecordingService_StreamTcpipRecordingClient = grpc.ClientStreamingClient[TcpipRecordingFrame, emptypb.Empty]
 
 // RecordingServiceServer is the server API for RecordingService service.
 // All implementations must embed UnimplementedRecordingServiceServer
 // for forward compatibility.
 //
-// RecordingService accepts a stream of recording frames from k8shelld and
-// persists them for later playback.
+// RecordingService accepts client-streaming recording frames from k8shelld
+// and persists them for later playback. Each RPC corresponds to a distinct
+// SSH channel type with its own typed header and frame set.
 type RecordingServiceServer interface {
-	// StreamRecording receives a client-streaming sequence of RecordingFrames
-	// for a single channel and stores them. The first frame must be a header.
-	StreamRecording(grpc.ClientStreamingServer[RecordingFrame, emptypb.Empty]) error
+	// StreamShellRecording records a PTY shell session. The first frame must
+	// be a ShellRecordingHeader; subsequent frames carry data chunks or
+	// terminal resize events.
+	StreamShellRecording(grpc.ClientStreamingServer[ShellRecordingFrame, emptypb.Empty]) error
+	// StreamExecRecording records a non-PTY exec channel. The first frame must
+	// be an ExecRecordingHeader; subsequent frames carry data chunks.
+	StreamExecRecording(grpc.ClientStreamingServer[ExecRecordingFrame, emptypb.Empty]) error
+	// StreamTcpipRecording records a direct-tcpip port-forward channel. The
+	// first frame must be a TcpipRecordingHeader; subsequent frames carry data chunks.
+	StreamTcpipRecording(grpc.ClientStreamingServer[TcpipRecordingFrame, emptypb.Empty]) error
 	mustEmbedUnimplementedRecordingServiceServer()
 }
 
@@ -273,8 +317,14 @@ type RecordingServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedRecordingServiceServer struct{}
 
-func (UnimplementedRecordingServiceServer) StreamRecording(grpc.ClientStreamingServer[RecordingFrame, emptypb.Empty]) error {
-	return status.Errorf(codes.Unimplemented, "method StreamRecording not implemented")
+func (UnimplementedRecordingServiceServer) StreamShellRecording(grpc.ClientStreamingServer[ShellRecordingFrame, emptypb.Empty]) error {
+	return status.Errorf(codes.Unimplemented, "method StreamShellRecording not implemented")
+}
+func (UnimplementedRecordingServiceServer) StreamExecRecording(grpc.ClientStreamingServer[ExecRecordingFrame, emptypb.Empty]) error {
+	return status.Errorf(codes.Unimplemented, "method StreamExecRecording not implemented")
+}
+func (UnimplementedRecordingServiceServer) StreamTcpipRecording(grpc.ClientStreamingServer[TcpipRecordingFrame, emptypb.Empty]) error {
+	return status.Errorf(codes.Unimplemented, "method StreamTcpipRecording not implemented")
 }
 func (UnimplementedRecordingServiceServer) mustEmbedUnimplementedRecordingServiceServer() {}
 func (UnimplementedRecordingServiceServer) testEmbeddedByValue()                          {}
@@ -297,12 +347,26 @@ func RegisterRecordingServiceServer(s grpc.ServiceRegistrar, srv RecordingServic
 	s.RegisterService(&RecordingService_ServiceDesc, srv)
 }
 
-func _RecordingService_StreamRecording_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(RecordingServiceServer).StreamRecording(&grpc.GenericServerStream[RecordingFrame, emptypb.Empty]{ServerStream: stream})
+func _RecordingService_StreamShellRecording_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(RecordingServiceServer).StreamShellRecording(&grpc.GenericServerStream[ShellRecordingFrame, emptypb.Empty]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type RecordingService_StreamRecordingServer = grpc.ClientStreamingServer[RecordingFrame, emptypb.Empty]
+type RecordingService_StreamShellRecordingServer = grpc.ClientStreamingServer[ShellRecordingFrame, emptypb.Empty]
+
+func _RecordingService_StreamExecRecording_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(RecordingServiceServer).StreamExecRecording(&grpc.GenericServerStream[ExecRecordingFrame, emptypb.Empty]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type RecordingService_StreamExecRecordingServer = grpc.ClientStreamingServer[ExecRecordingFrame, emptypb.Empty]
+
+func _RecordingService_StreamTcpipRecording_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(RecordingServiceServer).StreamTcpipRecording(&grpc.GenericServerStream[TcpipRecordingFrame, emptypb.Empty]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type RecordingService_StreamTcpipRecordingServer = grpc.ClientStreamingServer[TcpipRecordingFrame, emptypb.Empty]
 
 // RecordingService_ServiceDesc is the grpc.ServiceDesc for RecordingService service.
 // It's only intended for direct use with grpc.RegisterService,
@@ -313,8 +377,18 @@ var RecordingService_ServiceDesc = grpc.ServiceDesc{
 	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "StreamRecording",
-			Handler:       _RecordingService_StreamRecording_Handler,
+			StreamName:    "StreamShellRecording",
+			Handler:       _RecordingService_StreamShellRecording_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "StreamExecRecording",
+			Handler:       _RecordingService_StreamExecRecording_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "StreamTcpipRecording",
+			Handler:       _RecordingService_StreamTcpipRecording_Handler,
 			ClientStreams: true,
 		},
 	},
