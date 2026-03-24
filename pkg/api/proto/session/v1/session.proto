@@ -101,3 +101,87 @@ message EndSessionRequest {
   int64 bytes_out = 4;
 }
 
+// *** Recording
+
+// StreamType identifies the kind of SSH channel being recorded.
+enum StreamType {
+  // STREAM_TYPE_SHELL is a PTY shell session.
+  STREAM_TYPE_SHELL = 0;
+  // STREAM_TYPE_EXEC is a non-PTY exec request.
+  STREAM_TYPE_EXEC = 1;
+  // STREAM_TYPE_DIRECT_TCPIP is a port-forward channel.
+  STREAM_TYPE_DIRECT_TCPIP = 2;
+  // STREAM_TYPE_SFTP is an SFTP subsystem session.
+  STREAM_TYPE_SFTP = 3;
+}
+
+// Direction indicates which side of the channel produced the data.
+enum Direction {
+  // DIRECTION_OUTPUT is data flowing from the workspace to the client
+  // (server stdout / terminal output).
+  DIRECTION_OUTPUT = 0;
+  // DIRECTION_INPUT is data flowing from the client to the workspace.
+  // Only recorded when explicitly enabled.
+  DIRECTION_INPUT = 1;
+}
+
+// RecordingService accepts a stream of recording frames from k8shelld and
+// persists them for later playback.
+service RecordingService {
+  // StreamRecording receives a client-streaming sequence of RecordingFrames
+  // for a single channel and stores them. The first frame must be a header.
+  rpc StreamRecording(stream RecordingFrame) returns (google.protobuf.Empty);
+}
+
+// RecordingFrame is a single unit in a recording stream. The first frame
+// sent must carry a RecordingHeader; subsequent frames carry data or resize
+// events.
+message RecordingFrame {
+  oneof payload {
+    // header is the first frame and carries session metadata.
+    RecordingHeader header = 1;
+    // chunk carries a block of raw channel data.
+    DataChunk chunk = 2;
+    // resize carries a terminal resize event; only valid for PTY shell sessions.
+    TerminalResize resize = 3;
+  }
+}
+
+// RecordingHeader is the mandatory first frame of a recording stream.
+message RecordingHeader {
+  // session_id ties this recording to a SessionService session record.
+  string session_id = 1;
+  // username is the owner of the session being recorded.
+  string username = 2;
+  // started_at is the channel start time as a Unix timestamp (seconds).
+  int64 started_at = 3;
+  // stream_type identifies the kind of SSH channel being recorded.
+  StreamType stream_type = 4;
+  // width is the initial terminal width in columns.
+  // Only meaningful when stream_type is STREAM_TYPE_SHELL.
+  uint32 width = 5;
+  // height is the initial terminal height in rows.
+  // Only meaningful when stream_type is STREAM_TYPE_SHELL.
+  uint32 height = 6;
+}
+
+// DataChunk carries a block of raw channel data with timing information.
+message DataChunk {
+  // time_offset_ms is the number of milliseconds elapsed since started_at.
+  int64 time_offset_ms = 1;
+  // data is the raw bytes transferred on the channel.
+  bytes data = 2;
+  // direction indicates which side produced this data.
+  Direction direction = 3;
+}
+
+// TerminalResize records a PTY window-change event.
+message TerminalResize {
+  // time_offset_ms is the number of milliseconds elapsed since started_at.
+  int64 time_offset_ms = 1;
+  // width is the new terminal width in columns.
+  uint32 width = 2;
+  // height is the new terminal height in rows.
+  uint32 height = 3;
+}
+

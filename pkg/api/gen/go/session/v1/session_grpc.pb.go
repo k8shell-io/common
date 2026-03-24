@@ -215,3 +215,108 @@ var SessionService_ServiceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "session/v1/session.proto",
 }
+
+const (
+	RecordingService_StreamRecording_FullMethodName = "/session.v1.RecordingService/StreamRecording"
+)
+
+// RecordingServiceClient is the client API for RecordingService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// RecordingService accepts a stream of recording frames from k8shelld and
+// persists them for later playback.
+type RecordingServiceClient interface {
+	// StreamRecording receives a client-streaming sequence of RecordingFrames
+	// for a single channel and stores them. The first frame must be a header.
+	StreamRecording(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[RecordingFrame, emptypb.Empty], error)
+}
+
+type recordingServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewRecordingServiceClient(cc grpc.ClientConnInterface) RecordingServiceClient {
+	return &recordingServiceClient{cc}
+}
+
+func (c *recordingServiceClient) StreamRecording(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[RecordingFrame, emptypb.Empty], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &RecordingService_ServiceDesc.Streams[0], RecordingService_StreamRecording_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[RecordingFrame, emptypb.Empty]{ClientStream: stream}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type RecordingService_StreamRecordingClient = grpc.ClientStreamingClient[RecordingFrame, emptypb.Empty]
+
+// RecordingServiceServer is the server API for RecordingService service.
+// All implementations must embed UnimplementedRecordingServiceServer
+// for forward compatibility.
+//
+// RecordingService accepts a stream of recording frames from k8shelld and
+// persists them for later playback.
+type RecordingServiceServer interface {
+	// StreamRecording receives a client-streaming sequence of RecordingFrames
+	// for a single channel and stores them. The first frame must be a header.
+	StreamRecording(grpc.ClientStreamingServer[RecordingFrame, emptypb.Empty]) error
+	mustEmbedUnimplementedRecordingServiceServer()
+}
+
+// UnimplementedRecordingServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedRecordingServiceServer struct{}
+
+func (UnimplementedRecordingServiceServer) StreamRecording(grpc.ClientStreamingServer[RecordingFrame, emptypb.Empty]) error {
+	return status.Errorf(codes.Unimplemented, "method StreamRecording not implemented")
+}
+func (UnimplementedRecordingServiceServer) mustEmbedUnimplementedRecordingServiceServer() {}
+func (UnimplementedRecordingServiceServer) testEmbeddedByValue()                          {}
+
+// UnsafeRecordingServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to RecordingServiceServer will
+// result in compilation errors.
+type UnsafeRecordingServiceServer interface {
+	mustEmbedUnimplementedRecordingServiceServer()
+}
+
+func RegisterRecordingServiceServer(s grpc.ServiceRegistrar, srv RecordingServiceServer) {
+	// If the following call pancis, it indicates UnimplementedRecordingServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&RecordingService_ServiceDesc, srv)
+}
+
+func _RecordingService_StreamRecording_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(RecordingServiceServer).StreamRecording(&grpc.GenericServerStream[RecordingFrame, emptypb.Empty]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type RecordingService_StreamRecordingServer = grpc.ClientStreamingServer[RecordingFrame, emptypb.Empty]
+
+// RecordingService_ServiceDesc is the grpc.ServiceDesc for RecordingService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var RecordingService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "session.v1.RecordingService",
+	HandlerType: (*RecordingServiceServer)(nil),
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "StreamRecording",
+			Handler:       _RecordingService_StreamRecording_Handler,
+			ClientStreams: true,
+		},
+	},
+	Metadata: "session/v1/session.proto",
+}

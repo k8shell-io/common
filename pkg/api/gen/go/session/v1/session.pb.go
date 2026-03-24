@@ -25,6 +25,114 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// StreamType identifies the kind of SSH channel being recorded.
+type StreamType int32
+
+const (
+	// STREAM_TYPE_SHELL is a PTY shell session.
+	StreamType_STREAM_TYPE_SHELL StreamType = 0
+	// STREAM_TYPE_EXEC is a non-PTY exec request.
+	StreamType_STREAM_TYPE_EXEC StreamType = 1
+	// STREAM_TYPE_DIRECT_TCPIP is a port-forward channel.
+	StreamType_STREAM_TYPE_DIRECT_TCPIP StreamType = 2
+	// STREAM_TYPE_SFTP is an SFTP subsystem session.
+	StreamType_STREAM_TYPE_SFTP StreamType = 3
+)
+
+// Enum value maps for StreamType.
+var (
+	StreamType_name = map[int32]string{
+		0: "STREAM_TYPE_SHELL",
+		1: "STREAM_TYPE_EXEC",
+		2: "STREAM_TYPE_DIRECT_TCPIP",
+		3: "STREAM_TYPE_SFTP",
+	}
+	StreamType_value = map[string]int32{
+		"STREAM_TYPE_SHELL":        0,
+		"STREAM_TYPE_EXEC":         1,
+		"STREAM_TYPE_DIRECT_TCPIP": 2,
+		"STREAM_TYPE_SFTP":         3,
+	}
+)
+
+func (x StreamType) Enum() *StreamType {
+	p := new(StreamType)
+	*p = x
+	return p
+}
+
+func (x StreamType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (StreamType) Descriptor() protoreflect.EnumDescriptor {
+	return file_session_v1_session_proto_enumTypes[0].Descriptor()
+}
+
+func (StreamType) Type() protoreflect.EnumType {
+	return &file_session_v1_session_proto_enumTypes[0]
+}
+
+func (x StreamType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use StreamType.Descriptor instead.
+func (StreamType) EnumDescriptor() ([]byte, []int) {
+	return file_session_v1_session_proto_rawDescGZIP(), []int{0}
+}
+
+// Direction indicates which side of the channel produced the data.
+type Direction int32
+
+const (
+	// DIRECTION_OUTPUT is data flowing from the workspace to the client
+	// (server stdout / terminal output).
+	Direction_DIRECTION_OUTPUT Direction = 0
+	// DIRECTION_INPUT is data flowing from the client to the workspace.
+	// Only recorded when explicitly enabled.
+	Direction_DIRECTION_INPUT Direction = 1
+)
+
+// Enum value maps for Direction.
+var (
+	Direction_name = map[int32]string{
+		0: "DIRECTION_OUTPUT",
+		1: "DIRECTION_INPUT",
+	}
+	Direction_value = map[string]int32{
+		"DIRECTION_OUTPUT": 0,
+		"DIRECTION_INPUT":  1,
+	}
+)
+
+func (x Direction) Enum() *Direction {
+	p := new(Direction)
+	*p = x
+	return p
+}
+
+func (x Direction) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Direction) Descriptor() protoreflect.EnumDescriptor {
+	return file_session_v1_session_proto_enumTypes[1].Descriptor()
+}
+
+func (Direction) Type() protoreflect.EnumType {
+	return &file_session_v1_session_proto_enumTypes[1]
+}
+
+func (x Direction) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Direction.Descriptor instead.
+func (Direction) EnumDescriptor() ([]byte, []int) {
+	return file_session_v1_session_proto_rawDescGZIP(), []int{1}
+}
+
 // GetSessionsRequest filters the list of sessions to return.
 // All fields are optional; omitting a field disables that filter.
 type GetSessionsRequest struct {
@@ -482,6 +590,331 @@ func (x *EndSessionRequest) GetBytesOut() int64 {
 	return 0
 }
 
+// RecordingFrame is a single unit in a recording stream. The first frame
+// sent must carry a RecordingHeader; subsequent frames carry data or resize
+// events.
+type RecordingFrame struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Payload:
+	//
+	//	*RecordingFrame_Header
+	//	*RecordingFrame_Chunk
+	//	*RecordingFrame_Resize
+	Payload       isRecordingFrame_Payload `protobuf_oneof:"payload"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RecordingFrame) Reset() {
+	*x = RecordingFrame{}
+	mi := &file_session_v1_session_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RecordingFrame) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecordingFrame) ProtoMessage() {}
+
+func (x *RecordingFrame) ProtoReflect() protoreflect.Message {
+	mi := &file_session_v1_session_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecordingFrame.ProtoReflect.Descriptor instead.
+func (*RecordingFrame) Descriptor() ([]byte, []int) {
+	return file_session_v1_session_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *RecordingFrame) GetPayload() isRecordingFrame_Payload {
+	if x != nil {
+		return x.Payload
+	}
+	return nil
+}
+
+func (x *RecordingFrame) GetHeader() *RecordingHeader {
+	if x != nil {
+		if x, ok := x.Payload.(*RecordingFrame_Header); ok {
+			return x.Header
+		}
+	}
+	return nil
+}
+
+func (x *RecordingFrame) GetChunk() *DataChunk {
+	if x != nil {
+		if x, ok := x.Payload.(*RecordingFrame_Chunk); ok {
+			return x.Chunk
+		}
+	}
+	return nil
+}
+
+func (x *RecordingFrame) GetResize() *TerminalResize {
+	if x != nil {
+		if x, ok := x.Payload.(*RecordingFrame_Resize); ok {
+			return x.Resize
+		}
+	}
+	return nil
+}
+
+type isRecordingFrame_Payload interface {
+	isRecordingFrame_Payload()
+}
+
+type RecordingFrame_Header struct {
+	// header is the first frame and carries session metadata.
+	Header *RecordingHeader `protobuf:"bytes,1,opt,name=header,proto3,oneof"`
+}
+
+type RecordingFrame_Chunk struct {
+	// chunk carries a block of raw channel data.
+	Chunk *DataChunk `protobuf:"bytes,2,opt,name=chunk,proto3,oneof"`
+}
+
+type RecordingFrame_Resize struct {
+	// resize carries a terminal resize event; only valid for PTY shell sessions.
+	Resize *TerminalResize `protobuf:"bytes,3,opt,name=resize,proto3,oneof"`
+}
+
+func (*RecordingFrame_Header) isRecordingFrame_Payload() {}
+
+func (*RecordingFrame_Chunk) isRecordingFrame_Payload() {}
+
+func (*RecordingFrame_Resize) isRecordingFrame_Payload() {}
+
+// RecordingHeader is the mandatory first frame of a recording stream.
+type RecordingHeader struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// session_id ties this recording to a SessionService session record.
+	SessionId string `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	// username is the owner of the session being recorded.
+	Username string `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	// started_at is the channel start time as a Unix timestamp (seconds).
+	StartedAt int64 `protobuf:"varint,3,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	// stream_type identifies the kind of SSH channel being recorded.
+	StreamType StreamType `protobuf:"varint,4,opt,name=stream_type,json=streamType,proto3,enum=session.v1.StreamType" json:"stream_type,omitempty"`
+	// width is the initial terminal width in columns.
+	// Only meaningful when stream_type is STREAM_TYPE_SHELL.
+	Width uint32 `protobuf:"varint,5,opt,name=width,proto3" json:"width,omitempty"`
+	// height is the initial terminal height in rows.
+	// Only meaningful when stream_type is STREAM_TYPE_SHELL.
+	Height        uint32 `protobuf:"varint,6,opt,name=height,proto3" json:"height,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RecordingHeader) Reset() {
+	*x = RecordingHeader{}
+	mi := &file_session_v1_session_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RecordingHeader) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecordingHeader) ProtoMessage() {}
+
+func (x *RecordingHeader) ProtoReflect() protoreflect.Message {
+	mi := &file_session_v1_session_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecordingHeader.ProtoReflect.Descriptor instead.
+func (*RecordingHeader) Descriptor() ([]byte, []int) {
+	return file_session_v1_session_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *RecordingHeader) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *RecordingHeader) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *RecordingHeader) GetStartedAt() int64 {
+	if x != nil {
+		return x.StartedAt
+	}
+	return 0
+}
+
+func (x *RecordingHeader) GetStreamType() StreamType {
+	if x != nil {
+		return x.StreamType
+	}
+	return StreamType_STREAM_TYPE_SHELL
+}
+
+func (x *RecordingHeader) GetWidth() uint32 {
+	if x != nil {
+		return x.Width
+	}
+	return 0
+}
+
+func (x *RecordingHeader) GetHeight() uint32 {
+	if x != nil {
+		return x.Height
+	}
+	return 0
+}
+
+// DataChunk carries a block of raw channel data with timing information.
+type DataChunk struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// time_offset_ms is the number of milliseconds elapsed since started_at.
+	TimeOffsetMs int64 `protobuf:"varint,1,opt,name=time_offset_ms,json=timeOffsetMs,proto3" json:"time_offset_ms,omitempty"`
+	// data is the raw bytes transferred on the channel.
+	Data []byte `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
+	// direction indicates which side produced this data.
+	Direction     Direction `protobuf:"varint,3,opt,name=direction,proto3,enum=session.v1.Direction" json:"direction,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DataChunk) Reset() {
+	*x = DataChunk{}
+	mi := &file_session_v1_session_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DataChunk) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DataChunk) ProtoMessage() {}
+
+func (x *DataChunk) ProtoReflect() protoreflect.Message {
+	mi := &file_session_v1_session_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DataChunk.ProtoReflect.Descriptor instead.
+func (*DataChunk) Descriptor() ([]byte, []int) {
+	return file_session_v1_session_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *DataChunk) GetTimeOffsetMs() int64 {
+	if x != nil {
+		return x.TimeOffsetMs
+	}
+	return 0
+}
+
+func (x *DataChunk) GetData() []byte {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+func (x *DataChunk) GetDirection() Direction {
+	if x != nil {
+		return x.Direction
+	}
+	return Direction_DIRECTION_OUTPUT
+}
+
+// TerminalResize records a PTY window-change event.
+type TerminalResize struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// time_offset_ms is the number of milliseconds elapsed since started_at.
+	TimeOffsetMs int64 `protobuf:"varint,1,opt,name=time_offset_ms,json=timeOffsetMs,proto3" json:"time_offset_ms,omitempty"`
+	// width is the new terminal width in columns.
+	Width uint32 `protobuf:"varint,2,opt,name=width,proto3" json:"width,omitempty"`
+	// height is the new terminal height in rows.
+	Height        uint32 `protobuf:"varint,3,opt,name=height,proto3" json:"height,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TerminalResize) Reset() {
+	*x = TerminalResize{}
+	mi := &file_session_v1_session_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TerminalResize) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TerminalResize) ProtoMessage() {}
+
+func (x *TerminalResize) ProtoReflect() protoreflect.Message {
+	mi := &file_session_v1_session_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TerminalResize.ProtoReflect.Descriptor instead.
+func (*TerminalResize) Descriptor() ([]byte, []int) {
+	return file_session_v1_session_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *TerminalResize) GetTimeOffsetMs() int64 {
+	if x != nil {
+		return x.TimeOffsetMs
+	}
+	return 0
+}
+
+func (x *TerminalResize) GetWidth() uint32 {
+	if x != nil {
+		return x.Width
+	}
+	return 0
+}
+
+func (x *TerminalResize) GetHeight() uint32 {
+	if x != nil {
+		return x.Height
+	}
+	return 0
+}
+
 var File_session_v1_session_proto protoreflect.FileDescriptor
 
 const file_session_v1_session_proto_rawDesc = "" +
@@ -525,12 +958,46 @@ const file_session_v1_session_proto_rawDesc = "" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x19\n" +
 	"\bend_time\x18\x02 \x01(\x03R\aendTime\x12\x19\n" +
 	"\bbytes_in\x18\x03 \x01(\x03R\abytesIn\x12\x1b\n" +
-	"\tbytes_out\x18\x04 \x01(\x03R\bbytesOut2\xf0\x01\n" +
+	"\tbytes_out\x18\x04 \x01(\x03R\bbytesOut\"\xb7\x01\n" +
+	"\x0eRecordingFrame\x125\n" +
+	"\x06header\x18\x01 \x01(\v2\x1b.session.v1.RecordingHeaderH\x00R\x06header\x12-\n" +
+	"\x05chunk\x18\x02 \x01(\v2\x15.session.v1.DataChunkH\x00R\x05chunk\x124\n" +
+	"\x06resize\x18\x03 \x01(\v2\x1a.session.v1.TerminalResizeH\x00R\x06resizeB\t\n" +
+	"\apayload\"\xd2\x01\n" +
+	"\x0fRecordingHeader\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1a\n" +
+	"\busername\x18\x02 \x01(\tR\busername\x12\x1d\n" +
+	"\n" +
+	"started_at\x18\x03 \x01(\x03R\tstartedAt\x127\n" +
+	"\vstream_type\x18\x04 \x01(\x0e2\x16.session.v1.StreamTypeR\n" +
+	"streamType\x12\x14\n" +
+	"\x05width\x18\x05 \x01(\rR\x05width\x12\x16\n" +
+	"\x06height\x18\x06 \x01(\rR\x06height\"z\n" +
+	"\tDataChunk\x12$\n" +
+	"\x0etime_offset_ms\x18\x01 \x01(\x03R\ftimeOffsetMs\x12\x12\n" +
+	"\x04data\x18\x02 \x01(\fR\x04data\x123\n" +
+	"\tdirection\x18\x03 \x01(\x0e2\x15.session.v1.DirectionR\tdirection\"d\n" +
+	"\x0eTerminalResize\x12$\n" +
+	"\x0etime_offset_ms\x18\x01 \x01(\x03R\ftimeOffsetMs\x12\x14\n" +
+	"\x05width\x18\x02 \x01(\rR\x05width\x12\x16\n" +
+	"\x06height\x18\x03 \x01(\rR\x06height*m\n" +
+	"\n" +
+	"StreamType\x12\x15\n" +
+	"\x11STREAM_TYPE_SHELL\x10\x00\x12\x14\n" +
+	"\x10STREAM_TYPE_EXEC\x10\x01\x12\x1c\n" +
+	"\x18STREAM_TYPE_DIRECT_TCPIP\x10\x02\x12\x14\n" +
+	"\x10STREAM_TYPE_SFTP\x10\x03*6\n" +
+	"\tDirection\x12\x14\n" +
+	"\x10DIRECTION_OUTPUT\x10\x00\x12\x13\n" +
+	"\x0fDIRECTION_INPUT\x10\x012\xf0\x01\n" +
 	"\x0eSessionService\x12C\n" +
 	"\vGetSessions\x12\x1e.session.v1.GetSessionsRequest\x1a\x14.session.v1.Sessions\x12T\n" +
 	"\rUpsertSession\x12 .session.v1.UpsertSessionRequest\x1a!.session.v1.UpsertSessionResponse\x12C\n" +
 	"\n" +
-	"EndSession\x12\x1d.session.v1.EndSessionRequest\x1a\x16.google.protobuf.EmptyBBZ@github.com/k8shell-io/common/pkg/api/gen/go/session/v1;sessionv1b\x06proto3"
+	"EndSession\x12\x1d.session.v1.EndSessionRequest\x1a\x16.google.protobuf.Empty2[\n" +
+	"\x10RecordingService\x12G\n" +
+	"\x0fStreamRecording\x12\x1a.session.v1.RecordingFrame\x1a\x16.google.protobuf.Empty(\x01BBZ@github.com/k8shell-io/common/pkg/api/gen/go/session/v1;sessionv1b\x06proto3"
 
 var (
 	file_session_v1_session_proto_rawDescOnce sync.Once
@@ -544,31 +1011,45 @@ func file_session_v1_session_proto_rawDescGZIP() []byte {
 	return file_session_v1_session_proto_rawDescData
 }
 
-var file_session_v1_session_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_session_v1_session_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_session_v1_session_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_session_v1_session_proto_goTypes = []any{
-	(*GetSessionsRequest)(nil),    // 0: session.v1.GetSessionsRequest
-	(*Session)(nil),               // 1: session.v1.Session
-	(*Sessions)(nil),              // 2: session.v1.Sessions
-	(*UpsertSessionRequest)(nil),  // 3: session.v1.UpsertSessionRequest
-	(*UpsertSessionResponse)(nil), // 4: session.v1.UpsertSessionResponse
-	(*EndSessionRequest)(nil),     // 5: session.v1.EndSessionRequest
-	(*emptypb.Empty)(nil),         // 6: google.protobuf.Empty
+	(StreamType)(0),               // 0: session.v1.StreamType
+	(Direction)(0),                // 1: session.v1.Direction
+	(*GetSessionsRequest)(nil),    // 2: session.v1.GetSessionsRequest
+	(*Session)(nil),               // 3: session.v1.Session
+	(*Sessions)(nil),              // 4: session.v1.Sessions
+	(*UpsertSessionRequest)(nil),  // 5: session.v1.UpsertSessionRequest
+	(*UpsertSessionResponse)(nil), // 6: session.v1.UpsertSessionResponse
+	(*EndSessionRequest)(nil),     // 7: session.v1.EndSessionRequest
+	(*RecordingFrame)(nil),        // 8: session.v1.RecordingFrame
+	(*RecordingHeader)(nil),       // 9: session.v1.RecordingHeader
+	(*DataChunk)(nil),             // 10: session.v1.DataChunk
+	(*TerminalResize)(nil),        // 11: session.v1.TerminalResize
+	(*emptypb.Empty)(nil),         // 12: google.protobuf.Empty
 }
 var file_session_v1_session_proto_depIdxs = []int32{
-	1, // 0: session.v1.Sessions.sessions:type_name -> session.v1.Session
-	1, // 1: session.v1.UpsertSessionRequest.session:type_name -> session.v1.Session
-	1, // 2: session.v1.UpsertSessionResponse.session:type_name -> session.v1.Session
-	0, // 3: session.v1.SessionService.GetSessions:input_type -> session.v1.GetSessionsRequest
-	3, // 4: session.v1.SessionService.UpsertSession:input_type -> session.v1.UpsertSessionRequest
-	5, // 5: session.v1.SessionService.EndSession:input_type -> session.v1.EndSessionRequest
-	2, // 6: session.v1.SessionService.GetSessions:output_type -> session.v1.Sessions
-	4, // 7: session.v1.SessionService.UpsertSession:output_type -> session.v1.UpsertSessionResponse
-	6, // 8: session.v1.SessionService.EndSession:output_type -> google.protobuf.Empty
-	6, // [6:9] is the sub-list for method output_type
-	3, // [3:6] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	3,  // 0: session.v1.Sessions.sessions:type_name -> session.v1.Session
+	3,  // 1: session.v1.UpsertSessionRequest.session:type_name -> session.v1.Session
+	3,  // 2: session.v1.UpsertSessionResponse.session:type_name -> session.v1.Session
+	9,  // 3: session.v1.RecordingFrame.header:type_name -> session.v1.RecordingHeader
+	10, // 4: session.v1.RecordingFrame.chunk:type_name -> session.v1.DataChunk
+	11, // 5: session.v1.RecordingFrame.resize:type_name -> session.v1.TerminalResize
+	0,  // 6: session.v1.RecordingHeader.stream_type:type_name -> session.v1.StreamType
+	1,  // 7: session.v1.DataChunk.direction:type_name -> session.v1.Direction
+	2,  // 8: session.v1.SessionService.GetSessions:input_type -> session.v1.GetSessionsRequest
+	5,  // 9: session.v1.SessionService.UpsertSession:input_type -> session.v1.UpsertSessionRequest
+	7,  // 10: session.v1.SessionService.EndSession:input_type -> session.v1.EndSessionRequest
+	8,  // 11: session.v1.RecordingService.StreamRecording:input_type -> session.v1.RecordingFrame
+	4,  // 12: session.v1.SessionService.GetSessions:output_type -> session.v1.Sessions
+	6,  // 13: session.v1.SessionService.UpsertSession:output_type -> session.v1.UpsertSessionResponse
+	12, // 14: session.v1.SessionService.EndSession:output_type -> google.protobuf.Empty
+	12, // 15: session.v1.RecordingService.StreamRecording:output_type -> google.protobuf.Empty
+	12, // [12:16] is the sub-list for method output_type
+	8,  // [8:12] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_session_v1_session_proto_init() }
@@ -576,18 +1057,24 @@ func file_session_v1_session_proto_init() {
 	if File_session_v1_session_proto != nil {
 		return
 	}
+	file_session_v1_session_proto_msgTypes[6].OneofWrappers = []any{
+		(*RecordingFrame_Header)(nil),
+		(*RecordingFrame_Chunk)(nil),
+		(*RecordingFrame_Resize)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_session_v1_session_proto_rawDesc), len(file_session_v1_session_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   6,
+			NumEnums:      2,
+			NumMessages:   10,
 			NumExtensions: 0,
-			NumServices:   1,
+			NumServices:   2,
 		},
 		GoTypes:           file_session_v1_session_proto_goTypes,
 		DependencyIndexes: file_session_v1_session_proto_depIdxs,
+		EnumInfos:         file_session_v1_session_proto_enumTypes,
 		MessageInfos:      file_session_v1_session_proto_msgTypes,
 	}.Build()
 	File_session_v1_session_proto = out.File
