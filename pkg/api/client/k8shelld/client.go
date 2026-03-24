@@ -9,7 +9,9 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/k8shell-io/common/pkg/api/client/session"
 	k8shelldv1 "github.com/k8shell-io/common/pkg/api/gen/go/k8shelld/v1"
+	sessionv1 "github.com/k8shell-io/common/pkg/api/gen/go/session/v1"
 	"github.com/k8shell-io/common/pkg/gapi"
 	"github.com/k8shell-io/common/pkg/logger"
 	"github.com/rs/zerolog"
@@ -45,6 +47,7 @@ type K8shelld struct {
 	app              k8shelldv1.AppServiceClient
 	counters         *ConnCounters
 	tokenRetrieve    TokenRetrieve
+	sessionClient    *session.Client
 }
 
 type TokenRetrieve func() (string, error)
@@ -66,7 +69,8 @@ func (c *ConnCounters) Snapshot() (in, out int64) {
 	return atomic.LoadInt64(&c.inTotal), atomic.LoadInt64(&c.outTotal)
 }
 
-func NewClient(cfg gapi.ClientConfig, counters *ConnCounters, tokenRetrieve TokenRetrieve) (*K8shelld, error) {
+func NewClient(cfg gapi.ClientConfig, counters *ConnCounters, tokenRetrieve TokenRetrieve,
+	sessionClient *session.Client) (*K8shelld, error) {
 	gapiClient, err := gapi.NewClient(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create gRPC client: %w", err)
@@ -84,6 +88,7 @@ func NewClient(cfg gapi.ClientConfig, counters *ConnCounters, tokenRetrieve Toke
 		unixSocketClient: k8shelldv1.NewUnixSocketServiceClient(gapiClient.Conn),
 		app:              k8shelldv1.NewAppServiceClient(gapiClient.Conn),
 		tokenRetrieve:    tokenRetrieve,
+		sessionClient:    sessionClient,
 	}, nil
 }
 
@@ -109,11 +114,31 @@ func (c *K8shelld) GetSystemInfo(ctx context.Context) (*SystemInfo, error) {
 	return ProtoToSystemInfo(resp), nil
 }
 
+// startRecording creates a Recorder for the given stream and returns a (possibly wrapped)
+// BufferedReadWriter. When recording is disabled (nil recordingClient), the original rw is
+// returned unchanged and recorder is nil — the caller must handle a nil recorder gracefully.
+func (c *K8shelld) startRecording(
+	ctx context.Context,
+	rw BufferedReadWriter,
+	sessionID, username string,
+	streamType sessionv1.StreamType,
+	width, height uint32,
+) (start time.Time, recorder *Recorder, wrappedRW BufferedReadWriter) {
+	start = time.Now()
+	recorder = NewRecorder(ctx, c.sessionClient, sessionID, username, streamType, width, height, start, c.log)
+	if recorder != nil {
+		wrappedRW = NewRecordingAdapter(rw, start, recorder.Observe)
+	} else {
+		wrappedRW = rw
+	}
+	return
+}
+
 // RunShell creates a PTY shell session over gRPC and bridges it with the BufferedReadWriter.
 // onStart is called once the server sends the ShellStartResponse; it receives the PTY device
 // name (e.g. "/dev/pts/3") or an empty string when no PTY was allocated. onStart may be nil.
 func (c *K8shelld) RunShell(ctx context.Context, rw BufferedReadWriter, sessionId string, envVars []string,
-	width, height uint32, usePty bool, user string, onStart func(ptyName string)) error {
+	width, height uint32, usePty bool, username string, record bool, onStart func(ptyName string)) error {
 	token, err := c.tokenRetrieve()
 	if err != nil {
 		return fmt.Errorf("failed to retrieve token: %w", err)
@@ -128,6 +153,15 @@ func (c *K8shelld) RunShell(ctx context.Context, rw BufferedReadWriter, sessionI
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
+	if c.sessionClient != nil && record {
+		var recorder *Recorder
+		_, recorder, rw = c.startRecording(ctx, rw, sessionId, username,
+			sessionv1.StreamType_STREAM_TYPE_SHELL, width, height)
+		if recorder != nil {
+			defer recorder.Close()
+		}
+	}
+
 	stream, err := c.shellClient.Shell(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to create shell stream: %w", err)
@@ -141,7 +175,7 @@ func (c *K8shelld) RunShell(ctx context.Context, rw BufferedReadWriter, sessionI
 				UsePty:     usePty,
 				Width:      width,
 				Height:     height,
-				User:       user,
+				User:       username,
 			},
 		},
 	}
@@ -363,7 +397,8 @@ func (c *K8shelld) RunUnixSocket(ctx context.Context, upstream BufferedReadWrite
 }
 
 // RunPortForward sets up a port forward over gRPC and bridges it with the upstream channel.
-func (c *K8shelld) RunPortForward(ctx context.Context, upstream BufferedReadWriter, portForwardID, destinationIP string, destinationPort uint32) error {
+func (c *K8shelld) RunPortForward(ctx context.Context, upstream BufferedReadWriter, portForwardID,
+	destinationIP string, destinationPort uint32, username string, record bool) error {
 	if destinationIP == "" {
 		destinationIP = "localhost"
 	}
@@ -381,6 +416,15 @@ func (c *K8shelld) RunPortForward(ctx context.Context, upstream BufferedReadWrit
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
+
+	if c.sessionClient != nil && record {
+		var recorder *Recorder
+		_, recorder, upstream = c.startRecording(ctx, upstream, portForwardID, username,
+			sessionv1.StreamType_STREAM_TYPE_DIRECT_TCPIP, 0, 0)
+		if recorder != nil {
+			defer recorder.Close()
+		}
+	}
 
 	stream, err := c.pfClient.PortForward(ctx)
 	if err != nil {
@@ -463,7 +507,8 @@ func (c *K8shelld) RunPortForward(ctx context.Context, upstream BufferedReadWrit
 
 // RunExec executes a command in a remote shell over gRPC.
 func (c *K8shelld) RunExec(ctx context.Context, upstream BufferedReadWriter, execID string,
-	command string, shellBinary string, envVars []string, signalChan <-chan string) (int32, error) {
+	command string, shellBinary string, envVars []string, signalChan <-chan string,
+	username string, record bool) (int32, error) {
 
 	token, err := c.tokenRetrieve()
 	if err != nil {
@@ -475,6 +520,15 @@ func (c *K8shelld) RunExec(ctx context.Context, upstream BufferedReadWriter, exe
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
+
+	if c.sessionClient != nil && record {
+		var recorder *Recorder
+		_, recorder, upstream = c.startRecording(ctx, upstream, execID, username,
+			sessionv1.StreamType_STREAM_TYPE_EXEC, 0, 0)
+		if recorder != nil {
+			defer recorder.Close()
+		}
+	}
 
 	stream, err := c.execClient.Exec(ctx)
 	if err != nil {
