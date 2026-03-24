@@ -31,10 +31,6 @@ type ClientConfig struct {
 	// CACertPath is optional path to CA cert for TLS.
 	//  If empty, TLS is disabled and credentials are insecure.
 	CACertPath string `yaml:"caCertPath"`
-
-	// Enabled controls whether this client is enabled.
-	// If false, attempts to create a client will return an error.
-	Enabled bool `yaml:"enabled"`
 }
 
 // ErrNotEnabled is returned by NewClient when the client is explicitly disabled.
@@ -44,6 +40,10 @@ var ErrNotEnabled = errors.New("grpc api client is not enabled")
 type Client struct {
 	cfg  ClientConfig
 	Conn *grpc.ClientConn
+}
+
+func (c *ClientConfig) IsEnabled() bool {
+	return c.Address != ""
 }
 
 // PerRPCCredentials implementation that calls a func to fetch token.
@@ -77,7 +77,7 @@ func fileTokenSource(path string) func(context.Context) (string, error) {
 
 // NewClient creates and returns a new gRPC client connection.
 func NewClient(cfg ClientConfig) (*Client, error) {
-	if !cfg.Enabled {
+	if !cfg.IsEnabled() {
 		return nil, ErrNotEnabled
 	}
 	if cfg.Address == "" {
