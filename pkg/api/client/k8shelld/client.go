@@ -36,18 +36,20 @@ type BufferedReadWriter interface {
 
 // K8shelld is a client for the k8shelld gRPC service.
 type K8shelld struct {
-	client           *gapi.Client
-	log              *zerolog.Logger
-	systemClient     k8shelldv1.SystemServiceClient
-	shellClient      k8shelldv1.ShellServiceClient
-	execClient       k8shelldv1.ExecServiceClient
-	commandClient    k8shelldv1.CommandServiceClient
-	pfClient         k8shelldv1.PortForwardServiceClient
-	unixSocketClient k8shelldv1.UnixSocketServiceClient
-	app              k8shelldv1.AppServiceClient
-	counters         *ConnCounters
-	tokenRetrieve    TokenRetrieve
-	sessionClient    *session.Client
+	client             *gapi.Client
+	log                *zerolog.Logger
+	systemClient       k8shelldv1.SystemServiceClient
+	shellClient        k8shelldv1.ShellServiceClient
+	execClient         k8shelldv1.ExecServiceClient
+	commandClient      k8shelldv1.CommandServiceClient
+	pfClient           k8shelldv1.PortForwardServiceClient
+	unixSocketClient   k8shelldv1.UnixSocketServiceClient
+	app                k8shelldv1.AppServiceClient
+	counters           *ConnCounters
+	tokenRetrieve      TokenRetrieve
+	sessionClient      *session.Client
+	shellRecorder      *Recorder
+	shellRecorderStart time.Time
 }
 
 type TokenRetrieve func() (string, error)
@@ -154,12 +156,9 @@ func (c *K8shelld) RunShell(ctx context.Context, rw BufferedReadWriter, sessionI
 	defer cancel()
 
 	if c.sessionClient != nil && record {
-		var recorder *Recorder
-		_, recorder, rw = c.startRecording(ctx, rw, sessionId, username,
+		c.shellRecorderStart, c.shellRecorder, rw = c.startRecording(ctx, rw, sessionId, username,
 			sessionv1.StreamType_STREAM_TYPE_SHELL, width, height)
-		if recorder != nil {
-			defer recorder.Close()
-		}
+		defer c.shellRecorder.Close()
 	}
 
 	stream, err := c.shellClient.Shell(ctx)
@@ -270,6 +269,9 @@ func (c *K8shelld) ResizeTerminal(ctx context.Context, sessionId string, width, 
 	}
 
 	_, err := c.shellClient.ResizeTerminal(ctx, req)
+	if err == nil && c.shellRecorder != nil {
+		c.shellRecorder.ObserveResize(width, height, time.Since(c.shellRecorderStart))
+	}
 	return err
 }
 
