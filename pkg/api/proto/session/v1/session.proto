@@ -1,45 +1,103 @@
+// Copyright 2025 the k8Shell authors.
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 syntax = "proto3";
 
-package session;
+package session.v1;
 
 option go_package = "github.com/k8shell-io/common/pkg/api/gen/go/session/v1;sessionv1";
 
-// *** Session service
+import "google/protobuf/empty.proto";
 
+// SessionService manages SSH session records.
 service SessionService {
-  rpc GetSessions (GetSessionsRequest) returns (Sessions);
+  // GetSessions returns sessions matching the given filter criteria.
+  rpc GetSessions(GetSessionsRequest) returns (Sessions);
+
+  // UpsertSession creates or updates a session record.
+  // If a session with the given session_id already exists it is updated,
+  // otherwise a new record is created.
+  rpc UpsertSession(UpsertSessionRequest) returns (UpsertSessionResponse);
+
+  // EndSession marks a session as ended, recording its final byte counts
+  // and end time.
+  rpc EndSession(EndSessionRequest) returns (google.protobuf.Empty);
 }
 
-// GetSessionsRequest message
+// GetSessionsRequest filters the list of sessions to return.
+// All fields are optional; omitting a field disables that filter.
 message GetSessionsRequest {
+  // session_id filters by exact session identifier.
   string session_id = 1;
+  // username filters by the owning user.
   string username = 2;
+  // workspace filters by the workspace name.
   string workspace = 3;
+  // limit caps the number of returned sessions. 0 means no limit.
   int32 limit = 4;
+  // offset skips the first N results for pagination.
   int32 offset = 5;
+  // reverse returns results in reverse chronological order when true.
   bool reverse = 6;
 }
 
-// Session message
+// Session represents a single SSH session record.
 message Session {
+  // session_id is the unique identifier for this session.
   string session_id = 1;
+  // username is the user that owns this session.
   string username = 2;
+  // k8shelld_ver is the version of k8shelld that handled this session.
   string k8shelld_ver = 3;
+  // client is the SSH client identifier string.
   string client = 4;
+  // client_ip is the remote IP address of the SSH client.
   string client_ip = 5;
-  int64 start_time = 6;  
-  int64 end_time = 7;    
+  // start_time is the session start time as a Unix timestamp (seconds).
+  int64 start_time = 6;
+  // end_time is the session end time as a Unix timestamp (seconds).
+  // Zero means the session is still active.
+  int64 end_time = 7;
+  // workspace is the name of the workspace this session is attached to.
   string workspace = 8;
+  // bytes_in is the total number of bytes received from the client.
   int64 bytes_in = 9;
+  // bytes_out is the total number of bytes sent to the client.
   int64 bytes_out = 10;
+  // channels lists the SSH channels opened during this session.
   repeated string channels = 11;
+  // blueprint is the blueprint used by the session's workspace.
   string blueprint = 12;
-  int64 updated_at = 13; 
+  // updated_at is the time the record was last updated, as a Unix timestamp (seconds).
+  int64 updated_at = 13;
 }
 
-// Sessions wrapper for returning multiple Session messages
+// Sessions is a list of session records.
 message Sessions {
   repeated Session sessions = 1;
 }
 
+// UpsertSessionRequest carries the full session record to create or update.
+message UpsertSessionRequest {
+  // session is the session data to persist.
+  Session session = 1;
+}
+
+// UpsertSessionResponse carries the persisted session record after upsert.
+message UpsertSessionResponse {
+  // session is the session as stored, reflecting any server-side defaults.
+  Session session = 1;
+}
+
+// EndSessionRequest closes an active session and records its final stats.
+message EndSessionRequest {
+  // session_id identifies the session to end.
+  string session_id = 1;
+  // end_time is the session end time as a Unix timestamp (seconds).
+  int64 end_time = 2;
+  // bytes_in is the final total bytes received from the client.
+  int64 bytes_in = 3;
+  // bytes_out is the final total bytes sent to the client.
+  int64 bytes_out = 4;
+}
 
