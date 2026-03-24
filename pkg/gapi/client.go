@@ -17,11 +17,28 @@ import (
 
 // ClientConfig holds configuration for gRPC client
 type ClientConfig struct {
-	Address       string `yaml:"address"`
-	ServerName    string `yaml:"serverName"`
+	// Address of the gRPC server, e.g. "localhost:50051"
+	Address string `yaml:"address"`
+
+	// ServerName is optional TLS ServerName for hostname verification.
+	// Required if CACertPath is set and cert SAN doesn't match address host.
+	ServerName string `yaml:"serverName"`
+
+	// TokenFilePath is path to file containing token for authentication.
+	// The file is read on each request to support token rotation.
 	TokenFilePath string `yaml:"tokenFilePath"`
-	CACertPath    string `yaml:"caCertPath"`
+
+	// CACertPath is optional path to CA cert for TLS.
+	//  If empty, TLS is disabled and credentials are insecure.
+	CACertPath string `yaml:"caCertPath"`
+
+	// Enabled controls whether this client is enabled.
+	// If false, attempts to create a client will return an error.
+	Enabled bool `yaml:"enabled"`
 }
+
+// ErrNotEnabled is returned by NewClient when the client is explicitly disabled.
+var ErrNotEnabled = errors.New("not enabled")
 
 // Client gRPC client
 type Client struct {
@@ -60,6 +77,9 @@ func fileTokenSource(path string) func(context.Context) (string, error) {
 
 // NewClient creates and returns a new gRPC client connection.
 func NewClient(cfg ClientConfig) (*Client, error) {
+	if !cfg.Enabled {
+		return nil, fmt.Errorf("%w: grpc api client is not enabled for address %s", ErrNotEnabled, cfg.Address)
+	}
 	if cfg.Address == "" {
 		return nil, errors.New("addr required")
 	}
