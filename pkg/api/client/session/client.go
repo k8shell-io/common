@@ -10,6 +10,7 @@ import (
 
 type Client struct {
 	sessionv1.SessionServiceClient
+	sessionv1.RecordingServiceClient
 }
 
 func NewClient(cfg gapi.ClientConfig) (*Client, error) {
@@ -18,7 +19,8 @@ func NewClient(cfg gapi.ClientConfig) (*Client, error) {
 		return nil, err
 	}
 	return &Client{
-		SessionServiceClient: sessionv1.NewSessionServiceClient(gapiClient.Conn),
+		SessionServiceClient:   sessionv1.NewSessionServiceClient(gapiClient.Conn),
+		RecordingServiceClient: sessionv1.NewRecordingServiceClient(gapiClient.Conn),
 	}, nil
 }
 
