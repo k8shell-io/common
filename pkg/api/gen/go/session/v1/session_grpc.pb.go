@@ -220,6 +220,7 @@ const (
 	RecordingService_StreamShellRecording_FullMethodName = "/session.v1.RecordingService/StreamShellRecording"
 	RecordingService_StreamExecRecording_FullMethodName  = "/session.v1.RecordingService/StreamExecRecording"
 	RecordingService_StreamTcpipRecording_FullMethodName = "/session.v1.RecordingService/StreamTcpipRecording"
+	RecordingService_EndRecordingSession_FullMethodName  = "/session.v1.RecordingService/EndRecordingSession"
 )
 
 // RecordingServiceClient is the client API for RecordingService service.
@@ -240,6 +241,11 @@ type RecordingServiceClient interface {
 	// StreamTcpipRecording records a direct-tcpip port-forward channel. The
 	// first frame must be a TcpipRecordingHeader; subsequent frames carry data chunks.
 	StreamTcpipRecording(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[TcpipRecordingFrame, emptypb.Empty], error)
+	// EndRecordingSession notifies the recording backend that a session has ended
+	// and all associated recording resources (open streams, buffers, file handles)
+	// should be flushed and released. Must be called once per session_id when the
+	// SSH session terminates, regardless of how many recording streams were opened.
+	EndRecordingSession(ctx context.Context, in *EndRecordingSessionRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type recordingServiceClient struct {
@@ -289,6 +295,16 @@ func (c *recordingServiceClient) StreamTcpipRecording(ctx context.Context, opts 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type RecordingService_StreamTcpipRecordingClient = grpc.ClientStreamingClient[TcpipRecordingFrame, emptypb.Empty]
 
+func (c *recordingServiceClient) EndRecordingSession(ctx context.Context, in *EndRecordingSessionRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, RecordingService_EndRecordingSession_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RecordingServiceServer is the server API for RecordingService service.
 // All implementations must embed UnimplementedRecordingServiceServer
 // for forward compatibility.
@@ -307,6 +323,11 @@ type RecordingServiceServer interface {
 	// StreamTcpipRecording records a direct-tcpip port-forward channel. The
 	// first frame must be a TcpipRecordingHeader; subsequent frames carry data chunks.
 	StreamTcpipRecording(grpc.ClientStreamingServer[TcpipRecordingFrame, emptypb.Empty]) error
+	// EndRecordingSession notifies the recording backend that a session has ended
+	// and all associated recording resources (open streams, buffers, file handles)
+	// should be flushed and released. Must be called once per session_id when the
+	// SSH session terminates, regardless of how many recording streams were opened.
+	EndRecordingSession(context.Context, *EndRecordingSessionRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedRecordingServiceServer()
 }
 
@@ -325,6 +346,9 @@ func (UnimplementedRecordingServiceServer) StreamExecRecording(grpc.ClientStream
 }
 func (UnimplementedRecordingServiceServer) StreamTcpipRecording(grpc.ClientStreamingServer[TcpipRecordingFrame, emptypb.Empty]) error {
 	return status.Errorf(codes.Unimplemented, "method StreamTcpipRecording not implemented")
+}
+func (UnimplementedRecordingServiceServer) EndRecordingSession(context.Context, *EndRecordingSessionRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EndRecordingSession not implemented")
 }
 func (UnimplementedRecordingServiceServer) mustEmbedUnimplementedRecordingServiceServer() {}
 func (UnimplementedRecordingServiceServer) testEmbeddedByValue()                          {}
@@ -368,13 +392,36 @@ func _RecordingService_StreamTcpipRecording_Handler(srv interface{}, stream grpc
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type RecordingService_StreamTcpipRecordingServer = grpc.ClientStreamingServer[TcpipRecordingFrame, emptypb.Empty]
 
+func _RecordingService_EndRecordingSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EndRecordingSessionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RecordingServiceServer).EndRecordingSession(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RecordingService_EndRecordingSession_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RecordingServiceServer).EndRecordingSession(ctx, req.(*EndRecordingSessionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RecordingService_ServiceDesc is the grpc.ServiceDesc for RecordingService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var RecordingService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "session.v1.RecordingService",
 	HandlerType: (*RecordingServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "EndRecordingSession",
+			Handler:    _RecordingService_EndRecordingSession_Handler,
+		},
+	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "StreamShellRecording",

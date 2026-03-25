@@ -129,11 +129,11 @@ func (c *K8shelld) GetSystemInfo(ctx context.Context) (*SystemInfo, error) {
 func (c *K8shelld) startShellRecording(
 	ctx context.Context,
 	rw BufferedReadWriter,
-	sessionID, username string,
+	sessionID, connectionID, username string,
 	width, height uint32,
 ) (start time.Time, recorder *Recorder, wrappedRW BufferedReadWriter) {
 	start = time.Now()
-	recorder = NewShellRecorder(ctx, c.sessionClient, sessionID, username, width, height, start, c.log)
+	recorder = NewShellRecorder(ctx, c.sessionClient, sessionID, connectionID, username, width, height, start, c.log)
 	if recorder != nil {
 		wrappedRW = NewRecordingAdapter(rw, start, recorder.Observe)
 	} else {
@@ -146,10 +146,10 @@ func (c *K8shelld) startShellRecording(
 func (c *K8shelld) startExecRecording(
 	ctx context.Context,
 	rw BufferedReadWriter,
-	sessionID, username, command string,
+	sessionID, connectionID, username, command string,
 ) (recorder *Recorder, wrappedRW BufferedReadWriter) {
 	start := time.Now()
-	recorder = NewExecRecorder(ctx, c.sessionClient, sessionID, username, command, start, c.log)
+	recorder = NewExecRecorder(ctx, c.sessionClient, sessionID, connectionID, username, command, start, c.log)
 	if recorder != nil {
 		wrappedRW = NewRecordingAdapter(rw, start, recorder.Observe)
 	} else {
@@ -163,12 +163,13 @@ func (c *K8shelld) startExecRecording(
 func (c *K8shelld) startTcpipRecording(
 	ctx context.Context,
 	rw BufferedReadWriter,
-	sessionID, username string,
+	sessionID, connectionID, username string,
 	srcHost string, srcPort uint32,
 	dstHost string, dstPort uint32,
 ) (recorder *Recorder, wrappedRW BufferedReadWriter) {
 	start := time.Now()
-	recorder = NewTcpipRecorder(ctx, c.sessionClient, sessionID, username, srcHost, srcPort, dstHost, dstPort, start, c.log)
+	recordCtx := metadata.AppendToOutgoingContext(ctx, "x-connection-affinity", connectionID)
+	recorder = NewTcpipRecorder(recordCtx, c.sessionClient, sessionID, connectionID, username, srcHost, srcPort, dstHost, dstPort, start, c.log)
 	if recorder != nil {
 		wrappedRW = NewBidirectionalRecordingAdapter(rw, start, recorder.Observe, recorder.ObserveInput)
 	} else {
@@ -184,6 +185,7 @@ func (c *K8shelld) RunShell(
 	ctx context.Context,
 	rw BufferedReadWriter,
 	sessionId string,
+	connectionId string,
 	envVars []string,
 	width, height uint32,
 	usePty bool,
@@ -206,7 +208,7 @@ func (c *K8shelld) RunShell(
 	defer cancel()
 
 	if c.sessionClient != nil && record {
-		c.shellRecorderStart, c.shellRecorder, rw = c.startShellRecording(ctx, rw, sessionId, username, width, height)
+		c.shellRecorderStart, c.shellRecorder, rw = c.startShellRecording(ctx, rw, sessionId, connectionId, username, width, height)
 		defer c.shellRecorder.Close()
 	}
 
@@ -458,6 +460,7 @@ func (c *K8shelld) RunPortForward(
 	ctx context.Context,
 	upstream BufferedReadWriter,
 	portForwardID string,
+	connectionID string,
 	sourceIP string,
 	sourcePort uint32,
 	destinationIP string,
@@ -485,7 +488,7 @@ func (c *K8shelld) RunPortForward(
 
 	if c.sessionClient != nil && record {
 		var recorder *Recorder
-		recorder, upstream = c.startTcpipRecording(ctx, upstream, portForwardID, username,
+		recorder, upstream = c.startTcpipRecording(ctx, upstream, portForwardID, connectionID, username,
 			sourceIP, sourcePort, destinationIP, destinationPort)
 		if recorder != nil {
 			defer recorder.Close()
@@ -578,6 +581,7 @@ func (c *K8shelld) RunExec(
 	ctx context.Context,
 	upstream BufferedReadWriter,
 	execID string,
+	connectionID string,
 	command string,
 	shellBinary string,
 	envVars []string,
@@ -599,7 +603,7 @@ func (c *K8shelld) RunExec(
 
 	if c.sessionClient != nil && record {
 		var recorder *Recorder
-		recorder, upstream = c.startExecRecording(ctx, upstream, execID, username, command)
+		recorder, upstream = c.startExecRecording(ctx, upstream, execID, connectionID, username, command)
 		if recorder != nil {
 			defer recorder.Close()
 		}

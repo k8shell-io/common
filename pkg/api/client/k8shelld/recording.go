@@ -47,7 +47,7 @@ type Recorder struct {
 func NewShellRecorder(
 	ctx context.Context,
 	client sessionv1.RecordingServiceClient,
-	sessionID, username string,
+	sessionID, connectionID, username string,
 	width, height uint32,
 	startedAt time.Time,
 	log *zerolog.Logger,
@@ -60,7 +60,7 @@ func NewShellRecorder(
 		done: make(chan struct{}),
 		log:  log,
 	}
-	go r.runShell(ctx, client, sessionID, username, width, height, startedAt)
+	go r.runShell(ctx, client, sessionID, connectionID, username, width, height, startedAt)
 	return r
 }
 
@@ -70,7 +70,7 @@ func NewShellRecorder(
 func NewExecRecorder(
 	ctx context.Context,
 	client sessionv1.RecordingServiceClient,
-	sessionID, username, command string,
+	sessionID, connectionID, username, command string,
 	startedAt time.Time,
 	log *zerolog.Logger,
 ) *Recorder {
@@ -82,7 +82,7 @@ func NewExecRecorder(
 		done: make(chan struct{}),
 		log:  log,
 	}
-	go r.runExec(ctx, client, sessionID, username, command, startedAt)
+	go r.runExec(ctx, client, sessionID, connectionID, username, command, startedAt)
 	return r
 }
 
@@ -92,7 +92,7 @@ func NewExecRecorder(
 func NewTcpipRecorder(
 	ctx context.Context,
 	client sessionv1.RecordingServiceClient,
-	sessionID, username string,
+	sessionID, connectionID, username string,
 	srcHost string, srcPort uint32,
 	dstHost string, dstPort uint32,
 	startedAt time.Time,
@@ -106,7 +106,7 @@ func NewTcpipRecorder(
 		done: make(chan struct{}),
 		log:  log,
 	}
-	go r.runTcpip(ctx, client, sessionID, username, srcHost, srcPort, dstHost, dstPort, startedAt)
+	go r.runTcpip(ctx, client, sessionID, connectionID, username, srcHost, srcPort, dstHost, dstPort, startedAt)
 	return r
 }
 
@@ -246,7 +246,7 @@ func (w *recordingWriter) Write(p []byte) (int, error) {
 func (r *Recorder) runShell(
 	ctx context.Context,
 	client sessionv1.RecordingServiceClient,
-	sessionID, username string,
+	sessionID, connectionID, username string,
 	width, height uint32,
 	startedAt time.Time,
 ) {
@@ -263,11 +263,12 @@ func (r *Recorder) runShell(
 	if err = stream.Send(&sessionv1.ShellRecordingFrame{
 		Payload: &sessionv1.ShellRecordingFrame_Header{
 			Header: &sessionv1.ShellRecordingHeader{
-				SessionId: sessionID,
-				Username:  username,
-				StartedAt: startedAt.Unix(),
-				Width:     width,
-				Height:    height,
+				SessionId:    sessionID,
+				ConnectionId: connectionID,
+				Username:     username,
+				StartedAt:    startedAt.Unix(),
+				Width:        width,
+				Height:       height,
 			},
 		},
 	}); err != nil {
@@ -350,7 +351,7 @@ func (r *Recorder) runShell(
 func (r *Recorder) runExec(
 	ctx context.Context,
 	client sessionv1.RecordingServiceClient,
-	sessionID, username, command string,
+	sessionID, connectionID, username, command string,
 	startedAt time.Time,
 ) {
 	defer close(r.done)
@@ -366,10 +367,11 @@ func (r *Recorder) runExec(
 	if err = stream.Send(&sessionv1.ExecRecordingFrame{
 		Payload: &sessionv1.ExecRecordingFrame_Header{
 			Header: &sessionv1.ExecRecordingHeader{
-				SessionId: sessionID,
-				Username:  username,
-				StartedAt: startedAt.Unix(),
-				Command:   command,
+				SessionId:    sessionID,
+				ConnectionId: connectionID,
+				Username:     username,
+				StartedAt:    startedAt.Unix(),
+				Command:      command,
 			},
 		},
 	}); err != nil {
@@ -441,7 +443,7 @@ func (r *Recorder) runExec(
 func (r *Recorder) runTcpip(
 	ctx context.Context,
 	client sessionv1.RecordingServiceClient,
-	sessionID, username string,
+	sessionID, connectionID, username string,
 	srcHost string, srcPort uint32,
 	dstHost string, dstPort uint32,
 	startedAt time.Time,
@@ -459,13 +461,14 @@ func (r *Recorder) runTcpip(
 	if err = stream.Send(&sessionv1.TcpipRecordingFrame{
 		Payload: &sessionv1.TcpipRecordingFrame_Header{
 			Header: &sessionv1.TcpipRecordingHeader{
-				SessionId: sessionID,
-				Username:  username,
-				StartedAt: startedAt.Unix(),
-				SrcHost:   srcHost,
-				SrcPort:   srcPort,
-				DstHost:   dstHost,
-				DstPort:   dstPort,
+				SessionId:    sessionID,
+				ConnectionId: connectionID,
+				Username:     username,
+				StartedAt:    startedAt.Unix(),
+				SrcHost:      srcHost,
+				SrcPort:      srcPort,
+				DstHost:      dstHost,
+				DstPort:      dstPort,
 			},
 		},
 	}); err != nil {

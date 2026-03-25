@@ -101,6 +101,17 @@ message EndSessionRequest {
   int64 bytes_out = 4;
 }
 
+// EndRecordingSessionRequest signals the recording backend to flush and release
+// all resources associated with a connection.
+message EndRecordingSessionRequest {
+  // connection_id identifies the SSH connection whose recording resources should
+  // be cleaned up.
+  string connection_id = 1;
+  // end_time is the session end time as a Unix timestamp (seconds), used to
+  // finalise any open recording metadata.
+  int64 end_time = 2;
+}
+
 // *** Recording
 
 // Direction indicates which side of the channel produced the data.
@@ -129,6 +140,12 @@ service RecordingService {
   // StreamTcpipRecording records a direct-tcpip port-forward channel. The
   // first frame must be a TcpipRecordingHeader; subsequent frames carry data chunks.
   rpc StreamTcpipRecording(stream TcpipRecordingFrame) returns (google.protobuf.Empty);
+
+  // EndRecordingSession notifies the recording backend that a session has ended
+  // and all associated recording resources (open streams, buffers, file handles)
+  // should be flushed and released. Must be called once per session_id when the
+  // SSH session terminates, regardless of how many recording streams were opened.
+  rpc EndRecordingSession(EndRecordingSessionRequest) returns (google.protobuf.Empty);
 }
 
 // *** Shared recording types
@@ -167,6 +184,8 @@ message ShellRecordingHeader {
   uint32 width = 4;
   // height is the initial terminal height in rows.
   uint32 height = 5;
+  // connection_id is the unique identifier of the SSH connection.
+  string connection_id = 6;
 }
 
 // ShellRecordingFrame is a single unit in a shell recording stream.
@@ -193,6 +212,8 @@ message ExecRecordingHeader {
   int64 started_at = 3;
   // command is the command that was executed.
   string command = 4;
+  // connection_id is the unique identifier of the SSH connection.
+  string connection_id = 5;
 }
 
 // ExecRecordingFrame is a single unit in an exec recording stream.
@@ -223,6 +244,8 @@ message TcpipRecordingHeader {
   string dst_host = 6;
   // dst_port is the destination port of the port-forward request.
   uint32 dst_port = 7;
+  // connection_id is the unique identifier of the SSH connection.
+  string connection_id = 8;
 }
 
 // TcpipRecordingFrame is a single unit in a direct-tcpip recording stream.
