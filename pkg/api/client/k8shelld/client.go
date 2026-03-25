@@ -159,6 +159,7 @@ func (c *K8shelld) startExecRecording(
 }
 
 // startTcpipRecording creates a TCP/IP Recorder and returns a (possibly wrapped) BufferedReadWriter.
+// Both traffic directions (client→service and service→client) are captured.
 func (c *K8shelld) startTcpipRecording(
 	ctx context.Context,
 	rw BufferedReadWriter,
@@ -169,7 +170,7 @@ func (c *K8shelld) startTcpipRecording(
 	start := time.Now()
 	recorder = NewTcpipRecorder(ctx, c.sessionClient, sessionID, username, srcHost, srcPort, dstHost, dstPort, start, c.log)
 	if recorder != nil {
-		wrappedRW = NewRecordingAdapter(rw, start, recorder.Observe)
+		wrappedRW = NewBidirectionalRecordingAdapter(rw, start, recorder.Observe, recorder.ObserveInput)
 	} else {
 		wrappedRW = rw
 	}

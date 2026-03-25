@@ -20,9 +20,10 @@ const (
 )
 
 type recorderFrame struct {
-	data   []byte
-	offset int64 // milliseconds since session start
-	resize *recorderResizeEvent
+	data      []byte
+	offset    int64 // milliseconds since session start
+	direction sessionv1.Direction
+	resize    *recorderResizeEvent
 }
 
 type recorderResizeEvent struct {
@@ -109,7 +110,7 @@ func NewTcpipRecorder(
 	return r
 }
 
-// Observe enqueues a terminal output frame. Non-blocking; frames are dropped
+// Observe enqueues an output (service→client) frame. Non-blocking; frames are dropped
 // if the internal channel is full to protect the SSH session goroutine.
 func (r *Recorder) Observe(data []byte, offset time.Duration) {
 	if r == nil || len(data) == 0 {
@@ -118,9 +119,22 @@ func (r *Recorder) Observe(data []byte, offset time.Duration) {
 	cp := make([]byte, len(data))
 	copy(cp, data)
 	select {
-	case r.ch <- recorderFrame{data: cp, offset: offset.Milliseconds()}:
+	case r.ch <- recorderFrame{data: cp, offset: offset.Milliseconds(), direction: sessionv1.Direction_DIRECTION_OUTPUT}:
 	default:
 		// channel full — drop frame, never block the session
+	}
+}
+
+// ObserveInput enqueues an input (client→service) frame. Non-blocking.
+func (r *Recorder) ObserveInput(data []byte, offset time.Duration) {
+	if r == nil || len(data) == 0 {
+		return
+	}
+	cp := make([]byte, len(data))
+	copy(cp, data)
+	select {
+	case r.ch <- recorderFrame{data: cp, offset: offset.Milliseconds(), direction: sessionv1.Direction_DIRECTION_INPUT}:
+	default:
 	}
 }
 
@@ -150,40 +164,65 @@ func (r *Recorder) Close() {
 
 // *** RecordingAdapter
 
-// RecordingAdapter wraps a BufferedReadWriter and intercepts Write calls to
-// forward terminal output bytes to a recording observer function.
-// The observer is called synchronously but is expected to be non-blocking
-// (e.g. a channel send with a select/default).
+// RecordingAdapter wraps a BufferedReadWriter and intercepts Write (and optionally Read)
+// calls to forward bytes to recording observer functions.
+// Both observers are called synchronously but must be non-blocking.
 type RecordingAdapter struct {
 	BufferedReadWriter
-	observe func(data []byte, offset time.Duration)
-	start   time.Time
+	observeWrite func(data []byte, offset time.Duration)
+	observeRead  func(data []byte, offset time.Duration) // nil for output-only recording
+	start        time.Time
 }
 
-// NewRecordingAdapter wraps rw, forwarding all written bytes to observe.
+// NewRecordingAdapter wraps rw, forwarding written bytes to observe.
 // start is the wall-clock session start time used to compute offsets.
 func NewRecordingAdapter(rw BufferedReadWriter, start time.Time, observe func([]byte, time.Duration)) *RecordingAdapter {
 	return &RecordingAdapter{
 		BufferedReadWriter: rw,
-		observe:            observe,
+		observeWrite:       observe,
 		start:              start,
 	}
 }
 
-// Write intercepts output bytes before forwarding to the underlying writer.
+// NewBidirectionalRecordingAdapter wraps rw, forwarding written bytes to observeWrite
+// and read bytes to observeRead, capturing both traffic directions.
+func NewBidirectionalRecordingAdapter(
+	rw BufferedReadWriter,
+	start time.Time,
+	observeWrite func([]byte, time.Duration),
+	observeRead func([]byte, time.Duration),
+) *RecordingAdapter {
+	return &RecordingAdapter{
+		BufferedReadWriter: rw,
+		observeWrite:       observeWrite,
+		observeRead:        observeRead,
+		start:              start,
+	}
+}
+
+// Write intercepts output (service→client) bytes before forwarding to the underlying writer.
 func (a *RecordingAdapter) Write(p []byte) (int, error) {
 	n, err := a.BufferedReadWriter.Write(p)
-	if n > 0 {
-		a.observe(p[:n], time.Since(a.start))
+	if n > 0 && a.observeWrite != nil {
+		a.observeWrite(p[:n], time.Since(a.start))
 	}
 	return n, err
 }
 
-// Stderr returns a writer that also intercepts output through the observer.
+// Read intercepts input (client→service) bytes after reading from the underlying reader.
+func (a *RecordingAdapter) Read(p []byte) (int, error) {
+	n, err := a.BufferedReadWriter.Read(p)
+	if n > 0 && a.observeRead != nil {
+		a.observeRead(p[:n], time.Since(a.start))
+	}
+	return n, err
+}
+
+// Stderr returns a writer that also intercepts output through the write observer.
 func (a *RecordingAdapter) Stderr() io.Writer {
 	return &recordingWriter{
 		Writer:  a.BufferedReadWriter.Stderr(),
-		observe: a.observe,
+		observe: a.observeWrite,
 		start:   a.start,
 	}
 }
@@ -441,6 +480,7 @@ func (r *Recorder) runTcpip(
 		batchData   []byte
 		batchOffset int64
 		batchLen    int
+		batchDir    sessionv1.Direction
 	)
 
 	flush := func() {
@@ -452,7 +492,7 @@ func (r *Recorder) runTcpip(
 				Chunk: &sessionv1.DataChunk{
 					TimeOffsetMs: batchOffset,
 					Data:         batchData,
-					Direction:    sessionv1.Direction_DIRECTION_OUTPUT,
+					Direction:    batchDir,
 				},
 			},
 		}); sendErr != nil {
@@ -478,8 +518,13 @@ func (r *Recorder) runTcpip(
 				continue
 			}
 
+			// Flush before switching direction so chunks are never mixed.
+			if batchLen > 0 && frame.direction != batchDir {
+				flush()
+			}
 			if batchLen == 0 {
 				batchOffset = frame.offset
+				batchDir = frame.direction
 			}
 			batchData = append(batchData, frame.data...)
 			batchLen += len(frame.data)
