@@ -161,6 +161,7 @@ var SystemService_ServiceDesc = grpc.ServiceDesc{
 const (
 	ShellService_Shell_FullMethodName          = "/k8shelld.ShellService/Shell"
 	ShellService_ResizeTerminal_FullMethodName = "/k8shelld.ShellService/ResizeTerminal"
+	ShellService_WatchShell_FullMethodName     = "/k8shelld.ShellService/WatchShell"
 )
 
 // ShellServiceClient is the client API for ShellService service.
@@ -171,6 +172,8 @@ type ShellServiceClient interface {
 	Shell(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ShellRequest, ShellResponse], error)
 	// ResizeTerminal resizes the terminal in a shell session
 	ResizeTerminal(ctx context.Context, in *ResizeTerminalRequest, opts ...grpc.CallOption) (*ResizeTerminalResponse, error)
+	// WatchShell streams filesystem and CWD notifications for a running shell session.
+	WatchShell(ctx context.Context, in *WatchShellRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[WatchShellEvent], error)
 }
 
 type shellServiceClient struct {
@@ -204,6 +207,25 @@ func (c *shellServiceClient) ResizeTerminal(ctx context.Context, in *ResizeTermi
 	return out, nil
 }
 
+func (c *shellServiceClient) WatchShell(ctx context.Context, in *WatchShellRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[WatchShellEvent], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &ShellService_ServiceDesc.Streams[1], ShellService_WatchShell_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[WatchShellRequest, WatchShellEvent]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type ShellService_WatchShellClient = grpc.ServerStreamingClient[WatchShellEvent]
+
 // ShellServiceServer is the server API for ShellService service.
 // All implementations must embed UnimplementedShellServiceServer
 // for forward compatibility.
@@ -212,6 +234,8 @@ type ShellServiceServer interface {
 	Shell(grpc.BidiStreamingServer[ShellRequest, ShellResponse]) error
 	// ResizeTerminal resizes the terminal in a shell session
 	ResizeTerminal(context.Context, *ResizeTerminalRequest) (*ResizeTerminalResponse, error)
+	// WatchShell streams filesystem and CWD notifications for a running shell session.
+	WatchShell(*WatchShellRequest, grpc.ServerStreamingServer[WatchShellEvent]) error
 	mustEmbedUnimplementedShellServiceServer()
 }
 
@@ -227,6 +251,9 @@ func (UnimplementedShellServiceServer) Shell(grpc.BidiStreamingServer[ShellReque
 }
 func (UnimplementedShellServiceServer) ResizeTerminal(context.Context, *ResizeTerminalRequest) (*ResizeTerminalResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ResizeTerminal not implemented")
+}
+func (UnimplementedShellServiceServer) WatchShell(*WatchShellRequest, grpc.ServerStreamingServer[WatchShellEvent]) error {
+	return status.Errorf(codes.Unimplemented, "method WatchShell not implemented")
 }
 func (UnimplementedShellServiceServer) mustEmbedUnimplementedShellServiceServer() {}
 func (UnimplementedShellServiceServer) testEmbeddedByValue()                      {}
@@ -274,6 +301,17 @@ func _ShellService_ResizeTerminal_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ShellService_WatchShell_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(WatchShellRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ShellServiceServer).WatchShell(m, &grpc.GenericServerStream[WatchShellRequest, WatchShellEvent]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type ShellService_WatchShellServer = grpc.ServerStreamingServer[WatchShellEvent]
+
 // ShellService_ServiceDesc is the grpc.ServiceDesc for ShellService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -292,6 +330,11 @@ var ShellService_ServiceDesc = grpc.ServiceDesc{
 			Handler:       _ShellService_Shell_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
+		},
+		{
+			StreamName:    "WatchShell",
+			Handler:       _ShellService_WatchShell_Handler,
+			ServerStreams: true,
 		},
 	},
 	Metadata: "k8shelld/v1/k8shelld.proto",

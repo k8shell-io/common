@@ -87,6 +87,9 @@ service ShellService {
 
   // ResizeTerminal resizes the terminal in a shell session
   rpc ResizeTerminal (ResizeTerminalRequest) returns (ResizeTerminalResponse);
+
+  // WatchShell streams filesystem and CWD notifications for a running shell session.
+  rpc WatchShell (WatchShellRequest) returns (stream WatchShellEvent);
 }
 
 // ShellRequest message
@@ -129,6 +132,46 @@ message ResizeTerminalRequest {
 
 // ResizeTerminalResponse message
 message ResizeTerminalResponse {
+}
+
+enum WatchShellEventType {
+  WATCH_SHELL_EVENT_TYPE_UNSPECIFIED = 0;
+  WATCH_SHELL_EVENT_TYPE_CWD         = 1;
+  WATCH_SHELL_EVENT_TYPE_FS          = 2;
+}
+
+enum FsEventType {
+  FS_EVENT_TYPE_UNSPECIFIED = 0;
+  FS_EVENT_TYPE_CREATE      = 1;
+  FS_EVENT_TYPE_DELETE      = 2;
+  FS_EVENT_TYPE_RENAME      = 3;
+  FS_EVENT_TYPE_MODIFY      = 4;
+}
+
+// WatchShellRequest message
+message WatchShellRequest {
+  repeated WatchShellEventType event_types = 1;
+}
+
+// CwdChangedEvent message
+message CwdChangedEvent {
+  string path = 1;
+}
+
+// FsEvent message
+message FsEvent {
+  string      path      = 1;
+  FsEventType type      = 2;
+  // For renames, the destination path (empty for other types)
+  string      dest_path = 3;
+}
+
+// WatchShellEvent message
+message WatchShellEvent {
+  oneof event {
+    CwdChangedEvent cwd_changed = 1;
+    FsEvent         fs_event    = 2;
+  }
 }
 
 // *** PortForwardService

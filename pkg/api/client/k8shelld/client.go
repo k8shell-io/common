@@ -327,6 +327,20 @@ func (c *K8shelld) ResizeTerminal(ctx context.Context, sessionId string, width, 
 	return err
 }
 
+// WatchShell opens a server-streaming RPC that delivers filesystem and CWD change
+// events for the shell. The returnedstream must be closed by the caller
+// (cancel the context to terminate it).
+func (c *K8shelld) WatchShell(ctx context.Context, sessionId string, eventTypes []k8shelldv1.WatchShellEventType) (k8shelldv1.ShellService_WatchShellClient, error) {
+	md := metadata.Pairs("session-id", sessionId)
+	ctx = metadata.NewOutgoingContext(ctx, md)
+
+	req := &k8shelldv1.WatchShellRequest{
+		EventTypes: eventTypes,
+	}
+
+	return c.shellClient.WatchShell(ctx, req)
+}
+
 // RunUnixSocket creates a Unix socket connection over gRPC and bridges it with the RW channel.
 func (c *K8shelld) RunUnixSocket(
 	ctx context.Context,
