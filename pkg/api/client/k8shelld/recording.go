@@ -110,6 +110,18 @@ func NewTcpipRecorder(
 	return r
 }
 
+// enqueue attempts a non-blocking send on r.ch. It recovers from the "send on
+// closed channel" panic that can occur when Close() races with an in-flight Observe
+// call, treating the channel as already drained in that case.
+func (r *Recorder) enqueue(frame recorderFrame) {
+	defer func() { recover() }() //nolint:errcheck
+	select {
+	case r.ch <- frame:
+	default:
+		// channel full — drop frame, never block the caller
+	}
+}
+
 // Observe enqueues an output (service→client) frame. Non-blocking; frames are dropped
 // if the internal channel is full to protect the SSH session goroutine.
 func (r *Recorder) Observe(data []byte, offset time.Duration) {
@@ -118,11 +130,7 @@ func (r *Recorder) Observe(data []byte, offset time.Duration) {
 	}
 	cp := make([]byte, len(data))
 	copy(cp, data)
-	select {
-	case r.ch <- recorderFrame{data: cp, offset: offset.Milliseconds(), direction: sessionv1.Direction_DIRECTION_OUTPUT}:
-	default:
-		// channel full — drop frame, never block the session
-	}
+	r.enqueue(recorderFrame{data: cp, offset: offset.Milliseconds(), direction: sessionv1.Direction_DIRECTION_OUTPUT})
 }
 
 // ObserveInput enqueues an input (client→service) frame. Non-blocking.
@@ -132,10 +140,7 @@ func (r *Recorder) ObserveInput(data []byte, offset time.Duration) {
 	}
 	cp := make([]byte, len(data))
 	copy(cp, data)
-	select {
-	case r.ch <- recorderFrame{data: cp, offset: offset.Milliseconds(), direction: sessionv1.Direction_DIRECTION_INPUT}:
-	default:
-	}
+	r.enqueue(recorderFrame{data: cp, offset: offset.Milliseconds(), direction: sessionv1.Direction_DIRECTION_INPUT})
 }
 
 // ObserveResize enqueues a terminal resize frame. Non-blocking.
@@ -143,13 +148,10 @@ func (r *Recorder) ObserveResize(width, height uint32, offset time.Duration) {
 	if r == nil {
 		return
 	}
-	select {
-	case r.ch <- recorderFrame{
+	r.enqueue(recorderFrame{
 		offset: offset.Milliseconds(),
 		resize: &recorderResizeEvent{width: width, height: height},
-	}:
-	default:
-	}
+	})
 }
 
 // Close signals the sender goroutine to drain any buffered frames and close
