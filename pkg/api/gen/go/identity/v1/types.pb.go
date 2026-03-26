@@ -462,6 +462,59 @@ func (x *AuthUserResponse) GetUser() *v1.User {
 	return nil
 }
 
+// OnboardUserDeviceFlowRequest initiates a device-flow onboarding session for the given provider.
+type OnboardUserDeviceFlowRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Provider      string                 `protobuf:"bytes,1,opt,name=provider,proto3" json:"provider,omitempty"`
+	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OnboardUserDeviceFlowRequest) Reset() {
+	*x = OnboardUserDeviceFlowRequest{}
+	mi := &file_identity_v1_types_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OnboardUserDeviceFlowRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OnboardUserDeviceFlowRequest) ProtoMessage() {}
+
+func (x *OnboardUserDeviceFlowRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_types_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OnboardUserDeviceFlowRequest.ProtoReflect.Descriptor instead.
+func (*OnboardUserDeviceFlowRequest) Descriptor() ([]byte, []int) {
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *OnboardUserDeviceFlowRequest) GetProvider() string {
+	if x != nil {
+		return x.Provider
+	}
+	return ""
+}
+
+func (x *OnboardUserDeviceFlowRequest) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
 // OnboardUserWebFlowRequest initiates a web-flow onboarding session for the given provider.
 type OnboardUserWebFlowRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -473,7 +526,7 @@ type OnboardUserWebFlowRequest struct {
 
 func (x *OnboardUserWebFlowRequest) Reset() {
 	*x = OnboardUserWebFlowRequest{}
-	mi := &file_identity_v1_types_proto_msgTypes[9]
+	mi := &file_identity_v1_types_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -485,7 +538,7 @@ func (x *OnboardUserWebFlowRequest) String() string {
 func (*OnboardUserWebFlowRequest) ProtoMessage() {}
 
 func (x *OnboardUserWebFlowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[9]
+	mi := &file_identity_v1_types_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -498,7 +551,7 @@ func (x *OnboardUserWebFlowRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OnboardUserWebFlowRequest.ProtoReflect.Descriptor instead.
 func (*OnboardUserWebFlowRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{9}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *OnboardUserWebFlowRequest) GetProvider() string {
@@ -526,7 +579,7 @@ type CompleteUserWebFlowRequest struct {
 
 func (x *CompleteUserWebFlowRequest) Reset() {
 	*x = CompleteUserWebFlowRequest{}
-	mi := &file_identity_v1_types_proto_msgTypes[10]
+	mi := &file_identity_v1_types_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -538,7 +591,7 @@ func (x *CompleteUserWebFlowRequest) String() string {
 func (*CompleteUserWebFlowRequest) ProtoMessage() {}
 
 func (x *CompleteUserWebFlowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[10]
+	mi := &file_identity_v1_types_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -551,7 +604,7 @@ func (x *CompleteUserWebFlowRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CompleteUserWebFlowRequest.ProtoReflect.Descriptor instead.
 func (*CompleteUserWebFlowRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{10}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *CompleteUserWebFlowRequest) GetState() string {
@@ -578,7 +631,7 @@ type GetBlueprintByUserStrResponse struct {
 
 func (x *GetBlueprintByUserStrResponse) Reset() {
 	*x = GetBlueprintByUserStrResponse{}
-	mi := &file_identity_v1_types_proto_msgTypes[11]
+	mi := &file_identity_v1_types_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -590,7 +643,7 @@ func (x *GetBlueprintByUserStrResponse) String() string {
 func (*GetBlueprintByUserStrResponse) ProtoMessage() {}
 
 func (x *GetBlueprintByUserStrResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[11]
+	mi := &file_identity_v1_types_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -603,7 +656,7 @@ func (x *GetBlueprintByUserStrResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetBlueprintByUserStrResponse.ProtoReflect.Descriptor instead.
 func (*GetBlueprintByUserStrResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{11}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *GetBlueprintByUserStrResponse) GetBlueprint() string {
@@ -626,7 +679,7 @@ type RepoPullRequestRequest struct {
 
 func (x *RepoPullRequestRequest) Reset() {
 	*x = RepoPullRequestRequest{}
-	mi := &file_identity_v1_types_proto_msgTypes[12]
+	mi := &file_identity_v1_types_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -638,7 +691,7 @@ func (x *RepoPullRequestRequest) String() string {
 func (*RepoPullRequestRequest) ProtoMessage() {}
 
 func (x *RepoPullRequestRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[12]
+	mi := &file_identity_v1_types_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -651,7 +704,7 @@ func (x *RepoPullRequestRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RepoPullRequestRequest.ProtoReflect.Descriptor instead.
 func (*RepoPullRequestRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{12}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *RepoPullRequestRequest) GetUsername() string {
@@ -692,7 +745,7 @@ type RepoRefResponse struct {
 
 func (x *RepoRefResponse) Reset() {
 	*x = RepoRefResponse{}
-	mi := &file_identity_v1_types_proto_msgTypes[13]
+	mi := &file_identity_v1_types_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -704,7 +757,7 @@ func (x *RepoRefResponse) String() string {
 func (*RepoRefResponse) ProtoMessage() {}
 
 func (x *RepoRefResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[13]
+	mi := &file_identity_v1_types_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -717,7 +770,7 @@ func (x *RepoRefResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RepoRefResponse.ProtoReflect.Descriptor instead.
 func (*RepoRefResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{13}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *RepoRefResponse) GetRepoRef() string {
@@ -754,7 +807,10 @@ const file_identity_v1_types_proto_rawDesc = "" +
 	"public_key\x18\x02 \x01(\tR\tpublicKey\"M\n" +
 	"\x10AuthUserResponse\x12\x14\n" +
 	"\x05valid\x18\x01 \x01(\bR\x05valid\x12#\n" +
-	"\x04user\x18\x02 \x01(\v2\x0f.common.v1.UserR\x04user\"Z\n" +
+	"\x04user\x18\x02 \x01(\v2\x0f.common.v1.UserR\x04user\"V\n" +
+	"\x1cOnboardUserDeviceFlowRequest\x12\x1a\n" +
+	"\bprovider\x18\x01 \x01(\tR\bprovider\x12\x1a\n" +
+	"\busername\x18\x02 \x01(\tR\busername\"Z\n" +
 	"\x19OnboardUserWebFlowRequest\x12\x1a\n" +
 	"\bprovider\x18\x01 \x01(\tR\bprovider\x12!\n" +
 	"\fredirect_uri\x18\x02 \x01(\tR\vredirectUri\"F\n" +
@@ -784,7 +840,7 @@ func file_identity_v1_types_proto_rawDescGZIP() []byte {
 	return file_identity_v1_types_proto_rawDescData
 }
 
-var file_identity_v1_types_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_identity_v1_types_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_identity_v1_types_proto_goTypes = []any{
 	(*Username)(nil),                      // 0: identity.v1.Username
 	(*UserStr)(nil),                       // 1: identity.v1.UserStr
@@ -795,17 +851,18 @@ var file_identity_v1_types_proto_goTypes = []any{
 	(*GetUsersResponse)(nil),              // 6: identity.v1.GetUsersResponse
 	(*AuthUserPublicKeyRequest)(nil),      // 7: identity.v1.AuthUserPublicKeyRequest
 	(*AuthUserResponse)(nil),              // 8: identity.v1.AuthUserResponse
-	(*OnboardUserWebFlowRequest)(nil),     // 9: identity.v1.OnboardUserWebFlowRequest
-	(*CompleteUserWebFlowRequest)(nil),    // 10: identity.v1.CompleteUserWebFlowRequest
-	(*GetBlueprintByUserStrResponse)(nil), // 11: identity.v1.GetBlueprintByUserStrResponse
-	(*RepoPullRequestRequest)(nil),        // 12: identity.v1.RepoPullRequestRequest
-	(*RepoRefResponse)(nil),               // 13: identity.v1.RepoRefResponse
-	(*v1.User)(nil),                       // 14: common.v1.User
+	(*OnboardUserDeviceFlowRequest)(nil),  // 9: identity.v1.OnboardUserDeviceFlowRequest
+	(*OnboardUserWebFlowRequest)(nil),     // 10: identity.v1.OnboardUserWebFlowRequest
+	(*CompleteUserWebFlowRequest)(nil),    // 11: identity.v1.CompleteUserWebFlowRequest
+	(*GetBlueprintByUserStrResponse)(nil), // 12: identity.v1.GetBlueprintByUserStrResponse
+	(*RepoPullRequestRequest)(nil),        // 13: identity.v1.RepoPullRequestRequest
+	(*RepoRefResponse)(nil),               // 14: identity.v1.RepoRefResponse
+	(*v1.User)(nil),                       // 15: common.v1.User
 }
 var file_identity_v1_types_proto_depIdxs = []int32{
-	14, // 0: identity.v1.UserList.users:type_name -> common.v1.User
-	14, // 1: identity.v1.GetUsersResponse.users:type_name -> common.v1.User
-	14, // 2: identity.v1.AuthUserResponse.user:type_name -> common.v1.User
+	15, // 0: identity.v1.UserList.users:type_name -> common.v1.User
+	15, // 1: identity.v1.GetUsersResponse.users:type_name -> common.v1.User
+	15, // 2: identity.v1.AuthUserResponse.user:type_name -> common.v1.User
 	3,  // [3:3] is the sub-list for method output_type
 	3,  // [3:3] is the sub-list for method input_type
 	3,  // [3:3] is the sub-list for extension type_name
@@ -824,7 +881,7 @@ func file_identity_v1_types_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_identity_v1_types_proto_rawDesc), len(file_identity_v1_types_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   14,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

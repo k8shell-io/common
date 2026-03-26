@@ -49,7 +49,7 @@ type IdentityProviderServiceClient interface {
 	// OnboardCapability returns the onboarding capability details for a user.
 	OnboardUserCapability(ctx context.Context, in *Username, opts ...grpc.CallOption) (*v1.UserOnboardCapability, error)
 	// OnboardUserDeviceFlow initiates the device flow onboarding process for a user.
-	OnboardUserDeviceFlow(ctx context.Context, in *Username, opts ...grpc.CallOption) (*v1.OnboardUserDeviceFlow, error)
+	OnboardUserDeviceFlow(ctx context.Context, in *OnboardUserDeviceFlowRequest, opts ...grpc.CallOption) (*v1.OnboardUserDeviceFlow, error)
 	// OnboardUserWebFlow initiates the web flow onboarding process for a user.
 	OnboardUserWebFlow(ctx context.Context, in *OnboardUserWebFlowRequest, opts ...grpc.CallOption) (*v1.OnboardUserWebFlow, error)
 	// CompleteUserWebFlow completes the web flow onboarding process using the provided state and code.
@@ -102,7 +102,7 @@ func (c *identityProviderServiceClient) OnboardUserCapability(ctx context.Contex
 	return out, nil
 }
 
-func (c *identityProviderServiceClient) OnboardUserDeviceFlow(ctx context.Context, in *Username, opts ...grpc.CallOption) (*v1.OnboardUserDeviceFlow, error) {
+func (c *identityProviderServiceClient) OnboardUserDeviceFlow(ctx context.Context, in *OnboardUserDeviceFlowRequest, opts ...grpc.CallOption) (*v1.OnboardUserDeviceFlow, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(v1.OnboardUserDeviceFlow)
 	err := c.cc.Invoke(ctx, IdentityProviderService_OnboardUserDeviceFlow_FullMethodName, in, out, cOpts...)
@@ -186,7 +186,7 @@ type IdentityProviderServiceServer interface {
 	// OnboardCapability returns the onboarding capability details for a user.
 	OnboardUserCapability(context.Context, *Username) (*v1.UserOnboardCapability, error)
 	// OnboardUserDeviceFlow initiates the device flow onboarding process for a user.
-	OnboardUserDeviceFlow(context.Context, *Username) (*v1.OnboardUserDeviceFlow, error)
+	OnboardUserDeviceFlow(context.Context, *OnboardUserDeviceFlowRequest) (*v1.OnboardUserDeviceFlow, error)
 	// OnboardUserWebFlow initiates the web flow onboarding process for a user.
 	OnboardUserWebFlow(context.Context, *OnboardUserWebFlowRequest) (*v1.OnboardUserWebFlow, error)
 	// CompleteUserWebFlow completes the web flow onboarding process using the provided state and code.
@@ -218,7 +218,7 @@ func (UnimplementedIdentityProviderServiceServer) FindUser(context.Context, *Fin
 func (UnimplementedIdentityProviderServiceServer) OnboardUserCapability(context.Context, *Username) (*v1.UserOnboardCapability, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method OnboardUserCapability not implemented")
 }
-func (UnimplementedIdentityProviderServiceServer) OnboardUserDeviceFlow(context.Context, *Username) (*v1.OnboardUserDeviceFlow, error) {
+func (UnimplementedIdentityProviderServiceServer) OnboardUserDeviceFlow(context.Context, *OnboardUserDeviceFlowRequest) (*v1.OnboardUserDeviceFlow, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method OnboardUserDeviceFlow not implemented")
 }
 func (UnimplementedIdentityProviderServiceServer) OnboardUserWebFlow(context.Context, *OnboardUserWebFlowRequest) (*v1.OnboardUserWebFlow, error) {
@@ -316,7 +316,7 @@ func _IdentityProviderService_OnboardUserCapability_Handler(srv interface{}, ctx
 }
 
 func _IdentityProviderService_OnboardUserDeviceFlow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Username)
+	in := new(OnboardUserDeviceFlowRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -328,7 +328,7 @@ func _IdentityProviderService_OnboardUserDeviceFlow_Handler(srv interface{}, ctx
 		FullMethod: IdentityProviderService_OnboardUserDeviceFlow_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IdentityProviderServiceServer).OnboardUserDeviceFlow(ctx, req.(*Username))
+		return srv.(IdentityProviderServiceServer).OnboardUserDeviceFlow(ctx, req.(*OnboardUserDeviceFlowRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

@@ -26,7 +26,7 @@ service IdentityService {
   rpc GetUserOnboardCapability (Username) returns (common.v1.UserOnboardCapability);
 
   // OnboardUserDeviceFlow initiates the device flow onboarding process for a user.
-  rpc OnboardUserDeviceFlow (Username) returns (common.v1.OnboardUserDeviceFlow);
+  rpc OnboardUserDeviceFlow (OnboardUserDeviceFlowRequest) returns (common.v1.OnboardUserDeviceFlow);
 
   // OnboardUserWebFlow initiates the web flow onboarding process for a user.
   rpc OnboardUserWebFlow (OnboardUserWebFlowRequest) returns (common.v1.OnboardUserWebFlow);

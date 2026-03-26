@@ -362,13 +362,13 @@ const file_identity_v1_identity_proto_rawDesc = "" +
 	"\x1bDeleteUserCredentialRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\rR\x02id\"8\n" +
 	"\x1cDeleteUserCredentialResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess2\xca\t\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess2\xde\t\n" +
 	"\x0fIdentityService\x129\n" +
 	"\bFindUser\x12\x1c.identity.v1.FindUserRequest\x1a\x0f.common.v1.User\x12?\n" +
 	"\bGetUsers\x12\x1c.identity.v1.GetUsersRequest\x1a\x15.identity.v1.UserList\x12e\n" +
 	"\x12GetUserAccessToken\x12&.identity.v1.GetUserAccessTokenRequest\x1a'.identity.v1.GetUserAccessTokenResponse\x12S\n" +
-	"\x18GetUserOnboardCapability\x12\x15.identity.v1.Username\x1a .common.v1.UserOnboardCapability\x12P\n" +
-	"\x15OnboardUserDeviceFlow\x12\x15.identity.v1.Username\x1a .common.v1.OnboardUserDeviceFlow\x12[\n" +
+	"\x18GetUserOnboardCapability\x12\x15.identity.v1.Username\x1a .common.v1.UserOnboardCapability\x12d\n" +
+	"\x15OnboardUserDeviceFlow\x12).identity.v1.OnboardUserDeviceFlowRequest\x1a .common.v1.OnboardUserDeviceFlow\x12[\n" +
 	"\x12OnboardUserWebFlow\x12&.identity.v1.OnboardUserWebFlowRequest\x1a\x1d.common.v1.OnboardUserWebFlow\x12O\n" +
 	"\x13CompleteUserWebFlow\x12'.identity.v1.CompleteUserWebFlowRequest\x1a\x0f.common.v1.User\x12Y\n" +
 	"\x11AuthUserPublicKey\x12%.identity.v1.AuthUserPublicKeyRequest\x1a\x1d.identity.v1.AuthUserResponse\x12E\n" +
@@ -404,19 +404,20 @@ var file_identity_v1_identity_proto_goTypes = []any{
 	(*FindUserRequest)(nil),              // 8: identity.v1.FindUserRequest
 	(*GetUsersRequest)(nil),              // 9: identity.v1.GetUsersRequest
 	(*Username)(nil),                     // 10: identity.v1.Username
-	(*OnboardUserWebFlowRequest)(nil),    // 11: identity.v1.OnboardUserWebFlowRequest
-	(*CompleteUserWebFlowRequest)(nil),   // 12: identity.v1.CompleteUserWebFlowRequest
-	(*AuthUserPublicKeyRequest)(nil),     // 13: identity.v1.AuthUserPublicKeyRequest
-	(*UserStr)(nil),                      // 14: identity.v1.UserStr
-	(*RepoPullRequestRequest)(nil),       // 15: identity.v1.RepoPullRequestRequest
-	(*v1.User)(nil),                      // 16: common.v1.User
-	(*UserList)(nil),                     // 17: identity.v1.UserList
-	(*v1.UserOnboardCapability)(nil),     // 18: common.v1.UserOnboardCapability
-	(*v1.OnboardUserDeviceFlow)(nil),     // 19: common.v1.OnboardUserDeviceFlow
-	(*v1.OnboardUserWebFlow)(nil),        // 20: common.v1.OnboardUserWebFlow
-	(*AuthUserResponse)(nil),             // 21: identity.v1.AuthUserResponse
-	(*Blueprint)(nil),                    // 22: identity.v1.Blueprint
-	(*RepoRefResponse)(nil),              // 23: identity.v1.RepoRefResponse
+	(*OnboardUserDeviceFlowRequest)(nil), // 11: identity.v1.OnboardUserDeviceFlowRequest
+	(*OnboardUserWebFlowRequest)(nil),    // 12: identity.v1.OnboardUserWebFlowRequest
+	(*CompleteUserWebFlowRequest)(nil),   // 13: identity.v1.CompleteUserWebFlowRequest
+	(*AuthUserPublicKeyRequest)(nil),     // 14: identity.v1.AuthUserPublicKeyRequest
+	(*UserStr)(nil),                      // 15: identity.v1.UserStr
+	(*RepoPullRequestRequest)(nil),       // 16: identity.v1.RepoPullRequestRequest
+	(*v1.User)(nil),                      // 17: common.v1.User
+	(*UserList)(nil),                     // 18: identity.v1.UserList
+	(*v1.UserOnboardCapability)(nil),     // 19: common.v1.UserOnboardCapability
+	(*v1.OnboardUserDeviceFlow)(nil),     // 20: common.v1.OnboardUserDeviceFlow
+	(*v1.OnboardUserWebFlow)(nil),        // 21: common.v1.OnboardUserWebFlow
+	(*AuthUserResponse)(nil),             // 22: identity.v1.AuthUserResponse
+	(*Blueprint)(nil),                    // 23: identity.v1.Blueprint
+	(*RepoRefResponse)(nil),              // 24: identity.v1.RepoRefResponse
 }
 var file_identity_v1_identity_proto_depIdxs = []int32{
 	7,  // 0: identity.v1.GetUserCredentialsResponse.credentials:type_name -> common.v1.ExternalCredential
@@ -426,26 +427,26 @@ var file_identity_v1_identity_proto_depIdxs = []int32{
 	9,  // 4: identity.v1.IdentityService.GetUsers:input_type -> identity.v1.GetUsersRequest
 	0,  // 5: identity.v1.IdentityService.GetUserAccessToken:input_type -> identity.v1.GetUserAccessTokenRequest
 	10, // 6: identity.v1.IdentityService.GetUserOnboardCapability:input_type -> identity.v1.Username
-	10, // 7: identity.v1.IdentityService.OnboardUserDeviceFlow:input_type -> identity.v1.Username
-	11, // 8: identity.v1.IdentityService.OnboardUserWebFlow:input_type -> identity.v1.OnboardUserWebFlowRequest
-	12, // 9: identity.v1.IdentityService.CompleteUserWebFlow:input_type -> identity.v1.CompleteUserWebFlowRequest
-	13, // 10: identity.v1.IdentityService.AuthUserPublicKey:input_type -> identity.v1.AuthUserPublicKeyRequest
-	14, // 11: identity.v1.IdentityService.GetBlueprintByUserStr:input_type -> identity.v1.UserStr
-	15, // 12: identity.v1.IdentityService.ResolvePullRequestToRef:input_type -> identity.v1.RepoPullRequestRequest
+	11, // 7: identity.v1.IdentityService.OnboardUserDeviceFlow:input_type -> identity.v1.OnboardUserDeviceFlowRequest
+	12, // 8: identity.v1.IdentityService.OnboardUserWebFlow:input_type -> identity.v1.OnboardUserWebFlowRequest
+	13, // 9: identity.v1.IdentityService.CompleteUserWebFlow:input_type -> identity.v1.CompleteUserWebFlowRequest
+	14, // 10: identity.v1.IdentityService.AuthUserPublicKey:input_type -> identity.v1.AuthUserPublicKeyRequest
+	15, // 11: identity.v1.IdentityService.GetBlueprintByUserStr:input_type -> identity.v1.UserStr
+	16, // 12: identity.v1.IdentityService.ResolvePullRequestToRef:input_type -> identity.v1.RepoPullRequestRequest
 	10, // 13: identity.v1.IdentityService.GetUserCredentials:input_type -> identity.v1.Username
 	7,  // 14: identity.v1.IdentityService.AddUserCredential:input_type -> common.v1.ExternalCredential
 	7,  // 15: identity.v1.IdentityService.UpdateUserCredential:input_type -> common.v1.ExternalCredential
 	5,  // 16: identity.v1.IdentityService.DeleteUserCredential:input_type -> identity.v1.DeleteUserCredentialRequest
-	16, // 17: identity.v1.IdentityService.FindUser:output_type -> common.v1.User
-	17, // 18: identity.v1.IdentityService.GetUsers:output_type -> identity.v1.UserList
+	17, // 17: identity.v1.IdentityService.FindUser:output_type -> common.v1.User
+	18, // 18: identity.v1.IdentityService.GetUsers:output_type -> identity.v1.UserList
 	1,  // 19: identity.v1.IdentityService.GetUserAccessToken:output_type -> identity.v1.GetUserAccessTokenResponse
-	18, // 20: identity.v1.IdentityService.GetUserOnboardCapability:output_type -> common.v1.UserOnboardCapability
-	19, // 21: identity.v1.IdentityService.OnboardUserDeviceFlow:output_type -> common.v1.OnboardUserDeviceFlow
-	20, // 22: identity.v1.IdentityService.OnboardUserWebFlow:output_type -> common.v1.OnboardUserWebFlow
-	16, // 23: identity.v1.IdentityService.CompleteUserWebFlow:output_type -> common.v1.User
-	21, // 24: identity.v1.IdentityService.AuthUserPublicKey:output_type -> identity.v1.AuthUserResponse
-	22, // 25: identity.v1.IdentityService.GetBlueprintByUserStr:output_type -> identity.v1.Blueprint
-	23, // 26: identity.v1.IdentityService.ResolvePullRequestToRef:output_type -> identity.v1.RepoRefResponse
+	19, // 20: identity.v1.IdentityService.GetUserOnboardCapability:output_type -> common.v1.UserOnboardCapability
+	20, // 21: identity.v1.IdentityService.OnboardUserDeviceFlow:output_type -> common.v1.OnboardUserDeviceFlow
+	21, // 22: identity.v1.IdentityService.OnboardUserWebFlow:output_type -> common.v1.OnboardUserWebFlow
+	17, // 23: identity.v1.IdentityService.CompleteUserWebFlow:output_type -> common.v1.User
+	22, // 24: identity.v1.IdentityService.AuthUserPublicKey:output_type -> identity.v1.AuthUserResponse
+	23, // 25: identity.v1.IdentityService.GetBlueprintByUserStr:output_type -> identity.v1.Blueprint
+	24, // 26: identity.v1.IdentityService.ResolvePullRequestToRef:output_type -> identity.v1.RepoRefResponse
 	2,  // 27: identity.v1.IdentityService.GetUserCredentials:output_type -> identity.v1.GetUserCredentialsResponse
 	3,  // 28: identity.v1.IdentityService.AddUserCredential:output_type -> identity.v1.AddUserCredentialResponse
 	4,  // 29: identity.v1.IdentityService.UpdateUserCredential:output_type -> identity.v1.UpdateUserCredentialResponse

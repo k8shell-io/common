@@ -189,12 +189,12 @@ const file_identity_v1_idp_proto_rawDesc = "" +
 	"userMaxAge\x12\x18\n" +
 	"\aaddress\x18\x04 \x01(\tR\aaddress\"!\n" +
 	"\tUserToken\x12\x14\n" +
-	"\x05token\x18\x01 \x01(\tR\x05token2\xba\x06\n" +
+	"\x05token\x18\x01 \x01(\tR\x05token2\xce\x06\n" +
 	"\x17IdentityProviderService\x12S\n" +
 	"\fProviderInfo\x12 .identity.v1.ProviderInfoRequest\x1a!.identity.v1.ProviderInfoResponse\x129\n" +
 	"\bFindUser\x12\x1c.identity.v1.FindUserRequest\x1a\x0f.common.v1.User\x12P\n" +
-	"\x15OnboardUserCapability\x12\x15.identity.v1.Username\x1a .common.v1.UserOnboardCapability\x12P\n" +
-	"\x15OnboardUserDeviceFlow\x12\x15.identity.v1.Username\x1a .common.v1.OnboardUserDeviceFlow\x12[\n" +
+	"\x15OnboardUserCapability\x12\x15.identity.v1.Username\x1a .common.v1.UserOnboardCapability\x12d\n" +
+	"\x15OnboardUserDeviceFlow\x12).identity.v1.OnboardUserDeviceFlowRequest\x1a .common.v1.OnboardUserDeviceFlow\x12[\n" +
 	"\x12OnboardUserWebFlow\x12&.identity.v1.OnboardUserWebFlowRequest\x1a\x1d.common.v1.OnboardUserWebFlow\x12O\n" +
 	"\x13CompleteUserWebFlow\x12'.identity.v1.CompleteUserWebFlowRequest\x1a\x0f.common.v1.User\x12Y\n" +
 	"\x11AuthUserPublicKey\x12%.identity.v1.AuthUserPublicKeyRequest\x1a\x1d.identity.v1.AuthUserResponse\x12=\n" +
@@ -216,45 +216,46 @@ func file_identity_v1_idp_proto_rawDescGZIP() []byte {
 
 var file_identity_v1_idp_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_identity_v1_idp_proto_goTypes = []any{
-	(*ProviderInfoRequest)(nil),        // 0: identity.v1.ProviderInfoRequest
-	(*ProviderInfoResponse)(nil),       // 1: identity.v1.ProviderInfoResponse
-	(*UserToken)(nil),                  // 2: identity.v1.UserToken
-	(*FindUserRequest)(nil),            // 3: identity.v1.FindUserRequest
-	(*Username)(nil),                   // 4: identity.v1.Username
-	(*OnboardUserWebFlowRequest)(nil),  // 5: identity.v1.OnboardUserWebFlowRequest
-	(*CompleteUserWebFlowRequest)(nil), // 6: identity.v1.CompleteUserWebFlowRequest
-	(*AuthUserPublicKeyRequest)(nil),   // 7: identity.v1.AuthUserPublicKeyRequest
-	(*UserStr)(nil),                    // 8: identity.v1.UserStr
-	(*RepoPullRequestRequest)(nil),     // 9: identity.v1.RepoPullRequestRequest
-	(*v1.User)(nil),                    // 10: common.v1.User
-	(*v1.UserOnboardCapability)(nil),   // 11: common.v1.UserOnboardCapability
-	(*v1.OnboardUserDeviceFlow)(nil),   // 12: common.v1.OnboardUserDeviceFlow
-	(*v1.OnboardUserWebFlow)(nil),      // 13: common.v1.OnboardUserWebFlow
-	(*AuthUserResponse)(nil),           // 14: identity.v1.AuthUserResponse
-	(*Blueprint)(nil),                  // 15: identity.v1.Blueprint
-	(*RepoRefResponse)(nil),            // 16: identity.v1.RepoRefResponse
+	(*ProviderInfoRequest)(nil),          // 0: identity.v1.ProviderInfoRequest
+	(*ProviderInfoResponse)(nil),         // 1: identity.v1.ProviderInfoResponse
+	(*UserToken)(nil),                    // 2: identity.v1.UserToken
+	(*FindUserRequest)(nil),              // 3: identity.v1.FindUserRequest
+	(*Username)(nil),                     // 4: identity.v1.Username
+	(*OnboardUserDeviceFlowRequest)(nil), // 5: identity.v1.OnboardUserDeviceFlowRequest
+	(*OnboardUserWebFlowRequest)(nil),    // 6: identity.v1.OnboardUserWebFlowRequest
+	(*CompleteUserWebFlowRequest)(nil),   // 7: identity.v1.CompleteUserWebFlowRequest
+	(*AuthUserPublicKeyRequest)(nil),     // 8: identity.v1.AuthUserPublicKeyRequest
+	(*UserStr)(nil),                      // 9: identity.v1.UserStr
+	(*RepoPullRequestRequest)(nil),       // 10: identity.v1.RepoPullRequestRequest
+	(*v1.User)(nil),                      // 11: common.v1.User
+	(*v1.UserOnboardCapability)(nil),     // 12: common.v1.UserOnboardCapability
+	(*v1.OnboardUserDeviceFlow)(nil),     // 13: common.v1.OnboardUserDeviceFlow
+	(*v1.OnboardUserWebFlow)(nil),        // 14: common.v1.OnboardUserWebFlow
+	(*AuthUserResponse)(nil),             // 15: identity.v1.AuthUserResponse
+	(*Blueprint)(nil),                    // 16: identity.v1.Blueprint
+	(*RepoRefResponse)(nil),              // 17: identity.v1.RepoRefResponse
 }
 var file_identity_v1_idp_proto_depIdxs = []int32{
 	0,  // 0: identity.v1.IdentityProviderService.ProviderInfo:input_type -> identity.v1.ProviderInfoRequest
 	3,  // 1: identity.v1.IdentityProviderService.FindUser:input_type -> identity.v1.FindUserRequest
 	4,  // 2: identity.v1.IdentityProviderService.OnboardUserCapability:input_type -> identity.v1.Username
-	4,  // 3: identity.v1.IdentityProviderService.OnboardUserDeviceFlow:input_type -> identity.v1.Username
-	5,  // 4: identity.v1.IdentityProviderService.OnboardUserWebFlow:input_type -> identity.v1.OnboardUserWebFlowRequest
-	6,  // 5: identity.v1.IdentityProviderService.CompleteUserWebFlow:input_type -> identity.v1.CompleteUserWebFlowRequest
-	7,  // 6: identity.v1.IdentityProviderService.AuthUserPublicKey:input_type -> identity.v1.AuthUserPublicKeyRequest
+	5,  // 3: identity.v1.IdentityProviderService.OnboardUserDeviceFlow:input_type -> identity.v1.OnboardUserDeviceFlowRequest
+	6,  // 4: identity.v1.IdentityProviderService.OnboardUserWebFlow:input_type -> identity.v1.OnboardUserWebFlowRequest
+	7,  // 5: identity.v1.IdentityProviderService.CompleteUserWebFlow:input_type -> identity.v1.CompleteUserWebFlowRequest
+	8,  // 6: identity.v1.IdentityProviderService.AuthUserPublicKey:input_type -> identity.v1.AuthUserPublicKeyRequest
 	4,  // 7: identity.v1.IdentityProviderService.GetUserToken:input_type -> identity.v1.Username
-	8,  // 8: identity.v1.IdentityProviderService.GetBlueprintByUserStr:input_type -> identity.v1.UserStr
-	9,  // 9: identity.v1.IdentityProviderService.ResolvePullRequestToRef:input_type -> identity.v1.RepoPullRequestRequest
+	9,  // 8: identity.v1.IdentityProviderService.GetBlueprintByUserStr:input_type -> identity.v1.UserStr
+	10, // 9: identity.v1.IdentityProviderService.ResolvePullRequestToRef:input_type -> identity.v1.RepoPullRequestRequest
 	1,  // 10: identity.v1.IdentityProviderService.ProviderInfo:output_type -> identity.v1.ProviderInfoResponse
-	10, // 11: identity.v1.IdentityProviderService.FindUser:output_type -> common.v1.User
-	11, // 12: identity.v1.IdentityProviderService.OnboardUserCapability:output_type -> common.v1.UserOnboardCapability
-	12, // 13: identity.v1.IdentityProviderService.OnboardUserDeviceFlow:output_type -> common.v1.OnboardUserDeviceFlow
-	13, // 14: identity.v1.IdentityProviderService.OnboardUserWebFlow:output_type -> common.v1.OnboardUserWebFlow
-	10, // 15: identity.v1.IdentityProviderService.CompleteUserWebFlow:output_type -> common.v1.User
-	14, // 16: identity.v1.IdentityProviderService.AuthUserPublicKey:output_type -> identity.v1.AuthUserResponse
+	11, // 11: identity.v1.IdentityProviderService.FindUser:output_type -> common.v1.User
+	12, // 12: identity.v1.IdentityProviderService.OnboardUserCapability:output_type -> common.v1.UserOnboardCapability
+	13, // 13: identity.v1.IdentityProviderService.OnboardUserDeviceFlow:output_type -> common.v1.OnboardUserDeviceFlow
+	14, // 14: identity.v1.IdentityProviderService.OnboardUserWebFlow:output_type -> common.v1.OnboardUserWebFlow
+	11, // 15: identity.v1.IdentityProviderService.CompleteUserWebFlow:output_type -> common.v1.User
+	15, // 16: identity.v1.IdentityProviderService.AuthUserPublicKey:output_type -> identity.v1.AuthUserResponse
 	2,  // 17: identity.v1.IdentityProviderService.GetUserToken:output_type -> identity.v1.UserToken
-	15, // 18: identity.v1.IdentityProviderService.GetBlueprintByUserStr:output_type -> identity.v1.Blueprint
-	16, // 19: identity.v1.IdentityProviderService.ResolvePullRequestToRef:output_type -> identity.v1.RepoRefResponse
+	16, // 18: identity.v1.IdentityProviderService.GetBlueprintByUserStr:output_type -> identity.v1.Blueprint
+	17, // 19: identity.v1.IdentityProviderService.ResolvePullRequestToRef:output_type -> identity.v1.RepoRefResponse
 	10, // [10:20] is the sub-list for method output_type
 	0,  // [0:10] is the sub-list for method input_type
 	0,  // [0:0] is the sub-list for extension type_name

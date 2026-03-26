@@ -58,6 +58,12 @@ message AuthUserResponse {
   common.v1.User  user  = 2;
 }
 
+// OnboardUserDeviceFlowRequest initiates a device-flow onboarding session for the given provider.
+message OnboardUserDeviceFlowRequest {
+  string provider     = 1;
+  string username     = 2;
+}
+
 // OnboardUserWebFlowRequest initiates a web-flow onboarding session for the given provider.
 message OnboardUserWebFlowRequest {
   string provider     = 1;
