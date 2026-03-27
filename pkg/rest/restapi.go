@@ -12,7 +12,6 @@ import (
 
 	"github.com/k8shell-io/common/pkg/authz"
 	"github.com/k8shell-io/common/pkg/logger"
-	"github.com/k8shell-io/common/pkg/models"
 	"github.com/rs/zerolog"
 
 	"github.com/gin-gonic/gin"
@@ -34,7 +33,6 @@ type HTTPLoggingConfig struct {
 
 type Handler interface {
 	InitializeRoutes(r *gin.Engine)
-	GetUser(ctx context.Context, token string) (*models.User, error)
 	GetUserToken(ctx context.Context, username string) (string, error)
 }
 
