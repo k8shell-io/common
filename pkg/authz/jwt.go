@@ -431,3 +431,17 @@ func (v *JWTVerifier) VerifyToken(tokenStr string) (*UserClaims, error) {
 		return nil, fmt.Errorf("jwt: verify token: %w", err)
 	}
 }
+
+// ParseUnverifiedClaims decodes the claims from tokenStr without verifying
+// the signature or validating any registered claims (exp, iss, aud, etc.).
+// Use this only where the token has already been verified by another means,
+// or when you need to inspect claims (e.g. check expiry) before a full verify.
+func ParseUnverifiedClaims(tokenStr string) (*UserClaims, error) {
+	p := jwt.NewParser()
+	var claims UserClaims
+	_, _, err := p.ParseUnverified(tokenStr, &claims)
+	if err != nil {
+		return nil, fmt.Errorf("jwt: parse unverified claims: %w", err)
+	}
+	return &claims, nil
+}

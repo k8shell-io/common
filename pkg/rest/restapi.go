@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/k8shell-io/common/pkg/authz"
 	"github.com/k8shell-io/common/pkg/logger"
 	"github.com/k8shell-io/common/pkg/models"
 	"github.com/rs/zerolog"
@@ -34,6 +35,7 @@ type HTTPLoggingConfig struct {
 type Handler interface {
 	InitializeRoutes(r *gin.Engine)
 	GetUser(ctx context.Context, token string) (*models.User, error)
+	GetUserToken(ctx context.Context, username string) (string, error)
 }
 
 // RESTApiService represents the REST API service
@@ -78,6 +80,43 @@ func NewRESTAPI(httpConfig HTTPConfig, handler Handler) (*RESTAPI, error) {
 	}
 
 	return a, nil
+}
+
+func (a *RESTAPI) ensureUserClaims(c *gin.Context) (string, *authz.UserClaims, error) {
+	sess, err := MustGetSessionFromContext(c)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to get session: %w", err)
+	}
+
+	var token string
+	if v, ok := sess.Get("user_token"); ok {
+		if s, ok := v.(string); ok && s != "" {
+			token = s
+		}
+	}
+	if token == "" {
+		return "", nil, fmt.Errorf("no user token in session")
+	}
+
+	claims, err := authz.ParseUnverifiedClaims(token)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to parse token claims from user token in the session: %w", err)
+	}
+
+	if claims.ExpiresAt != nil && time.Until(claims.ExpiresAt.Time) < 0 {
+		token, err = a.GetUserToken(c.Request.Context(), claims.Subject)
+		if err != nil {
+			return "", nil, fmt.Errorf("failed to update user token for username %s: %w", claims.Subject, err)
+		}
+		claims, err = authz.ParseUnverifiedClaims(token)
+		if err != nil {
+			return "", nil, fmt.Errorf("failed to parse token claims from user token in the session: %w", err)
+		}
+		sess.Set("user_token", token)
+	}
+
+	c.Set("user_claims", claims)
+	return token, claims, nil
 }
 
 func (a *RESTAPI) LoggingMiddleware() gin.HandlerFunc {
@@ -140,47 +179,24 @@ func (a *RESTAPI) SessionTelemetryMiddleware() gin.HandlerFunc {
 // It checks for a Bearer token in the Authorization header or a token stored in the session.
 func (a *RESTAPI) AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		ctx := c.Request.Context()
-
-		var token string
+		var headerToken string
 		if authHeader := c.GetHeader("Authorization"); authHeader != "" {
 			parts := strings.SplitN(authHeader, " ", 2)
 			if len(parts) == 2 && strings.EqualFold(parts[0], "bearer") && parts[1] != "" {
-				token = parts[1]
+				headerToken = parts[1]
 				c.Set("use_cookie", false)
 			}
 		} else {
 			c.Set("use_cookie", true)
 		}
 
-		if token == "" {
-			sess, err := MustGetSessionFromContext(c)
-			if err != nil {
-				c.JSON(500, gin.H{"error": "failed to get session"})
-				return
-			}
-			if v, ok := sess.Get("user_token"); ok {
-				if s, ok := v.(string); ok && s != "" {
-					token = s
-				}
-			}
-		}
-
-		if token == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"status": http.StatusUnauthorized,
-				"msg": "Unauthorized"})
-			return
-		}
-
-		user, err := a.GetUser(ctx, token)
+		sessionToken, claims, err := a.ensureUserClaims(c)
 		if err != nil {
-			a.log.Error().Err(err).Msg("Failed to get user from token")
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"status": http.StatusInternalServerError,
-				"msg": "Internal Server Error"})
+			c.JSON(401, gin.H{"error": err.Error()})
 			return
 		}
 
-		if user == nil || user.Username == "" {
+		if headerToken != "" && headerToken != sessionToken {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"status": http.StatusUnauthorized,
 				"msg": "Unauthorized"})
 			return
@@ -190,13 +206,12 @@ func (a *RESTAPI) AuthMiddleware() gin.HandlerFunc {
 		// e.g., check roles/permissions/scopes
 		// For now, we just check if the username in the URL matches the authenticated user
 		username := c.Param("username")
-		if username != "" && username != user.Username {
+		if username != "" && username != claims.Subject {
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"status": http.StatusForbidden,
 				"msg": "Forbidden"})
 			return
 		}
 
-		c.Set("user", user)
 		c.Next()
 	}
 }
@@ -256,8 +271,8 @@ func GetLimitOffsetReverseFromQuery(c *gin.Context) (limit, offset int, reverse 
 }
 
 // GetCurrentUserFromContext retrieves the current user from the Gin context.
-func GetCurrentUserFromContext(c *gin.Context) (*models.User, bool) {
-	v, ok := c.Get("user")
+func GetUserClaimsFromContext(c *gin.Context) (*authz.UserClaims, bool) {
+	v, ok := c.Get("user_claims")
 	if !ok || v == nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"status": http.StatusUnauthorized,
@@ -265,7 +280,7 @@ func GetCurrentUserFromContext(c *gin.Context) (*models.User, bool) {
 		})
 		return nil, false
 	}
-	user, ok := v.(*models.User)
+	user, ok := v.(*authz.UserClaims)
 	if !ok {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"status": http.StatusInternalServerError,
