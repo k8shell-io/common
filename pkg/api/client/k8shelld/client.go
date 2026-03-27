@@ -45,14 +45,17 @@ type K8shelld struct {
 	unixSocketClient   k8shelldv1.UnixSocketServiceClient
 	app                k8shelldv1.AppServiceClient
 	counters           *ConnCounters
-	tokenRetrieve      TokenRetrieve
+	getUserToken       GetUserTokenFunc
+	username           string
+	connectionID       string
 	sessionClient      *session.Client
 	shellRecorder      *Recorder
 	shellRecorderStart time.Time
 }
 
-// TokenRetrieve is a function that returns a bearer token for authenticating gRPC requests.
-type TokenRetrieve func() (string, error)
+// GetUserTokenFunc is a function that returns a JWT bearer token for the given username,
+// used to authenticate gRPC requests on behalf of that user.
+type GetUserTokenFunc func(username string) (string, error)
 
 // ConnCounters holds counters for bytes sent and received.
 type ConnCounters struct {
@@ -77,7 +80,9 @@ func (c *ConnCounters) Snapshot() (in, out int64) {
 func NewClient(
 	cfg gapi.ClientConfig,
 	counters *ConnCounters,
-	tokenRetrieve TokenRetrieve,
+	username string,
+	connectionID string,
+	getUserToken GetUserTokenFunc,
 	sessionClient *session.Client,
 ) (*K8shelld, error) {
 	gapiClient, err := gapi.NewClient(cfg)
@@ -85,10 +90,16 @@ func NewClient(
 		return nil, fmt.Errorf("failed to create gRPC client: %w", err)
 	}
 
+	if getUserToken == nil {
+		return nil, fmt.Errorf("getUserToken function is required")
+	}
+
 	return &K8shelld{
 		client:           gapiClient,
 		log:              logger.NewLogger("k8shelld"),
 		counters:         counters,
+		username:         username,
+		connectionID:     connectionID,
 		systemClient:     k8shelldv1.NewSystemServiceClient(gapiClient.Conn),
 		shellClient:      k8shelldv1.NewShellServiceClient(gapiClient.Conn),
 		execClient:       k8shelldv1.NewExecServiceClient(gapiClient.Conn),
@@ -96,7 +107,7 @@ func NewClient(
 		pfClient:         k8shelldv1.NewPortForwardServiceClient(gapiClient.Conn),
 		unixSocketClient: k8shelldv1.NewUnixSocketServiceClient(gapiClient.Conn),
 		app:              k8shelldv1.NewAppServiceClient(gapiClient.Conn),
-		tokenRetrieve:    tokenRetrieve,
+		getUserToken:     getUserToken,
 		sessionClient:    sessionClient,
 	}, nil
 }
@@ -129,11 +140,11 @@ func (c *K8shelld) GetSystemInfo(ctx context.Context) (*SystemInfo, error) {
 func (c *K8shelld) startShellRecording(
 	ctx context.Context,
 	rw BufferedReadWriter,
-	sessionID, connectionID, username string,
+	sessionID string,
 	width, height uint32,
 ) (start time.Time, recorder *Recorder, wrappedRW BufferedReadWriter) {
 	start = time.Now()
-	recorder = NewShellRecorder(ctx, c.sessionClient, sessionID, connectionID, username, width, height, start, c.log)
+	recorder = NewShellRecorder(ctx, c.sessionClient, sessionID, c.connectionID, c.username, width, height, start, c.log)
 	if recorder != nil {
 		wrappedRW = NewRecordingAdapter(rw, start, recorder.Observe)
 	} else {
@@ -146,10 +157,10 @@ func (c *K8shelld) startShellRecording(
 func (c *K8shelld) startExecRecording(
 	ctx context.Context,
 	rw BufferedReadWriter,
-	sessionID, connectionID, username, command string,
+	sessionID, command string,
 ) (recorder *Recorder, wrappedRW BufferedReadWriter) {
 	start := time.Now()
-	recorder = NewExecRecorder(ctx, c.sessionClient, sessionID, connectionID, username, command, start, c.log)
+	recorder = NewExecRecorder(ctx, c.sessionClient, sessionID, c.connectionID, c.username, command, start, c.log)
 	if recorder != nil {
 		wrappedRW = NewRecordingAdapter(rw, start, recorder.Observe)
 	} else {
@@ -163,13 +174,13 @@ func (c *K8shelld) startExecRecording(
 func (c *K8shelld) startTcpipRecording(
 	ctx context.Context,
 	rw BufferedReadWriter,
-	sessionID, connectionID, username string,
+	sessionID string,
 	srcHost string, srcPort uint32,
 	dstHost string, dstPort uint32,
 ) (recorder *Recorder, wrappedRW BufferedReadWriter) {
 	start := time.Now()
-	recordCtx := metadata.AppendToOutgoingContext(ctx, "x-connection-affinity", connectionID)
-	recorder = NewTcpipRecorder(recordCtx, c.sessionClient, sessionID, connectionID, username, srcHost, srcPort, dstHost, dstPort, start, c.log)
+	recordCtx := metadata.AppendToOutgoingContext(ctx, "x-connection-affinity", c.connectionID)
+	recorder = NewTcpipRecorder(recordCtx, c.sessionClient, sessionID, c.connectionID, c.username, srcHost, srcPort, dstHost, dstPort, start, c.log)
 	if recorder != nil {
 		wrappedRW = NewBidirectionalRecordingAdapter(rw, start, recorder.Observe, recorder.ObserveInput)
 	} else {
@@ -185,15 +196,16 @@ func (c *K8shelld) RunShell(
 	ctx context.Context,
 	rw BufferedReadWriter,
 	sessionId string,
-	connectionId string,
 	envVars []string,
 	width, height uint32,
 	usePty bool,
-	username string,
-	record bool,
+	enableRecording bool,
 	onStart func(ptyName string),
 ) error {
-	token, err := c.tokenRetrieve()
+	if enableRecording && c.sessionClient == nil {
+		return fmt.Errorf("session recording requested but session client is not set")
+	}
+	token, err := c.getUserToken(c.username)
 	if err != nil {
 		return fmt.Errorf("failed to retrieve token: %w", err)
 	}
@@ -207,8 +219,8 @@ func (c *K8shelld) RunShell(
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	if c.sessionClient != nil && record {
-		c.shellRecorderStart, c.shellRecorder, rw = c.startShellRecording(ctx, rw, sessionId, connectionId, username, width, height)
+	if enableRecording {
+		c.shellRecorderStart, c.shellRecorder, rw = c.startShellRecording(ctx, rw, sessionId, width, height)
 		defer c.shellRecorder.Close()
 	}
 
@@ -225,7 +237,7 @@ func (c *K8shelld) RunShell(
 				UsePty:     usePty,
 				Width:      width,
 				Height:     height,
-				User:       username,
+				User:       c.username,
 			},
 		},
 	}
@@ -349,8 +361,7 @@ func (c *K8shelld) RunUnixSocket(
 	socketPath string,
 	mode string,
 ) error {
-
-	token, err := c.tokenRetrieve()
+	token, err := c.getUserToken(c.username)
 	if err != nil {
 		return fmt.Errorf("failed to retrieve token: %w", err)
 	}
@@ -474,19 +485,19 @@ func (c *K8shelld) RunPortForward(
 	ctx context.Context,
 	upstream BufferedReadWriter,
 	portForwardID string,
-	connectionID string,
 	sourceIP string,
 	sourcePort uint32,
 	destinationIP string,
 	destinationPort uint32,
-	username string,
-	record bool,
+	enableRecording bool,
 ) error {
+	if enableRecording && c.sessionClient == nil {
+		return fmt.Errorf("session recording requested but session client is not set")
+	}
 	if destinationIP == "" {
 		destinationIP = "localhost"
 	}
-
-	token, err := c.tokenRetrieve()
+	token, err := c.getUserToken(c.username)
 	if err != nil {
 		return fmt.Errorf("failed to retrieve token: %w", err)
 	}
@@ -500,9 +511,9 @@ func (c *K8shelld) RunPortForward(
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	if c.sessionClient != nil && record {
+	if enableRecording {
 		var recorder *Recorder
-		recorder, upstream = c.startTcpipRecording(ctx, upstream, portForwardID, connectionID, username,
+		recorder, upstream = c.startTcpipRecording(ctx, upstream, portForwardID,
 			sourceIP, sourcePort, destinationIP, destinationPort)
 		if recorder != nil {
 			defer recorder.Close()
@@ -595,16 +606,16 @@ func (c *K8shelld) RunExec(
 	ctx context.Context,
 	upstream BufferedReadWriter,
 	execID string,
-	connectionID string,
 	command string,
 	shellBinary string,
 	envVars []string,
 	signalChan <-chan string,
-	username string,
-	record bool,
+	enableRecording bool,
 ) (int32, error) {
-
-	token, err := c.tokenRetrieve()
+	if enableRecording && c.sessionClient == nil {
+		return 1, fmt.Errorf("session recording requested but session client is not set")
+	}
+	token, err := c.getUserToken(c.username)
 	if err != nil {
 		return 1, fmt.Errorf("failed to retrieve token: %w", err)
 	}
@@ -615,9 +626,9 @@ func (c *K8shelld) RunExec(
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	if c.sessionClient != nil && record {
+	if enableRecording {
 		var recorder *Recorder
-		recorder, upstream = c.startExecRecording(ctx, upstream, execID, connectionID, username, command)
+		recorder, upstream = c.startExecRecording(ctx, upstream, execID, command)
 		if recorder != nil {
 			defer recorder.Close()
 		}
