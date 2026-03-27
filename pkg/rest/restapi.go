@@ -114,6 +114,7 @@ func (a *RESTAPI) ensureUserClaims(c *gin.Context) (string, *authz.UserClaims, e
 	}
 
 	c.Set("user_claims", claims)
+	c.Set("user_token", token)
 	return token, claims, nil
 }
 
