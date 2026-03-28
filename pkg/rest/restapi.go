@@ -92,17 +92,22 @@ func (a *RESTAPI) EnsureUserToken(c *gin.Context) (string, *authz.UserClaims, er
 			token = s
 		}
 	}
-	if token == "" {
-		return "", nil, fmt.Errorf("no user token in session")
+
+	var claims *authz.UserClaims
+	if token != "" {
+		claims, err = authz.ParseUnverifiedClaims(token, false)
+		if err != nil {
+			return "", nil, fmt.Errorf("failed to parse token claims from user token in the session: %w", err)
+		}
 	}
 
-	claims, err := authz.ParseUnverifiedClaims(token, false)
-	if err != nil {
-		return "", nil, fmt.Errorf("failed to parse token claims from user token in the session: %w", err)
-	}
+	if (token == "" || claims.ExpiresAt == nil) && time.Until(claims.ExpiresAt.Time) < 0 {
+		username := c.GetString("username")
+		if username == "" {
+			return "", nil, fmt.Errorf("username not found in context")
+		}
 
-	if claims.ExpiresAt != nil && time.Until(claims.ExpiresAt.Time) < 0 {
-		token, err = a.RetrieveUserToken(c.Request.Context(), claims.Subject)
+		token, err = a.RetrieveUserToken(c.Request.Context(), username)
 		if err != nil {
 			return "", nil, fmt.Errorf("failed to update user token for username %s: %w", claims.Subject, err)
 		}
