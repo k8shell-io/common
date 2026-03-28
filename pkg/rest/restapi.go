@@ -33,7 +33,7 @@ type HTTPLoggingConfig struct {
 
 type Handler interface {
 	InitializeRoutes(r *gin.Engine)
-	GetUserToken(ctx context.Context, username string) (string, error)
+	RetrieveUserToken(ctx context.Context, username string) (string, error)
 }
 
 // RESTApiService represents the REST API service
@@ -80,7 +80,7 @@ func NewRESTAPI(httpConfig HTTPConfig, handler Handler) (*RESTAPI, error) {
 	return a, nil
 }
 
-func (a *RESTAPI) ensureUserClaims(c *gin.Context) (string, *authz.UserClaims, error) {
+func (a *RESTAPI) EnsureUserToken(c *gin.Context) (string, *authz.UserClaims, error) {
 	sess, err := MustGetSessionFromContext(c)
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to get session: %w", err)
@@ -102,7 +102,7 @@ func (a *RESTAPI) ensureUserClaims(c *gin.Context) (string, *authz.UserClaims, e
 	}
 
 	if claims.ExpiresAt != nil && time.Until(claims.ExpiresAt.Time) < 0 {
-		token, err = a.GetUserToken(c.Request.Context(), claims.Subject)
+		token, err = a.RetrieveUserToken(c.Request.Context(), claims.Subject)
 		if err != nil {
 			return "", nil, fmt.Errorf("failed to update user token for username %s: %w", claims.Subject, err)
 		}
@@ -189,7 +189,7 @@ func (a *RESTAPI) AuthMiddleware() gin.HandlerFunc {
 			c.Set("use_cookie", true)
 		}
 
-		sessionToken, claims, err := a.ensureUserClaims(c)
+		sessionToken, claims, err := a.EnsureUserToken(c)
 		if err != nil {
 			c.JSON(401, gin.H{"error": err.Error()})
 			return
