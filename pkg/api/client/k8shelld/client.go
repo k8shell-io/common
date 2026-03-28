@@ -11,6 +11,7 @@ import (
 
 	"github.com/k8shell-io/common/pkg/api/client/session"
 	k8shelldv1 "github.com/k8shell-io/common/pkg/api/gen/go/k8shelld/v1"
+	"github.com/k8shell-io/common/pkg/authz"
 	"github.com/k8shell-io/common/pkg/gapi"
 	"github.com/k8shell-io/common/pkg/logger"
 	"github.com/rs/zerolog"
@@ -45,7 +46,6 @@ type K8shelld struct {
 	unixSocketClient   k8shelldv1.UnixSocketServiceClient
 	app                k8shelldv1.AppServiceClient
 	counters           *ConnCounters
-	getUserToken       GetUserTokenFunc
 	username           string
 	connectionID       string
 	sessionClient      *session.Client
@@ -53,9 +53,7 @@ type K8shelld struct {
 	shellRecorderStart time.Time
 }
 
-// GetUserTokenFunc is a function that returns a JWT bearer token for the given username,
-// used to authenticate gRPC requests on behalf of that user.
-type GetUserTokenFunc func(username string) (string, error)
+type NotifyPtyNameFunc func(ptyName string)
 
 // ConnCounters holds counters for bytes sent and received.
 type ConnCounters struct {
@@ -82,16 +80,11 @@ func NewClient(
 	counters *ConnCounters,
 	username string,
 	connectionID string,
-	getUserToken GetUserTokenFunc,
 	sessionClient *session.Client,
 ) (*K8shelld, error) {
 	gapiClient, err := gapi.NewClient(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create gRPC client: %w", err)
-	}
-
-	if getUserToken == nil {
-		return nil, fmt.Errorf("getUserToken function is required")
 	}
 
 	return &K8shelld{
@@ -107,7 +100,6 @@ func NewClient(
 		pfClient:         k8shelldv1.NewPortForwardServiceClient(gapiClient.Conn),
 		unixSocketClient: k8shelldv1.NewUnixSocketServiceClient(gapiClient.Conn),
 		app:              k8shelldv1.NewAppServiceClient(gapiClient.Conn),
-		getUserToken:     getUserToken,
 		sessionClient:    sessionClient,
 	}, nil
 }
@@ -194,25 +186,27 @@ func (c *K8shelld) startTcpipRecording(
 // name (e.g. "/dev/pts/3") or an empty string when no PTY was allocated. onStart may be nil.
 func (c *K8shelld) RunShell(
 	ctx context.Context,
+	userToken string,
 	rw BufferedReadWriter,
 	sessionId string,
 	envVars []string,
 	width, height uint32,
 	usePty bool,
 	enableRecording bool,
-	onStart func(ptyName string),
+	notifyPtyName NotifyPtyNameFunc,
 ) error {
 	if enableRecording && c.sessionClient == nil {
 		return fmt.Errorf("session recording requested but session client is not set")
 	}
-	token, err := c.getUserToken(c.username)
+
+	_, err := authz.ParseUnverifiedClaims(userToken, true)
 	if err != nil {
-		return fmt.Errorf("failed to retrieve token: %w", err)
+		return fmt.Errorf("invalid user token: %w", err)
 	}
 
 	md := metadata.Pairs(
 		"session-id", sessionId,
-		"token", token,
+		"token", userToken,
 	)
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
@@ -292,8 +286,8 @@ func (c *K8shelld) RunShell(
 
 			switch r := resp.Response.(type) {
 			case *k8shelldv1.ShellResponse_StartResponse:
-				if onStart != nil {
-					onStart(r.StartResponse.GetPty())
+				if notifyPtyName != nil {
+					notifyPtyName(r.StartResponse.GetPty())
 				}
 			case *k8shelldv1.ShellResponse_Data:
 				if _, werr := rw.Write(r.Data); werr != nil {
@@ -356,19 +350,20 @@ func (c *K8shelld) WatchShell(ctx context.Context, sessionId string, eventTypes 
 // RunUnixSocket creates a Unix socket connection over gRPC and bridges it with the RW channel.
 func (c *K8shelld) RunUnixSocket(
 	ctx context.Context,
+	userToken string,
 	upstream BufferedReadWriter,
 	unixSocketId string,
 	socketPath string,
 	mode string,
 ) error {
-	token, err := c.getUserToken(c.username)
+	_, err := authz.ParseUnverifiedClaims(userToken, true)
 	if err != nil {
-		return fmt.Errorf("failed to retrieve token: %w", err)
+		return fmt.Errorf("invalid user token: %w", err)
 	}
 
 	md := metadata.Pairs(
 		"unixsocket-id", unixSocketId,
-		"token", token,
+		"token", userToken,
 	)
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
@@ -483,6 +478,7 @@ func (c *K8shelld) RunUnixSocket(
 // RunPortForward sets up a port forward over gRPC and bridges it with the upstream channel.
 func (c *K8shelld) RunPortForward(
 	ctx context.Context,
+	userToken string,
 	upstream BufferedReadWriter,
 	portForwardID string,
 	sourceIP string,
@@ -497,14 +493,14 @@ func (c *K8shelld) RunPortForward(
 	if destinationIP == "" {
 		destinationIP = "localhost"
 	}
-	token, err := c.getUserToken(c.username)
+	_, err := authz.ParseUnverifiedClaims(userToken, true)
 	if err != nil {
-		return fmt.Errorf("failed to retrieve token: %w", err)
+		return fmt.Errorf("invalid user token: %w", err)
 	}
 
 	md := metadata.Pairs(
 		"portforward-id", portForwardID,
-		"token", token,
+		"token", userToken,
 	)
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
@@ -604,6 +600,7 @@ func (c *K8shelld) RunPortForward(
 // process. Returns the process exit code together with any transport error.
 func (c *K8shelld) RunExec(
 	ctx context.Context,
+	userToken string,
 	upstream BufferedReadWriter,
 	execID string,
 	command string,
@@ -615,12 +612,12 @@ func (c *K8shelld) RunExec(
 	if enableRecording && c.sessionClient == nil {
 		return 1, fmt.Errorf("session recording requested but session client is not set")
 	}
-	token, err := c.getUserToken(c.username)
+	_, err := authz.ParseUnverifiedClaims(userToken, true)
 	if err != nil {
-		return 1, fmt.Errorf("failed to retrieve token: %w", err)
+		return 1, fmt.Errorf("invalid user token: %w", err)
 	}
 
-	md := metadata.Pairs("exec-id", execID, "token", token)
+	md := metadata.Pairs("exec-id", execID, "token", userToken)
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
 	ctx, cancel := context.WithCancel(ctx)

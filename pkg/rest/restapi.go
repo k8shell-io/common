@@ -96,7 +96,7 @@ func (a *RESTAPI) ensureUserClaims(c *gin.Context) (string, *authz.UserClaims, e
 		return "", nil, fmt.Errorf("no user token in session")
 	}
 
-	claims, err := authz.ParseUnverifiedClaims(token)
+	claims, err := authz.ParseUnverifiedClaims(token, false)
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to parse token claims from user token in the session: %w", err)
 	}
@@ -106,7 +106,7 @@ func (a *RESTAPI) ensureUserClaims(c *gin.Context) (string, *authz.UserClaims, e
 		if err != nil {
 			return "", nil, fmt.Errorf("failed to update user token for username %s: %w", claims.Subject, err)
 		}
-		claims, err = authz.ParseUnverifiedClaims(token)
+		claims, err = authz.ParseUnverifiedClaims(token, false)
 		if err != nil {
 			return "", nil, fmt.Errorf("failed to parse token claims from user token in the session: %w", err)
 		}
