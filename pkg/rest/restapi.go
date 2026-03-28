@@ -90,6 +90,8 @@ func (a *RESTAPI) EnsureUserToken(c *gin.Context) (string, *authz.UserClaims, er
 	if v, ok := sess.Get("user_token"); ok {
 		if s, ok := v.(string); ok && s != "" {
 			token = s
+		} else {
+			a.log.Warn().Msg("user_token in session is not a valid string, will attempt to retrieve a new token")
 		}
 	}
 
@@ -97,7 +99,8 @@ func (a *RESTAPI) EnsureUserToken(c *gin.Context) (string, *authz.UserClaims, er
 	if token != "" {
 		claims, err = authz.ParseUnverifiedClaims(token, false)
 		if err != nil {
-			return "", nil, fmt.Errorf("failed to parse token claims from user token in the session: %w", err)
+			a.log.Warn().Err(err).Msg("Failed to parse user token claims, will attempt to retrieve a new token")
+			token = ""
 		}
 	}
 
