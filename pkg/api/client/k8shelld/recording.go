@@ -246,7 +246,7 @@ func (w *recordingWriter) Write(p []byte) (int, error) {
 func (r *Recorder) runShell(
 	ctx context.Context,
 	client sessionv1.RecordingServiceClient,
-	sessionID, connectionID, username string,
+	sessionID, connectionID, userToken string,
 	width, height uint32,
 	startedAt time.Time,
 ) {
@@ -265,7 +265,7 @@ func (r *Recorder) runShell(
 			Header: &sessionv1.ShellRecordingHeader{
 				SessionId:    sessionID,
 				ConnectionId: connectionID,
-				Username:     username,
+				UserToken:    userToken,
 				StartedAt:    startedAt.Unix(),
 				Width:        width,
 				Height:       height,
@@ -351,7 +351,7 @@ func (r *Recorder) runShell(
 func (r *Recorder) runExec(
 	ctx context.Context,
 	client sessionv1.RecordingServiceClient,
-	sessionID, connectionID, username, command string,
+	sessionID, connectionID, userToken, command string,
 	startedAt time.Time,
 ) {
 	defer close(r.done)
@@ -369,7 +369,7 @@ func (r *Recorder) runExec(
 			Header: &sessionv1.ExecRecordingHeader{
 				SessionId:    sessionID,
 				ConnectionId: connectionID,
-				Username:     username,
+				UserToken:    userToken,
 				StartedAt:    startedAt.Unix(),
 				Command:      command,
 			},
@@ -443,7 +443,7 @@ func (r *Recorder) runExec(
 func (r *Recorder) runTcpip(
 	ctx context.Context,
 	client sessionv1.RecordingServiceClient,
-	sessionID, connectionID, username string,
+	sessionID, connectionID, userToken string,
 	srcHost string, srcPort uint32,
 	dstHost string, dstPort uint32,
 	startedAt time.Time,
@@ -463,7 +463,7 @@ func (r *Recorder) runTcpip(
 			Header: &sessionv1.TcpipRecordingHeader{
 				SessionId:    sessionID,
 				ConnectionId: connectionID,
-				Username:     username,
+				UserToken:    userToken,
 				StartedAt:    startedAt.Unix(),
 				SrcHost:      srcHost,
 				SrcPort:      srcPort,

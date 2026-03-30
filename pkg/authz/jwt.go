@@ -170,6 +170,10 @@ type UserClaims struct {
 	Sudo bool `json:"sudo,omitempty"`
 }
 
+func (c *UserClaims) GetUsername() string {
+	return c.Subject
+}
+
 // JWTIssuer creates and signs JWT tokens for authenticated users.
 type JWTIssuer struct {
 	cfg           JWTIssuerConfig
