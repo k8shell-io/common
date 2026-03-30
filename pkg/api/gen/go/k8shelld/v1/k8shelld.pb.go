@@ -996,7 +996,6 @@ type ShellStartRequest struct {
 	UsePty        bool                   `protobuf:"varint,3,opt,name=usePty,proto3" json:"usePty,omitempty"`        // True to use a pseudo-terminal
 	Width         uint32                 `protobuf:"varint,4,opt,name=width,proto3" json:"width,omitempty"`          // Terminal width
 	Height        uint32                 `protobuf:"varint,5,opt,name=height,proto3" json:"height,omitempty"`        // Terminal height
-	User          string                 `protobuf:"bytes,6,opt,name=user,proto3" json:"user,omitempty"`             // User to run the shell as, empty for default user
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1064,13 +1063,6 @@ func (x *ShellStartRequest) GetHeight() uint32 {
 		return x.Height
 	}
 	return 0
-}
-
-func (x *ShellStartRequest) GetUser() string {
-	if x != nil {
-		return x.User
-	}
-	return ""
 }
 
 // ShellStartResponse message
@@ -2864,7 +2856,7 @@ const file_k8shelld_v1_k8shelld_proto_rawDesc = "" +
 	"\x04data\x18\x02 \x01(\fH\x00R\x04data\x12\x1e\n" +
 	"\tterminate\x18\x03 \x01(\bH\x00R\tterminateB\n" +
 	"\n" +
-	"\bresponse\"\xa9\x01\n" +
+	"\bresponse\"\x95\x01\n" +
 	"\x11ShellStartRequest\x12\x1a\n" +
 	"\bcmdShell\x18\x01 \x01(\tR\bcmdShell\x12\x1e\n" +
 	"\n" +
@@ -2872,8 +2864,7 @@ const file_k8shelld_v1_k8shelld_proto_rawDesc = "" +
 	"setEnvVars\x12\x16\n" +
 	"\x06usePty\x18\x03 \x01(\bR\x06usePty\x12\x14\n" +
 	"\x05width\x18\x04 \x01(\rR\x05width\x12\x16\n" +
-	"\x06height\x18\x05 \x01(\rR\x06height\x12\x12\n" +
-	"\x04user\x18\x06 \x01(\tR\x04user\"&\n" +
+	"\x06height\x18\x05 \x01(\rR\x06height\"&\n" +
 	"\x12ShellStartResponse\x12\x10\n" +
 	"\x03pty\x18\x01 \x01(\tR\x03pty\"E\n" +
 	"\x15ResizeTerminalRequest\x12\x14\n" +

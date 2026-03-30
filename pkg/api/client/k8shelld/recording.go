@@ -47,7 +47,7 @@ type Recorder struct {
 func NewShellRecorder(
 	ctx context.Context,
 	client sessionv1.RecordingServiceClient,
-	sessionID, connectionID, username string,
+	sessionID, connectionID, userToken string,
 	width, height uint32,
 	startedAt time.Time,
 	log *zerolog.Logger,
@@ -60,7 +60,7 @@ func NewShellRecorder(
 		done: make(chan struct{}),
 		log:  log,
 	}
-	go r.runShell(ctx, client, sessionID, connectionID, username, width, height, startedAt)
+	go r.runShell(ctx, client, sessionID, connectionID, userToken, width, height, startedAt)
 	return r
 }
 
@@ -70,7 +70,7 @@ func NewShellRecorder(
 func NewExecRecorder(
 	ctx context.Context,
 	client sessionv1.RecordingServiceClient,
-	sessionID, connectionID, username, command string,
+	sessionID, connectionID, userToken, command string,
 	startedAt time.Time,
 	log *zerolog.Logger,
 ) *Recorder {
@@ -82,7 +82,7 @@ func NewExecRecorder(
 		done: make(chan struct{}),
 		log:  log,
 	}
-	go r.runExec(ctx, client, sessionID, connectionID, username, command, startedAt)
+	go r.runExec(ctx, client, sessionID, connectionID, userToken, command, startedAt)
 	return r
 }
 
@@ -92,7 +92,7 @@ func NewExecRecorder(
 func NewTcpipRecorder(
 	ctx context.Context,
 	client sessionv1.RecordingServiceClient,
-	sessionID, connectionID, username string,
+	sessionID, connectionID, userToken string,
 	srcHost string, srcPort uint32,
 	dstHost string, dstPort uint32,
 	startedAt time.Time,
@@ -106,7 +106,7 @@ func NewTcpipRecorder(
 		done: make(chan struct{}),
 		log:  log,
 	}
-	go r.runTcpip(ctx, client, sessionID, connectionID, username, srcHost, srcPort, dstHost, dstPort, startedAt)
+	go r.runTcpip(ctx, client, sessionID, connectionID, userToken, srcHost, srcPort, dstHost, dstPort, startedAt)
 	return r
 }
 

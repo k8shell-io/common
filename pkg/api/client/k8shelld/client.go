@@ -46,7 +46,6 @@ type K8shelld struct {
 	unixSocketClient   k8shelldv1.UnixSocketServiceClient
 	app                k8shelldv1.AppServiceClient
 	counters           *ConnCounters
-	username           string
 	connectionID       string
 	sessionClient      *session.Client
 	shellRecorder      *Recorder
@@ -78,7 +77,6 @@ func (c *ConnCounters) Snapshot() (in, out int64) {
 func NewClient(
 	cfg gapi.ClientConfig,
 	counters *ConnCounters,
-	username string,
 	connectionID string,
 	sessionClient *session.Client,
 ) (*K8shelld, error) {
@@ -91,7 +89,6 @@ func NewClient(
 		client:           gapiClient,
 		log:              logger.NewLogger("k8shelld"),
 		counters:         counters,
-		username:         username,
 		connectionID:     connectionID,
 		systemClient:     k8shelldv1.NewSystemServiceClient(gapiClient.Conn),
 		shellClient:      k8shelldv1.NewShellServiceClient(gapiClient.Conn),
@@ -132,11 +129,12 @@ func (c *K8shelld) GetSystemInfo(ctx context.Context) (*SystemInfo, error) {
 func (c *K8shelld) startShellRecording(
 	ctx context.Context,
 	rw BufferedReadWriter,
+	userToken string,
 	sessionID string,
 	width, height uint32,
 ) (start time.Time, recorder *Recorder, wrappedRW BufferedReadWriter) {
 	start = time.Now()
-	recorder = NewShellRecorder(ctx, c.sessionClient, sessionID, c.connectionID, c.username, width, height, start, c.log)
+	recorder = NewShellRecorder(ctx, c.sessionClient, sessionID, c.connectionID, userToken, width, height, start, c.log)
 	if recorder != nil {
 		wrappedRW = NewRecordingAdapter(rw, start, recorder.Observe)
 	} else {
@@ -149,10 +147,11 @@ func (c *K8shelld) startShellRecording(
 func (c *K8shelld) startExecRecording(
 	ctx context.Context,
 	rw BufferedReadWriter,
+	userToken string,
 	sessionID, command string,
 ) (recorder *Recorder, wrappedRW BufferedReadWriter) {
 	start := time.Now()
-	recorder = NewExecRecorder(ctx, c.sessionClient, sessionID, c.connectionID, c.username, command, start, c.log)
+	recorder = NewExecRecorder(ctx, c.sessionClient, sessionID, c.connectionID, userToken, command, start, c.log)
 	if recorder != nil {
 		wrappedRW = NewRecordingAdapter(rw, start, recorder.Observe)
 	} else {
@@ -166,13 +165,15 @@ func (c *K8shelld) startExecRecording(
 func (c *K8shelld) startTcpipRecording(
 	ctx context.Context,
 	rw BufferedReadWriter,
+	userToken string,
 	sessionID string,
 	srcHost string, srcPort uint32,
 	dstHost string, dstPort uint32,
 ) (recorder *Recorder, wrappedRW BufferedReadWriter) {
 	start := time.Now()
 	recordCtx := metadata.AppendToOutgoingContext(ctx, "x-connection-affinity", c.connectionID)
-	recorder = NewTcpipRecorder(recordCtx, c.sessionClient, sessionID, c.connectionID, c.username, srcHost, srcPort, dstHost, dstPort, start, c.log)
+	recorder = NewTcpipRecorder(recordCtx, c.sessionClient, sessionID, c.connectionID, userToken,
+		srcHost, srcPort, dstHost, dstPort, start, c.log)
 	if recorder != nil {
 		wrappedRW = NewBidirectionalRecordingAdapter(rw, start, recorder.Observe, recorder.ObserveInput)
 	} else {
@@ -214,7 +215,7 @@ func (c *K8shelld) RunShell(
 	defer cancel()
 
 	if enableRecording {
-		c.shellRecorderStart, c.shellRecorder, rw = c.startShellRecording(ctx, rw, sessionId, width, height)
+		c.shellRecorderStart, c.shellRecorder, rw = c.startShellRecording(ctx, rw, userToken, sessionId, width, height)
 		defer c.shellRecorder.Close()
 	}
 
@@ -231,7 +232,6 @@ func (c *K8shelld) RunShell(
 				UsePty:     usePty,
 				Width:      width,
 				Height:     height,
-				User:       c.username,
 			},
 		},
 	}
@@ -509,7 +509,7 @@ func (c *K8shelld) RunPortForward(
 
 	if enableRecording {
 		var recorder *Recorder
-		recorder, upstream = c.startTcpipRecording(ctx, upstream, portForwardID,
+		recorder, upstream = c.startTcpipRecording(ctx, upstream, userToken, portForwardID,
 			sourceIP, sourcePort, destinationIP, destinationPort)
 		if recorder != nil {
 			defer recorder.Close()
@@ -625,7 +625,7 @@ func (c *K8shelld) RunExec(
 
 	if enableRecording {
 		var recorder *Recorder
-		recorder, upstream = c.startExecRecording(ctx, upstream, execID, command)
+		recorder, upstream = c.startExecRecording(ctx, upstream, userToken, execID, command)
 		if recorder != nil {
 			defer recorder.Close()
 		}
