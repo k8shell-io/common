@@ -135,6 +135,7 @@ func (x *ProviderInfoResponse) GetAddress() string {
 type UserToken struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	ServiceName   string                 `protobuf:"bytes,2,opt,name=service_name,json=serviceName,proto3" json:"service_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -176,6 +177,13 @@ func (x *UserToken) GetToken() string {
 	return ""
 }
 
+func (x *UserToken) GetServiceName() string {
+	if x != nil {
+		return x.ServiceName
+	}
+	return ""
+}
+
 var File_identity_v1_idp_proto protoreflect.FileDescriptor
 
 const file_identity_v1_idp_proto_rawDesc = "" +
@@ -187,9 +195,10 @@ const file_identity_v1_idp_proto_rawDesc = "" +
 	"\fcapabilities\x18\x02 \x03(\tR\fcapabilities\x12 \n" +
 	"\fuser_max_age\x18\x03 \x01(\rR\n" +
 	"userMaxAge\x12\x18\n" +
-	"\aaddress\x18\x04 \x01(\tR\aaddress\"!\n" +
+	"\aaddress\x18\x04 \x01(\tR\aaddress\"D\n" +
 	"\tUserToken\x12\x14\n" +
-	"\x05token\x18\x01 \x01(\tR\x05token2\xce\x06\n" +
+	"\x05token\x18\x01 \x01(\tR\x05token\x12!\n" +
+	"\fservice_name\x18\x02 \x01(\tR\vserviceName2\xce\x06\n" +
 	"\x17IdentityProviderService\x12S\n" +
 	"\fProviderInfo\x12 .identity.v1.ProviderInfoRequest\x1a!.identity.v1.ProviderInfoResponse\x129\n" +
 	"\bFindUser\x12\x1c.identity.v1.FindUserRequest\x1a\x0f.common.v1.User\x12P\n" +
