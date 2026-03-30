@@ -724,8 +724,8 @@ type ShellRecordingHeader struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// session_id ties this recording to a SessionService session record.
 	SessionId string `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	// username is the owner of the session being recorded.
-	Username string `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	// user_token is the token of the user owning the session being recorded.
+	UserToken string `protobuf:"bytes,2,opt,name=user_token,json=userToken,proto3" json:"user_token,omitempty"`
 	// started_at is the channel start time as a Unix timestamp (seconds).
 	StartedAt int64 `protobuf:"varint,3,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
 	// width is the initial terminal width in columns.
@@ -775,9 +775,9 @@ func (x *ShellRecordingHeader) GetSessionId() string {
 	return ""
 }
 
-func (x *ShellRecordingHeader) GetUsername() string {
+func (x *ShellRecordingHeader) GetUserToken() string {
 	if x != nil {
-		return x.Username
+		return x.UserToken
 	}
 	return ""
 }
@@ -917,8 +917,8 @@ type ExecRecordingHeader struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// session_id ties this recording to a SessionService session record.
 	SessionId string `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	// username is the owner of the session being recorded.
-	Username string `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	// user_token is the token of the user owning the session being recorded.
+	UserToken string `protobuf:"bytes,2,opt,name=user_token,json=userToken,proto3" json:"user_token,omitempty"`
 	// started_at is the channel start time as a Unix timestamp (seconds).
 	StartedAt int64 `protobuf:"varint,3,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
 	// command is the command that was executed.
@@ -966,9 +966,9 @@ func (x *ExecRecordingHeader) GetSessionId() string {
 	return ""
 }
 
-func (x *ExecRecordingHeader) GetUsername() string {
+func (x *ExecRecordingHeader) GetUserToken() string {
 	if x != nil {
-		return x.Username
+		return x.UserToken
 	}
 	return ""
 }
@@ -1084,8 +1084,8 @@ type TcpipRecordingHeader struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// session_id ties this recording to a SessionService session record.
 	SessionId string `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	// username is the owner of the session being recorded.
-	Username string `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	// user_token is the token of the user owning the session being recorded.
+	UserToken string `protobuf:"bytes,2,opt,name=user_token,json=userToken,proto3" json:"user_token,omitempty"`
 	// started_at is the channel start time as a Unix timestamp (seconds).
 	StartedAt int64 `protobuf:"varint,3,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
 	// src_host is the originating host of the port-forward request.
@@ -1139,9 +1139,9 @@ func (x *TcpipRecordingHeader) GetSessionId() string {
 	return ""
 }
 
-func (x *TcpipRecordingHeader) GetUsername() string {
+func (x *TcpipRecordingHeader) GetUserToken() string {
 	if x != nil {
-		return x.Username
+		return x.UserToken
 	}
 	return ""
 }
@@ -1327,11 +1327,12 @@ const file_session_v1_session_proto_rawDesc = "" +
 	"\x0eTerminalResize\x12$\n" +
 	"\x0etime_offset_ms\x18\x01 \x01(\x03R\ftimeOffsetMs\x12\x14\n" +
 	"\x05width\x18\x02 \x01(\rR\x05width\x12\x16\n" +
-	"\x06height\x18\x03 \x01(\rR\x06height\"\xc3\x01\n" +
+	"\x06height\x18\x03 \x01(\rR\x06height\"\xc6\x01\n" +
 	"\x14ShellRecordingHeader\x12\x1d\n" +
 	"\n" +
-	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1a\n" +
-	"\busername\x18\x02 \x01(\tR\busername\x12\x1d\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1d\n" +
+	"\n" +
+	"user_token\x18\x02 \x01(\tR\tuserToken\x12\x1d\n" +
 	"\n" +
 	"started_at\x18\x03 \x01(\x03R\tstartedAt\x12\x14\n" +
 	"\x05width\x18\x04 \x01(\rR\x05width\x12\x16\n" +
@@ -1341,11 +1342,12 @@ const file_session_v1_session_proto_rawDesc = "" +
 	"\x06header\x18\x01 \x01(\v2 .session.v1.ShellRecordingHeaderH\x00R\x06header\x12-\n" +
 	"\x05chunk\x18\x02 \x01(\v2\x15.session.v1.DataChunkH\x00R\x05chunk\x124\n" +
 	"\x06resize\x18\x03 \x01(\v2\x1a.session.v1.TerminalResizeH\x00R\x06resizeB\t\n" +
-	"\apayload\"\xae\x01\n" +
+	"\apayload\"\xb1\x01\n" +
 	"\x13ExecRecordingHeader\x12\x1d\n" +
 	"\n" +
-	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1a\n" +
-	"\busername\x18\x02 \x01(\tR\busername\x12\x1d\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1d\n" +
+	"\n" +
+	"user_token\x18\x02 \x01(\tR\tuserToken\x12\x1d\n" +
 	"\n" +
 	"started_at\x18\x03 \x01(\x03R\tstartedAt\x12\x18\n" +
 	"\acommand\x18\x04 \x01(\tR\acommand\x12#\n" +
@@ -1353,11 +1355,12 @@ const file_session_v1_session_proto_rawDesc = "" +
 	"\x12ExecRecordingFrame\x129\n" +
 	"\x06header\x18\x01 \x01(\v2\x1f.session.v1.ExecRecordingHeaderH\x00R\x06header\x12-\n" +
 	"\x05chunk\x18\x02 \x01(\v2\x15.session.v1.DataChunkH\x00R\x05chunkB\t\n" +
-	"\apayload\"\x81\x02\n" +
+	"\apayload\"\x84\x02\n" +
 	"\x14TcpipRecordingHeader\x12\x1d\n" +
 	"\n" +
-	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1a\n" +
-	"\busername\x18\x02 \x01(\tR\busername\x12\x1d\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1d\n" +
+	"\n" +
+	"user_token\x18\x02 \x01(\tR\tuserToken\x12\x1d\n" +
 	"\n" +
 	"started_at\x18\x03 \x01(\x03R\tstartedAt\x12\x19\n" +
 	"\bsrc_host\x18\x04 \x01(\tR\asrcHost\x12\x19\n" +
