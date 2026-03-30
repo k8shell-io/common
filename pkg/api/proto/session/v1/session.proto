@@ -176,8 +176,8 @@ message TerminalResize {
 message ShellRecordingHeader {
   // session_id ties this recording to a SessionService session record.
   string session_id = 1;
-  // username is the owner of the session being recorded.
-  string username = 2;
+  // user_token is the token of the user owning the session being recorded.
+  string user_token = 2;
   // started_at is the channel start time as a Unix timestamp (seconds).
   int64 started_at = 3;
   // width is the initial terminal width in columns.
@@ -206,8 +206,8 @@ message ShellRecordingFrame {
 message ExecRecordingHeader {
   // session_id ties this recording to a SessionService session record.
   string session_id = 1;
-  // username is the owner of the session being recorded.
-  string username = 2;
+  // user_token is the token of the user owning the session being recorded.
+  string user_token = 2;
   // started_at is the channel start time as a Unix timestamp (seconds).
   int64 started_at = 3;
   // command is the command that was executed.
@@ -232,8 +232,8 @@ message ExecRecordingFrame {
 message TcpipRecordingHeader {
   // session_id ties this recording to a SessionService session record.
   string session_id = 1;
-  // username is the owner of the session being recorded.
-  string username = 2;
+  // user_token is the token of the user owning the session being recorded.
+  string user_token = 2;
   // started_at is the channel start time as a Unix timestamp (seconds).
   int64 started_at = 3;
   // src_host is the originating host of the port-forward request.
