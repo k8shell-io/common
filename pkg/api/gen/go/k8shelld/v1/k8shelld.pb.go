@@ -1820,7 +1820,6 @@ type CommandDetails struct {
 	Command       string                 `protobuf:"bytes,1,opt,name=command,proto3" json:"command,omitempty"`                            // Initial command with arguments
 	ShellBinary   string                 `protobuf:"bytes,2,opt,name=shell_binary,json=shellBinary,proto3" json:"shell_binary,omitempty"` // Optional shell binary to use (e.g., "/bin/sh"), empty for none
 	EnvVars       []string               `protobuf:"bytes,3,rep,name=env_vars,json=envVars,proto3" json:"env_vars,omitempty"`             // Environment variables to be set for the command
-	User          string                 `protobuf:"bytes,4,opt,name=user,proto3" json:"user,omitempty"`                                  // User to run the executable as, empty for default user
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1874,13 +1873,6 @@ func (x *CommandDetails) GetEnvVars() []string {
 		return x.EnvVars
 	}
 	return nil
-}
-
-func (x *CommandDetails) GetUser() string {
-	if x != nil {
-		return x.User
-	}
-	return ""
 }
 
 // Request for the UnixSocket operation
@@ -2904,12 +2896,11 @@ const file_k8shelld_v1_k8shelld_proto_rawDesc = "" +
 	"\x06stderr\x18\x02 \x01(\fH\x00R\x06stderr\x12\x1d\n" +
 	"\texit_code\x18\x03 \x01(\x05H\x00R\bexitCodeB\n" +
 	"\n" +
-	"\bresponse\"|\n" +
+	"\bresponse\"h\n" +
 	"\x0eCommandDetails\x12\x18\n" +
 	"\acommand\x18\x01 \x01(\tR\acommand\x12!\n" +
 	"\fshell_binary\x18\x02 \x01(\tR\vshellBinary\x12\x19\n" +
-	"\benv_vars\x18\x03 \x03(\tR\aenvVars\x12\x12\n" +
-	"\x04user\x18\x04 \x01(\tR\x04user\"}\n" +
+	"\benv_vars\x18\x03 \x03(\tR\aenvVars\"}\n" +
 	"\x11UnixSocketRequest\x12G\n" +
 	"\rstart_request\x18\x01 \x01(\v2 .k8shelld.UnixSocketStartRequestH\x00R\fstartRequest\x12\x14\n" +
 	"\x04data\x18\x02 \x01(\fH\x00R\x04dataB\t\n" +
