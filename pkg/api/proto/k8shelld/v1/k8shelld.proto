@@ -111,11 +111,12 @@ message ShellResponse {
 
 // ShellStartRequest message
 message ShellStartRequest {
-  string cmdShell = 1;              // Command to run the shell
-  repeated string setEnvVars = 2;   // Environment variables to be set in the the shell
-  bool usePty = 3;                  // True to use a pseudo-terminal
-  uint32 width = 4;                 // Terminal width
-  uint32 height = 5;                // Terminal height
+  string as_user = 1;              // User to run the shell as (empty for default)
+  string cmdShell = 2;              // Command to run the shell
+  repeated string setEnvVars = 3;   // Environment variables to be set in the the shell
+  bool usePty = 4;                  // True to use a pseudo-terminal
+  uint32 width = 5;                 // Terminal width
+  uint32 height = 6;                // Terminal height
 }
 
 // ShellStartResponse message
@@ -226,9 +227,10 @@ message ExecResponse {
 
 // Command details message
 message CommandDetails {
-  string command = 1;       // Initial command with arguments
-  string shell_binary = 2;  // Optional shell binary to use (e.g., "/bin/sh"), empty for none
-  repeated string env_vars = 3;   // Environment variables to be set for the command
+  string as_user = 1;      // User to run the command as (empty for default)
+  string command = 2;       // Initial command with arguments
+  string shell_binary = 3;  // Optional shell binary to use (e.g., "/bin/sh"), empty for none
+  repeated string env_vars = 4;   // Environment variables to be set for the command
 }
 
 // *** UnixSocketService

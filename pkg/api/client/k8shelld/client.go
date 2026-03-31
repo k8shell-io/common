@@ -188,6 +188,7 @@ func (c *K8shelld) startTcpipRecording(
 func (c *K8shelld) RunShell(
 	ctx context.Context,
 	userToken string,
+	asUser string,
 	rw BufferedReadWriter,
 	sessionId string,
 	envVars []string,
@@ -232,6 +233,7 @@ func (c *K8shelld) RunShell(
 				UsePty:     usePty,
 				Width:      width,
 				Height:     height,
+				AsUser:     asUser,
 			},
 		},
 	}
@@ -601,6 +603,7 @@ func (c *K8shelld) RunPortForward(
 func (c *K8shelld) RunExec(
 	ctx context.Context,
 	userToken string,
+	asUser string,
 	upstream BufferedReadWriter,
 	execID string,
 	command string,
@@ -642,6 +645,7 @@ func (c *K8shelld) RunExec(
 				Command:     command,
 				ShellBinary: shellBinary,
 				EnvVars:     envVars,
+				AsUser:      asUser,
 			},
 		},
 	}

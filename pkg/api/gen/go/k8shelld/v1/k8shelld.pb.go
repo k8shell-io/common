@@ -991,11 +991,12 @@ func (*ShellResponse_Terminate) isShellResponse_Response() {}
 // ShellStartRequest message
 type ShellStartRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	CmdShell      string                 `protobuf:"bytes,1,opt,name=cmdShell,proto3" json:"cmdShell,omitempty"`     // Command to run the shell
-	SetEnvVars    []string               `protobuf:"bytes,2,rep,name=setEnvVars,proto3" json:"setEnvVars,omitempty"` // Environment variables to be set in the the shell
-	UsePty        bool                   `protobuf:"varint,3,opt,name=usePty,proto3" json:"usePty,omitempty"`        // True to use a pseudo-terminal
-	Width         uint32                 `protobuf:"varint,4,opt,name=width,proto3" json:"width,omitempty"`          // Terminal width
-	Height        uint32                 `protobuf:"varint,5,opt,name=height,proto3" json:"height,omitempty"`        // Terminal height
+	AsUser        string                 `protobuf:"bytes,1,opt,name=as_user,json=asUser,proto3" json:"as_user,omitempty"` // User to run the shell as (empty for default)
+	CmdShell      string                 `protobuf:"bytes,2,opt,name=cmdShell,proto3" json:"cmdShell,omitempty"`           // Command to run the shell
+	SetEnvVars    []string               `protobuf:"bytes,3,rep,name=setEnvVars,proto3" json:"setEnvVars,omitempty"`       // Environment variables to be set in the the shell
+	UsePty        bool                   `protobuf:"varint,4,opt,name=usePty,proto3" json:"usePty,omitempty"`              // True to use a pseudo-terminal
+	Width         uint32                 `protobuf:"varint,5,opt,name=width,proto3" json:"width,omitempty"`                // Terminal width
+	Height        uint32                 `protobuf:"varint,6,opt,name=height,proto3" json:"height,omitempty"`              // Terminal height
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1028,6 +1029,13 @@ func (x *ShellStartRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use ShellStartRequest.ProtoReflect.Descriptor instead.
 func (*ShellStartRequest) Descriptor() ([]byte, []int) {
 	return file_k8shelld_v1_k8shelld_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ShellStartRequest) GetAsUser() string {
+	if x != nil {
+		return x.AsUser
+	}
+	return ""
 }
 
 func (x *ShellStartRequest) GetCmdShell() string {
@@ -1817,9 +1825,10 @@ func (*ExecResponse_ExitCode) isExecResponse_Response() {}
 // Command details message
 type CommandDetails struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Command       string                 `protobuf:"bytes,1,opt,name=command,proto3" json:"command,omitempty"`                            // Initial command with arguments
-	ShellBinary   string                 `protobuf:"bytes,2,opt,name=shell_binary,json=shellBinary,proto3" json:"shell_binary,omitempty"` // Optional shell binary to use (e.g., "/bin/sh"), empty for none
-	EnvVars       []string               `protobuf:"bytes,3,rep,name=env_vars,json=envVars,proto3" json:"env_vars,omitempty"`             // Environment variables to be set for the command
+	AsUser        string                 `protobuf:"bytes,1,opt,name=as_user,json=asUser,proto3" json:"as_user,omitempty"`                // User to run the command as (empty for default)
+	Command       string                 `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`                            // Initial command with arguments
+	ShellBinary   string                 `protobuf:"bytes,3,opt,name=shell_binary,json=shellBinary,proto3" json:"shell_binary,omitempty"` // Optional shell binary to use (e.g., "/bin/sh"), empty for none
+	EnvVars       []string               `protobuf:"bytes,4,rep,name=env_vars,json=envVars,proto3" json:"env_vars,omitempty"`             // Environment variables to be set for the command
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1852,6 +1861,13 @@ func (x *CommandDetails) ProtoReflect() protoreflect.Message {
 // Deprecated: Use CommandDetails.ProtoReflect.Descriptor instead.
 func (*CommandDetails) Descriptor() ([]byte, []int) {
 	return file_k8shelld_v1_k8shelld_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *CommandDetails) GetAsUser() string {
+	if x != nil {
+		return x.AsUser
+	}
+	return ""
 }
 
 func (x *CommandDetails) GetCommand() string {
@@ -2848,15 +2864,16 @@ const file_k8shelld_v1_k8shelld_proto_rawDesc = "" +
 	"\x04data\x18\x02 \x01(\fH\x00R\x04data\x12\x1e\n" +
 	"\tterminate\x18\x03 \x01(\bH\x00R\tterminateB\n" +
 	"\n" +
-	"\bresponse\"\x95\x01\n" +
-	"\x11ShellStartRequest\x12\x1a\n" +
-	"\bcmdShell\x18\x01 \x01(\tR\bcmdShell\x12\x1e\n" +
+	"\bresponse\"\xae\x01\n" +
+	"\x11ShellStartRequest\x12\x17\n" +
+	"\aas_user\x18\x01 \x01(\tR\x06asUser\x12\x1a\n" +
+	"\bcmdShell\x18\x02 \x01(\tR\bcmdShell\x12\x1e\n" +
 	"\n" +
-	"setEnvVars\x18\x02 \x03(\tR\n" +
+	"setEnvVars\x18\x03 \x03(\tR\n" +
 	"setEnvVars\x12\x16\n" +
-	"\x06usePty\x18\x03 \x01(\bR\x06usePty\x12\x14\n" +
-	"\x05width\x18\x04 \x01(\rR\x05width\x12\x16\n" +
-	"\x06height\x18\x05 \x01(\rR\x06height\"&\n" +
+	"\x06usePty\x18\x04 \x01(\bR\x06usePty\x12\x14\n" +
+	"\x05width\x18\x05 \x01(\rR\x05width\x12\x16\n" +
+	"\x06height\x18\x06 \x01(\rR\x06height\"&\n" +
 	"\x12ShellStartResponse\x12\x10\n" +
 	"\x03pty\x18\x01 \x01(\tR\x03pty\"E\n" +
 	"\x15ResizeTerminalRequest\x12\x14\n" +
@@ -2896,11 +2913,12 @@ const file_k8shelld_v1_k8shelld_proto_rawDesc = "" +
 	"\x06stderr\x18\x02 \x01(\fH\x00R\x06stderr\x12\x1d\n" +
 	"\texit_code\x18\x03 \x01(\x05H\x00R\bexitCodeB\n" +
 	"\n" +
-	"\bresponse\"h\n" +
-	"\x0eCommandDetails\x12\x18\n" +
-	"\acommand\x18\x01 \x01(\tR\acommand\x12!\n" +
-	"\fshell_binary\x18\x02 \x01(\tR\vshellBinary\x12\x19\n" +
-	"\benv_vars\x18\x03 \x03(\tR\aenvVars\"}\n" +
+	"\bresponse\"\x81\x01\n" +
+	"\x0eCommandDetails\x12\x17\n" +
+	"\aas_user\x18\x01 \x01(\tR\x06asUser\x12\x18\n" +
+	"\acommand\x18\x02 \x01(\tR\acommand\x12!\n" +
+	"\fshell_binary\x18\x03 \x01(\tR\vshellBinary\x12\x19\n" +
+	"\benv_vars\x18\x04 \x03(\tR\aenvVars\"}\n" +
 	"\x11UnixSocketRequest\x12G\n" +
 	"\rstart_request\x18\x01 \x01(\v2 .k8shelld.UnixSocketStartRequestH\x00R\fstartRequest\x12\x14\n" +
 	"\x04data\x18\x02 \x01(\fH\x00R\x04dataB\t\n" +
