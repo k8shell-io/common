@@ -32,7 +32,7 @@ service IdentityService {
   rpc OnboardUserWebFlow (OnboardUserWebFlowRequest) returns (common.v1.OnboardUserWebFlow);
 
   // CompleteUserWebFlow completes the web flow onboarding process using the provided state and code.
-  rpc CompleteUserWebFlow (CompleteUserWebFlowRequest) returns (common.v1.User);
+  rpc CompleteUserWebFlow (CompleteUserWebFlowRequest) returns (CompleteUserWebFlowResponse);
 
   // AuthUserPublicKey authenticates a user using a public key and returns the authentication result
   // along with user details if valid.
@@ -62,6 +62,11 @@ service IdentityService {
 // GetUserAccessTokenRequest carries the username for a token retrieval request.
 message GetUserAccessTokenRequest {
   string username = 1;
+}
+
+// CompleteUserWebFlowResponse carries the user token issued upon successful completion of the web flow onboarding process.
+message CompleteUserWebFlowResponse {
+  string user_token = 1;
 }
 
 // GetUserAccessTokenResponse carries the JWT access token for the requested user.

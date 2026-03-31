@@ -53,7 +53,7 @@ type IdentityProviderServiceClient interface {
 	// OnboardUserWebFlow initiates the web flow onboarding process for a user.
 	OnboardUserWebFlow(ctx context.Context, in *OnboardUserWebFlowRequest, opts ...grpc.CallOption) (*v1.OnboardUserWebFlow, error)
 	// CompleteUserWebFlow completes the web flow onboarding process using the provided state and code.
-	CompleteUserWebFlow(ctx context.Context, in *CompleteUserWebFlowRequest, opts ...grpc.CallOption) (*CompleteUserWebFlowResponse, error)
+	CompleteUserWebFlow(ctx context.Context, in *CompleteUserWebFlowRequest, opts ...grpc.CallOption) (*v1.User, error)
 	// AuthUserPublicKey authenticates a user using a public key and returns the authentication result
 	AuthUserPublicKey(ctx context.Context, in *AuthUserPublicKeyRequest, opts ...grpc.CallOption) (*AuthUserResponse, error)
 	// GetUserToken retrieves an authentication token for a user.
@@ -122,9 +122,9 @@ func (c *identityProviderServiceClient) OnboardUserWebFlow(ctx context.Context, 
 	return out, nil
 }
 
-func (c *identityProviderServiceClient) CompleteUserWebFlow(ctx context.Context, in *CompleteUserWebFlowRequest, opts ...grpc.CallOption) (*CompleteUserWebFlowResponse, error) {
+func (c *identityProviderServiceClient) CompleteUserWebFlow(ctx context.Context, in *CompleteUserWebFlowRequest, opts ...grpc.CallOption) (*v1.User, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CompleteUserWebFlowResponse)
+	out := new(v1.User)
 	err := c.cc.Invoke(ctx, IdentityProviderService_CompleteUserWebFlow_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -190,7 +190,7 @@ type IdentityProviderServiceServer interface {
 	// OnboardUserWebFlow initiates the web flow onboarding process for a user.
 	OnboardUserWebFlow(context.Context, *OnboardUserWebFlowRequest) (*v1.OnboardUserWebFlow, error)
 	// CompleteUserWebFlow completes the web flow onboarding process using the provided state and code.
-	CompleteUserWebFlow(context.Context, *CompleteUserWebFlowRequest) (*CompleteUserWebFlowResponse, error)
+	CompleteUserWebFlow(context.Context, *CompleteUserWebFlowRequest) (*v1.User, error)
 	// AuthUserPublicKey authenticates a user using a public key and returns the authentication result
 	AuthUserPublicKey(context.Context, *AuthUserPublicKeyRequest) (*AuthUserResponse, error)
 	// GetUserToken retrieves an authentication token for a user.
@@ -224,7 +224,7 @@ func (UnimplementedIdentityProviderServiceServer) OnboardUserDeviceFlow(context.
 func (UnimplementedIdentityProviderServiceServer) OnboardUserWebFlow(context.Context, *OnboardUserWebFlowRequest) (*v1.OnboardUserWebFlow, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method OnboardUserWebFlow not implemented")
 }
-func (UnimplementedIdentityProviderServiceServer) CompleteUserWebFlow(context.Context, *CompleteUserWebFlowRequest) (*CompleteUserWebFlowResponse, error) {
+func (UnimplementedIdentityProviderServiceServer) CompleteUserWebFlow(context.Context, *CompleteUserWebFlowRequest) (*v1.User, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CompleteUserWebFlow not implemented")
 }
 func (UnimplementedIdentityProviderServiceServer) AuthUserPublicKey(context.Context, *AuthUserPublicKeyRequest) (*AuthUserResponse, error) {
