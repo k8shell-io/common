@@ -29,7 +29,7 @@ service IdentityProviderService {
   rpc OnboardUserWebFlow(OnboardUserWebFlowRequest) returns (common.v1.OnboardUserWebFlow);
 
   // CompleteUserWebFlow completes the web flow onboarding process using the provided state and code.
-  rpc CompleteUserWebFlow(CompleteUserWebFlowRequest) returns (common.v1.User);
+  rpc CompleteUserWebFlow(CompleteUserWebFlowRequest) returns (CompleteUserWebFlowResponse);
 
   // AuthUserPublicKey authenticates a user using a public key and returns the authentication result
   rpc AuthUserPublicKey(AuthUserPublicKeyRequest) returns (AuthUserResponse);
@@ -53,6 +53,11 @@ message ProviderInfoResponse {
   repeated string capabilities = 2;
   uint32          user_max_age = 3;
   string          address      = 4;
+}
+
+// CompleteUserWebFlowResponse carries the result of completing the web flow onboarding process.
+message CompleteUserWebFlowResponse {
+  string user_token = 1;
 }
 
 // UserToken holds a provider-issued authentication token for a user.
