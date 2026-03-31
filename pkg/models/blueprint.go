@@ -18,10 +18,8 @@ type Blueprint struct {
 	IsTemplate      bool                `yaml:"isTemplate,omitempty" default:"false"`
 	Splash          string              `yaml:"splash,omitempty"`
 	Template        string              `yaml:"template"`
-	Shell           string              `yaml:"shell" validate:"required"`
 	Hostname        string              `yaml:"hostname,omitempty" validate:"omitempty,plainhostname"`
 	Subdomain       string              `yaml:"subdomain,omitempty" validate:"omitempty,plainhostname"`
-	Sudo            bool                `yaml:"sudo,omitempty" default:"false"`
 	Image           string              `yaml:"image" validate:"required"`
 	ImagePullSecret string              `yaml:"imagePullSecret,omitempty"`
 	ImagePullPolicy string              `yaml:"imagePullPolicy,omitempty" validate:"omitempty,oneof=Always Never IfNotPresent"`
