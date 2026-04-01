@@ -991,12 +991,13 @@ func (*ShellResponse_Terminate) isShellResponse_Response() {}
 // ShellStartRequest message
 type ShellStartRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	AsUser        string                 `protobuf:"bytes,1,opt,name=as_user,json=asUser,proto3" json:"as_user,omitempty"` // User to run the shell as (empty for default)
-	CmdShell      string                 `protobuf:"bytes,2,opt,name=cmdShell,proto3" json:"cmdShell,omitempty"`           // Command to run the shell
-	SetEnvVars    []string               `protobuf:"bytes,3,rep,name=setEnvVars,proto3" json:"setEnvVars,omitempty"`       // Environment variables to be set in the the shell
-	UsePty        bool                   `protobuf:"varint,4,opt,name=usePty,proto3" json:"usePty,omitempty"`              // True to use a pseudo-terminal
-	Width         uint32                 `protobuf:"varint,5,opt,name=width,proto3" json:"width,omitempty"`                // Terminal width
-	Height        uint32                 `protobuf:"varint,6,opt,name=height,proto3" json:"height,omitempty"`              // Terminal height
+	AsUser        string                 `protobuf:"bytes,1,opt,name=as_user,json=asUser,proto3" json:"as_user,omitempty"`                   // User to run the shell as (empty for default)
+	CmdShell      string                 `protobuf:"bytes,2,opt,name=cmdShell,proto3" json:"cmdShell,omitempty"`                             // Command to run the shell
+	SetEnvVars    []string               `protobuf:"bytes,3,rep,name=setEnvVars,proto3" json:"setEnvVars,omitempty"`                         // Environment variables to be set in the the shell
+	UsePty        bool                   `protobuf:"varint,4,opt,name=usePty,proto3" json:"usePty,omitempty"`                                // True to use a pseudo-terminal
+	Width         uint32                 `protobuf:"varint,5,opt,name=width,proto3" json:"width,omitempty"`                                  // Terminal width
+	Height        uint32                 `protobuf:"varint,6,opt,name=height,proto3" json:"height,omitempty"`                                // Terminal height
+	ContainerRef  string                 `protobuf:"bytes,7,opt,name=container_ref,json=containerRef,proto3" json:"container_ref,omitempty"` // Container ID, name, or Compose service name; empty = local shell
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1071,6 +1072,13 @@ func (x *ShellStartRequest) GetHeight() uint32 {
 		return x.Height
 	}
 	return 0
+}
+
+func (x *ShellStartRequest) GetContainerRef() string {
+	if x != nil {
+		return x.ContainerRef
+	}
+	return ""
 }
 
 // ShellStartResponse message
@@ -2864,7 +2872,7 @@ const file_k8shelld_v1_k8shelld_proto_rawDesc = "" +
 	"\x04data\x18\x02 \x01(\fH\x00R\x04data\x12\x1e\n" +
 	"\tterminate\x18\x03 \x01(\bH\x00R\tterminateB\n" +
 	"\n" +
-	"\bresponse\"\xae\x01\n" +
+	"\bresponse\"\xd3\x01\n" +
 	"\x11ShellStartRequest\x12\x17\n" +
 	"\aas_user\x18\x01 \x01(\tR\x06asUser\x12\x1a\n" +
 	"\bcmdShell\x18\x02 \x01(\tR\bcmdShell\x12\x1e\n" +
@@ -2873,7 +2881,8 @@ const file_k8shelld_v1_k8shelld_proto_rawDesc = "" +
 	"setEnvVars\x12\x16\n" +
 	"\x06usePty\x18\x04 \x01(\bR\x06usePty\x12\x14\n" +
 	"\x05width\x18\x05 \x01(\rR\x05width\x12\x16\n" +
-	"\x06height\x18\x06 \x01(\rR\x06height\"&\n" +
+	"\x06height\x18\x06 \x01(\rR\x06height\x12#\n" +
+	"\rcontainer_ref\x18\a \x01(\tR\fcontainerRef\"&\n" +
 	"\x12ShellStartResponse\x12\x10\n" +
 	"\x03pty\x18\x01 \x01(\tR\x03pty\"E\n" +
 	"\x15ResizeTerminalRequest\x12\x14\n" +

@@ -117,6 +117,7 @@ message ShellStartRequest {
   bool usePty = 4;                  // True to use a pseudo-terminal
   uint32 width = 5;                 // Terminal width
   uint32 height = 6;                // Terminal height
+  string container_ref = 7;         // Container ID, name, or Compose service name; empty = local shell
 }
 
 // ShellStartResponse message
