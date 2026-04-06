@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -325,6 +326,9 @@ type JWTVerifier struct {
 	// cfg holds the original configuration for issuer/audience validation.
 	cfg JWTVerifierConfig
 
+	// mu guards verificationKey for concurrent access.
+	mu sync.RWMutex
+
 	// verificationKey is the key used to verify the token signature.
 	// For hs256 it is []byte; for rs256 *rsa.PublicKey; for es256 *ecdsa.PublicKey.
 	verificationKey interface{}
@@ -417,8 +421,12 @@ func NewJWTVerifier(cfg JWTVerifierConfig) (*JWTVerifier, error) {
 func (v *JWTVerifier) VerifyToken(tokenStr string) (*UserClaims, error) {
 	var claims UserClaims
 
+	v.mu.RLock()
+	key := v.verificationKey
+	v.mu.RUnlock()
+
 	_, err := v.parser.ParseWithClaims(tokenStr, &claims, func(t *jwt.Token) (interface{}, error) {
-		return v.verificationKey, nil
+		return key, nil
 	})
 	if err == nil {
 		return &claims, nil
@@ -434,6 +442,66 @@ func (v *JWTVerifier) VerifyToken(tokenStr string) (*UserClaims, error) {
 	default:
 		return nil, fmt.Errorf("jwt: verify token: %w", err)
 	}
+}
+
+// ReloadPublicKey re-reads the public key from disk and updates the
+// verification key used by VerifyToken. It is safe to call concurrently
+// with VerifyToken. For hs256 (secret-based) verifiers it is a no-op.
+func (v *JWTVerifier) ReloadPublicKey() error {
+	method := v.cfg.SigningMethod
+	if method == "" {
+		method = "hs256"
+	}
+
+	var newKey interface{}
+
+	switch method {
+	case "hs256":
+		// HMAC key comes from config, not a file; nothing to reload.
+		return nil
+
+	case "rs256":
+		if v.cfg.PublicKeyFile != "" {
+			pub, err := loadRSAPublicKey(v.cfg.PublicKeyFile)
+			if err != nil {
+				return fmt.Errorf("jwt: reload RSA public key: %w", err)
+			}
+			newKey = pub
+		} else if v.cfg.PrivateKeyFile != "" {
+			priv, err := loadRSAPrivateKey(v.cfg.PrivateKeyFile)
+			if err != nil {
+				return fmt.Errorf("jwt: reload RSA private key: %w", err)
+			}
+			newKey = &priv.PublicKey
+		} else {
+			return fmt.Errorf("jwt: rs256 requires publicKeyFile or privateKeyFile")
+		}
+
+	case "es256":
+		if v.cfg.PublicKeyFile != "" {
+			pub, err := loadECPublicKey(v.cfg.PublicKeyFile)
+			if err != nil {
+				return fmt.Errorf("jwt: reload EC public key: %w", err)
+			}
+			newKey = pub
+		} else if v.cfg.PrivateKeyFile != "" {
+			priv, err := loadECPrivateKey(v.cfg.PrivateKeyFile)
+			if err != nil {
+				return fmt.Errorf("jwt: reload EC private key: %w", err)
+			}
+			newKey = &priv.PublicKey
+		} else {
+			return fmt.Errorf("jwt: es256 requires publicKeyFile or privateKeyFile")
+		}
+
+	default:
+		return fmt.Errorf("jwt: unsupported signing method %q", method)
+	}
+
+	v.mu.Lock()
+	v.verificationKey = newKey
+	v.mu.Unlock()
+	return nil
 }
 
 // ParseUnverifiedClaims decodes the claims from tokenStr without verifying
