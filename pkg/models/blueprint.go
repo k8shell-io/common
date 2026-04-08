@@ -116,6 +116,7 @@ type Docker struct {
 // Storage represents storage configuration
 type Storage struct {
 	Enabled      bool              `yaml:"enabled" default:"false"`
+	Type         string            `yaml:"type,omitempty" validate:"omitempty,oneof=local shared" default:"local"`
 	StorageClass string            `yaml:"storageClass,omitempty" default:""`
 	Size         string            `yaml:"size" validate:"required_if=Enabled true"`
 	Path         string            `yaml:"path" validate:"required_if=Enabled true,startswith=/"`
