@@ -241,16 +241,15 @@ func newJTI() (string, error) {
 // IssueToken creates a signed JWT string for the given user. The token
 // includes both standard registered claims and k8Shell-specific user
 // attributes as additional claims.
-// It returns the JTI (JWT ID), the signed token string, and any error.
-func (j *JWTIssuer) IssueToken(user *models.User) (jti string, signed string, err error) {
+func (j *JWTIssuer) IssueToken(user *models.User) (claims *UserClaims, signed string, err error) {
 	now := time.Now()
 
-	jti, err = newJTI()
+	jti, err := newJTI()
 	if err != nil {
-		return "", "", fmt.Errorf("jwt: generate jti: %w", err)
+		return nil, "", fmt.Errorf("jwt: generate jti: %w", err)
 	}
 
-	claims := UserClaims{
+	claims = &UserClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ID:        jti,
 			Subject:   user.Username,
@@ -277,10 +276,10 @@ func (j *JWTIssuer) IssueToken(user *models.User) (jti string, signed string, er
 
 	signed, err = token.SignedString(j.signingKey)
 	if err != nil {
-		return "", "", fmt.Errorf("jwt: sign token: %w", err)
+		return nil, "", fmt.Errorf("jwt: sign token: %w", err)
 	}
 
-	return jti, signed, nil
+	return claims, signed, nil
 }
 
 // loadRSAPrivateKey reads and parses a PEM-encoded RSA private key from path.
