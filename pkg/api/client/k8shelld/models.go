@@ -49,10 +49,11 @@ type DockerUsage struct {
 
 // SystemInfo represents the overall system information
 type SystemInfo struct {
-	Time   string       `json:"time"`             // current system time
-	System *SystemUsage `json:"system"`           // system usage metrics
-	Mounts []MountUsage `json:"mounts"`           // list of mount usage statistics
-	Docker *DockerUsage `json:"docker,omitempty"` // docker usage statistics
+	Time       string       `json:"time"`                 // current system time
+	System     *SystemUsage `json:"system"`               // system usage metrics
+	Mounts     []MountUsage `json:"mounts"`               // list of mount usage statistics
+	Docker     *DockerUsage `json:"docker,omitempty"`     // docker usage statistics
+	Repository string       `json:"repository,omitempty"` // full repo URL, e.g. https://github.com/owner/repo
 }
 
 // SplashInfo contains the rendered splash message text.
@@ -182,7 +183,8 @@ func safeIntToInt32(v int) int32 {
 
 func SystemInfoToProto(si *SystemInfo) *k8shelldv1.SystemInfoResponse {
 	pb := &k8shelldv1.SystemInfoResponse{
-		Time: si.Time,
+		Time:       si.Time,
+		Repository: si.Repository,
 		System: &k8shelldv1.SystemMetrics{
 			Uptime:             si.System.Uptime,
 			CpuUsageMillicores: si.System.CPUUsageMillicores,
@@ -234,7 +236,8 @@ func SystemInfoToProto(si *SystemInfo) *k8shelldv1.SystemInfoResponse {
 
 func ProtoToSystemInfo(pb *k8shelldv1.SystemInfoResponse) *SystemInfo {
 	si := &SystemInfo{
-		Time: pb.GetTime(),
+		Time:       pb.GetTime(),
+		Repository: pb.GetRepository(),
 		System: &SystemUsage{
 			Uptime:             pb.System.GetUptime(),
 			CPUUsageMillicores: pb.System.GetCpuUsageMillicores(),

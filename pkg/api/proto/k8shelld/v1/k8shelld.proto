@@ -20,6 +20,7 @@ message SystemInfoResponse {
   SystemMetrics system = 2;
   repeated MountUsage mounts = 3;
   DockerUsage docker = 4;
+  string repository = 5; 
 }
 
 // SystemMetrics message

@@ -263,6 +263,7 @@ type SystemInfoResponse struct {
 	System        *SystemMetrics         `protobuf:"bytes,2,opt,name=system,proto3" json:"system,omitempty"`
 	Mounts        []*MountUsage          `protobuf:"bytes,3,rep,name=mounts,proto3" json:"mounts,omitempty"`
 	Docker        *DockerUsage           `protobuf:"bytes,4,opt,name=docker,proto3" json:"docker,omitempty"`
+	Repository    string                 `protobuf:"bytes,5,opt,name=repository,proto3" json:"repository,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -323,6 +324,13 @@ func (x *SystemInfoResponse) GetDocker() *DockerUsage {
 		return x.Docker
 	}
 	return nil
+}
+
+func (x *SystemInfoResponse) GetRepository() string {
+	if x != nil {
+		return x.Repository
+	}
+	return ""
 }
 
 // SystemMetrics message
@@ -2795,12 +2803,15 @@ var File_k8shelld_v1_k8shelld_proto protoreflect.FileDescriptor
 const file_k8shelld_v1_k8shelld_proto_rawDesc = "" +
 	"\n" +
 	"\x1ak8shelld/v1/k8shelld.proto\x12\bk8shelld\"\x13\n" +
-	"\x11SystemInfoRequest\"\xb6\x01\n" +
+	"\x11SystemInfoRequest\"\xd6\x01\n" +
 	"\x12SystemInfoResponse\x12\x12\n" +
 	"\x04time\x18\x01 \x01(\tR\x04time\x12/\n" +
 	"\x06system\x18\x02 \x01(\v2\x17.k8shelld.SystemMetricsR\x06system\x12,\n" +
 	"\x06mounts\x18\x03 \x03(\v2\x14.k8shelld.MountUsageR\x06mounts\x12-\n" +
-	"\x06docker\x18\x04 \x01(\v2\x15.k8shelld.DockerUsageR\x06docker\"\xc9\x02\n" +
+	"\x06docker\x18\x04 \x01(\v2\x15.k8shelld.DockerUsageR\x06docker\x12\x1e\n" +
+	"\n" +
+	"repository\x18\x05 \x01(\tR\n" +
+	"repository\"\xc9\x02\n" +
 	"\rSystemMetrics\x12\x16\n" +
 	"\x06uptime\x18\x01 \x01(\tR\x06uptime\x12.\n" +
 	"\x12cpuUsageMillicores\x18\x02 \x01(\x01R\x12cpuUsageMillicores\x12.\n" +
