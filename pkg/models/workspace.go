@@ -13,6 +13,7 @@ type WorkspacePodStatus string
 
 const (
 	WorkspaceStatusProvisioning WorkspacePodStatus = "Starting"
+	WorkspaceStatusPulling      WorkspacePodStatus = "Pulling"
 	WorkspaceStatusRunning      WorkspacePodStatus = "Running"
 	WorkspaceStatusFailing      WorkspacePodStatus = "Failing"
 	WorkspaceStatusTerminating  WorkspacePodStatus = "Terminating"
