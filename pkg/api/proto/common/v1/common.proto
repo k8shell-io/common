@@ -117,11 +117,11 @@ message UserOnboardCapability {
   bool can_onboard = 3;
 }
 
-// PodStatus represents the observed status of a workspace's Kubernetes pod.
-message PodStatus {
-  // created is the time the pod was created.
+// WorkspaceStatus represents the observed status of a workspace.
+message WorkspaceStatus {
+  // created is the time the workspace was created.
   google.protobuf.Timestamp created = 1;
-  // status is the current pod phase (e.g. "Pending", "Running", "Failed").
+  // status is the current workspace status (e.g. "Starting", "Running", "Failing").
   string status = 2;
   // message provides additional human-readable detail about the current status.
   string message = 3;
@@ -134,8 +134,8 @@ message PodStatus {
 
 // WorkspaceDetails describes a user workspace and its current runtime state.
 message WorkspaceDetails {
-  // pod_status holds the observed Kubernetes pod state for this workspace.
-  PodStatus pod_status = 1;
+  // workspace_status holds the observed workspace status.
+  WorkspaceStatus workspace_status = 1;
   // app_version is the version of the workspace application image in use.
   string app_version = 2;
   // name is the unique name of the workspace.

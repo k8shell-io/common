@@ -214,8 +214,8 @@ func ProtoToUserOnboardCapability(pb *commonv1.UserOnboardCapability) *models.On
 
 // *** Workspace and related models
 
-// PodStatusToProto converts a Go PodStatus model to its protobuf message.
-func PodStatusToProto(m *models.PodStatus) *commonv1.PodStatus {
+// WorkspaceStatusToProto converts a Go WorkspaceStatus model to its protobuf message.
+func WorkspaceStatusToProto(m *models.WorkspaceStatus) *commonv1.WorkspaceStatus {
 	if m == nil {
 		return nil
 	}
@@ -225,7 +225,7 @@ func PodStatusToProto(m *models.PodStatus) *commonv1.PodStatus {
 		created = timestamppb.New(m.Created)
 	}
 
-	return &commonv1.PodStatus{
+	return &commonv1.WorkspaceStatus{
 		Created:         created,
 		Status:          string(m.Status),
 		Message:         m.Message,
@@ -234,8 +234,8 @@ func PodStatusToProto(m *models.PodStatus) *commonv1.PodStatus {
 	}
 }
 
-// ProtoToPodStatus converts a protobuf PodStatus message to its Go model.
-func ProtoToPodStatus(pb *commonv1.PodStatus) *models.PodStatus {
+// ProtoToWorkspaceStatus converts a protobuf WorkspaceStatus message to its Go model.
+func ProtoToWorkspaceStatus(pb *commonv1.WorkspaceStatus) *models.WorkspaceStatus {
 	if pb == nil {
 		return nil
 	}
@@ -245,9 +245,9 @@ func ProtoToPodStatus(pb *commonv1.PodStatus) *models.PodStatus {
 		created = ts.AsTime()
 	}
 
-	return &models.PodStatus{
+	return &models.WorkspaceStatus{
 		Created:         created,
-		Status:          models.WorkspacePodStatus(pb.GetStatus()),
+		Status:          models.WorkspaceStatusMessage(pb.GetStatus()),
 		Message:         pb.GetMessage(),
 		Restarts:        pb.GetRestarts(),
 		LastFailMessage: pb.GetLastFailMessage(),
@@ -261,24 +261,24 @@ func WorkspaceDetailsToProto(m *models.WorkspaceDetails) *commonv1.WorkspaceDeta
 	}
 
 	return &commonv1.WorkspaceDetails{
-		PodStatus:    PodStatusToProto(&m.PodStatus),
-		Name:         m.Name,
-		Username:     m.Username,
-		Blueprint:    m.Blueprint,
-		Organization: m.Organization,
-		RepoOwner:    m.RepoOwner,
-		RepoName:     m.RepoName,
-		RepoRef:      m.RepoRef,
-		ServerName:   m.ServerName,
-		PodIp:        m.PodIP,
-		Port:         int32(m.Port),
-		TlsEnabled:   m.TLSEnabled,
-		Splash:       m.Splash,
-		AppVersion:   m.AppVersion,
-		Cpu:          m.CPU,
-		Memory:       m.Memory,
-		Hostname:     m.Hostname,
-		JobId:        m.JobId,
+		WorkspaceStatus: WorkspaceStatusToProto(&m.WorkspaceStatus),
+		Name:            m.Name,
+		Username:        m.Username,
+		Blueprint:       m.Blueprint,
+		Organization:    m.Organization,
+		RepoOwner:       m.RepoOwner,
+		RepoName:        m.RepoName,
+		RepoRef:         m.RepoRef,
+		ServerName:      m.ServerName,
+		PodIp:           m.PodIP,
+		Port:            int32(m.Port),
+		TlsEnabled:      m.TLSEnabled,
+		Splash:          m.Splash,
+		AppVersion:      m.AppVersion,
+		Cpu:             m.CPU,
+		Memory:          m.Memory,
+		Hostname:        m.Hostname,
+		JobId:           m.JobId,
 	}
 }
 
@@ -289,24 +289,24 @@ func ProtoToWorkspaceDetails(pb *commonv1.WorkspaceDetails) *models.WorkspaceDet
 	}
 
 	return &models.WorkspaceDetails{
-		PodStatus:    *ProtoToPodStatus(pb.GetPodStatus()),
-		Name:         pb.GetName(),
-		Username:     pb.GetUsername(),
-		Organization: pb.GetOrganization(),
-		RepoOwner:    pb.GetRepoOwner(),
-		RepoName:     pb.GetRepoName(),
-		RepoRef:      pb.GetRepoRef(),
-		Blueprint:    pb.GetBlueprint(),
-		ServerName:   pb.GetServerName(),
-		PodIP:        pb.GetPodIp(),
-		Port:         int(pb.GetPort()),
-		TLSEnabled:   pb.GetTlsEnabled(),
-		Splash:       pb.GetSplash(),
-		AppVersion:   pb.GetAppVersion(),
-		CPU:          pb.GetCpu(),
-		Memory:       pb.GetMemory(),
-		Hostname:     pb.GetHostname(),
-		JobId:        pb.GetJobId(),
+		WorkspaceStatus: *ProtoToWorkspaceStatus(pb.GetWorkspaceStatus()),
+		Name:            pb.GetName(),
+		Username:        pb.GetUsername(),
+		Organization:    pb.GetOrganization(),
+		RepoOwner:       pb.GetRepoOwner(),
+		RepoName:        pb.GetRepoName(),
+		RepoRef:         pb.GetRepoRef(),
+		Blueprint:       pb.GetBlueprint(),
+		ServerName:      pb.GetServerName(),
+		PodIP:           pb.GetPodIp(),
+		Port:            int(pb.GetPort()),
+		TLSEnabled:      pb.GetTlsEnabled(),
+		Splash:          pb.GetSplash(),
+		AppVersion:      pb.GetAppVersion(),
+		CPU:             pb.GetCpu(),
+		Memory:          pb.GetMemory(),
+		Hostname:        pb.GetHostname(),
+		JobId:           pb.GetJobId(),
 	}
 }
 

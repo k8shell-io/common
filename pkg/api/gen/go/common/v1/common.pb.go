@@ -591,12 +591,12 @@ func (x *UserOnboardCapability) GetCanOnboard() bool {
 	return false
 }
 
-// PodStatus represents the observed status of a workspace's Kubernetes pod.
-type PodStatus struct {
+// WorkspaceStatus represents the observed status of a workspace.
+type WorkspaceStatus struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// created is the time the pod was created.
+	// created is the time the workspace was created.
 	Created *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=created,proto3" json:"created,omitempty"`
-	// status is the current pod phase (e.g. "Pending", "Running", "Failed").
+	// status is the current workspace status (e.g. "Starting", "Running", "Failing").
 	Status string `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
 	// message provides additional human-readable detail about the current status.
 	Message string `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
@@ -609,20 +609,20 @@ type PodStatus struct {
 	sizeCache       protoimpl.SizeCache
 }
 
-func (x *PodStatus) Reset() {
-	*x = PodStatus{}
+func (x *WorkspaceStatus) Reset() {
+	*x = WorkspaceStatus{}
 	mi := &file_common_v1_common_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *PodStatus) String() string {
+func (x *WorkspaceStatus) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PodStatus) ProtoMessage() {}
+func (*WorkspaceStatus) ProtoMessage() {}
 
-func (x *PodStatus) ProtoReflect() protoreflect.Message {
+func (x *WorkspaceStatus) ProtoReflect() protoreflect.Message {
 	mi := &file_common_v1_common_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -634,40 +634,40 @@ func (x *PodStatus) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use PodStatus.ProtoReflect.Descriptor instead.
-func (*PodStatus) Descriptor() ([]byte, []int) {
+// Deprecated: Use WorkspaceStatus.ProtoReflect.Descriptor instead.
+func (*WorkspaceStatus) Descriptor() ([]byte, []int) {
 	return file_common_v1_common_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *PodStatus) GetCreated() *timestamppb.Timestamp {
+func (x *WorkspaceStatus) GetCreated() *timestamppb.Timestamp {
 	if x != nil {
 		return x.Created
 	}
 	return nil
 }
 
-func (x *PodStatus) GetStatus() string {
+func (x *WorkspaceStatus) GetStatus() string {
 	if x != nil {
 		return x.Status
 	}
 	return ""
 }
 
-func (x *PodStatus) GetMessage() string {
+func (x *WorkspaceStatus) GetMessage() string {
 	if x != nil {
 		return x.Message
 	}
 	return ""
 }
 
-func (x *PodStatus) GetRestarts() int32 {
+func (x *WorkspaceStatus) GetRestarts() int32 {
 	if x != nil {
 		return x.Restarts
 	}
 	return 0
 }
 
-func (x *PodStatus) GetLastFailMessage() string {
+func (x *WorkspaceStatus) GetLastFailMessage() string {
 	if x != nil {
 		return x.LastFailMessage
 	}
@@ -677,8 +677,8 @@ func (x *PodStatus) GetLastFailMessage() string {
 // WorkspaceDetails describes a user workspace and its current runtime state.
 type WorkspaceDetails struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// pod_status holds the observed Kubernetes pod state for this workspace.
-	PodStatus *PodStatus `protobuf:"bytes,1,opt,name=pod_status,json=podStatus,proto3" json:"pod_status,omitempty"`
+	// workspace_status holds the observed workspace status.
+	WorkspaceStatus *WorkspaceStatus `protobuf:"bytes,1,opt,name=workspace_status,json=workspaceStatus,proto3" json:"workspace_status,omitempty"`
 	// app_version is the version of the workspace application image in use.
 	AppVersion string `protobuf:"bytes,2,opt,name=app_version,json=appVersion,proto3" json:"app_version,omitempty"`
 	// name is the unique name of the workspace.
@@ -747,9 +747,9 @@ func (*WorkspaceDetails) Descriptor() ([]byte, []int) {
 	return file_common_v1_common_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *WorkspaceDetails) GetPodStatus() *PodStatus {
+func (x *WorkspaceDetails) GetWorkspaceStatus() *WorkspaceStatus {
 	if x != nil {
-		return x.PodStatus
+		return x.WorkspaceStatus
 	}
 	return nil
 }
@@ -995,16 +995,15 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"\bprovider\x18\x01 \x01(\tR\bprovider\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x1f\n" +
 	"\vcan_onboard\x18\x03 \x01(\bR\n" +
-	"canOnboard\"\xbb\x01\n" +
-	"\tPodStatus\x124\n" +
+	"canOnboard\"\xc1\x01\n" +
+	"\x0fWorkspaceStatus\x124\n" +
 	"\acreated\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\acreated\x12\x16\n" +
 	"\x06status\x18\x02 \x01(\tR\x06status\x12\x18\n" +
 	"\amessage\x18\x03 \x01(\tR\amessage\x12\x1a\n" +
 	"\brestarts\x18\x04 \x01(\x05R\brestarts\x12*\n" +
-	"\x11last_fail_message\x18\x05 \x01(\tR\x0flastFailMessage\"\x93\x04\n" +
-	"\x10WorkspaceDetails\x123\n" +
-	"\n" +
-	"pod_status\x18\x01 \x01(\v2\x14.common.v1.PodStatusR\tpodStatus\x12\x1f\n" +
+	"\x11last_fail_message\x18\x05 \x01(\tR\x0flastFailMessage\"\xa5\x04\n" +
+	"\x10WorkspaceDetails\x12E\n" +
+	"\x10workspace_status\x18\x01 \x01(\v2\x1a.common.v1.WorkspaceStatusR\x0fworkspaceStatus\x12\x1f\n" +
 	"\vapp_version\x18\x02 \x01(\tR\n" +
 	"appVersion\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12\x1a\n" +
@@ -1053,15 +1052,15 @@ var file_common_v1_common_proto_goTypes = []any{
 	(*OnboardUserWebFlow)(nil),    // 3: common.v1.OnboardUserWebFlow
 	(*CompleteUserWebFlow)(nil),   // 4: common.v1.CompleteUserWebFlow
 	(*UserOnboardCapability)(nil), // 5: common.v1.UserOnboardCapability
-	(*PodStatus)(nil),             // 6: common.v1.PodStatus
+	(*WorkspaceStatus)(nil),       // 6: common.v1.WorkspaceStatus
 	(*WorkspaceDetails)(nil),      // 7: common.v1.WorkspaceDetails
 	(*BlueprintSummary)(nil),      // 8: common.v1.BlueprintSummary
 	(*timestamppb.Timestamp)(nil), // 9: google.protobuf.Timestamp
 }
 var file_common_v1_common_proto_depIdxs = []int32{
 	9, // 0: common.v1.User.expires_at:type_name -> google.protobuf.Timestamp
-	9, // 1: common.v1.PodStatus.created:type_name -> google.protobuf.Timestamp
-	6, // 2: common.v1.WorkspaceDetails.pod_status:type_name -> common.v1.PodStatus
+	9, // 1: common.v1.WorkspaceStatus.created:type_name -> google.protobuf.Timestamp
+	6, // 2: common.v1.WorkspaceDetails.workspace_status:type_name -> common.v1.WorkspaceStatus
 	3, // [3:3] is the sub-list for method output_type
 	3, // [3:3] is the sub-list for method input_type
 	3, // [3:3] is the sub-list for extension type_name

@@ -8,33 +8,33 @@ import (
 
 const WORKSPACE_PORT = 2822 // port that workspace containers listen on for grpc connections
 
-// WorkspacePodStatus is the user-friendly status reported for a workspace pod.
-type WorkspacePodStatus string
+// WorkspaceStatusMessage is the user-friendly status reported for a workspace pod.
+type WorkspaceStatusMessage string
 
 const (
-	WorkspaceStatusProvisioning WorkspacePodStatus = "Starting"
-	WorkspaceStatusPulling      WorkspacePodStatus = "Pulling"
-	WorkspaceStatusRunning      WorkspacePodStatus = "Running"
-	WorkspaceStatusFailing      WorkspacePodStatus = "Failing"
-	WorkspaceStatusTerminating  WorkspacePodStatus = "Terminating"
-	WorkspaceStatusStopped      WorkspacePodStatus = "Stopped"
-	WorkspaceStatusError        WorkspacePodStatus = "Error"
-	WorkspaceStatusUnknown      WorkspacePodStatus = "Unknown"
+	WorkspaceStatusProvisioning WorkspaceStatusMessage = "Starting"
+	WorkspaceStatusPulling      WorkspaceStatusMessage = "Pulling"
+	WorkspaceStatusRunning      WorkspaceStatusMessage = "Running"
+	WorkspaceStatusFailing      WorkspaceStatusMessage = "Failing"
+	WorkspaceStatusTerminating  WorkspaceStatusMessage = "Terminating"
+	WorkspaceStatusStopped      WorkspaceStatusMessage = "Stopped"
+	WorkspaceStatusError        WorkspaceStatusMessage = "Error"
+	WorkspaceStatusUnknown      WorkspaceStatusMessage = "Unknown"
 )
 
-// PodStatus represents the status of a workspace pod
-type PodStatus struct {
-	Created         time.Time          `json:"created" example:"2025-08-05T10:30:00Z"`
-	Status          WorkspacePodStatus `json:"status" example:"Running"`
-	Message         string             `json:"message" example:"Workspace is running"`
-	Restarts        int32              `json:"restarts" example:"0"`
-	LastFailMessage string             `json:"lastFailMessage,omitempty" example:""`
+// WorkspaceStatus represents the status of a workspace pod
+type WorkspaceStatus struct {
+	Created         time.Time              `json:"created" example:"2025-08-05T10:30:00Z"`
+	Status          WorkspaceStatusMessage `json:"status" example:"Running"`
+	Message         string                 `json:"message" example:"Workspace is running"`
+	Restarts        int32                  `json:"restarts" example:"0"`
+	LastFailMessage string                 `json:"lastFailMessage,omitempty" example:""`
 }
 
 // WorkspaceDetails represents the details of a workspace
 // It contains information about the workspace pod status and in addition
 type WorkspaceDetails struct {
-	PodStatus
+	WorkspaceStatus
 	AppVersion   string `json:"appVersion" example:"1.0.0"`
 	Name         string `json:"name"`
 	Username     string `json:"username"`
@@ -76,7 +76,7 @@ type WorkspaceStreamEvent struct {
 	Timestamp  string                   `json:"timestamp,omitempty" example:"2025-08-05T10:30:00Z"`
 	ObjectName string                   `json:"objectName,omitempty" example:"dev-user123"`
 	Message    string                   `json:"message,omitempty" example:"Pod is starting"`
-	Status     WorkspacePodStatus       `json:"status,omitempty" example:"Running"`
+	Status     WorkspaceStatusMessage   `json:"status,omitempty" example:"Running"`
 }
 
 type ProvisionJobStatus string
