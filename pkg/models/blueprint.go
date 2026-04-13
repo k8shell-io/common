@@ -91,8 +91,17 @@ type K8shelld struct {
 
 // Network represents network configuration
 type Network struct {
-	NetworkPolicy string   `yaml:"networkPolicy,omitempty" validate:"oneof=workspace system isolated user organization"`
-	AllowEgress   []string `yaml:"allowEgress,omitempty" validate:"dive,cidr"`
+	NetworkPolicy        string       `yaml:"networkPolicy,omitempty" validate:"oneof=workspace system isolated user organization"`
+	AllowEgress          []string     `yaml:"allowEgress,omitempty" validate:"dive,cidr"`
+	AllowEgressFQDN      []string     `yaml:"allowEgressFQDN,omitempty"`
+	CiliumEgressEntities []string     `yaml:"ciliumEgressEntities,omitempty"`
+	CiliumEgressPorts    []CiliumPort `yaml:"ciliumEgressPorts,omitempty"`
+}
+
+// CiliumPort defines a port+protocol pair for Cilium L7 egress rules.
+type CiliumPort struct {
+	Port     string `yaml:"port" validate:"required"`
+	Protocol string `yaml:"protocol,omitempty" validate:"omitempty,oneof=TCP UDP SCTP"`
 }
 
 // Resources represents resource limits
