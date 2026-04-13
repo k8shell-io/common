@@ -94,17 +94,6 @@ type Network struct {
 	NetworkPolicy      string              `yaml:"networkPolicy,omitempty" validate:"oneof=workspace system isolated user organization"`
 	AllowEgressToCIDRs []string            `yaml:"allowEgressToCIDRs,omitempty" validate:"dive,cidr"`
 	AllowEgressToPods  []map[string]string `yaml:"allowEgressToPods,omitempty"`
-	Cilium             CiliumConfig        `yaml:"cilium,omitempty"`
-}
-
-// CiliumConfig holds all Cilium-specific network policy settings.
-// When Enabled is false (or Cilium field is absent), no CiliumNetworkPolicy
-// is created and Cilium falls back to standard NetworkPolicy behaviour.
-type CiliumConfig struct {
-	Enabled        bool         `yaml:"enabled"`
-	EgressEntities []string     `yaml:"egressEntities,omitempty"`
-	EgressFQDN     []string     `yaml:"egressFQDN,omitempty"`
-	EgressPorts    []CiliumPort `yaml:"egressPorts,omitempty"`
 }
 
 // CiliumPort defines a port+protocol pair for Cilium L7 egress rules.
