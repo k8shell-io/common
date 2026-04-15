@@ -102,13 +102,13 @@ type Resources struct {
 
 // Podman represents Podman configuration
 type Podman struct {
-	Enabled        bool               `yaml:"enabled" default:"false"`
-	Image          string             `yaml:"image" validate:"required_if=Enabled true"`
-	Resources      Resources          `yaml:"resources" default:"{cpu:500m,memory:512Mi}"`
-	GroupID        int                `yaml:"groupId" validate:"required_if=Enabled true,min=0,max=65535"`
-	ParentStorages bool               `yaml:"parentStorages" default:"true"`
-	ExtFiles       map[string]string  `yaml:"extFiles,omitempty" default:"{}"`
-	Storages       map[string]Storage `yaml:"storages,omitempty" default:"{}"`
+	Enabled                 bool               `yaml:"enabled" default:"false"`
+	Image                   string             `yaml:"image" validate:"required_if=Enabled true"`
+	Resources               Resources          `yaml:"resources" default:"{cpu:500m,memory:512Mi}"`
+	CreateDockerSockSymlink bool               `yaml:"createDockerSockSymlink" default:"false"`
+	ParentStorages          bool               `yaml:"parentStorages" default:"true"`
+	ExtFiles                map[string]string  `yaml:"extFiles,omitempty" default:"{}"`
+	Storages                map[string]Storage `yaml:"storages,omitempty" default:"{}"`
 }
 
 // Storage represents storage configuration
