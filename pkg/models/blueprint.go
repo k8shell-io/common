@@ -28,7 +28,7 @@ type Blueprint struct {
 	PortForwarding  []string            `yaml:"portForwarding,omitempty" default:"[localnetworks:0]"`
 	Network         Network             `yaml:"network,omitempty" default:"{networkPolicy:workspace}"`
 	Resources       Resources           `yaml:"resources,omitempty" default:"{limits:{cpu:500m,memory:512Mi}}"`
-	Docker          Docker              `yaml:"docker,omitempty" default:"{enabled:false}"`
+	Podman          Podman              `yaml:"podman,omitempty" default:"{enabled:false}"`
 	Storages        map[string]Storage  `yaml:"storages,omitempty" default:"{}"`
 	InitScripts     []map[string]string `yaml:"initScripts,omitempty" default:"[]"`
 	Capabilities    []string            `yaml:"capabilities,omitempty" validate:"omitempty,dive,oneof=NET_ADMIN NET_BIND_SERVICE NET_RAW SYS_ADMIN SYS_TIME SYS_MODULE SYS_RAWIO DAC_OVERRIDE FOWNER SETUID SETGID KILL CHOWN"`
@@ -57,8 +57,6 @@ type CustomBlueprint struct {
 	Name           string              `yaml:"name,omitempty"`
 	Template       string              `yaml:"template" validate:"required"`
 	Splash         string              `yaml:"splash,omitempty"`
-	Shell          string              `yaml:"shell,omitempty"`
-	Sudo           bool                `yaml:"sudo,omitempty"`
 	Image          string              `yaml:"image,omitempty"`
 	Env            map[string]string   `yaml:"env,omitempty"`
 	PortForwarding []string            `yaml:"portForwarding,omitempty"`
@@ -96,25 +94,18 @@ type Network struct {
 	AllowEgressToPods  []map[string]string `yaml:"allowEgressToPods,omitempty"`
 }
 
-// CiliumPort defines a port+protocol pair for Cilium L7 egress rules.
-type CiliumPort struct {
-	Port     string `yaml:"port"      validate:"required"`
-	Protocol string `yaml:"protocol,omitempty" validate:"omitempty,oneof=TCP UDP SCTP"`
-}
-
 // Resources represents resource limits
 type Resources struct {
 	CPU    string `yaml:"cpu" validate:"required"`
 	Memory string `yaml:"memory" validate:"required"`
 }
 
-// Docker represents Docker configuration
-type Docker struct {
+// Podman represents Podman configuration
+type Podman struct {
 	Enabled        bool               `yaml:"enabled" default:"false"`
 	Image          string             `yaml:"image" validate:"required_if=Enabled true"`
 	Resources      Resources          `yaml:"resources" default:"{cpu:500m,memory:512Mi}"`
 	GroupID        int                `yaml:"groupId" validate:"required_if=Enabled true,min=0,max=65535"`
-	SubGID         int                `yaml:"subgid" validate:"min=0" default:"0"`
 	ParentStorages bool               `yaml:"parentStorages" default:"true"`
 	ExtFiles       map[string]string  `yaml:"extFiles,omitempty" default:"{}"`
 	Storages       map[string]Storage `yaml:"storages,omitempty" default:"{}"`
@@ -122,14 +113,15 @@ type Docker struct {
 
 // Storage represents storage configuration
 type Storage struct {
-	Enabled      bool              `yaml:"enabled" default:"false"`
-	Id           string            `yaml:"id,omitempty" validate:"omitempty,alphanum"`
-	Type         string            `yaml:"type,omitempty" validate:"omitempty,oneof=local shared" default:"local"`
-	StorageClass string            `yaml:"storageClass,omitempty" default:""`
-	Size         string            `yaml:"size" validate:"required_if=Enabled true"`
-	Path         string            `yaml:"path" validate:"required_if=Enabled true,startswith=/"`
-	Readonly     bool              `yaml:"readonly" default:"false"`
-	Annotations  map[string]string `yaml:"annotations,omitempty" default:"{}"`
+	Enabled       bool              `yaml:"enabled" default:"false"`
+	Id            string            `yaml:"id,omitempty" validate:"omitempty,alphanum"`
+	Type          string            `yaml:"type,omitempty" validate:"omitempty,oneof=local shared" default:"local"`
+	ExistingClaim string            `yaml:"existingClaim,omitempty" validate:"required_if=Type shared Enabled true"`
+	StorageClass  string            `yaml:"storageClass,omitempty" default:""`
+	Size          string            `yaml:"size" validate:"required_if=Enabled true"`
+	Path          string            `yaml:"path" validate:"required_if=Enabled true,startswith=/"`
+	Readonly      bool              `yaml:"readonly" default:"false"`
+	Annotations   map[string]string `yaml:"annotations,omitempty" default:"{}"`
 }
 
 type AppSpec struct {
