@@ -13,28 +13,28 @@ import (
 // Blueprint represents a single blueprint configuration
 type Blueprint struct {
 	Metadata        BlueprintMetadata
-	Name            string              `yaml:"name" validate:"required,min=1,max=40"`
-	Description     string              `yaml:"description,omitempty" validate:"max=500"`
-	IsTemplate      bool                `yaml:"isTemplate,omitempty" default:"false"`
-	Splash          string              `yaml:"splash,omitempty"`
-	Template        string              `yaml:"template"`
-	Hostname        string              `yaml:"hostname,omitempty" validate:"omitempty,plainhostname"`
-	Subdomain       string              `yaml:"subdomain,omitempty" validate:"omitempty,plainhostname"`
-	Image           string              `yaml:"image" validate:"required"`
-	ImagePullSecret string              `yaml:"imagePullSecret,omitempty"`
-	ImagePullPolicy string              `yaml:"imagePullPolicy,omitempty" validate:"omitempty,oneof=Always Never IfNotPresent"`
-	K8shelld        K8shelld            `yaml:"k8shelld" validate:"required"`
-	Env             map[string]string   `yaml:"env,omitempty" default:"{}"`
-	PortForwarding  []string            `yaml:"portForwarding,omitempty" default:"[localnetworks:0]"`
-	Network         Network             `yaml:"network,omitempty" default:"{networkPolicy:workspace}"`
-	Resources       Resources           `yaml:"resources,omitempty" default:"{limits:{cpu:500m,memory:512Mi}}"`
-	Podman          Podman              `yaml:"podman,omitempty" default:"{enabled:false}"`
-	Storages        map[string]Storage  `yaml:"storages,omitempty" default:"{}"`
-	InitScripts     []map[string]string `yaml:"initScripts,omitempty" default:"[]"`
-	Capabilities    []string            `yaml:"capabilities,omitempty" validate:"omitempty,dive,oneof=NET_ADMIN NET_BIND_SERVICE NET_RAW SYS_ADMIN SYS_TIME SYS_MODULE SYS_RAWIO DAC_OVERRIDE FOWNER SETUID SETGID KILL CHOWN"`
-	ExtFiles        map[string]string   `yaml:"extFiles,omitempty" default:"{}"`
-	EnableApps      bool                `yaml:"enableApps,omitempty" default:"false"`
-	Apps            map[string]AppSpec  `yaml:"apps,omitempty" default:"{}"`
+	Name            string             `yaml:"name" validate:"required,min=1,max=40"`
+	Description     string             `yaml:"description,omitempty" validate:"max=500"`
+	IsTemplate      bool               `yaml:"isTemplate,omitempty" default:"false"`
+	Splash          string             `yaml:"splash,omitempty"`
+	Template        string             `yaml:"template"`
+	Hostname        string             `yaml:"hostname,omitempty" validate:"omitempty,plainhostname"`
+	Subdomain       string             `yaml:"subdomain,omitempty" validate:"omitempty,plainhostname"`
+	Image           string             `yaml:"image" validate:"required"`
+	ImagePullSecret string             `yaml:"imagePullSecret,omitempty"`
+	ImagePullPolicy string             `yaml:"imagePullPolicy,omitempty" validate:"omitempty,oneof=Always Never IfNotPresent"`
+	K8shelld        K8shelld           `yaml:"k8shelld" validate:"required"`
+	Env             map[string]string  `yaml:"env,omitempty" default:"{}"`
+	PortForwarding  []string           `yaml:"portForwarding,omitempty" default:"[localnetworks:0]"`
+	Network         Network            `yaml:"network,omitempty" default:"{networkPolicy:workspace}"`
+	Resources       Resources          `yaml:"resources,omitempty" default:"{limits:{cpu:500m,memory:512Mi}}"`
+	Podman          Podman             `yaml:"podman,omitempty" default:"{enabled:false}"`
+	Storages        map[string]Storage `yaml:"storages,omitempty" default:"{}"`
+	InitScripts     []InitScript       `yaml:"initScripts,omitempty" default:"[]"`
+	Capabilities    []string           `yaml:"capabilities,omitempty" validate:"omitempty,dive,oneof=NET_ADMIN NET_BIND_SERVICE NET_RAW SYS_ADMIN SYS_TIME SYS_MODULE SYS_RAWIO DAC_OVERRIDE FOWNER SETUID SETGID KILL CHOWN"`
+	ExtFiles        map[string]string  `yaml:"extFiles,omitempty" default:"{}"`
+	EnableApps      bool               `yaml:"enableApps,omitempty" default:"false"`
+	Apps            map[string]AppSpec `yaml:"apps,omitempty" default:"{}"`
 }
 
 // BlueprintMetadata holds metadata information for a blueprint.
@@ -54,24 +54,30 @@ type K8shellFile struct {
 // CustomBlueprint represents a custom blueprint configuration
 type CustomBlueprint struct {
 	Metadata       BlueprintMetadata
-	Name           string              `yaml:"name,omitempty"`
-	Template       string              `yaml:"template" validate:"required"`
-	Splash         string              `yaml:"splash,omitempty"`
-	Image          string              `yaml:"image,omitempty"`
-	Env            map[string]string   `yaml:"env,omitempty"`
-	PortForwarding []string            `yaml:"portForwarding,omitempty"`
-	Network        Network             `yaml:"network,omitempty"`
-	Resources      Resources           `yaml:"resources,omitempty"`
-	Storages       map[string]Storage  `yaml:"storages,omitempty"`
-	InitScripts    []map[string]string `yaml:"initScripts,omitempty"`
-	EnableApps     bool                `yaml:"enableApps,omitempty"`
-	Apps           map[string]AppSpec  `yaml:"apps,omitempty"`
+	Name           string             `yaml:"name,omitempty"`
+	Template       string             `yaml:"template" validate:"required"`
+	Splash         string             `yaml:"splash,omitempty"`
+	Image          string             `yaml:"image,omitempty"`
+	Env            map[string]string  `yaml:"env,omitempty"`
+	PortForwarding []string           `yaml:"portForwarding,omitempty"`
+	Network        Network            `yaml:"network,omitempty"`
+	Resources      Resources          `yaml:"resources,omitempty"`
+	Storages       map[string]Storage `yaml:"storages,omitempty"`
+	InitScripts    []InitScript       `yaml:"initScripts,omitempty"`
+	EnableApps     bool               `yaml:"enableApps,omitempty"`
+	Apps           map[string]AppSpec `yaml:"apps,omitempty"`
 }
 
 type BlueprintSummary struct {
 	Name        string `json:"name"`
 	Description string `json:"description,omitempty"`
 	IsTemplate  bool   `json:"isTemplate,omitempty"`
+}
+
+// InitScript represents a named initialization script
+type InitScript struct {
+	Name   string `yaml:"name" validate:"required"`
+	Script string `yaml:"script" validate:"required"`
 }
 
 type Conn struct {
