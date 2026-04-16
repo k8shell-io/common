@@ -1,0 +1,93 @@
+// Copyright 2026 the k8Shell authors.
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+syntax = "proto3";
+
+package cloudshell.v1;
+
+option go_package = "github.com/k8shell-io/common/pkg/api/gen/go/cloudshell/v1;cloudshellv1";
+
+// CloudshellMessage is the top-level message that can contain any of the other message types as its payload.
+message CloudshellMessage {
+    oneof payload {
+        PingMessage ping = 1;
+        PongMessage pong = 2;
+        TerminalInputMessage terminal_input = 3;
+        TerminalOutputMessage terminal_output = 4;
+        TerminalResizeMessage terminal_resize = 5;
+        FileExplorerMessage file_explorer = 6;
+        TerminalErrorMessage terminal_error = 7;
+    }
+}
+
+// PingMessage is sent by the client to keep the connection alive
+message PingMessage {}
+
+// PongMessage is sent by the server in response to a PingMessage
+message PongMessage {}
+
+// TerminalInputMessage is sent by the client when the user types in the terminal
+message TerminalInputMessage {
+    string data = 1;
+}
+
+// TerminalOutputMessage is sent by the server to the client when there is output from the terminal
+message TerminalOutputMessage {
+    string data = 1;
+}
+
+// TerminalErrorMessage is sent by the server to the client when there is an error in the terminal
+message TerminalErrorMessage {
+    string data = 1;
+}
+
+// TerminalResizeMessage is sent by the client when the terminal is resized
+message TerminalResizeMessage {
+    uint32 cols = 1;
+    uint32 rows = 2;
+}
+
+// FileExplorerMessage is used for both commands and responses in the file explorer component.
+message FileExplorerMessage {
+    // Id is used to correlate commands and responses between the client and server.
+    string id = 1;
+
+    oneof payload {
+        FileExplorerCommand command = 2;
+        FileExplorerResponse response = 3;
+    }
+}
+
+// FileExplorerCommand represents a command sent from the client to the server in the file explorer component.
+message FileExplorerCommand {
+    oneof payload {
+        ListFilesCommand list_files = 1;
+    }
+}
+
+// FileExplorerResponse represents a response sent from the server to the client in the file explorer component.
+message FileExplorerResponse {
+    oneof payload {
+        ListFilesResponse list_files = 1;
+    }
+}
+
+// ListFilesCommand is a command to list files in a directory.
+message ListFilesCommand {
+    string path = 1;
+}
+
+// ListFilesResponse is a response containing the list of files in a directory.
+message ListFilesResponse {
+    repeated FileInfo files = 1;
+}
+
+// FileInfo represents information about a file or directory.
+message FileInfo {
+    string name= 1;
+    string path = 2;
+    int64 size = 3;
+    string mode = 4;
+    bool is_dir = 5;
+    string mod_time = 6;
+}
