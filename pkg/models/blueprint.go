@@ -116,8 +116,8 @@ type Storage struct {
 	Enabled       bool              `yaml:"enabled" default:"false"`
 	Id            string            `yaml:"id,omitempty" validate:"omitempty,alphanum"`
 	Type          string            `yaml:"type,omitempty" validate:"omitempty,oneof=local shared" default:"local"`
-	FsOwnerUid    int               `yaml:"ownerUid,omitempty" default:"0"`
-	FsOwnerGid    int               `yaml:"ownerGid,omitempty" default:"0"`
+	FsOwnerUid    int               `yaml:"fsOwnerUid,omitempty" default:"0"`
+	FsOwnerGid    int               `yaml:"fsOwnerGid,omitempty" default:"0"`
 	ExistingClaim string            `yaml:"existingClaim,omitempty" validate:"required_if=Type shared Enabled true"`
 	StorageClass  string            `yaml:"storageClass,omitempty" default:""`
 	Size          string            `yaml:"size" validate:"required_if=Enabled true"`
