@@ -52,19 +52,18 @@ type K8shellFile struct {
 
 // CustomBlueprint represents a custom blueprint configuration
 type CustomBlueprint struct {
-	Metadata       BlueprintMetadata
-	Name           string             `yaml:"name,omitempty"`
-	Template       string             `yaml:"template" validate:"required"`
-	Splash         string             `yaml:"splash,omitempty"`
-	Image          string             `yaml:"image,omitempty"`
-	Env            map[string]string  `yaml:"env,omitempty"`
-	PortForwarding []string           `yaml:"portForwarding,omitempty"`
-	Network        Network            `yaml:"network,omitempty"`
-	Resources      Resources          `yaml:"resources,omitempty"`
-	Storages       map[string]Storage `yaml:"storages,omitempty"`
-	InitScripts    []InitScript       `yaml:"initScripts,omitempty"`
-	EnableApps     bool               `yaml:"enableApps,omitempty"`
-	Apps           map[string]AppSpec `yaml:"apps,omitempty"`
+	Metadata    BlueprintMetadata
+	Name        string             `yaml:"name,omitempty"`
+	Template    string             `yaml:"template" validate:"required"`
+	Splash      string             `yaml:"splash,omitempty"`
+	Image       string             `yaml:"image,omitempty"`
+	Env         map[string]string  `yaml:"env,omitempty"`
+	Network     Network            `yaml:"network,omitempty"`
+	Resources   Resources          `yaml:"resources,omitempty"`
+	Storages    map[string]Storage `yaml:"storages,omitempty"`
+	InitScripts []InitScript       `yaml:"initScripts,omitempty"`
+	EnableApps  bool               `yaml:"enableApps,omitempty"`
+	Apps        map[string]AppSpec `yaml:"apps,omitempty"`
 }
 
 type BlueprintSummary struct {
