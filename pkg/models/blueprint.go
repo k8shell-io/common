@@ -25,7 +25,6 @@ type Blueprint struct {
 	ImagePullPolicy string             `yaml:"imagePullPolicy,omitempty" validate:"omitempty,oneof=Always Never IfNotPresent"`
 	K8shelld        K8shelld           `yaml:"k8shelld" validate:"required"`
 	Env             map[string]string  `yaml:"env,omitempty" default:"{}"`
-	PortForwarding  []string           `yaml:"portForwarding,omitempty" default:"[localnetworks:0]"`
 	Network         Network            `yaml:"network,omitempty" default:"{networkPolicy:workspace}"`
 	Resources       Resources          `yaml:"resources,omitempty" default:"{limits:{cpu:500m,memory:512Mi}}"`
 	Podman          Podman             `yaml:"podman,omitempty" default:"{enabled:false}"`
