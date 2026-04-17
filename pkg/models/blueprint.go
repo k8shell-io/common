@@ -119,22 +119,21 @@ type Podman struct {
 
 // Storage represents storage configuration
 type Storage struct {
-	Enabled       bool              `yaml:"enabled" default:"false"`
-	Id            string            `yaml:"id,omitempty" validate:"omitempty,alphanum"`
-	Type          string            `yaml:"type,omitempty" validate:"omitempty,oneof=local shared" default:"local"`
-	FsOwnerUid    int               `yaml:"fsOwnerUid,omitempty" default:"0"`
-	FsOwnerGid    int               `yaml:"fsOwnerGid,omitempty" default:"0"`
-	ExistingClaim string            `yaml:"existingClaim,omitempty" validate:"required_if=Type shared Enabled true"`
-	StorageClass  string            `yaml:"storageClass,omitempty" default:""`
-	Size          string            `yaml:"size" validate:"required_if=Enabled true"`
-	Path          string            `yaml:"path" validate:"required_if=Enabled true,startswith=/"`
-	Readonly      bool              `yaml:"readonly" default:"false"`
-	Annotations   map[string]string `yaml:"annotations,omitempty" default:"{}"`
+	Enabled              bool              `yaml:"enabled" default:"false"`
+	Id                   string            `yaml:"id,omitempty" validate:"omitempty,alphanum"`
+	Type                 string            `yaml:"type,omitempty" validate:"omitempty,oneof=local shared" default:"local"`
+	Path                 string            `yaml:"path" validate:"required_if=Enabled true,startswith=/"`
+	Readonly             bool              `yaml:"readonly" default:"false"`
+	ExistingClaim        string            `yaml:"existingClaim,omitempty" validate:"required_if=Type shared Enabled true"`
+	FsOwnerUid           int               `yaml:"fsOwnerUid,omitempty" default:"0"`
+	FsOwnerGid           int               `yaml:"fsOwnerGid,omitempty" default:"0"`
+	ClaimSpec            *yaml.Node        `yaml:"claimSpec,omitempty"`
+	ClaimSpecAnnotations map[string]string `yaml:"claimSpecAnnotations,omitempty" default:"{}"`
 }
 
 type AppSpec struct {
-	Enabled           bool          `yaml:"enabled" default:"false"`
 	Name              string        `yaml:"name" validate:"required_if=Enabled true"`
+	Enabled           bool          `yaml:"enabled" default:"false"`
 	Binary            string        `yaml:"binary" validate:"required_if=Enabled true"`
 	VersionCmd        []string      `yaml:"versionCmd,omitempty"`
 	VersionRegex      string        `yaml:"versionRegex,omitempty"`
