@@ -13,27 +13,27 @@ import (
 // Blueprint represents a single blueprint configuration
 type Blueprint struct {
 	Metadata        BlueprintMetadata
-	Name            string             `yaml:"name" validate:"required,min=1,max=40"`
-	Description     string             `yaml:"description,omitempty" validate:"max=500"`
-	IsTemplate      bool               `yaml:"isTemplate,omitempty" default:"false"`
-	Splash          string             `yaml:"splash,omitempty"`
-	Template        string             `yaml:"template"`
-	Hostname        string             `yaml:"hostname,omitempty" validate:"omitempty,plainhostname"`
-	Subdomain       string             `yaml:"subdomain,omitempty" validate:"omitempty,plainhostname"`
-	Image           string             `yaml:"image" validate:"required"`
-	ImagePullSecret string             `yaml:"imagePullSecret,omitempty"`
-	ImagePullPolicy string             `yaml:"imagePullPolicy,omitempty" validate:"omitempty,oneof=Always Never IfNotPresent"`
-	K8shelld        K8shelld           `yaml:"k8shelld" validate:"required"`
-	Env             map[string]string  `yaml:"env,omitempty" default:"{}"`
-	Network         Network            `yaml:"network,omitempty" default:"{networkPolicy:workspace}"`
-	Resources       Resources          `yaml:"resources,omitempty" default:"{limits:{cpu:500m,memory:512Mi}}"`
-	Podman          Podman             `yaml:"podman,omitempty" default:"{enabled:false}"`
-	Storages        map[string]Storage `yaml:"storages,omitempty" default:"{}"`
-	InitScripts     []InitScript       `yaml:"initScripts,omitempty" default:"[]"`
-	Capabilities    []string           `yaml:"capabilities,omitempty" validate:"omitempty,dive,oneof=NET_ADMIN NET_BIND_SERVICE NET_RAW SYS_ADMIN SYS_TIME SYS_MODULE SYS_RAWIO DAC_OVERRIDE FOWNER SETUID SETGID KILL CHOWN"`
-	ExtFiles        map[string]string  `yaml:"extFiles,omitempty" default:"{}"`
-	EnableApps      bool               `yaml:"enableApps,omitempty" default:"false"`
-	Apps            map[string]AppSpec `yaml:"apps,omitempty" default:"{}"`
+	Name            string                 `yaml:"name" validate:"required,min=1,max=40"`
+	Description     string                 `yaml:"description,omitempty" validate:"max=500"`
+	IsTemplate      bool                   `yaml:"isTemplate,omitempty" default:"false"`
+	Splash          string                 `yaml:"splash,omitempty"`
+	Template        string                 `yaml:"template"`
+	Hostname        string                 `yaml:"hostname,omitempty" validate:"omitempty,plainhostname"`
+	Subdomain       string                 `yaml:"subdomain,omitempty" validate:"omitempty,plainhostname"`
+	Image           string                 `yaml:"image" validate:"required"`
+	ImagePullSecret string                 `yaml:"imagePullSecret,omitempty"`
+	ImagePullPolicy string                 `yaml:"imagePullPolicy,omitempty" validate:"omitempty,oneof=Always Never IfNotPresent"`
+	K8shelld        K8shelld               `yaml:"k8shelld" validate:"required"`
+	Env             map[string]string      `yaml:"env,omitempty" default:"{}"`
+	Network         Network                `yaml:"network,omitempty" default:"{networkPolicy:workspace}"`
+	Resources       Resources              `yaml:"resources,omitempty" default:"{limits:{cpu:500m,memory:512Mi}}"`
+	Podman          Podman                 `yaml:"podman,omitempty" default:"{enabled:false}"`
+	Storages        map[string]Storage     `yaml:"storages,omitempty" default:"{}"`
+	InitScripts     []InitScript           `yaml:"initScripts,omitempty" default:"[]"`
+	SecurityContext map[string]interface{} `yaml:"securityContext,omitempty" default:"{}"`
+	ExtFiles        map[string]string      `yaml:"extFiles,omitempty" default:"{}"`
+	EnableApps      bool                   `yaml:"enableApps,omitempty" default:"false"`
+	Apps            map[string]AppSpec     `yaml:"apps,omitempty" default:"{}"`
 }
 
 // BlueprintMetadata holds metadata information for a blueprint.
@@ -106,13 +106,14 @@ type Resources struct {
 
 // Podman represents Podman configuration
 type Podman struct {
-	Enabled                 bool               `yaml:"enabled" default:"false"`
-	Image                   string             `yaml:"image" validate:"required_if=Enabled true"`
-	Resources               Resources          `yaml:"resources" default:"{cpu:500m,memory:512Mi}"`
-	CreateDockerSockSymlink bool               `yaml:"createDockerSockSymlink" default:"false"`
-	ParentStorages          bool               `yaml:"parentStorages" default:"true"`
-	ExtFiles                map[string]string  `yaml:"extFiles,omitempty" default:"{}"`
-	Storages                map[string]Storage `yaml:"storages,omitempty" default:"{}"`
+	Enabled                 bool                   `yaml:"enabled" default:"false"`
+	Image                   string                 `yaml:"image" validate:"required_if=Enabled true"`
+	Resources               Resources              `yaml:"resources" default:"{cpu:500m,memory:512Mi}"`
+	CreateDockerSockSymlink bool                   `yaml:"createDockerSockSymlink" default:"false"`
+	ParentStorages          bool                   `yaml:"parentStorages" default:"true"`
+	ExtFiles                map[string]string      `yaml:"extFiles,omitempty" default:"{}"`
+	Storages                map[string]Storage     `yaml:"storages,omitempty" default:"{}"`
+	SecurityContext         map[string]interface{} `yaml:"securityContext,omitempty" default:"{}"`
 }
 
 // Storage represents storage configuration
@@ -125,7 +126,7 @@ type Storage struct {
 	ExistingClaim        string                 `yaml:"existingClaim,omitempty" validate:"required_if=Type shared Enabled true"`
 	FsOwnerUid           int                    `yaml:"fsOwnerUid,omitempty" default:"0"`
 	FsOwnerGid           int                    `yaml:"fsOwnerGid,omitempty" default:"0"`
-	ClaimSpec            map[string]interface{} `yaml:"claimSpec,omitempty"`
+	ClaimSpec            map[string]interface{} `yaml:"claimSpec,omitempty" default:"{}"`
 	ClaimSpecAnnotations map[string]string      `yaml:"claimSpecAnnotations,omitempty" default:"{}"`
 }
 
