@@ -159,34 +159,44 @@ var SystemService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	ShellService_Shell_FullMethodName          = "/k8shelld.ShellService/Shell"
-	ShellService_ResizeTerminal_FullMethodName = "/k8shelld.ShellService/ResizeTerminal"
-	ShellService_WatchShell_FullMethodName     = "/k8shelld.ShellService/WatchShell"
+	SshService_Shell_FullMethodName          = "/k8shelld.SshService/Shell"
+	SshService_ResizeTerminal_FullMethodName = "/k8shelld.SshService/ResizeTerminal"
+	SshService_WatchShell_FullMethodName     = "/k8shelld.SshService/WatchShell"
+	SshService_PortForward_FullMethodName    = "/k8shelld.SshService/PortForward"
+	SshService_Exec_FullMethodName           = "/k8shelld.SshService/Exec"
+	SshService_UnixSocket_FullMethodName     = "/k8shelld.SshService/UnixSocket"
 )
 
-// ShellServiceClient is the client API for ShellService service.
+// SshServiceClient is the client API for SshService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type ShellServiceClient interface {
+type SshServiceClient interface {
 	// Shell starts a shell session
 	Shell(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ShellRequest, ShellResponse], error)
 	// ResizeTerminal resizes the terminal in a shell session
 	ResizeTerminal(ctx context.Context, in *ResizeTerminalRequest, opts ...grpc.CallOption) (*ResizeTerminalResponse, error)
 	// WatchShell streams filesystem and CWD notifications for a running shell session.
 	WatchShell(ctx context.Context, in *WatchShellRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[WatchShellEvent], error)
+	// PortForward forwards a port to the specified destination IP and port
+	PortForward(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[PortForwardRequest, PortForwardResponse], error)
+	// Exec executes a command
+	Exec(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ExecRequest, ExecResponse], error)
+	// UnixSocket reads/writes to a Unix socket in the remote OS
+	// This is primarily used for SSH agent forwarding
+	UnixSocket(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[UnixSocketRequest, UnixSocketResponse], error)
 }
 
-type shellServiceClient struct {
+type sshServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewShellServiceClient(cc grpc.ClientConnInterface) ShellServiceClient {
-	return &shellServiceClient{cc}
+func NewSshServiceClient(cc grpc.ClientConnInterface) SshServiceClient {
+	return &sshServiceClient{cc}
 }
 
-func (c *shellServiceClient) Shell(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ShellRequest, ShellResponse], error) {
+func (c *sshServiceClient) Shell(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ShellRequest, ShellResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &ShellService_ServiceDesc.Streams[0], ShellService_Shell_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &SshService_ServiceDesc.Streams[0], SshService_Shell_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -195,21 +205,21 @@ func (c *shellServiceClient) Shell(ctx context.Context, opts ...grpc.CallOption)
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type ShellService_ShellClient = grpc.BidiStreamingClient[ShellRequest, ShellResponse]
+type SshService_ShellClient = grpc.BidiStreamingClient[ShellRequest, ShellResponse]
 
-func (c *shellServiceClient) ResizeTerminal(ctx context.Context, in *ResizeTerminalRequest, opts ...grpc.CallOption) (*ResizeTerminalResponse, error) {
+func (c *sshServiceClient) ResizeTerminal(ctx context.Context, in *ResizeTerminalRequest, opts ...grpc.CallOption) (*ResizeTerminalResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ResizeTerminalResponse)
-	err := c.cc.Invoke(ctx, ShellService_ResizeTerminal_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, SshService_ResizeTerminal_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *shellServiceClient) WatchShell(ctx context.Context, in *WatchShellRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[WatchShellEvent], error) {
+func (c *sshServiceClient) WatchShell(ctx context.Context, in *WatchShellRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[WatchShellEvent], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &ShellService_ServiceDesc.Streams[1], ShellService_WatchShell_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &SshService_ServiceDesc.Streams[1], SshService_WatchShell_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -224,145 +234,11 @@ func (c *shellServiceClient) WatchShell(ctx context.Context, in *WatchShellReque
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type ShellService_WatchShellClient = grpc.ServerStreamingClient[WatchShellEvent]
+type SshService_WatchShellClient = grpc.ServerStreamingClient[WatchShellEvent]
 
-// ShellServiceServer is the server API for ShellService service.
-// All implementations must embed UnimplementedShellServiceServer
-// for forward compatibility.
-type ShellServiceServer interface {
-	// Shell starts a shell session
-	Shell(grpc.BidiStreamingServer[ShellRequest, ShellResponse]) error
-	// ResizeTerminal resizes the terminal in a shell session
-	ResizeTerminal(context.Context, *ResizeTerminalRequest) (*ResizeTerminalResponse, error)
-	// WatchShell streams filesystem and CWD notifications for a running shell session.
-	WatchShell(*WatchShellRequest, grpc.ServerStreamingServer[WatchShellEvent]) error
-	mustEmbedUnimplementedShellServiceServer()
-}
-
-// UnimplementedShellServiceServer must be embedded to have
-// forward compatible implementations.
-//
-// NOTE: this should be embedded by value instead of pointer to avoid a nil
-// pointer dereference when methods are called.
-type UnimplementedShellServiceServer struct{}
-
-func (UnimplementedShellServiceServer) Shell(grpc.BidiStreamingServer[ShellRequest, ShellResponse]) error {
-	return status.Errorf(codes.Unimplemented, "method Shell not implemented")
-}
-func (UnimplementedShellServiceServer) ResizeTerminal(context.Context, *ResizeTerminalRequest) (*ResizeTerminalResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ResizeTerminal not implemented")
-}
-func (UnimplementedShellServiceServer) WatchShell(*WatchShellRequest, grpc.ServerStreamingServer[WatchShellEvent]) error {
-	return status.Errorf(codes.Unimplemented, "method WatchShell not implemented")
-}
-func (UnimplementedShellServiceServer) mustEmbedUnimplementedShellServiceServer() {}
-func (UnimplementedShellServiceServer) testEmbeddedByValue()                      {}
-
-// UnsafeShellServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to ShellServiceServer will
-// result in compilation errors.
-type UnsafeShellServiceServer interface {
-	mustEmbedUnimplementedShellServiceServer()
-}
-
-func RegisterShellServiceServer(s grpc.ServiceRegistrar, srv ShellServiceServer) {
-	// If the following call pancis, it indicates UnimplementedShellServiceServer was
-	// embedded by pointer and is nil.  This will cause panics if an
-	// unimplemented method is ever invoked, so we test this at initialization
-	// time to prevent it from happening at runtime later due to I/O.
-	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
-		t.testEmbeddedByValue()
-	}
-	s.RegisterService(&ShellService_ServiceDesc, srv)
-}
-
-func _ShellService_Shell_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(ShellServiceServer).Shell(&grpc.GenericServerStream[ShellRequest, ShellResponse]{ServerStream: stream})
-}
-
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type ShellService_ShellServer = grpc.BidiStreamingServer[ShellRequest, ShellResponse]
-
-func _ShellService_ResizeTerminal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ResizeTerminalRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ShellServiceServer).ResizeTerminal(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ShellService_ResizeTerminal_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ShellServiceServer).ResizeTerminal(ctx, req.(*ResizeTerminalRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ShellService_WatchShell_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(WatchShellRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(ShellServiceServer).WatchShell(m, &grpc.GenericServerStream[WatchShellRequest, WatchShellEvent]{ServerStream: stream})
-}
-
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type ShellService_WatchShellServer = grpc.ServerStreamingServer[WatchShellEvent]
-
-// ShellService_ServiceDesc is the grpc.ServiceDesc for ShellService service.
-// It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
-var ShellService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "k8shelld.ShellService",
-	HandlerType: (*ShellServiceServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "ResizeTerminal",
-			Handler:    _ShellService_ResizeTerminal_Handler,
-		},
-	},
-	Streams: []grpc.StreamDesc{
-		{
-			StreamName:    "Shell",
-			Handler:       _ShellService_Shell_Handler,
-			ServerStreams: true,
-			ClientStreams: true,
-		},
-		{
-			StreamName:    "WatchShell",
-			Handler:       _ShellService_WatchShell_Handler,
-			ServerStreams: true,
-		},
-	},
-	Metadata: "k8shelld/v1/k8shelld.proto",
-}
-
-const (
-	PortForwardService_PortForward_FullMethodName = "/k8shelld.PortForwardService/PortForward"
-)
-
-// PortForwardServiceClient is the client API for PortForwardService service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type PortForwardServiceClient interface {
-	// PortForward forwards a port to the specified destination IP and port
-	PortForward(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[PortForwardRequest, PortForwardResponse], error)
-}
-
-type portForwardServiceClient struct {
-	cc grpc.ClientConnInterface
-}
-
-func NewPortForwardServiceClient(cc grpc.ClientConnInterface) PortForwardServiceClient {
-	return &portForwardServiceClient{cc}
-}
-
-func (c *portForwardServiceClient) PortForward(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[PortForwardRequest, PortForwardResponse], error) {
+func (c *sshServiceClient) PortForward(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[PortForwardRequest, PortForwardResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &PortForwardService_ServiceDesc.Streams[0], PortForwardService_PortForward_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &SshService_ServiceDesc.Streams[2], SshService_PortForward_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -371,96 +247,11 @@ func (c *portForwardServiceClient) PortForward(ctx context.Context, opts ...grpc
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type PortForwardService_PortForwardClient = grpc.BidiStreamingClient[PortForwardRequest, PortForwardResponse]
+type SshService_PortForwardClient = grpc.BidiStreamingClient[PortForwardRequest, PortForwardResponse]
 
-// PortForwardServiceServer is the server API for PortForwardService service.
-// All implementations must embed UnimplementedPortForwardServiceServer
-// for forward compatibility.
-type PortForwardServiceServer interface {
-	// PortForward forwards a port to the specified destination IP and port
-	PortForward(grpc.BidiStreamingServer[PortForwardRequest, PortForwardResponse]) error
-	mustEmbedUnimplementedPortForwardServiceServer()
-}
-
-// UnimplementedPortForwardServiceServer must be embedded to have
-// forward compatible implementations.
-//
-// NOTE: this should be embedded by value instead of pointer to avoid a nil
-// pointer dereference when methods are called.
-type UnimplementedPortForwardServiceServer struct{}
-
-func (UnimplementedPortForwardServiceServer) PortForward(grpc.BidiStreamingServer[PortForwardRequest, PortForwardResponse]) error {
-	return status.Errorf(codes.Unimplemented, "method PortForward not implemented")
-}
-func (UnimplementedPortForwardServiceServer) mustEmbedUnimplementedPortForwardServiceServer() {}
-func (UnimplementedPortForwardServiceServer) testEmbeddedByValue()                            {}
-
-// UnsafePortForwardServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to PortForwardServiceServer will
-// result in compilation errors.
-type UnsafePortForwardServiceServer interface {
-	mustEmbedUnimplementedPortForwardServiceServer()
-}
-
-func RegisterPortForwardServiceServer(s grpc.ServiceRegistrar, srv PortForwardServiceServer) {
-	// If the following call pancis, it indicates UnimplementedPortForwardServiceServer was
-	// embedded by pointer and is nil.  This will cause panics if an
-	// unimplemented method is ever invoked, so we test this at initialization
-	// time to prevent it from happening at runtime later due to I/O.
-	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
-		t.testEmbeddedByValue()
-	}
-	s.RegisterService(&PortForwardService_ServiceDesc, srv)
-}
-
-func _PortForwardService_PortForward_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(PortForwardServiceServer).PortForward(&grpc.GenericServerStream[PortForwardRequest, PortForwardResponse]{ServerStream: stream})
-}
-
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type PortForwardService_PortForwardServer = grpc.BidiStreamingServer[PortForwardRequest, PortForwardResponse]
-
-// PortForwardService_ServiceDesc is the grpc.ServiceDesc for PortForwardService service.
-// It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
-var PortForwardService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "k8shelld.PortForwardService",
-	HandlerType: (*PortForwardServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
-	Streams: []grpc.StreamDesc{
-		{
-			StreamName:    "PortForward",
-			Handler:       _PortForwardService_PortForward_Handler,
-			ServerStreams: true,
-			ClientStreams: true,
-		},
-	},
-	Metadata: "k8shelld/v1/k8shelld.proto",
-}
-
-const (
-	ExecService_Exec_FullMethodName = "/k8shelld.ExecService/Exec"
-)
-
-// ExecServiceClient is the client API for ExecService service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type ExecServiceClient interface {
-	// Exec executes a command
-	Exec(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ExecRequest, ExecResponse], error)
-}
-
-type execServiceClient struct {
-	cc grpc.ClientConnInterface
-}
-
-func NewExecServiceClient(cc grpc.ClientConnInterface) ExecServiceClient {
-	return &execServiceClient{cc}
-}
-
-func (c *execServiceClient) Exec(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ExecRequest, ExecResponse], error) {
+func (c *sshServiceClient) Exec(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ExecRequest, ExecResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &ExecService_ServiceDesc.Streams[0], ExecService_Exec_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &SshService_ServiceDesc.Streams[3], SshService_Exec_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -469,97 +260,11 @@ func (c *execServiceClient) Exec(ctx context.Context, opts ...grpc.CallOption) (
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type ExecService_ExecClient = grpc.BidiStreamingClient[ExecRequest, ExecResponse]
+type SshService_ExecClient = grpc.BidiStreamingClient[ExecRequest, ExecResponse]
 
-// ExecServiceServer is the server API for ExecService service.
-// All implementations must embed UnimplementedExecServiceServer
-// for forward compatibility.
-type ExecServiceServer interface {
-	// Exec executes a command
-	Exec(grpc.BidiStreamingServer[ExecRequest, ExecResponse]) error
-	mustEmbedUnimplementedExecServiceServer()
-}
-
-// UnimplementedExecServiceServer must be embedded to have
-// forward compatible implementations.
-//
-// NOTE: this should be embedded by value instead of pointer to avoid a nil
-// pointer dereference when methods are called.
-type UnimplementedExecServiceServer struct{}
-
-func (UnimplementedExecServiceServer) Exec(grpc.BidiStreamingServer[ExecRequest, ExecResponse]) error {
-	return status.Errorf(codes.Unimplemented, "method Exec not implemented")
-}
-func (UnimplementedExecServiceServer) mustEmbedUnimplementedExecServiceServer() {}
-func (UnimplementedExecServiceServer) testEmbeddedByValue()                     {}
-
-// UnsafeExecServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to ExecServiceServer will
-// result in compilation errors.
-type UnsafeExecServiceServer interface {
-	mustEmbedUnimplementedExecServiceServer()
-}
-
-func RegisterExecServiceServer(s grpc.ServiceRegistrar, srv ExecServiceServer) {
-	// If the following call pancis, it indicates UnimplementedExecServiceServer was
-	// embedded by pointer and is nil.  This will cause panics if an
-	// unimplemented method is ever invoked, so we test this at initialization
-	// time to prevent it from happening at runtime later due to I/O.
-	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
-		t.testEmbeddedByValue()
-	}
-	s.RegisterService(&ExecService_ServiceDesc, srv)
-}
-
-func _ExecService_Exec_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(ExecServiceServer).Exec(&grpc.GenericServerStream[ExecRequest, ExecResponse]{ServerStream: stream})
-}
-
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type ExecService_ExecServer = grpc.BidiStreamingServer[ExecRequest, ExecResponse]
-
-// ExecService_ServiceDesc is the grpc.ServiceDesc for ExecService service.
-// It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
-var ExecService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "k8shelld.ExecService",
-	HandlerType: (*ExecServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
-	Streams: []grpc.StreamDesc{
-		{
-			StreamName:    "Exec",
-			Handler:       _ExecService_Exec_Handler,
-			ServerStreams: true,
-			ClientStreams: true,
-		},
-	},
-	Metadata: "k8shelld/v1/k8shelld.proto",
-}
-
-const (
-	UnixSocketService_UnixSocket_FullMethodName = "/k8shelld.UnixSocketService/UnixSocket"
-)
-
-// UnixSocketServiceClient is the client API for UnixSocketService service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type UnixSocketServiceClient interface {
-	// UnixSocket reads/writes to a Unix socket in the remote OS
-	// This is primarily used for SSH agent forwarding
-	UnixSocket(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[UnixSocketRequest, UnixSocketResponse], error)
-}
-
-type unixSocketServiceClient struct {
-	cc grpc.ClientConnInterface
-}
-
-func NewUnixSocketServiceClient(cc grpc.ClientConnInterface) UnixSocketServiceClient {
-	return &unixSocketServiceClient{cc}
-}
-
-func (c *unixSocketServiceClient) UnixSocket(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[UnixSocketRequest, UnixSocketResponse], error) {
+func (c *sshServiceClient) UnixSocket(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[UnixSocketRequest, UnixSocketResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &UnixSocketService_ServiceDesc.Streams[0], UnixSocketService_UnixSocket_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &SshService_ServiceDesc.Streams[4], SshService_UnixSocket_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -568,67 +273,170 @@ func (c *unixSocketServiceClient) UnixSocket(ctx context.Context, opts ...grpc.C
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type UnixSocketService_UnixSocketClient = grpc.BidiStreamingClient[UnixSocketRequest, UnixSocketResponse]
+type SshService_UnixSocketClient = grpc.BidiStreamingClient[UnixSocketRequest, UnixSocketResponse]
 
-// UnixSocketServiceServer is the server API for UnixSocketService service.
-// All implementations must embed UnimplementedUnixSocketServiceServer
+// SshServiceServer is the server API for SshService service.
+// All implementations must embed UnimplementedSshServiceServer
 // for forward compatibility.
-type UnixSocketServiceServer interface {
+type SshServiceServer interface {
+	// Shell starts a shell session
+	Shell(grpc.BidiStreamingServer[ShellRequest, ShellResponse]) error
+	// ResizeTerminal resizes the terminal in a shell session
+	ResizeTerminal(context.Context, *ResizeTerminalRequest) (*ResizeTerminalResponse, error)
+	// WatchShell streams filesystem and CWD notifications for a running shell session.
+	WatchShell(*WatchShellRequest, grpc.ServerStreamingServer[WatchShellEvent]) error
+	// PortForward forwards a port to the specified destination IP and port
+	PortForward(grpc.BidiStreamingServer[PortForwardRequest, PortForwardResponse]) error
+	// Exec executes a command
+	Exec(grpc.BidiStreamingServer[ExecRequest, ExecResponse]) error
 	// UnixSocket reads/writes to a Unix socket in the remote OS
 	// This is primarily used for SSH agent forwarding
 	UnixSocket(grpc.BidiStreamingServer[UnixSocketRequest, UnixSocketResponse]) error
-	mustEmbedUnimplementedUnixSocketServiceServer()
+	mustEmbedUnimplementedSshServiceServer()
 }
 
-// UnimplementedUnixSocketServiceServer must be embedded to have
+// UnimplementedSshServiceServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedUnixSocketServiceServer struct{}
+type UnimplementedSshServiceServer struct{}
 
-func (UnimplementedUnixSocketServiceServer) UnixSocket(grpc.BidiStreamingServer[UnixSocketRequest, UnixSocketResponse]) error {
+func (UnimplementedSshServiceServer) Shell(grpc.BidiStreamingServer[ShellRequest, ShellResponse]) error {
+	return status.Errorf(codes.Unimplemented, "method Shell not implemented")
+}
+func (UnimplementedSshServiceServer) ResizeTerminal(context.Context, *ResizeTerminalRequest) (*ResizeTerminalResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ResizeTerminal not implemented")
+}
+func (UnimplementedSshServiceServer) WatchShell(*WatchShellRequest, grpc.ServerStreamingServer[WatchShellEvent]) error {
+	return status.Errorf(codes.Unimplemented, "method WatchShell not implemented")
+}
+func (UnimplementedSshServiceServer) PortForward(grpc.BidiStreamingServer[PortForwardRequest, PortForwardResponse]) error {
+	return status.Errorf(codes.Unimplemented, "method PortForward not implemented")
+}
+func (UnimplementedSshServiceServer) Exec(grpc.BidiStreamingServer[ExecRequest, ExecResponse]) error {
+	return status.Errorf(codes.Unimplemented, "method Exec not implemented")
+}
+func (UnimplementedSshServiceServer) UnixSocket(grpc.BidiStreamingServer[UnixSocketRequest, UnixSocketResponse]) error {
 	return status.Errorf(codes.Unimplemented, "method UnixSocket not implemented")
 }
-func (UnimplementedUnixSocketServiceServer) mustEmbedUnimplementedUnixSocketServiceServer() {}
-func (UnimplementedUnixSocketServiceServer) testEmbeddedByValue()                           {}
+func (UnimplementedSshServiceServer) mustEmbedUnimplementedSshServiceServer() {}
+func (UnimplementedSshServiceServer) testEmbeddedByValue()                    {}
 
-// UnsafeUnixSocketServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to UnixSocketServiceServer will
+// UnsafeSshServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to SshServiceServer will
 // result in compilation errors.
-type UnsafeUnixSocketServiceServer interface {
-	mustEmbedUnimplementedUnixSocketServiceServer()
+type UnsafeSshServiceServer interface {
+	mustEmbedUnimplementedSshServiceServer()
 }
 
-func RegisterUnixSocketServiceServer(s grpc.ServiceRegistrar, srv UnixSocketServiceServer) {
-	// If the following call pancis, it indicates UnimplementedUnixSocketServiceServer was
+func RegisterSshServiceServer(s grpc.ServiceRegistrar, srv SshServiceServer) {
+	// If the following call pancis, it indicates UnimplementedSshServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&UnixSocketService_ServiceDesc, srv)
+	s.RegisterService(&SshService_ServiceDesc, srv)
 }
 
-func _UnixSocketService_UnixSocket_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(UnixSocketServiceServer).UnixSocket(&grpc.GenericServerStream[UnixSocketRequest, UnixSocketResponse]{ServerStream: stream})
+func _SshService_Shell_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(SshServiceServer).Shell(&grpc.GenericServerStream[ShellRequest, ShellResponse]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type UnixSocketService_UnixSocketServer = grpc.BidiStreamingServer[UnixSocketRequest, UnixSocketResponse]
+type SshService_ShellServer = grpc.BidiStreamingServer[ShellRequest, ShellResponse]
 
-// UnixSocketService_ServiceDesc is the grpc.ServiceDesc for UnixSocketService service.
+func _SshService_ResizeTerminal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResizeTerminalRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SshServiceServer).ResizeTerminal(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SshService_ResizeTerminal_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SshServiceServer).ResizeTerminal(ctx, req.(*ResizeTerminalRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SshService_WatchShell_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(WatchShellRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(SshServiceServer).WatchShell(m, &grpc.GenericServerStream[WatchShellRequest, WatchShellEvent]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type SshService_WatchShellServer = grpc.ServerStreamingServer[WatchShellEvent]
+
+func _SshService_PortForward_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(SshServiceServer).PortForward(&grpc.GenericServerStream[PortForwardRequest, PortForwardResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type SshService_PortForwardServer = grpc.BidiStreamingServer[PortForwardRequest, PortForwardResponse]
+
+func _SshService_Exec_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(SshServiceServer).Exec(&grpc.GenericServerStream[ExecRequest, ExecResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type SshService_ExecServer = grpc.BidiStreamingServer[ExecRequest, ExecResponse]
+
+func _SshService_UnixSocket_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(SshServiceServer).UnixSocket(&grpc.GenericServerStream[UnixSocketRequest, UnixSocketResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type SshService_UnixSocketServer = grpc.BidiStreamingServer[UnixSocketRequest, UnixSocketResponse]
+
+// SshService_ServiceDesc is the grpc.ServiceDesc for SshService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var UnixSocketService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "k8shelld.UnixSocketService",
-	HandlerType: (*UnixSocketServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
+var SshService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "k8shelld.SshService",
+	HandlerType: (*SshServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ResizeTerminal",
+			Handler:    _SshService_ResizeTerminal_Handler,
+		},
+	},
 	Streams: []grpc.StreamDesc{
 		{
+			StreamName:    "Shell",
+			Handler:       _SshService_Shell_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "WatchShell",
+			Handler:       _SshService_WatchShell_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "PortForward",
+			Handler:       _SshService_PortForward_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "Exec",
+			Handler:       _SshService_Exec_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+		{
 			StreamName:    "UnixSocket",
-			Handler:       _UnixSocketService_UnixSocket_Handler,
+			Handler:       _SshService_UnixSocket_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
 		},

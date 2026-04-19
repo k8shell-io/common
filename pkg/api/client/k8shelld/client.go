@@ -39,11 +39,8 @@ type K8shelld struct {
 	client             *gapi.Client
 	log                *zerolog.Logger
 	systemClient       k8shelldv1.SystemServiceClient
-	shellClient        k8shelldv1.ShellServiceClient
-	execClient         k8shelldv1.ExecServiceClient
+	sshClient          k8shelldv1.SshServiceClient
 	commandClient      k8shelldv1.CommandServiceClient
-	pfClient           k8shelldv1.PortForwardServiceClient
-	unixSocketClient   k8shelldv1.UnixSocketServiceClient
 	app                k8shelldv1.AppServiceClient
 	counters           *ConnCounters
 	connectionID       string
@@ -86,18 +83,15 @@ func NewClient(
 	}
 
 	return &K8shelld{
-		client:           gapiClient,
-		log:              logger.NewLogger("k8shelld"),
-		counters:         counters,
-		connectionID:     connectionID,
-		systemClient:     k8shelldv1.NewSystemServiceClient(gapiClient.Conn),
-		shellClient:      k8shelldv1.NewShellServiceClient(gapiClient.Conn),
-		execClient:       k8shelldv1.NewExecServiceClient(gapiClient.Conn),
-		commandClient:    k8shelldv1.NewCommandServiceClient(gapiClient.Conn),
-		pfClient:         k8shelldv1.NewPortForwardServiceClient(gapiClient.Conn),
-		unixSocketClient: k8shelldv1.NewUnixSocketServiceClient(gapiClient.Conn),
-		app:              k8shelldv1.NewAppServiceClient(gapiClient.Conn),
-		sessionClient:    sessionClient,
+		client:        gapiClient,
+		log:           logger.NewLogger("k8shelld"),
+		counters:      counters,
+		connectionID:  connectionID,
+		systemClient:  k8shelldv1.NewSystemServiceClient(gapiClient.Conn),
+		sshClient:     k8shelldv1.NewSshServiceClient(gapiClient.Conn),
+		commandClient: k8shelldv1.NewCommandServiceClient(gapiClient.Conn),
+		app:           k8shelldv1.NewAppServiceClient(gapiClient.Conn),
+		sessionClient: sessionClient,
 	}, nil
 }
 
@@ -220,7 +214,7 @@ func (c *K8shelld) RunShell(
 		defer c.shellRecorder.Close()
 	}
 
-	stream, err := c.shellClient.Shell(ctx)
+	stream, err := c.sshClient.Shell(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to create shell stream: %w", err)
 	}
@@ -328,7 +322,7 @@ func (c *K8shelld) ResizeTerminal(ctx context.Context, sessionId string, width, 
 		Height: height,
 	}
 
-	_, err := c.shellClient.ResizeTerminal(ctx, req)
+	_, err := c.sshClient.ResizeTerminal(ctx, req)
 	if err == nil && c.shellRecorder != nil {
 		c.shellRecorder.ObserveResize(width, height, time.Since(c.shellRecorderStart))
 	}
@@ -338,7 +332,7 @@ func (c *K8shelld) ResizeTerminal(ctx context.Context, sessionId string, width, 
 // WatchShell opens a server-streaming RPC that delivers filesystem and CWD change
 // events for the shell. The returnedstream must be closed by the caller
 // (cancel the context to terminate it).
-func (c *K8shelld) WatchShell(ctx context.Context, sessionId string, eventTypes []k8shelldv1.WatchShellEventType) (k8shelldv1.ShellService_WatchShellClient, error) {
+func (c *K8shelld) WatchShell(ctx context.Context, sessionId string, eventTypes []k8shelldv1.WatchShellEventType) (k8shelldv1.SshService_WatchShellClient, error) {
 	md := metadata.Pairs("session-id", sessionId)
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
@@ -346,7 +340,7 @@ func (c *K8shelld) WatchShell(ctx context.Context, sessionId string, eventTypes 
 		EventTypes: eventTypes,
 	}
 
-	return c.shellClient.WatchShell(ctx, req)
+	return c.sshClient.WatchShell(ctx, req)
 }
 
 // RunUnixSocket creates a Unix socket connection over gRPC and bridges it with the RW channel.
@@ -372,7 +366,7 @@ func (c *K8shelld) RunUnixSocket(
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	stream, err := c.unixSocketClient.UnixSocket(ctx)
+	stream, err := c.sshClient.UnixSocket(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to create UnixSocket stream: %w", err)
 	}
@@ -518,7 +512,7 @@ func (c *K8shelld) RunPortForward(
 		}
 	}
 
-	stream, err := c.pfClient.PortForward(ctx)
+	stream, err := c.sshClient.PortForward(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to create PortForward stream: %w", err)
 	}
@@ -634,7 +628,7 @@ func (c *K8shelld) RunExec(
 		}
 	}
 
-	stream, err := c.execClient.Exec(ctx)
+	stream, err := c.sshClient.Exec(ctx)
 	if err != nil {
 		return 1, fmt.Errorf("failed to create exec stream: %w", err)
 	}

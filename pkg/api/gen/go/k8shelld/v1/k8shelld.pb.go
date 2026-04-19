@@ -3007,17 +3007,15 @@ const file_k8shelld_v1_k8shelld_proto_rawDesc = "" +
 	"\rSystemService\x12D\n" +
 	"\tHandshake\x12\x1a.k8shelld.HandshakeRequest\x1a\x1b.k8shelld.HandshakeResponse\x12G\n" +
 	"\n" +
-	"SystemInfo\x12\x1b.k8shelld.SystemInfoRequest\x1a\x1c.k8shelld.SystemInfoResponse2\xe9\x01\n" +
-	"\fShellService\x12<\n" +
+	"SystemInfo\x12\x1b.k8shelld.SystemInfoRequest\x1a\x1c.k8shelld.SystemInfoResponse2\xbf\x03\n" +
+	"\n" +
+	"SshService\x12<\n" +
 	"\x05Shell\x12\x16.k8shelld.ShellRequest\x1a\x17.k8shelld.ShellResponse(\x010\x01\x12S\n" +
 	"\x0eResizeTerminal\x12\x1f.k8shelld.ResizeTerminalRequest\x1a .k8shelld.ResizeTerminalResponse\x12F\n" +
 	"\n" +
-	"WatchShell\x12\x1b.k8shelld.WatchShellRequest\x1a\x19.k8shelld.WatchShellEvent0\x012d\n" +
-	"\x12PortForwardService\x12N\n" +
-	"\vPortForward\x12\x1c.k8shelld.PortForwardRequest\x1a\x1d.k8shelld.PortForwardResponse(\x010\x012H\n" +
-	"\vExecService\x129\n" +
-	"\x04Exec\x12\x15.k8shelld.ExecRequest\x1a\x16.k8shelld.ExecResponse(\x010\x012`\n" +
-	"\x11UnixSocketService\x12K\n" +
+	"WatchShell\x12\x1b.k8shelld.WatchShellRequest\x1a\x19.k8shelld.WatchShellEvent0\x01\x12N\n" +
+	"\vPortForward\x12\x1c.k8shelld.PortForwardRequest\x1a\x1d.k8shelld.PortForwardResponse(\x010\x01\x129\n" +
+	"\x04Exec\x12\x15.k8shelld.ExecRequest\x1a\x16.k8shelld.ExecResponse(\x010\x01\x12K\n" +
 	"\n" +
 	"UnixSocket\x12\x1b.k8shelld.UnixSocketRequest\x1a\x1c.k8shelld.UnixSocketResponse(\x010\x012[\n" +
 	"\x0eCommandService\x12I\n" +
@@ -3111,12 +3109,12 @@ var file_k8shelld_v1_k8shelld_proto_depIdxs = []int32{
 	3,  // 15: k8shelld.GetLogsStreamRequest.type:type_name -> k8shelld.LogType
 	9,  // 16: k8shelld.SystemService.Handshake:input_type -> k8shelld.HandshakeRequest
 	4,  // 17: k8shelld.SystemService.SystemInfo:input_type -> k8shelld.SystemInfoRequest
-	11, // 18: k8shelld.ShellService.Shell:input_type -> k8shelld.ShellRequest
-	15, // 19: k8shelld.ShellService.ResizeTerminal:input_type -> k8shelld.ResizeTerminalRequest
-	17, // 20: k8shelld.ShellService.WatchShell:input_type -> k8shelld.WatchShellRequest
-	21, // 21: k8shelld.PortForwardService.PortForward:input_type -> k8shelld.PortForwardRequest
-	24, // 22: k8shelld.ExecService.Exec:input_type -> k8shelld.ExecRequest
-	27, // 23: k8shelld.UnixSocketService.UnixSocket:input_type -> k8shelld.UnixSocketRequest
+	11, // 18: k8shelld.SshService.Shell:input_type -> k8shelld.ShellRequest
+	15, // 19: k8shelld.SshService.ResizeTerminal:input_type -> k8shelld.ResizeTerminalRequest
+	17, // 20: k8shelld.SshService.WatchShell:input_type -> k8shelld.WatchShellRequest
+	21, // 21: k8shelld.SshService.PortForward:input_type -> k8shelld.PortForwardRequest
+	24, // 22: k8shelld.SshService.Exec:input_type -> k8shelld.ExecRequest
+	27, // 23: k8shelld.SshService.UnixSocket:input_type -> k8shelld.UnixSocketRequest
 	30, // 24: k8shelld.CommandService.CommandListener:input_type -> k8shelld.CommandMessage
 	31, // 25: k8shelld.AppService.ListApps:input_type -> k8shelld.ListAppsRequest
 	34, // 26: k8shelld.AppService.InstallApp:input_type -> k8shelld.InstallAppRequest
@@ -3126,12 +3124,12 @@ var file_k8shelld_v1_k8shelld_proto_depIdxs = []int32{
 	42, // 30: k8shelld.AppService.GetLogsStream:input_type -> k8shelld.GetLogsStreamRequest
 	10, // 31: k8shelld.SystemService.Handshake:output_type -> k8shelld.HandshakeResponse
 	5,  // 32: k8shelld.SystemService.SystemInfo:output_type -> k8shelld.SystemInfoResponse
-	12, // 33: k8shelld.ShellService.Shell:output_type -> k8shelld.ShellResponse
-	16, // 34: k8shelld.ShellService.ResizeTerminal:output_type -> k8shelld.ResizeTerminalResponse
-	20, // 35: k8shelld.ShellService.WatchShell:output_type -> k8shelld.WatchShellEvent
-	23, // 36: k8shelld.PortForwardService.PortForward:output_type -> k8shelld.PortForwardResponse
-	25, // 37: k8shelld.ExecService.Exec:output_type -> k8shelld.ExecResponse
-	28, // 38: k8shelld.UnixSocketService.UnixSocket:output_type -> k8shelld.UnixSocketResponse
+	12, // 33: k8shelld.SshService.Shell:output_type -> k8shelld.ShellResponse
+	16, // 34: k8shelld.SshService.ResizeTerminal:output_type -> k8shelld.ResizeTerminalResponse
+	20, // 35: k8shelld.SshService.WatchShell:output_type -> k8shelld.WatchShellEvent
+	23, // 36: k8shelld.SshService.PortForward:output_type -> k8shelld.PortForwardResponse
+	25, // 37: k8shelld.SshService.Exec:output_type -> k8shelld.ExecResponse
+	28, // 38: k8shelld.SshService.UnixSocket:output_type -> k8shelld.UnixSocketResponse
 	30, // 39: k8shelld.CommandService.CommandListener:output_type -> k8shelld.CommandMessage
 	32, // 40: k8shelld.AppService.ListApps:output_type -> k8shelld.ListAppsResponse
 	35, // 41: k8shelld.AppService.InstallApp:output_type -> k8shelld.InstallAppResponse
@@ -3194,7 +3192,7 @@ func file_k8shelld_v1_k8shelld_proto_init() {
 			NumEnums:      4,
 			NumMessages:   40,
 			NumExtensions: 0,
-			NumServices:   7,
+			NumServices:   4,
 		},
 		GoTypes:           file_k8shelld_v1_k8shelld_proto_goTypes,
 		DependencyIndexes: file_k8shelld_v1_k8shelld_proto_depIdxs,

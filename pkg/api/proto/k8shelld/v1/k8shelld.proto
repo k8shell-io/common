@@ -80,9 +80,9 @@ message HandshakeResponse {
   string message = 3;
 }
 
-// *** ShellService
+// *** SshService
 
-service ShellService {
+service SshService {
   // Shell starts a shell session
   rpc Shell (stream ShellRequest) returns (stream ShellResponse);
 
@@ -91,6 +91,16 @@ service ShellService {
 
   // WatchShell streams filesystem and CWD notifications for a running shell session.
   rpc WatchShell (WatchShellRequest) returns (stream WatchShellEvent);
+
+  // PortForward forwards a port to the specified destination IP and port
+  rpc PortForward (stream PortForwardRequest) returns (stream PortForwardResponse);
+
+  // Exec executes a command
+  rpc Exec(stream ExecRequest) returns (stream ExecResponse);
+
+  // UnixSocket reads/writes to a Unix socket in the remote OS
+  // This is primarily used for SSH agent forwarding
+  rpc UnixSocket (stream UnixSocketRequest) returns (stream UnixSocketResponse);
 }
 
 // ShellRequest message
@@ -176,13 +186,6 @@ message WatchShellEvent {
   }
 }
 
-// *** PortForwardService
-
-service PortForwardService {
-  // PortForward forwards a port to the specified destination IP and port
-  rpc PortForward (stream PortForwardRequest) returns (stream PortForwardResponse);
-}
-
 // Request for the PortForward operation
 message PortForwardRequest {
   oneof request { 
@@ -200,13 +203,6 @@ message Destination {
 // Response for the PortForward operation
 message PortForwardResponse {
   bytes data = 1;     // Data received from the destination
-}
-
-// *** ExecService
-
-service ExecService {
-  // Exec executes a command 
-  rpc Exec(stream ExecRequest) returns (stream ExecResponse);
 }
 
 // Request for the Exec operation
@@ -233,14 +229,6 @@ message CommandDetails {
   string command = 2;       // Initial command with arguments
   string shell_binary = 3;  // Optional shell binary to use (e.g., "/bin/sh"), empty for none
   repeated string env_vars = 4;   // Environment variables to be set for the command
-}
-
-// *** UnixSocketService
-
-service UnixSocketService {
-  // UnixSocket reads/writes to a Unix socket in the remote OS
-  // This is primarily used for SSH agent forwarding
-  rpc UnixSocket (stream UnixSocketRequest) returns (stream UnixSocketResponse);
 }
 
 // Request for the UnixSocket operation
