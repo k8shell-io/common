@@ -89,9 +89,6 @@ service SshService {
   // ResizeTerminal resizes the terminal in a shell session
   rpc ResizeTerminal (ResizeTerminalRequest) returns (ResizeTerminalResponse);
 
-  // WatchShell streams filesystem and CWD notifications for a running shell session.
-  rpc WatchShell (WatchShellRequest) returns (stream WatchShellEvent);
-
   // PortForward forwards a port to the specified destination IP and port
   rpc PortForward (stream PortForwardRequest) returns (stream PortForwardResponse);
 
@@ -101,6 +98,9 @@ service SshService {
   // UnixSocket reads/writes to a Unix socket in the remote OS
   // This is primarily used for SSH agent forwarding
   rpc UnixSocket (stream UnixSocketRequest) returns (stream UnixSocketResponse);
+
+  // GetCWD gets the current working directory for a shell session
+  rpc GetCWD (GetCWDRequest) returns (GetCWDResponse);
 }
 
 // ShellRequest message
@@ -146,44 +146,14 @@ message ResizeTerminalRequest {
 message ResizeTerminalResponse {
 }
 
-enum WatchShellEventType {
-  WATCH_SHELL_EVENT_TYPE_UNSPECIFIED = 0;
-  WATCH_SHELL_EVENT_TYPE_CWD         = 1;
-  WATCH_SHELL_EVENT_TYPE_FS          = 2;
+// GetCWDRequest message
+message GetCWDRequest {
+  string shell_id = 1; // Shell session ID
 }
 
-enum FsEventType {
-  FS_EVENT_TYPE_UNSPECIFIED = 0;
-  FS_EVENT_TYPE_CREATE      = 1;
-  FS_EVENT_TYPE_DELETE      = 2;
-  FS_EVENT_TYPE_RENAME      = 3;
-  FS_EVENT_TYPE_MODIFY      = 4;
-}
-
-// WatchShellRequest message
-message WatchShellRequest {
-  repeated WatchShellEventType event_types = 1;
-}
-
-// CwdChangedEvent message
-message CwdChangedEvent {
-  string path = 1;
-}
-
-// FsEvent message
-message FsEvent {
-  string      path      = 1;
-  FsEventType type      = 2;
-  // For renames, the destination path (empty for other types)
-  string      dest_path = 3;
-}
-
-// WatchShellEvent message
-message WatchShellEvent {
-  oneof event {
-    CwdChangedEvent cwd_changed = 1;
-    FsEvent         fs_event    = 2;
-  }
+// GetCWDResponse message
+message GetCWDResponse {
+  string path = 1; // Current working directory path
 }
 
 // Request for the PortForward operation

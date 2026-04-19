@@ -329,18 +329,17 @@ func (c *K8shelld) ResizeTerminal(ctx context.Context, sessionId string, width, 
 	return err
 }
 
-// WatchShell opens a server-streaming RPC that delivers filesystem and CWD change
-// events for the shell. The returnedstream must be closed by the caller
-// (cancel the context to terminate it).
-func (c *K8shelld) WatchShell(ctx context.Context, sessionId string, eventTypes []k8shelldv1.WatchShellEventType) (k8shelldv1.SshService_WatchShellClient, error) {
-	md := metadata.Pairs("session-id", sessionId)
-	ctx = metadata.NewOutgoingContext(ctx, md)
-
-	req := &k8shelldv1.WatchShellRequest{
-		EventTypes: eventTypes,
+// GetCWD retrieves the current working directory for a shell session.
+func (c *K8shelld) GetCWD(ctx context.Context, shellId string) (string, error) {
+	req := &k8shelldv1.GetCWDRequest{
+		ShellId: shellId,
 	}
 
-	return c.sshClient.WatchShell(ctx, req)
+	resp, err := c.sshClient.GetCWD(ctx, req)
+	if err != nil {
+		return "", err
+	}
+	return resp.Path, nil
 }
 
 // RunUnixSocket creates a Unix socket connection over gRPC and bridges it with the RW channel.

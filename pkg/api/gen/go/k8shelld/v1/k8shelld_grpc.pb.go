@@ -161,7 +161,7 @@ var SystemService_ServiceDesc = grpc.ServiceDesc{
 const (
 	SshService_Shell_FullMethodName          = "/k8shelld.SshService/Shell"
 	SshService_ResizeTerminal_FullMethodName = "/k8shelld.SshService/ResizeTerminal"
-	SshService_WatchShell_FullMethodName     = "/k8shelld.SshService/WatchShell"
+	SshService_GetCWD_FullMethodName         = "/k8shelld.SshService/GetCWD"
 	SshService_PortForward_FullMethodName    = "/k8shelld.SshService/PortForward"
 	SshService_Exec_FullMethodName           = "/k8shelld.SshService/Exec"
 	SshService_UnixSocket_FullMethodName     = "/k8shelld.SshService/UnixSocket"
@@ -175,8 +175,8 @@ type SshServiceClient interface {
 	Shell(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ShellRequest, ShellResponse], error)
 	// ResizeTerminal resizes the terminal in a shell session
 	ResizeTerminal(ctx context.Context, in *ResizeTerminalRequest, opts ...grpc.CallOption) (*ResizeTerminalResponse, error)
-	// WatchShell streams filesystem and CWD notifications for a running shell session.
-	WatchShell(ctx context.Context, in *WatchShellRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[WatchShellEvent], error)
+	// GetCWD gets the current working directory for a shell session
+	GetCWD(ctx context.Context, in *GetCWDRequest, opts ...grpc.CallOption) (*GetCWDResponse, error)
 	// PortForward forwards a port to the specified destination IP and port
 	PortForward(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[PortForwardRequest, PortForwardResponse], error)
 	// Exec executes a command
@@ -217,28 +217,19 @@ func (c *sshServiceClient) ResizeTerminal(ctx context.Context, in *ResizeTermina
 	return out, nil
 }
 
-func (c *sshServiceClient) WatchShell(ctx context.Context, in *WatchShellRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[WatchShellEvent], error) {
+func (c *sshServiceClient) GetCWD(ctx context.Context, in *GetCWDRequest, opts ...grpc.CallOption) (*GetCWDResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &SshService_ServiceDesc.Streams[1], SshService_WatchShell_FullMethodName, cOpts...)
+	out := new(GetCWDResponse)
+	err := c.cc.Invoke(ctx, SshService_GetCWD_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &grpc.GenericClientStream[WatchShellRequest, WatchShellEvent]{ClientStream: stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
+	return out, nil
 }
-
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type SshService_WatchShellClient = grpc.ServerStreamingClient[WatchShellEvent]
 
 func (c *sshServiceClient) PortForward(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[PortForwardRequest, PortForwardResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &SshService_ServiceDesc.Streams[2], SshService_PortForward_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &SshService_ServiceDesc.Streams[1], SshService_PortForward_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -251,7 +242,7 @@ type SshService_PortForwardClient = grpc.BidiStreamingClient[PortForwardRequest,
 
 func (c *sshServiceClient) Exec(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ExecRequest, ExecResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &SshService_ServiceDesc.Streams[3], SshService_Exec_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &SshService_ServiceDesc.Streams[2], SshService_Exec_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -264,7 +255,7 @@ type SshService_ExecClient = grpc.BidiStreamingClient[ExecRequest, ExecResponse]
 
 func (c *sshServiceClient) UnixSocket(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[UnixSocketRequest, UnixSocketResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &SshService_ServiceDesc.Streams[4], SshService_UnixSocket_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &SshService_ServiceDesc.Streams[3], SshService_UnixSocket_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -283,8 +274,8 @@ type SshServiceServer interface {
 	Shell(grpc.BidiStreamingServer[ShellRequest, ShellResponse]) error
 	// ResizeTerminal resizes the terminal in a shell session
 	ResizeTerminal(context.Context, *ResizeTerminalRequest) (*ResizeTerminalResponse, error)
-	// WatchShell streams filesystem and CWD notifications for a running shell session.
-	WatchShell(*WatchShellRequest, grpc.ServerStreamingServer[WatchShellEvent]) error
+	// GetCWD gets the current working directory for a shell session
+	GetCWD(context.Context, *GetCWDRequest) (*GetCWDResponse, error)
 	// PortForward forwards a port to the specified destination IP and port
 	PortForward(grpc.BidiStreamingServer[PortForwardRequest, PortForwardResponse]) error
 	// Exec executes a command
@@ -308,8 +299,8 @@ func (UnimplementedSshServiceServer) Shell(grpc.BidiStreamingServer[ShellRequest
 func (UnimplementedSshServiceServer) ResizeTerminal(context.Context, *ResizeTerminalRequest) (*ResizeTerminalResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ResizeTerminal not implemented")
 }
-func (UnimplementedSshServiceServer) WatchShell(*WatchShellRequest, grpc.ServerStreamingServer[WatchShellEvent]) error {
-	return status.Errorf(codes.Unimplemented, "method WatchShell not implemented")
+func (UnimplementedSshServiceServer) GetCWD(context.Context, *GetCWDRequest) (*GetCWDResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetCWD not implemented")
 }
 func (UnimplementedSshServiceServer) PortForward(grpc.BidiStreamingServer[PortForwardRequest, PortForwardResponse]) error {
 	return status.Errorf(codes.Unimplemented, "method PortForward not implemented")
@@ -366,16 +357,23 @@ func _SshService_ResizeTerminal_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SshService_WatchShell_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(WatchShellRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
+func _SshService_GetCWD_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetCWDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
 	}
-	return srv.(SshServiceServer).WatchShell(m, &grpc.GenericServerStream[WatchShellRequest, WatchShellEvent]{ServerStream: stream})
+	if interceptor == nil {
+		return srv.(SshServiceServer).GetCWD(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SshService_GetCWD_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SshServiceServer).GetCWD(ctx, req.(*GetCWDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
-
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type SshService_WatchShellServer = grpc.ServerStreamingServer[WatchShellEvent]
 
 func _SshService_PortForward_Handler(srv interface{}, stream grpc.ServerStream) error {
 	return srv.(SshServiceServer).PortForward(&grpc.GenericServerStream[PortForwardRequest, PortForwardResponse]{ServerStream: stream})
@@ -409,6 +407,10 @@ var SshService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "ResizeTerminal",
 			Handler:    _SshService_ResizeTerminal_Handler,
 		},
+		{
+			MethodName: "GetCWD",
+			Handler:    _SshService_GetCWD_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
@@ -416,11 +418,6 @@ var SshService_ServiceDesc = grpc.ServiceDesc{
 			Handler:       _SshService_Shell_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
-		},
-		{
-			StreamName:    "WatchShell",
-			Handler:       _SshService_WatchShell_Handler,
-			ServerStreams: true,
 		},
 		{
 			StreamName:    "PortForward",
