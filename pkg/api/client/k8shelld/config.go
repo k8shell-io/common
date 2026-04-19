@@ -18,7 +18,6 @@ type Config struct {
 	Identity         Identity         `yaml:"identity"`
 	TerminateOrphans TerminateOrphans `yaml:"terminateOrphans"`
 	ReapZombies      ReapZombies      `yaml:"reapZombies"`
-	InitScriptsDir   string           `yaml:"initScriptsDir,omitempty"`
 }
 
 // System represents the general system configuration.
