@@ -62,6 +62,8 @@ message FileExplorerMessage {
 message FileExplorerCommand {
     oneof payload {
         ListFilesCommand list_files = 1;
+        MakeDirectoryCommand make_directory = 2;
+        RemoveCommand remove = 3;
     }
 }
 
@@ -69,6 +71,8 @@ message FileExplorerCommand {
 message FileExplorerResponse {
     oneof payload {
         ListFilesResponse list_files = 1;
+        MakeDirectoryResponse make_directory = 2;
+        RemoveResponse remove = 3;
     }
 }
 
@@ -90,4 +94,20 @@ message FileInfo {
     string mode = 4;
     bool is_dir = 5;
     string mod_time = 6;
+}
+
+message MakeDirectoryCommand {
+    string path = 1;
+    string name = 2;
+}
+
+message MakeDirectoryResponse {
+}
+
+message RemoveCommand {
+    string path = 1;
+}
+
+message RemoveResponse {
+
 }

@@ -547,6 +547,8 @@ type FileExplorerCommand struct {
 	// Types that are valid to be assigned to Payload:
 	//
 	//	*FileExplorerCommand_ListFiles
+	//	*FileExplorerCommand_MakeDirectory
+	//	*FileExplorerCommand_Remove
 	Payload       isFileExplorerCommand_Payload `protobuf_oneof:"payload"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -598,6 +600,24 @@ func (x *FileExplorerCommand) GetListFiles() *ListFilesCommand {
 	return nil
 }
 
+func (x *FileExplorerCommand) GetMakeDirectory() *MakeDirectoryCommand {
+	if x != nil {
+		if x, ok := x.Payload.(*FileExplorerCommand_MakeDirectory); ok {
+			return x.MakeDirectory
+		}
+	}
+	return nil
+}
+
+func (x *FileExplorerCommand) GetRemove() *RemoveCommand {
+	if x != nil {
+		if x, ok := x.Payload.(*FileExplorerCommand_Remove); ok {
+			return x.Remove
+		}
+	}
+	return nil
+}
+
 type isFileExplorerCommand_Payload interface {
 	isFileExplorerCommand_Payload()
 }
@@ -606,7 +626,19 @@ type FileExplorerCommand_ListFiles struct {
 	ListFiles *ListFilesCommand `protobuf:"bytes,1,opt,name=list_files,json=listFiles,proto3,oneof"`
 }
 
+type FileExplorerCommand_MakeDirectory struct {
+	MakeDirectory *MakeDirectoryCommand `protobuf:"bytes,2,opt,name=make_directory,json=makeDirectory,proto3,oneof"`
+}
+
+type FileExplorerCommand_Remove struct {
+	Remove *RemoveCommand `protobuf:"bytes,3,opt,name=remove,proto3,oneof"`
+}
+
 func (*FileExplorerCommand_ListFiles) isFileExplorerCommand_Payload() {}
+
+func (*FileExplorerCommand_MakeDirectory) isFileExplorerCommand_Payload() {}
+
+func (*FileExplorerCommand_Remove) isFileExplorerCommand_Payload() {}
 
 // FileExplorerResponse represents a response sent from the server to the client in the file explorer component.
 type FileExplorerResponse struct {
@@ -614,6 +646,8 @@ type FileExplorerResponse struct {
 	// Types that are valid to be assigned to Payload:
 	//
 	//	*FileExplorerResponse_ListFiles
+	//	*FileExplorerResponse_MakeDirectory
+	//	*FileExplorerResponse_Remove
 	Payload       isFileExplorerResponse_Payload `protobuf_oneof:"payload"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -665,6 +699,24 @@ func (x *FileExplorerResponse) GetListFiles() *ListFilesResponse {
 	return nil
 }
 
+func (x *FileExplorerResponse) GetMakeDirectory() *MakeDirectoryResponse {
+	if x != nil {
+		if x, ok := x.Payload.(*FileExplorerResponse_MakeDirectory); ok {
+			return x.MakeDirectory
+		}
+	}
+	return nil
+}
+
+func (x *FileExplorerResponse) GetRemove() *RemoveResponse {
+	if x != nil {
+		if x, ok := x.Payload.(*FileExplorerResponse_Remove); ok {
+			return x.Remove
+		}
+	}
+	return nil
+}
+
 type isFileExplorerResponse_Payload interface {
 	isFileExplorerResponse_Payload()
 }
@@ -673,7 +725,19 @@ type FileExplorerResponse_ListFiles struct {
 	ListFiles *ListFilesResponse `protobuf:"bytes,1,opt,name=list_files,json=listFiles,proto3,oneof"`
 }
 
+type FileExplorerResponse_MakeDirectory struct {
+	MakeDirectory *MakeDirectoryResponse `protobuf:"bytes,2,opt,name=make_directory,json=makeDirectory,proto3,oneof"`
+}
+
+type FileExplorerResponse_Remove struct {
+	Remove *RemoveResponse `protobuf:"bytes,3,opt,name=remove,proto3,oneof"`
+}
+
 func (*FileExplorerResponse_ListFiles) isFileExplorerResponse_Payload() {}
+
+func (*FileExplorerResponse_MakeDirectory) isFileExplorerResponse_Payload() {}
+
+func (*FileExplorerResponse_Remove) isFileExplorerResponse_Payload() {}
 
 // ListFilesCommand is a command to list files in a directory.
 type ListFilesCommand struct {
@@ -850,6 +914,174 @@ func (x *FileInfo) GetModTime() string {
 	return ""
 }
 
+type MakeDirectoryCommand struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MakeDirectoryCommand) Reset() {
+	*x = MakeDirectoryCommand{}
+	mi := &file_cloudshell_cloudshell_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MakeDirectoryCommand) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MakeDirectoryCommand) ProtoMessage() {}
+
+func (x *MakeDirectoryCommand) ProtoReflect() protoreflect.Message {
+	mi := &file_cloudshell_cloudshell_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MakeDirectoryCommand.ProtoReflect.Descriptor instead.
+func (*MakeDirectoryCommand) Descriptor() ([]byte, []int) {
+	return file_cloudshell_cloudshell_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *MakeDirectoryCommand) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *MakeDirectoryCommand) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type MakeDirectoryResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MakeDirectoryResponse) Reset() {
+	*x = MakeDirectoryResponse{}
+	mi := &file_cloudshell_cloudshell_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MakeDirectoryResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MakeDirectoryResponse) ProtoMessage() {}
+
+func (x *MakeDirectoryResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloudshell_cloudshell_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MakeDirectoryResponse.ProtoReflect.Descriptor instead.
+func (*MakeDirectoryResponse) Descriptor() ([]byte, []int) {
+	return file_cloudshell_cloudshell_proto_rawDescGZIP(), []int{14}
+}
+
+type RemoveCommand struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RemoveCommand) Reset() {
+	*x = RemoveCommand{}
+	mi := &file_cloudshell_cloudshell_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RemoveCommand) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RemoveCommand) ProtoMessage() {}
+
+func (x *RemoveCommand) ProtoReflect() protoreflect.Message {
+	mi := &file_cloudshell_cloudshell_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RemoveCommand.ProtoReflect.Descriptor instead.
+func (*RemoveCommand) Descriptor() ([]byte, []int) {
+	return file_cloudshell_cloudshell_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *RemoveCommand) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+type RemoveResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RemoveResponse) Reset() {
+	*x = RemoveResponse{}
+	mi := &file_cloudshell_cloudshell_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RemoveResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RemoveResponse) ProtoMessage() {}
+
+func (x *RemoveResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloudshell_cloudshell_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RemoveResponse.ProtoReflect.Descriptor instead.
+func (*RemoveResponse) Descriptor() ([]byte, []int) {
+	return file_cloudshell_cloudshell_proto_rawDescGZIP(), []int{16}
+}
+
 var File_cloudshell_cloudshell_proto protoreflect.FileDescriptor
 
 const file_cloudshell_cloudshell_proto_rawDesc = "" +
@@ -879,14 +1111,18 @@ const file_cloudshell_cloudshell_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12>\n" +
 	"\acommand\x18\x02 \x01(\v2\".cloudshell.v1.FileExplorerCommandH\x00R\acommand\x12A\n" +
 	"\bresponse\x18\x03 \x01(\v2#.cloudshell.v1.FileExplorerResponseH\x00R\bresponseB\t\n" +
-	"\apayload\"b\n" +
+	"\apayload\"\xe8\x01\n" +
 	"\x13FileExplorerCommand\x12@\n" +
 	"\n" +
-	"list_files\x18\x01 \x01(\v2\x1f.cloudshell.v1.ListFilesCommandH\x00R\tlistFilesB\t\n" +
-	"\apayload\"d\n" +
+	"list_files\x18\x01 \x01(\v2\x1f.cloudshell.v1.ListFilesCommandH\x00R\tlistFiles\x12L\n" +
+	"\x0emake_directory\x18\x02 \x01(\v2#.cloudshell.v1.MakeDirectoryCommandH\x00R\rmakeDirectory\x126\n" +
+	"\x06remove\x18\x03 \x01(\v2\x1c.cloudshell.v1.RemoveCommandH\x00R\x06removeB\t\n" +
+	"\apayload\"\xec\x01\n" +
 	"\x14FileExplorerResponse\x12A\n" +
 	"\n" +
-	"list_files\x18\x01 \x01(\v2 .cloudshell.v1.ListFilesResponseH\x00R\tlistFilesB\t\n" +
+	"list_files\x18\x01 \x01(\v2 .cloudshell.v1.ListFilesResponseH\x00R\tlistFiles\x12M\n" +
+	"\x0emake_directory\x18\x02 \x01(\v2$.cloudshell.v1.MakeDirectoryResponseH\x00R\rmakeDirectory\x127\n" +
+	"\x06remove\x18\x03 \x01(\v2\x1d.cloudshell.v1.RemoveResponseH\x00R\x06removeB\t\n" +
 	"\apayload\"&\n" +
 	"\x10ListFilesCommand\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\"B\n" +
@@ -898,7 +1134,14 @@ const file_cloudshell_cloudshell_proto_rawDesc = "" +
 	"\x04size\x18\x03 \x01(\x03R\x04size\x12\x12\n" +
 	"\x04mode\x18\x04 \x01(\tR\x04mode\x12\x15\n" +
 	"\x06is_dir\x18\x05 \x01(\bR\x05isDir\x12\x19\n" +
-	"\bmod_time\x18\x06 \x01(\tR\amodTimeBHZFgithub.com/k8shell-io/common/pkg/api/gen/go/cloudshell/v1;cloudshellv1b\x06proto3"
+	"\bmod_time\x18\x06 \x01(\tR\amodTime\">\n" +
+	"\x14MakeDirectoryCommand\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\"\x17\n" +
+	"\x15MakeDirectoryResponse\"#\n" +
+	"\rRemoveCommand\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\"\x10\n" +
+	"\x0eRemoveResponseBHZFgithub.com/k8shell-io/common/pkg/api/gen/go/cloudshell/v1;cloudshellv1b\x06proto3"
 
 var (
 	file_cloudshell_cloudshell_proto_rawDescOnce sync.Once
@@ -912,7 +1155,7 @@ func file_cloudshell_cloudshell_proto_rawDescGZIP() []byte {
 	return file_cloudshell_cloudshell_proto_rawDescData
 }
 
-var file_cloudshell_cloudshell_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_cloudshell_cloudshell_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
 var file_cloudshell_cloudshell_proto_goTypes = []any{
 	(*CloudshellMessage)(nil),     // 0: cloudshell.v1.CloudshellMessage
 	(*PingMessage)(nil),           // 1: cloudshell.v1.PingMessage
@@ -927,6 +1170,10 @@ var file_cloudshell_cloudshell_proto_goTypes = []any{
 	(*ListFilesCommand)(nil),      // 10: cloudshell.v1.ListFilesCommand
 	(*ListFilesResponse)(nil),     // 11: cloudshell.v1.ListFilesResponse
 	(*FileInfo)(nil),              // 12: cloudshell.v1.FileInfo
+	(*MakeDirectoryCommand)(nil),  // 13: cloudshell.v1.MakeDirectoryCommand
+	(*MakeDirectoryResponse)(nil), // 14: cloudshell.v1.MakeDirectoryResponse
+	(*RemoveCommand)(nil),         // 15: cloudshell.v1.RemoveCommand
+	(*RemoveResponse)(nil),        // 16: cloudshell.v1.RemoveResponse
 }
 var file_cloudshell_cloudshell_proto_depIdxs = []int32{
 	1,  // 0: cloudshell.v1.CloudshellMessage.ping:type_name -> cloudshell.v1.PingMessage
@@ -939,13 +1186,17 @@ var file_cloudshell_cloudshell_proto_depIdxs = []int32{
 	8,  // 7: cloudshell.v1.FileExplorerMessage.command:type_name -> cloudshell.v1.FileExplorerCommand
 	9,  // 8: cloudshell.v1.FileExplorerMessage.response:type_name -> cloudshell.v1.FileExplorerResponse
 	10, // 9: cloudshell.v1.FileExplorerCommand.list_files:type_name -> cloudshell.v1.ListFilesCommand
-	11, // 10: cloudshell.v1.FileExplorerResponse.list_files:type_name -> cloudshell.v1.ListFilesResponse
-	12, // 11: cloudshell.v1.ListFilesResponse.files:type_name -> cloudshell.v1.FileInfo
-	12, // [12:12] is the sub-list for method output_type
-	12, // [12:12] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	13, // 10: cloudshell.v1.FileExplorerCommand.make_directory:type_name -> cloudshell.v1.MakeDirectoryCommand
+	15, // 11: cloudshell.v1.FileExplorerCommand.remove:type_name -> cloudshell.v1.RemoveCommand
+	11, // 12: cloudshell.v1.FileExplorerResponse.list_files:type_name -> cloudshell.v1.ListFilesResponse
+	14, // 13: cloudshell.v1.FileExplorerResponse.make_directory:type_name -> cloudshell.v1.MakeDirectoryResponse
+	16, // 14: cloudshell.v1.FileExplorerResponse.remove:type_name -> cloudshell.v1.RemoveResponse
+	12, // 15: cloudshell.v1.ListFilesResponse.files:type_name -> cloudshell.v1.FileInfo
+	16, // [16:16] is the sub-list for method output_type
+	16, // [16:16] is the sub-list for method input_type
+	16, // [16:16] is the sub-list for extension type_name
+	16, // [16:16] is the sub-list for extension extendee
+	0,  // [0:16] is the sub-list for field type_name
 }
 
 func init() { file_cloudshell_cloudshell_proto_init() }
@@ -968,9 +1219,13 @@ func file_cloudshell_cloudshell_proto_init() {
 	}
 	file_cloudshell_cloudshell_proto_msgTypes[8].OneofWrappers = []any{
 		(*FileExplorerCommand_ListFiles)(nil),
+		(*FileExplorerCommand_MakeDirectory)(nil),
+		(*FileExplorerCommand_Remove)(nil),
 	}
 	file_cloudshell_cloudshell_proto_msgTypes[9].OneofWrappers = []any{
 		(*FileExplorerResponse_ListFiles)(nil),
+		(*FileExplorerResponse_MakeDirectory)(nil),
+		(*FileExplorerResponse_Remove)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -978,7 +1233,7 @@ func file_cloudshell_cloudshell_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloudshell_cloudshell_proto_rawDesc), len(file_cloudshell_cloudshell_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   17,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
