@@ -84,6 +84,7 @@ message ListFilesCommand {
 // ListFilesResponse is a response containing the list of files in a directory.
 message ListFilesResponse {
     repeated FileInfo files = 1;
+    optional string error = 2;
 }
 
 // FileInfo represents information about a file or directory.
@@ -102,6 +103,7 @@ message MakeDirectoryCommand {
 }
 
 message MakeDirectoryResponse {
+    optional string error = 1;
 }
 
 message RemoveCommand {
@@ -109,5 +111,5 @@ message RemoveCommand {
 }
 
 message RemoveResponse {
-
+    optional string error = 1;
 }
