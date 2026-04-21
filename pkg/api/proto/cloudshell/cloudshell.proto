@@ -97,19 +97,24 @@ message FileInfo {
     string mod_time = 6;
 }
 
+// MakeDirectoryCommand is used to create a directory in `path` which name is `name`
 message MakeDirectoryCommand {
     string path = 1;
     string name = 2;
 }
 
+// MakeDirectoryResponse represents response to MakeDirectoryCommand. When error is empty, the command was successful
 message MakeDirectoryResponse {
     optional string error = 1;
 }
 
+// RemoveCommand is used to remove a file or directory specified by `path`.
+// When `path` is a directory, it removes all files in it and the specified directory. 
 message RemoveCommand {
     string path = 1;
 }
 
+// RemoveResponse represents response to RemoveCommand. When error is empty, the command was successful.
 message RemoveResponse {
     optional string error = 1;
 }

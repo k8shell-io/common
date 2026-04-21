@@ -922,6 +922,7 @@ func (x *FileInfo) GetModTime() string {
 	return ""
 }
 
+// MakeDirectoryCommand is used to create a directory in `path` which name is `name`
 type MakeDirectoryCommand struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
@@ -974,6 +975,7 @@ func (x *MakeDirectoryCommand) GetName() string {
 	return ""
 }
 
+// MakeDirectoryResponse represents response to MakeDirectoryCommand. When error is empty, the command was successful
 type MakeDirectoryResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Error         *string                `protobuf:"bytes,1,opt,name=error,proto3,oneof" json:"error,omitempty"`
@@ -1018,6 +1020,8 @@ func (x *MakeDirectoryResponse) GetError() string {
 	return ""
 }
 
+// RemoveCommand is used to remove a file or directory specified by `path`.
+// When `path` is a directory, it removes all files in it and the specified directory.
 type RemoveCommand struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
@@ -1062,6 +1066,7 @@ func (x *RemoveCommand) GetPath() string {
 	return ""
 }
 
+// RemoveResponse represents response to RemoveCommand. When error is empty, the command was successful.
 type RemoveResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Error         *string                `protobuf:"bytes,1,opt,name=error,proto3,oneof" json:"error,omitempty"`
