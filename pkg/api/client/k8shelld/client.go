@@ -188,6 +188,7 @@ func (c *K8shelld) RunShell(
 	envVars []string,
 	width, height uint32,
 	usePty bool,
+	attach bool,
 	enableRecording bool,
 	notifyPtyName NotifyPtyNameFunc,
 ) error {
@@ -228,6 +229,7 @@ func (c *K8shelld) RunShell(
 				Width:      width,
 				Height:     height,
 				AsUser:     asUser,
+				Attach:     attach,
 			},
 		},
 	}
