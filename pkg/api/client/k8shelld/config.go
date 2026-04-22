@@ -18,6 +18,7 @@ type Config struct {
 	Identity         Identity         `yaml:"identity"`
 	TerminateOrphans TerminateOrphans `yaml:"terminateOrphans"`
 	ReapZombies      ReapZombies      `yaml:"reapZombies"`
+	Shells           Shells           `yaml:"shells,omitempty"`
 }
 
 // System represents the general system configuration.
@@ -44,4 +45,14 @@ type TerminateOrphans struct {
 // ReapZombies represents the configuration for the reap-zombies feature.
 type ReapZombies struct {
 	Enabled bool `yaml:"enabled"`
+}
+
+// Shells holds shell session configuration.
+type Shells struct {
+	// DetachedTTL controls how long a PTY shell session with no attached
+	// client is kept alive before the GC terminates it.
+	// Accepts Go duration strings (e.g. "30m", "1h").
+	// When empty the server falls back to its built-in default (30m).
+	// Set to "0s" to disable automatic termination entirely.
+	DetachedTTL string `yaml:"detachedTTL,omitempty"`
 }
