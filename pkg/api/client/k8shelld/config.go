@@ -55,4 +55,10 @@ type Shells struct {
 	// When empty the server falls back to its built-in default (30m).
 	// Set to "0s" to disable automatic termination entirely.
 	DetachedTTL string `yaml:"detachedTTL,omitempty"`
+
+	// AllowUnlimittedTTL controls whether clients are allowed to set an unlimitted TTL for detached sessions.
+	AllowUnlimittedTTL bool `yaml:"allowUnlimittedTTL"`
+
+	// AllowSessionDetach controls whether clients are allowed to detach from PTY shell sessions.
+	AllowSessionDetach bool `yaml:"allowSessionDetach"`
 }
