@@ -101,6 +101,7 @@ service SshService {
 
   // GetCWD gets the current working directory for a shell session
   rpc GetCWD (GetCWDRequest) returns (GetCWDResponse);
+
 }
 
 // ShellRequest message
@@ -122,13 +123,15 @@ message ShellResponse {
 
 // ShellStartRequest message
 message ShellStartRequest {
-  string as_user = 1;              // User to run the shell as (empty for default)
+  string as_user = 1;               // User to run the shell as (empty for default)
   string cmdShell = 2;              // Command to run the shell
   repeated string setEnvVars = 3;   // Environment variables to be set in the the shell
   bool usePty = 4;                  // True to use a pseudo-terminal
   uint32 width = 5;                 // Terminal width
   uint32 height = 6;                // Terminal height
   string container_ref = 7;         // Container ID, name, or Compose service name; empty = local shell
+  bool attach = 8;                  // Whether to attach to an existing session 
+  string attachPassKey = 9;         // Optional passkey to attach to an existing session (only used if attach=true)
 }
 
 // ShellStartResponse message
