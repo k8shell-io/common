@@ -93,3 +93,8 @@ message RepoPullRequestRequest {
 message RepoRefResponse {
   string repo_ref = 1;
 }
+
+// IdentityProviderInfo carries data about the identity provider
+message IdentityProviderInfo {
+  string name = 1;
+}

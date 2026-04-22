@@ -780,6 +780,51 @@ func (x *RepoRefResponse) GetRepoRef() string {
 	return ""
 }
 
+// IdentityProviderInfo carries data about the identity provider
+type IdentityProviderInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *IdentityProviderInfo) Reset() {
+	*x = IdentityProviderInfo{}
+	mi := &file_identity_v1_types_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IdentityProviderInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IdentityProviderInfo) ProtoMessage() {}
+
+func (x *IdentityProviderInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_types_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IdentityProviderInfo.ProtoReflect.Descriptor instead.
+func (*IdentityProviderInfo) Descriptor() ([]byte, []int) {
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *IdentityProviderInfo) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
 var File_identity_v1_types_proto protoreflect.FileDescriptor
 
 const file_identity_v1_types_proto_rawDesc = "" +
@@ -826,7 +871,9 @@ const file_identity_v1_types_proto_rawDesc = "" +
 	"\trepo_name\x18\x03 \x01(\tR\brepoName\x12.\n" +
 	"\x13pull_request_number\x18\x04 \x01(\x05R\x11pullRequestNumber\",\n" +
 	"\x0fRepoRefResponse\x12\x19\n" +
-	"\brepo_ref\x18\x01 \x01(\tR\arepoRefBDZBgithub.com/k8shell-io/common/pkg/api/gen/go/identity/v1;identityv1b\x06proto3"
+	"\brepo_ref\x18\x01 \x01(\tR\arepoRef\"*\n" +
+	"\x14IdentityProviderInfo\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04nameBDZBgithub.com/k8shell-io/common/pkg/api/gen/go/identity/v1;identityv1b\x06proto3"
 
 var (
 	file_identity_v1_types_proto_rawDescOnce sync.Once
@@ -840,7 +887,7 @@ func file_identity_v1_types_proto_rawDescGZIP() []byte {
 	return file_identity_v1_types_proto_rawDescData
 }
 
-var file_identity_v1_types_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_identity_v1_types_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_identity_v1_types_proto_goTypes = []any{
 	(*Username)(nil),                      // 0: identity.v1.Username
 	(*UserStr)(nil),                       // 1: identity.v1.UserStr
@@ -857,12 +904,13 @@ var file_identity_v1_types_proto_goTypes = []any{
 	(*GetBlueprintByUserStrResponse)(nil), // 12: identity.v1.GetBlueprintByUserStrResponse
 	(*RepoPullRequestRequest)(nil),        // 13: identity.v1.RepoPullRequestRequest
 	(*RepoRefResponse)(nil),               // 14: identity.v1.RepoRefResponse
-	(*v1.User)(nil),                       // 15: common.v1.User
+	(*IdentityProviderInfo)(nil),          // 15: identity.v1.IdentityProviderInfo
+	(*v1.User)(nil),                       // 16: common.v1.User
 }
 var file_identity_v1_types_proto_depIdxs = []int32{
-	15, // 0: identity.v1.UserList.users:type_name -> common.v1.User
-	15, // 1: identity.v1.GetUsersResponse.users:type_name -> common.v1.User
-	15, // 2: identity.v1.AuthUserResponse.user:type_name -> common.v1.User
+	16, // 0: identity.v1.UserList.users:type_name -> common.v1.User
+	16, // 1: identity.v1.GetUsersResponse.users:type_name -> common.v1.User
+	16, // 2: identity.v1.AuthUserResponse.user:type_name -> common.v1.User
 	3,  // [3:3] is the sub-list for method output_type
 	3,  // [3:3] is the sub-list for method input_type
 	3,  // [3:3] is the sub-list for extension type_name
@@ -881,7 +929,7 @@ func file_identity_v1_types_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_identity_v1_types_proto_rawDesc), len(file_identity_v1_types_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   15,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

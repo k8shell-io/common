@@ -55,6 +55,9 @@ service IdentityService {
 
   // DeleteUserCredential deletes an external credential by its ID.
   rpc DeleteUserCredential (DeleteUserCredentialRequest) returns (DeleteUserCredentialResponse);
+
+  // GetAvailableIdentityProviders returns a list of available identity providers.
+  rpc GetAvailableIdentityProviders (GetAvailableIdentityProvidersRequest) returns (GetAvailableIdentityProvidersResponse);
 }
 
 // Messages
@@ -97,4 +100,13 @@ message DeleteUserCredentialRequest {
 // DeleteUserCredentialResponse indicates whether the deletion was successful.
 message DeleteUserCredentialResponse {
   bool success = 1;
+}
+
+// GetAvailableIdentityProvidersRequest is an empty request message to query available identity providers.
+message GetAvailableIdentityProvidersRequest {
+}
+
+// GetAvailableIdentityProvidersResponse carries the list of available identity providers.
+message GetAvailableIdentityProvidersResponse {
+  repeated IdentityProviderInfo providers = 1;
 }
