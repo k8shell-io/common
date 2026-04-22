@@ -902,6 +902,8 @@ type ShellStartRequest struct {
 	Width         uint32                 `protobuf:"varint,5,opt,name=width,proto3" json:"width,omitempty"`                                  // Terminal width
 	Height        uint32                 `protobuf:"varint,6,opt,name=height,proto3" json:"height,omitempty"`                                // Terminal height
 	ContainerRef  string                 `protobuf:"bytes,7,opt,name=container_ref,json=containerRef,proto3" json:"container_ref,omitempty"` // Container ID, name, or Compose service name; empty = local shell
+	Attach        bool                   `protobuf:"varint,8,opt,name=attach,proto3" json:"attach,omitempty"`                                // Whether to attach to an existing session
+	AttachPassKey string                 `protobuf:"bytes,9,opt,name=attachPassKey,proto3" json:"attachPassKey,omitempty"`                   // Optional passkey to attach to an existing session (only used if attach=true)
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -981,6 +983,20 @@ func (x *ShellStartRequest) GetHeight() uint32 {
 func (x *ShellStartRequest) GetContainerRef() string {
 	if x != nil {
 		return x.ContainerRef
+	}
+	return ""
+}
+
+func (x *ShellStartRequest) GetAttach() bool {
+	if x != nil {
+		return x.Attach
+	}
+	return false
+}
+
+func (x *ShellStartRequest) GetAttachPassKey() string {
+	if x != nil {
+		return x.AttachPassKey
 	}
 	return ""
 }
@@ -2634,7 +2650,7 @@ const file_k8shelld_v1_k8shelld_proto_rawDesc = "" +
 	"\x04data\x18\x02 \x01(\fH\x00R\x04data\x12\x1e\n" +
 	"\tterminate\x18\x03 \x01(\bH\x00R\tterminateB\n" +
 	"\n" +
-	"\bresponse\"\xd3\x01\n" +
+	"\bresponse\"\x91\x02\n" +
 	"\x11ShellStartRequest\x12\x17\n" +
 	"\aas_user\x18\x01 \x01(\tR\x06asUser\x12\x1a\n" +
 	"\bcmdShell\x18\x02 \x01(\tR\bcmdShell\x12\x1e\n" +
@@ -2644,7 +2660,9 @@ const file_k8shelld_v1_k8shelld_proto_rawDesc = "" +
 	"\x06usePty\x18\x04 \x01(\bR\x06usePty\x12\x14\n" +
 	"\x05width\x18\x05 \x01(\rR\x05width\x12\x16\n" +
 	"\x06height\x18\x06 \x01(\rR\x06height\x12#\n" +
-	"\rcontainer_ref\x18\a \x01(\tR\fcontainerRef\"&\n" +
+	"\rcontainer_ref\x18\a \x01(\tR\fcontainerRef\x12\x16\n" +
+	"\x06attach\x18\b \x01(\bR\x06attach\x12$\n" +
+	"\rattachPassKey\x18\t \x01(\tR\rattachPassKey\"&\n" +
 	"\x12ShellStartResponse\x12\x10\n" +
 	"\x03pty\x18\x01 \x01(\tR\x03pty\"E\n" +
 	"\x15ResizeTerminalRequest\x12\x14\n" +
@@ -2742,12 +2760,12 @@ const file_k8shelld_v1_k8shelld_proto_rawDesc = "" +
 	"\n" +
 	"SshService\x12<\n" +
 	"\x05Shell\x12\x16.k8shelld.ShellRequest\x1a\x17.k8shelld.ShellResponse(\x010\x01\x12S\n" +
-	"\x0eResizeTerminal\x12\x1f.k8shelld.ResizeTerminalRequest\x1a .k8shelld.ResizeTerminalResponse\x12;\n" +
-	"\x06GetCWD\x12\x17.k8shelld.GetCWDRequest\x1a\x18.k8shelld.GetCWDResponse\x12N\n" +
+	"\x0eResizeTerminal\x12\x1f.k8shelld.ResizeTerminalRequest\x1a .k8shelld.ResizeTerminalResponse\x12N\n" +
 	"\vPortForward\x12\x1c.k8shelld.PortForwardRequest\x1a\x1d.k8shelld.PortForwardResponse(\x010\x01\x129\n" +
 	"\x04Exec\x12\x15.k8shelld.ExecRequest\x1a\x16.k8shelld.ExecResponse(\x010\x01\x12K\n" +
 	"\n" +
-	"UnixSocket\x12\x1b.k8shelld.UnixSocketRequest\x1a\x1c.k8shelld.UnixSocketResponse(\x010\x012[\n" +
+	"UnixSocket\x12\x1b.k8shelld.UnixSocketRequest\x1a\x1c.k8shelld.UnixSocketResponse(\x010\x01\x12;\n" +
+	"\x06GetCWD\x12\x17.k8shelld.GetCWDRequest\x1a\x18.k8shelld.GetCWDResponse2[\n" +
 	"\x0eCommandService\x12I\n" +
 	"\x0fCommandListener\x12\x18.k8shelld.CommandMessage\x1a\x18.k8shelld.CommandMessage(\x010\x012\xaf\x03\n" +
 	"\n" +
@@ -2833,10 +2851,10 @@ var file_k8shelld_v1_k8shelld_proto_depIdxs = []int32{
 	2,  // 13: k8shelld.SystemService.SystemInfo:input_type -> k8shelld.SystemInfoRequest
 	9,  // 14: k8shelld.SshService.Shell:input_type -> k8shelld.ShellRequest
 	13, // 15: k8shelld.SshService.ResizeTerminal:input_type -> k8shelld.ResizeTerminalRequest
-	15, // 16: k8shelld.SshService.GetCWD:input_type -> k8shelld.GetCWDRequest
-	17, // 17: k8shelld.SshService.PortForward:input_type -> k8shelld.PortForwardRequest
-	20, // 18: k8shelld.SshService.Exec:input_type -> k8shelld.ExecRequest
-	23, // 19: k8shelld.SshService.UnixSocket:input_type -> k8shelld.UnixSocketRequest
+	17, // 16: k8shelld.SshService.PortForward:input_type -> k8shelld.PortForwardRequest
+	20, // 17: k8shelld.SshService.Exec:input_type -> k8shelld.ExecRequest
+	23, // 18: k8shelld.SshService.UnixSocket:input_type -> k8shelld.UnixSocketRequest
+	15, // 19: k8shelld.SshService.GetCWD:input_type -> k8shelld.GetCWDRequest
 	26, // 20: k8shelld.CommandService.CommandListener:input_type -> k8shelld.CommandMessage
 	27, // 21: k8shelld.AppService.ListApps:input_type -> k8shelld.ListAppsRequest
 	30, // 22: k8shelld.AppService.InstallApp:input_type -> k8shelld.InstallAppRequest
@@ -2848,10 +2866,10 @@ var file_k8shelld_v1_k8shelld_proto_depIdxs = []int32{
 	3,  // 28: k8shelld.SystemService.SystemInfo:output_type -> k8shelld.SystemInfoResponse
 	10, // 29: k8shelld.SshService.Shell:output_type -> k8shelld.ShellResponse
 	14, // 30: k8shelld.SshService.ResizeTerminal:output_type -> k8shelld.ResizeTerminalResponse
-	16, // 31: k8shelld.SshService.GetCWD:output_type -> k8shelld.GetCWDResponse
-	19, // 32: k8shelld.SshService.PortForward:output_type -> k8shelld.PortForwardResponse
-	21, // 33: k8shelld.SshService.Exec:output_type -> k8shelld.ExecResponse
-	24, // 34: k8shelld.SshService.UnixSocket:output_type -> k8shelld.UnixSocketResponse
+	19, // 31: k8shelld.SshService.PortForward:output_type -> k8shelld.PortForwardResponse
+	21, // 32: k8shelld.SshService.Exec:output_type -> k8shelld.ExecResponse
+	24, // 33: k8shelld.SshService.UnixSocket:output_type -> k8shelld.UnixSocketResponse
+	16, // 34: k8shelld.SshService.GetCWD:output_type -> k8shelld.GetCWDResponse
 	26, // 35: k8shelld.CommandService.CommandListener:output_type -> k8shelld.CommandMessage
 	28, // 36: k8shelld.AppService.ListApps:output_type -> k8shelld.ListAppsResponse
 	31, // 37: k8shelld.AppService.InstallApp:output_type -> k8shelld.InstallAppResponse

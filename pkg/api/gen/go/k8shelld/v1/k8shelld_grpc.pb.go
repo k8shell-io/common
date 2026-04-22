@@ -161,10 +161,10 @@ var SystemService_ServiceDesc = grpc.ServiceDesc{
 const (
 	SshService_Shell_FullMethodName          = "/k8shelld.SshService/Shell"
 	SshService_ResizeTerminal_FullMethodName = "/k8shelld.SshService/ResizeTerminal"
-	SshService_GetCWD_FullMethodName         = "/k8shelld.SshService/GetCWD"
 	SshService_PortForward_FullMethodName    = "/k8shelld.SshService/PortForward"
 	SshService_Exec_FullMethodName           = "/k8shelld.SshService/Exec"
 	SshService_UnixSocket_FullMethodName     = "/k8shelld.SshService/UnixSocket"
+	SshService_GetCWD_FullMethodName         = "/k8shelld.SshService/GetCWD"
 )
 
 // SshServiceClient is the client API for SshService service.
@@ -175,8 +175,6 @@ type SshServiceClient interface {
 	Shell(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ShellRequest, ShellResponse], error)
 	// ResizeTerminal resizes the terminal in a shell session
 	ResizeTerminal(ctx context.Context, in *ResizeTerminalRequest, opts ...grpc.CallOption) (*ResizeTerminalResponse, error)
-	// GetCWD gets the current working directory for a shell session
-	GetCWD(ctx context.Context, in *GetCWDRequest, opts ...grpc.CallOption) (*GetCWDResponse, error)
 	// PortForward forwards a port to the specified destination IP and port
 	PortForward(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[PortForwardRequest, PortForwardResponse], error)
 	// Exec executes a command
@@ -184,6 +182,8 @@ type SshServiceClient interface {
 	// UnixSocket reads/writes to a Unix socket in the remote OS
 	// This is primarily used for SSH agent forwarding
 	UnixSocket(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[UnixSocketRequest, UnixSocketResponse], error)
+	// GetCWD gets the current working directory for a shell session
+	GetCWD(ctx context.Context, in *GetCWDRequest, opts ...grpc.CallOption) (*GetCWDResponse, error)
 }
 
 type sshServiceClient struct {
@@ -211,16 +211,6 @@ func (c *sshServiceClient) ResizeTerminal(ctx context.Context, in *ResizeTermina
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ResizeTerminalResponse)
 	err := c.cc.Invoke(ctx, SshService_ResizeTerminal_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *sshServiceClient) GetCWD(ctx context.Context, in *GetCWDRequest, opts ...grpc.CallOption) (*GetCWDResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetCWDResponse)
-	err := c.cc.Invoke(ctx, SshService_GetCWD_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -266,6 +256,16 @@ func (c *sshServiceClient) UnixSocket(ctx context.Context, opts ...grpc.CallOpti
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type SshService_UnixSocketClient = grpc.BidiStreamingClient[UnixSocketRequest, UnixSocketResponse]
 
+func (c *sshServiceClient) GetCWD(ctx context.Context, in *GetCWDRequest, opts ...grpc.CallOption) (*GetCWDResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetCWDResponse)
+	err := c.cc.Invoke(ctx, SshService_GetCWD_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SshServiceServer is the server API for SshService service.
 // All implementations must embed UnimplementedSshServiceServer
 // for forward compatibility.
@@ -274,8 +274,6 @@ type SshServiceServer interface {
 	Shell(grpc.BidiStreamingServer[ShellRequest, ShellResponse]) error
 	// ResizeTerminal resizes the terminal in a shell session
 	ResizeTerminal(context.Context, *ResizeTerminalRequest) (*ResizeTerminalResponse, error)
-	// GetCWD gets the current working directory for a shell session
-	GetCWD(context.Context, *GetCWDRequest) (*GetCWDResponse, error)
 	// PortForward forwards a port to the specified destination IP and port
 	PortForward(grpc.BidiStreamingServer[PortForwardRequest, PortForwardResponse]) error
 	// Exec executes a command
@@ -283,6 +281,8 @@ type SshServiceServer interface {
 	// UnixSocket reads/writes to a Unix socket in the remote OS
 	// This is primarily used for SSH agent forwarding
 	UnixSocket(grpc.BidiStreamingServer[UnixSocketRequest, UnixSocketResponse]) error
+	// GetCWD gets the current working directory for a shell session
+	GetCWD(context.Context, *GetCWDRequest) (*GetCWDResponse, error)
 	mustEmbedUnimplementedSshServiceServer()
 }
 
@@ -299,9 +299,6 @@ func (UnimplementedSshServiceServer) Shell(grpc.BidiStreamingServer[ShellRequest
 func (UnimplementedSshServiceServer) ResizeTerminal(context.Context, *ResizeTerminalRequest) (*ResizeTerminalResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ResizeTerminal not implemented")
 }
-func (UnimplementedSshServiceServer) GetCWD(context.Context, *GetCWDRequest) (*GetCWDResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetCWD not implemented")
-}
 func (UnimplementedSshServiceServer) PortForward(grpc.BidiStreamingServer[PortForwardRequest, PortForwardResponse]) error {
 	return status.Errorf(codes.Unimplemented, "method PortForward not implemented")
 }
@@ -310,6 +307,9 @@ func (UnimplementedSshServiceServer) Exec(grpc.BidiStreamingServer[ExecRequest, 
 }
 func (UnimplementedSshServiceServer) UnixSocket(grpc.BidiStreamingServer[UnixSocketRequest, UnixSocketResponse]) error {
 	return status.Errorf(codes.Unimplemented, "method UnixSocket not implemented")
+}
+func (UnimplementedSshServiceServer) GetCWD(context.Context, *GetCWDRequest) (*GetCWDResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetCWD not implemented")
 }
 func (UnimplementedSshServiceServer) mustEmbedUnimplementedSshServiceServer() {}
 func (UnimplementedSshServiceServer) testEmbeddedByValue()                    {}
@@ -357,24 +357,6 @@ func _SshService_ResizeTerminal_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SshService_GetCWD_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetCWDRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SshServiceServer).GetCWD(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: SshService_GetCWD_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SshServiceServer).GetCWD(ctx, req.(*GetCWDRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _SshService_PortForward_Handler(srv interface{}, stream grpc.ServerStream) error {
 	return srv.(SshServiceServer).PortForward(&grpc.GenericServerStream[PortForwardRequest, PortForwardResponse]{ServerStream: stream})
 }
@@ -395,6 +377,24 @@ func _SshService_UnixSocket_Handler(srv interface{}, stream grpc.ServerStream) e
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type SshService_UnixSocketServer = grpc.BidiStreamingServer[UnixSocketRequest, UnixSocketResponse]
+
+func _SshService_GetCWD_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetCWDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SshServiceServer).GetCWD(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SshService_GetCWD_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SshServiceServer).GetCWD(ctx, req.(*GetCWDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
 
 // SshService_ServiceDesc is the grpc.ServiceDesc for SshService service.
 // It's only intended for direct use with grpc.RegisterService,
