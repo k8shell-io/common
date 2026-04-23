@@ -135,6 +135,7 @@ message ShellStartRequest {
   uint32 height = 6;                // Terminal height
   string container_ref = 7;         // Container ID, name, or Compose service name; empty = local shell
   string lock_id = 8;               // Lock ID from AcquireSession to attach to an existing session
+  bool detach_on_close = 9;         // trueto continue the session after the client disconnects
 }
 
 // ShellStartResponse message
