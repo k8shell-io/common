@@ -96,11 +96,15 @@ service SshService {
   rpc Exec(stream ExecRequest) returns (stream ExecResponse);
 
   // UnixSocket reads/writes to a Unix socket in the remote OS
-  // This is primarily used for SSH agent forwarding
   rpc UnixSocket (stream UnixSocketRequest) returns (stream UnixSocketResponse);
 
   // GetCWD gets the current working directory for a shell session
   rpc GetCWD (GetCWDRequest) returns (GetCWDResponse);
+
+  // AcquireSession acquires an existing shell session by session ID for attachment.
+  // Returns a lock_id on success, or a failure reason if the session does not exist
+  // or is already acquired.
+  rpc AcquireSession (AcquireSessionRequest) returns (AcquireSessionResponse);
 
 }
 
@@ -130,8 +134,7 @@ message ShellStartRequest {
   uint32 width = 5;                 // Terminal width
   uint32 height = 6;                // Terminal height
   string container_ref = 7;         // Container ID, name, or Compose service name; empty = local shell
-  bool attach = 8;                  // Whether to attach to an existing session 
-  string attachPassKey = 9;         // Optional passkey to attach to an existing session (only used if attach=true)
+  string lock_id = 8;               // Lock ID from AcquireSession to attach to an existing session
 }
 
 // ShellStartResponse message
@@ -157,6 +160,25 @@ message GetCWDRequest {
 // GetCWDResponse message
 message GetCWDResponse {
   string path = 1; // Current working directory path
+}
+
+// Failure reason for AcquireSession
+enum AcquireSessionFailureReason {
+  ACQUIRE_SESSION_FAILURE_REASON_UNSPECIFIED    = 0;
+  ACQUIRE_SESSION_FAILURE_REASON_NOT_FOUND      = 1; // Session does not exist
+  ACQUIRE_SESSION_FAILURE_REASON_ALREADY_ACQUIRED = 2; // Session is already held by another client
+}
+
+// AcquireSessionRequest message
+message AcquireSessionRequest {
+  string session_id = 1; // ID of the shell session to acquire
+}
+
+// AcquireSessionResponse message
+message AcquireSessionResponse {
+  bool    success       = 1; // True if the session was acquired
+  string  lock_id       = 2; // Lock ID to use when attaching (only set on success)
+  AcquireSessionFailureReason failure_reason = 3; // Reason for failure (only set on failure)
 }
 
 // Request for the PortForward operation

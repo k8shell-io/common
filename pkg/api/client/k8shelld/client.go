@@ -188,7 +188,7 @@ func (c *K8shelld) RunShell(
 	envVars []string,
 	width, height uint32,
 	usePty bool,
-	attach bool,
+	lockId string,
 	enableRecording bool,
 	notifyPtyName NotifyPtyNameFunc,
 ) error {
@@ -229,7 +229,7 @@ func (c *K8shelld) RunShell(
 				Width:      width,
 				Height:     height,
 				AsUser:     asUser,
-				Attach:     attach,
+				LockId:     lockId,
 			},
 		},
 	}
@@ -329,6 +329,14 @@ func (c *K8shelld) ResizeTerminal(ctx context.Context, sessionId string, width, 
 		c.shellRecorder.ObserveResize(width, height, time.Since(c.shellRecorderStart))
 	}
 	return err
+}
+
+// AcquireSession attempts to acquire an existing shell session for attachment
+func (c *K8shelld) AcquireSession(ctx context.Context, sessionId string) (*k8shelldv1.AcquireSessionResponse, error) {
+	req := &k8shelldv1.AcquireSessionRequest{
+		SessionId: sessionId,
+	}
+	return c.sshClient.AcquireSession(ctx, req)
 }
 
 // GetCWD retrieves the current working directory for a shell session.

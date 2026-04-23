@@ -165,6 +165,7 @@ const (
 	SshService_Exec_FullMethodName           = "/k8shelld.SshService/Exec"
 	SshService_UnixSocket_FullMethodName     = "/k8shelld.SshService/UnixSocket"
 	SshService_GetCWD_FullMethodName         = "/k8shelld.SshService/GetCWD"
+	SshService_AcquireSession_FullMethodName = "/k8shelld.SshService/AcquireSession"
 )
 
 // SshServiceClient is the client API for SshService service.
@@ -180,10 +181,13 @@ type SshServiceClient interface {
 	// Exec executes a command
 	Exec(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ExecRequest, ExecResponse], error)
 	// UnixSocket reads/writes to a Unix socket in the remote OS
-	// This is primarily used for SSH agent forwarding
 	UnixSocket(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[UnixSocketRequest, UnixSocketResponse], error)
 	// GetCWD gets the current working directory for a shell session
 	GetCWD(ctx context.Context, in *GetCWDRequest, opts ...grpc.CallOption) (*GetCWDResponse, error)
+	// AcquireSession acquires an existing shell session by session ID for attachment.
+	// Returns a lock_id on success, or a failure reason if the session does not exist
+	// or is already acquired.
+	AcquireSession(ctx context.Context, in *AcquireSessionRequest, opts ...grpc.CallOption) (*AcquireSessionResponse, error)
 }
 
 type sshServiceClient struct {
@@ -266,6 +270,16 @@ func (c *sshServiceClient) GetCWD(ctx context.Context, in *GetCWDRequest, opts .
 	return out, nil
 }
 
+func (c *sshServiceClient) AcquireSession(ctx context.Context, in *AcquireSessionRequest, opts ...grpc.CallOption) (*AcquireSessionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AcquireSessionResponse)
+	err := c.cc.Invoke(ctx, SshService_AcquireSession_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SshServiceServer is the server API for SshService service.
 // All implementations must embed UnimplementedSshServiceServer
 // for forward compatibility.
@@ -279,10 +293,13 @@ type SshServiceServer interface {
 	// Exec executes a command
 	Exec(grpc.BidiStreamingServer[ExecRequest, ExecResponse]) error
 	// UnixSocket reads/writes to a Unix socket in the remote OS
-	// This is primarily used for SSH agent forwarding
 	UnixSocket(grpc.BidiStreamingServer[UnixSocketRequest, UnixSocketResponse]) error
 	// GetCWD gets the current working directory for a shell session
 	GetCWD(context.Context, *GetCWDRequest) (*GetCWDResponse, error)
+	// AcquireSession acquires an existing shell session by session ID for attachment.
+	// Returns a lock_id on success, or a failure reason if the session does not exist
+	// or is already acquired.
+	AcquireSession(context.Context, *AcquireSessionRequest) (*AcquireSessionResponse, error)
 	mustEmbedUnimplementedSshServiceServer()
 }
 
@@ -310,6 +327,9 @@ func (UnimplementedSshServiceServer) UnixSocket(grpc.BidiStreamingServer[UnixSoc
 }
 func (UnimplementedSshServiceServer) GetCWD(context.Context, *GetCWDRequest) (*GetCWDResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetCWD not implemented")
+}
+func (UnimplementedSshServiceServer) AcquireSession(context.Context, *AcquireSessionRequest) (*AcquireSessionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AcquireSession not implemented")
 }
 func (UnimplementedSshServiceServer) mustEmbedUnimplementedSshServiceServer() {}
 func (UnimplementedSshServiceServer) testEmbeddedByValue()                    {}
@@ -396,6 +416,24 @@ func _SshService_GetCWD_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SshService_AcquireSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AcquireSessionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SshServiceServer).AcquireSession(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SshService_AcquireSession_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SshServiceServer).AcquireSession(ctx, req.(*AcquireSessionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SshService_ServiceDesc is the grpc.ServiceDesc for SshService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -410,6 +448,10 @@ var SshService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetCWD",
 			Handler:    _SshService_GetCWD_Handler,
+		},
+		{
+			MethodName: "AcquireSession",
+			Handler:    _SshService_AcquireSession_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
