@@ -23,20 +23,21 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	IdentityService_FindUser_FullMethodName                 = "/identity.v1.IdentityService/FindUser"
-	IdentityService_GetUsers_FullMethodName                 = "/identity.v1.IdentityService/GetUsers"
-	IdentityService_GetUserAccessToken_FullMethodName       = "/identity.v1.IdentityService/GetUserAccessToken"
-	IdentityService_GetUserOnboardCapability_FullMethodName = "/identity.v1.IdentityService/GetUserOnboardCapability"
-	IdentityService_OnboardUserDeviceFlow_FullMethodName    = "/identity.v1.IdentityService/OnboardUserDeviceFlow"
-	IdentityService_OnboardUserWebFlow_FullMethodName       = "/identity.v1.IdentityService/OnboardUserWebFlow"
-	IdentityService_CompleteUserWebFlow_FullMethodName      = "/identity.v1.IdentityService/CompleteUserWebFlow"
-	IdentityService_AuthUserPublicKey_FullMethodName        = "/identity.v1.IdentityService/AuthUserPublicKey"
-	IdentityService_GetBlueprintByUserStr_FullMethodName    = "/identity.v1.IdentityService/GetBlueprintByUserStr"
-	IdentityService_ResolvePullRequestToRef_FullMethodName  = "/identity.v1.IdentityService/ResolvePullRequestToRef"
-	IdentityService_GetUserCredentials_FullMethodName       = "/identity.v1.IdentityService/GetUserCredentials"
-	IdentityService_AddUserCredential_FullMethodName        = "/identity.v1.IdentityService/AddUserCredential"
-	IdentityService_UpdateUserCredential_FullMethodName     = "/identity.v1.IdentityService/UpdateUserCredential"
-	IdentityService_DeleteUserCredential_FullMethodName     = "/identity.v1.IdentityService/DeleteUserCredential"
+	IdentityService_FindUser_FullMethodName                      = "/identity.v1.IdentityService/FindUser"
+	IdentityService_GetUsers_FullMethodName                      = "/identity.v1.IdentityService/GetUsers"
+	IdentityService_GetUserAccessToken_FullMethodName            = "/identity.v1.IdentityService/GetUserAccessToken"
+	IdentityService_GetUserOnboardCapability_FullMethodName      = "/identity.v1.IdentityService/GetUserOnboardCapability"
+	IdentityService_OnboardUserDeviceFlow_FullMethodName         = "/identity.v1.IdentityService/OnboardUserDeviceFlow"
+	IdentityService_OnboardUserWebFlow_FullMethodName            = "/identity.v1.IdentityService/OnboardUserWebFlow"
+	IdentityService_CompleteUserWebFlow_FullMethodName           = "/identity.v1.IdentityService/CompleteUserWebFlow"
+	IdentityService_AuthUserPublicKey_FullMethodName             = "/identity.v1.IdentityService/AuthUserPublicKey"
+	IdentityService_GetBlueprintByUserStr_FullMethodName         = "/identity.v1.IdentityService/GetBlueprintByUserStr"
+	IdentityService_ResolvePullRequestToRef_FullMethodName       = "/identity.v1.IdentityService/ResolvePullRequestToRef"
+	IdentityService_GetUserCredentials_FullMethodName            = "/identity.v1.IdentityService/GetUserCredentials"
+	IdentityService_AddUserCredential_FullMethodName             = "/identity.v1.IdentityService/AddUserCredential"
+	IdentityService_UpdateUserCredential_FullMethodName          = "/identity.v1.IdentityService/UpdateUserCredential"
+	IdentityService_DeleteUserCredential_FullMethodName          = "/identity.v1.IdentityService/DeleteUserCredential"
+	IdentityService_GetAvailableIdentityProviders_FullMethodName = "/identity.v1.IdentityService/GetAvailableIdentityProviders"
 )
 
 // IdentityServiceClient is the client API for IdentityService service.
@@ -75,6 +76,8 @@ type IdentityServiceClient interface {
 	UpdateUserCredential(ctx context.Context, in *v1.ExternalCredential, opts ...grpc.CallOption) (*UpdateUserCredentialResponse, error)
 	// DeleteUserCredential deletes an external credential by its ID.
 	DeleteUserCredential(ctx context.Context, in *DeleteUserCredentialRequest, opts ...grpc.CallOption) (*DeleteUserCredentialResponse, error)
+	// GetAvailableIdentityProviders returns a list of available identity providers.
+	GetAvailableIdentityProviders(ctx context.Context, in *GetAvailableIdentityProvidersRequest, opts ...grpc.CallOption) (*GetAvailableIdentityProvidersResponse, error)
 }
 
 type identityServiceClient struct {
@@ -225,6 +228,16 @@ func (c *identityServiceClient) DeleteUserCredential(ctx context.Context, in *De
 	return out, nil
 }
 
+func (c *identityServiceClient) GetAvailableIdentityProviders(ctx context.Context, in *GetAvailableIdentityProvidersRequest, opts ...grpc.CallOption) (*GetAvailableIdentityProvidersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetAvailableIdentityProvidersResponse)
+	err := c.cc.Invoke(ctx, IdentityService_GetAvailableIdentityProviders_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // IdentityServiceServer is the server API for IdentityService service.
 // All implementations must embed UnimplementedIdentityServiceServer
 // for forward compatibility.
@@ -261,6 +274,8 @@ type IdentityServiceServer interface {
 	UpdateUserCredential(context.Context, *v1.ExternalCredential) (*UpdateUserCredentialResponse, error)
 	// DeleteUserCredential deletes an external credential by its ID.
 	DeleteUserCredential(context.Context, *DeleteUserCredentialRequest) (*DeleteUserCredentialResponse, error)
+	// GetAvailableIdentityProviders returns a list of available identity providers.
+	GetAvailableIdentityProviders(context.Context, *GetAvailableIdentityProvidersRequest) (*GetAvailableIdentityProvidersResponse, error)
 	mustEmbedUnimplementedIdentityServiceServer()
 }
 
@@ -312,6 +327,9 @@ func (UnimplementedIdentityServiceServer) UpdateUserCredential(context.Context, 
 }
 func (UnimplementedIdentityServiceServer) DeleteUserCredential(context.Context, *DeleteUserCredentialRequest) (*DeleteUserCredentialResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteUserCredential not implemented")
+}
+func (UnimplementedIdentityServiceServer) GetAvailableIdentityProviders(context.Context, *GetAvailableIdentityProvidersRequest) (*GetAvailableIdentityProvidersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAvailableIdentityProviders not implemented")
 }
 func (UnimplementedIdentityServiceServer) mustEmbedUnimplementedIdentityServiceServer() {}
 func (UnimplementedIdentityServiceServer) testEmbeddedByValue()                         {}
@@ -586,6 +604,24 @@ func _IdentityService_DeleteUserCredential_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IdentityService_GetAvailableIdentityProviders_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAvailableIdentityProvidersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).GetAvailableIdentityProviders(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_GetAvailableIdentityProviders_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).GetAvailableIdentityProviders(ctx, req.(*GetAvailableIdentityProvidersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // IdentityService_ServiceDesc is the grpc.ServiceDesc for IdentityService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -648,6 +684,10 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteUserCredential",
 			Handler:    _IdentityService_DeleteUserCredential_Handler,
+		},
+		{
+			MethodName: "GetAvailableIdentityProviders",
+			Handler:    _IdentityService_GetAvailableIdentityProviders_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
