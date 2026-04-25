@@ -64,7 +64,7 @@ message FileExplorerCommand {
         ListFilesCommand list_files = 1;
         MakeDirectoryCommand make_directory = 2;
         RemoveCommand remove = 3;
-        GetCWDRequest get_cwd = 4;
+        GetCWDCommand get_cwd = 4;
     }
 }
 
@@ -122,12 +122,12 @@ message RemoveResponse {
     optional string error = 1;
 }
 
-// GetCWDRequest is sent by the client to request the current working directory of the terminal session.
+// GetCWDCommand is sent by the client to request the current working directory of the terminal session.
 // The terminal session is currently held on server side and identified by the connection, so no additional fields are needed in the request.
-message GetCWDRequest {
+message GetCWDCommand {
 }
 
-// GetCWDResponse is sent by the server in response to a GetCWDRequest, containing the current working directory path.
+// GetCWDResponse is sent by the server in response to a GetCWDCommand, containing the current working directory path.
 message GetCWDResponse {
     string path = 1; // Current working directory path
     optional string error = 2; // Error message if the request failed, empty if successful

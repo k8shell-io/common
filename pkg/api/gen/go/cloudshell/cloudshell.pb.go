@@ -619,7 +619,7 @@ func (x *FileExplorerCommand) GetRemove() *RemoveCommand {
 	return nil
 }
 
-func (x *FileExplorerCommand) GetGetCwd() *GetCWDRequest {
+func (x *FileExplorerCommand) GetGetCwd() *GetCWDCommand {
 	if x != nil {
 		if x, ok := x.Payload.(*FileExplorerCommand_GetCwd); ok {
 			return x.GetCwd
@@ -645,7 +645,7 @@ type FileExplorerCommand_Remove struct {
 }
 
 type FileExplorerCommand_GetCwd struct {
-	GetCwd *GetCWDRequest `protobuf:"bytes,4,opt,name=get_cwd,json=getCwd,proto3,oneof"`
+	GetCwd *GetCWDCommand `protobuf:"bytes,4,opt,name=get_cwd,json=getCwd,proto3,oneof"`
 }
 
 func (*FileExplorerCommand_ListFiles) isFileExplorerCommand_Payload() {}
@@ -1151,28 +1151,28 @@ func (x *RemoveResponse) GetError() string {
 	return ""
 }
 
-// GetCWDRequest is sent by the client to request the current working directory of the terminal session.
+// GetCWDCommand is sent by the client to request the current working directory of the terminal session.
 // The terminal session is currently held on server side and identified by the connection, so no additional fields are needed in the request.
-type GetCWDRequest struct {
+type GetCWDCommand struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetCWDRequest) Reset() {
-	*x = GetCWDRequest{}
+func (x *GetCWDCommand) Reset() {
+	*x = GetCWDCommand{}
 	mi := &file_cloudshell_cloudshell_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetCWDRequest) String() string {
+func (x *GetCWDCommand) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetCWDRequest) ProtoMessage() {}
+func (*GetCWDCommand) ProtoMessage() {}
 
-func (x *GetCWDRequest) ProtoReflect() protoreflect.Message {
+func (x *GetCWDCommand) ProtoReflect() protoreflect.Message {
 	mi := &file_cloudshell_cloudshell_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1184,12 +1184,12 @@ func (x *GetCWDRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetCWDRequest.ProtoReflect.Descriptor instead.
-func (*GetCWDRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetCWDCommand.ProtoReflect.Descriptor instead.
+func (*GetCWDCommand) Descriptor() ([]byte, []int) {
 	return file_cloudshell_cloudshell_proto_rawDescGZIP(), []int{17}
 }
 
-// GetCWDResponse is sent by the server in response to a GetCWDRequest, containing the current working directory path.
+// GetCWDResponse is sent by the server in response to a GetCWDCommand, containing the current working directory path.
 type GetCWDResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`         // Current working directory path
@@ -1277,7 +1277,7 @@ const file_cloudshell_cloudshell_proto_rawDesc = "" +
 	"list_files\x18\x01 \x01(\v2\x1f.cloudshell.v1.ListFilesCommandH\x00R\tlistFiles\x12L\n" +
 	"\x0emake_directory\x18\x02 \x01(\v2#.cloudshell.v1.MakeDirectoryCommandH\x00R\rmakeDirectory\x126\n" +
 	"\x06remove\x18\x03 \x01(\v2\x1c.cloudshell.v1.RemoveCommandH\x00R\x06remove\x127\n" +
-	"\aget_cwd\x18\x04 \x01(\v2\x1c.cloudshell.v1.GetCWDRequestH\x00R\x06getCwdB\t\n" +
+	"\aget_cwd\x18\x04 \x01(\v2\x1c.cloudshell.v1.GetCWDCommandH\x00R\x06getCwdB\t\n" +
 	"\apayload\"\xa6\x02\n" +
 	"\x14FileExplorerResponse\x12A\n" +
 	"\n" +
@@ -1312,7 +1312,7 @@ const file_cloudshell_cloudshell_proto_rawDesc = "" +
 	"\x0eRemoveResponse\x12\x19\n" +
 	"\x05error\x18\x01 \x01(\tH\x00R\x05error\x88\x01\x01B\b\n" +
 	"\x06_error\"\x0f\n" +
-	"\rGetCWDRequest\"I\n" +
+	"\rGetCWDCommand\"I\n" +
 	"\x0eGetCWDResponse\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\x12\x19\n" +
 	"\x05error\x18\x02 \x01(\tH\x00R\x05error\x88\x01\x01B\b\n" +
@@ -1349,7 +1349,7 @@ var file_cloudshell_cloudshell_proto_goTypes = []any{
 	(*MakeDirectoryResponse)(nil), // 14: cloudshell.v1.MakeDirectoryResponse
 	(*RemoveCommand)(nil),         // 15: cloudshell.v1.RemoveCommand
 	(*RemoveResponse)(nil),        // 16: cloudshell.v1.RemoveResponse
-	(*GetCWDRequest)(nil),         // 17: cloudshell.v1.GetCWDRequest
+	(*GetCWDCommand)(nil),         // 17: cloudshell.v1.GetCWDCommand
 	(*GetCWDResponse)(nil),        // 18: cloudshell.v1.GetCWDResponse
 }
 var file_cloudshell_cloudshell_proto_depIdxs = []int32{
@@ -1365,7 +1365,7 @@ var file_cloudshell_cloudshell_proto_depIdxs = []int32{
 	10, // 9: cloudshell.v1.FileExplorerCommand.list_files:type_name -> cloudshell.v1.ListFilesCommand
 	13, // 10: cloudshell.v1.FileExplorerCommand.make_directory:type_name -> cloudshell.v1.MakeDirectoryCommand
 	15, // 11: cloudshell.v1.FileExplorerCommand.remove:type_name -> cloudshell.v1.RemoveCommand
-	17, // 12: cloudshell.v1.FileExplorerCommand.get_cwd:type_name -> cloudshell.v1.GetCWDRequest
+	17, // 12: cloudshell.v1.FileExplorerCommand.get_cwd:type_name -> cloudshell.v1.GetCWDCommand
 	11, // 13: cloudshell.v1.FileExplorerResponse.list_files:type_name -> cloudshell.v1.ListFilesResponse
 	14, // 14: cloudshell.v1.FileExplorerResponse.make_directory:type_name -> cloudshell.v1.MakeDirectoryResponse
 	16, // 15: cloudshell.v1.FileExplorerResponse.remove:type_name -> cloudshell.v1.RemoveResponse
