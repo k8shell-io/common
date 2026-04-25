@@ -130,4 +130,5 @@ message GetCWDRequest {
 // GetCWDResponse is sent by the server in response to a GetCWDRequest, containing the current working directory path.
 message GetCWDResponse {
     string path = 1; // Current working directory path
+    optional string error = 2; // Error message if the request failed, empty if successful
 }

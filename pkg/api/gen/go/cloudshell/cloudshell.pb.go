@@ -1192,7 +1192,8 @@ func (*GetCWDRequest) Descriptor() ([]byte, []int) {
 // GetCWDResponse is sent by the server in response to a GetCWDRequest, containing the current working directory path.
 type GetCWDResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"` // Current working directory path
+	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`         // Current working directory path
+	Error         *string                `protobuf:"bytes,2,opt,name=error,proto3,oneof" json:"error,omitempty"` // Error message if the request failed, empty if successful
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1230,6 +1231,13 @@ func (*GetCWDResponse) Descriptor() ([]byte, []int) {
 func (x *GetCWDResponse) GetPath() string {
 	if x != nil {
 		return x.Path
+	}
+	return ""
+}
+
+func (x *GetCWDResponse) GetError() string {
+	if x != nil && x.Error != nil {
+		return *x.Error
 	}
 	return ""
 }
@@ -1304,9 +1312,11 @@ const file_cloudshell_cloudshell_proto_rawDesc = "" +
 	"\x0eRemoveResponse\x12\x19\n" +
 	"\x05error\x18\x01 \x01(\tH\x00R\x05error\x88\x01\x01B\b\n" +
 	"\x06_error\"\x0f\n" +
-	"\rGetCWDRequest\"$\n" +
+	"\rGetCWDRequest\"I\n" +
 	"\x0eGetCWDResponse\x12\x12\n" +
-	"\x04path\x18\x01 \x01(\tR\x04pathBHZFgithub.com/k8shell-io/common/pkg/api/gen/go/cloudshell/v1;cloudshellv1b\x06proto3"
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x19\n" +
+	"\x05error\x18\x02 \x01(\tH\x00R\x05error\x88\x01\x01B\b\n" +
+	"\x06_errorBHZFgithub.com/k8shell-io/common/pkg/api/gen/go/cloudshell/v1;cloudshellv1b\x06proto3"
 
 var (
 	file_cloudshell_cloudshell_proto_rawDescOnce sync.Once
@@ -1401,6 +1411,7 @@ func file_cloudshell_cloudshell_proto_init() {
 	file_cloudshell_cloudshell_proto_msgTypes[11].OneofWrappers = []any{}
 	file_cloudshell_cloudshell_proto_msgTypes[14].OneofWrappers = []any{}
 	file_cloudshell_cloudshell_proto_msgTypes[16].OneofWrappers = []any{}
+	file_cloudshell_cloudshell_proto_msgTypes[18].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
