@@ -549,6 +549,7 @@ type FileExplorerCommand struct {
 	//	*FileExplorerCommand_ListFiles
 	//	*FileExplorerCommand_MakeDirectory
 	//	*FileExplorerCommand_Remove
+	//	*FileExplorerCommand_GetCwd
 	Payload       isFileExplorerCommand_Payload `protobuf_oneof:"payload"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -618,6 +619,15 @@ func (x *FileExplorerCommand) GetRemove() *RemoveCommand {
 	return nil
 }
 
+func (x *FileExplorerCommand) GetGetCwd() *GetCWDCommand {
+	if x != nil {
+		if x, ok := x.Payload.(*FileExplorerCommand_GetCwd); ok {
+			return x.GetCwd
+		}
+	}
+	return nil
+}
+
 type isFileExplorerCommand_Payload interface {
 	isFileExplorerCommand_Payload()
 }
@@ -634,11 +644,17 @@ type FileExplorerCommand_Remove struct {
 	Remove *RemoveCommand `protobuf:"bytes,3,opt,name=remove,proto3,oneof"`
 }
 
+type FileExplorerCommand_GetCwd struct {
+	GetCwd *GetCWDCommand `protobuf:"bytes,4,opt,name=get_cwd,json=getCwd,proto3,oneof"`
+}
+
 func (*FileExplorerCommand_ListFiles) isFileExplorerCommand_Payload() {}
 
 func (*FileExplorerCommand_MakeDirectory) isFileExplorerCommand_Payload() {}
 
 func (*FileExplorerCommand_Remove) isFileExplorerCommand_Payload() {}
+
+func (*FileExplorerCommand_GetCwd) isFileExplorerCommand_Payload() {}
 
 // FileExplorerResponse represents a response sent from the server to the client in the file explorer component.
 type FileExplorerResponse struct {
@@ -648,6 +664,7 @@ type FileExplorerResponse struct {
 	//	*FileExplorerResponse_ListFiles
 	//	*FileExplorerResponse_MakeDirectory
 	//	*FileExplorerResponse_Remove
+	//	*FileExplorerResponse_GetCwd
 	Payload       isFileExplorerResponse_Payload `protobuf_oneof:"payload"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -717,6 +734,15 @@ func (x *FileExplorerResponse) GetRemove() *RemoveResponse {
 	return nil
 }
 
+func (x *FileExplorerResponse) GetGetCwd() *GetCWDResponse {
+	if x != nil {
+		if x, ok := x.Payload.(*FileExplorerResponse_GetCwd); ok {
+			return x.GetCwd
+		}
+	}
+	return nil
+}
+
 type isFileExplorerResponse_Payload interface {
 	isFileExplorerResponse_Payload()
 }
@@ -733,16 +759,23 @@ type FileExplorerResponse_Remove struct {
 	Remove *RemoveResponse `protobuf:"bytes,3,opt,name=remove,proto3,oneof"`
 }
 
+type FileExplorerResponse_GetCwd struct {
+	GetCwd *GetCWDResponse `protobuf:"bytes,4,opt,name=get_cwd,json=getCwd,proto3,oneof"`
+}
+
 func (*FileExplorerResponse_ListFiles) isFileExplorerResponse_Payload() {}
 
 func (*FileExplorerResponse_MakeDirectory) isFileExplorerResponse_Payload() {}
 
 func (*FileExplorerResponse_Remove) isFileExplorerResponse_Payload() {}
 
+func (*FileExplorerResponse_GetCwd) isFileExplorerResponse_Payload() {}
+
 // ListFilesCommand is a command to list files in a directory.
 type ListFilesCommand struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	ShowHidden    bool                   `protobuf:"varint,2,opt,name=show_hidden,json=showHidden,proto3" json:"show_hidden,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -782,6 +815,13 @@ func (x *ListFilesCommand) GetPath() string {
 		return x.Path
 	}
 	return ""
+}
+
+func (x *ListFilesCommand) GetShowHidden() bool {
+	if x != nil {
+		return x.ShowHidden
+	}
+	return false
 }
 
 // ListFilesResponse is a response containing the list of files in a directory.
@@ -1111,6 +1151,97 @@ func (x *RemoveResponse) GetError() string {
 	return ""
 }
 
+// GetCWDCommand is sent by the client to request the current working directory of the terminal session.
+// The terminal session is currently held on server side and identified by the connection, so no additional fields are needed in the request.
+type GetCWDCommand struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetCWDCommand) Reset() {
+	*x = GetCWDCommand{}
+	mi := &file_cloudshell_cloudshell_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetCWDCommand) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetCWDCommand) ProtoMessage() {}
+
+func (x *GetCWDCommand) ProtoReflect() protoreflect.Message {
+	mi := &file_cloudshell_cloudshell_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetCWDCommand.ProtoReflect.Descriptor instead.
+func (*GetCWDCommand) Descriptor() ([]byte, []int) {
+	return file_cloudshell_cloudshell_proto_rawDescGZIP(), []int{17}
+}
+
+// GetCWDResponse is sent by the server in response to a GetCWDCommand, containing the current working directory path.
+type GetCWDResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`         // Current working directory path
+	Error         *string                `protobuf:"bytes,2,opt,name=error,proto3,oneof" json:"error,omitempty"` // Error message if the request failed, empty if successful
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetCWDResponse) Reset() {
+	*x = GetCWDResponse{}
+	mi := &file_cloudshell_cloudshell_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetCWDResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetCWDResponse) ProtoMessage() {}
+
+func (x *GetCWDResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloudshell_cloudshell_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetCWDResponse.ProtoReflect.Descriptor instead.
+func (*GetCWDResponse) Descriptor() ([]byte, []int) {
+	return file_cloudshell_cloudshell_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *GetCWDResponse) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *GetCWDResponse) GetError() string {
+	if x != nil && x.Error != nil {
+		return *x.Error
+	}
+	return ""
+}
+
 var File_cloudshell_cloudshell_proto protoreflect.FileDescriptor
 
 const file_cloudshell_cloudshell_proto_rawDesc = "" +
@@ -1140,21 +1271,25 @@ const file_cloudshell_cloudshell_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12>\n" +
 	"\acommand\x18\x02 \x01(\v2\".cloudshell.v1.FileExplorerCommandH\x00R\acommand\x12A\n" +
 	"\bresponse\x18\x03 \x01(\v2#.cloudshell.v1.FileExplorerResponseH\x00R\bresponseB\t\n" +
-	"\apayload\"\xe8\x01\n" +
+	"\apayload\"\xa1\x02\n" +
 	"\x13FileExplorerCommand\x12@\n" +
 	"\n" +
 	"list_files\x18\x01 \x01(\v2\x1f.cloudshell.v1.ListFilesCommandH\x00R\tlistFiles\x12L\n" +
 	"\x0emake_directory\x18\x02 \x01(\v2#.cloudshell.v1.MakeDirectoryCommandH\x00R\rmakeDirectory\x126\n" +
-	"\x06remove\x18\x03 \x01(\v2\x1c.cloudshell.v1.RemoveCommandH\x00R\x06removeB\t\n" +
-	"\apayload\"\xec\x01\n" +
+	"\x06remove\x18\x03 \x01(\v2\x1c.cloudshell.v1.RemoveCommandH\x00R\x06remove\x127\n" +
+	"\aget_cwd\x18\x04 \x01(\v2\x1c.cloudshell.v1.GetCWDCommandH\x00R\x06getCwdB\t\n" +
+	"\apayload\"\xa6\x02\n" +
 	"\x14FileExplorerResponse\x12A\n" +
 	"\n" +
 	"list_files\x18\x01 \x01(\v2 .cloudshell.v1.ListFilesResponseH\x00R\tlistFiles\x12M\n" +
 	"\x0emake_directory\x18\x02 \x01(\v2$.cloudshell.v1.MakeDirectoryResponseH\x00R\rmakeDirectory\x127\n" +
-	"\x06remove\x18\x03 \x01(\v2\x1d.cloudshell.v1.RemoveResponseH\x00R\x06removeB\t\n" +
-	"\apayload\"&\n" +
+	"\x06remove\x18\x03 \x01(\v2\x1d.cloudshell.v1.RemoveResponseH\x00R\x06remove\x128\n" +
+	"\aget_cwd\x18\x04 \x01(\v2\x1d.cloudshell.v1.GetCWDResponseH\x00R\x06getCwdB\t\n" +
+	"\apayload\"G\n" +
 	"\x10ListFilesCommand\x12\x12\n" +
-	"\x04path\x18\x01 \x01(\tR\x04path\"g\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x1f\n" +
+	"\vshow_hidden\x18\x02 \x01(\bR\n" +
+	"showHidden\"g\n" +
 	"\x11ListFilesResponse\x12-\n" +
 	"\x05files\x18\x01 \x03(\v2\x17.cloudshell.v1.FileInfoR\x05files\x12\x19\n" +
 	"\x05error\x18\x02 \x01(\tH\x00R\x05error\x88\x01\x01B\b\n" +
@@ -1176,6 +1311,11 @@ const file_cloudshell_cloudshell_proto_rawDesc = "" +
 	"\x04path\x18\x01 \x01(\tR\x04path\"5\n" +
 	"\x0eRemoveResponse\x12\x19\n" +
 	"\x05error\x18\x01 \x01(\tH\x00R\x05error\x88\x01\x01B\b\n" +
+	"\x06_error\"\x0f\n" +
+	"\rGetCWDCommand\"I\n" +
+	"\x0eGetCWDResponse\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x19\n" +
+	"\x05error\x18\x02 \x01(\tH\x00R\x05error\x88\x01\x01B\b\n" +
 	"\x06_errorBHZFgithub.com/k8shell-io/common/pkg/api/gen/go/cloudshell/v1;cloudshellv1b\x06proto3"
 
 var (
@@ -1190,7 +1330,7 @@ func file_cloudshell_cloudshell_proto_rawDescGZIP() []byte {
 	return file_cloudshell_cloudshell_proto_rawDescData
 }
 
-var file_cloudshell_cloudshell_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_cloudshell_cloudshell_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
 var file_cloudshell_cloudshell_proto_goTypes = []any{
 	(*CloudshellMessage)(nil),     // 0: cloudshell.v1.CloudshellMessage
 	(*PingMessage)(nil),           // 1: cloudshell.v1.PingMessage
@@ -1209,6 +1349,8 @@ var file_cloudshell_cloudshell_proto_goTypes = []any{
 	(*MakeDirectoryResponse)(nil), // 14: cloudshell.v1.MakeDirectoryResponse
 	(*RemoveCommand)(nil),         // 15: cloudshell.v1.RemoveCommand
 	(*RemoveResponse)(nil),        // 16: cloudshell.v1.RemoveResponse
+	(*GetCWDCommand)(nil),         // 17: cloudshell.v1.GetCWDCommand
+	(*GetCWDResponse)(nil),        // 18: cloudshell.v1.GetCWDResponse
 }
 var file_cloudshell_cloudshell_proto_depIdxs = []int32{
 	1,  // 0: cloudshell.v1.CloudshellMessage.ping:type_name -> cloudshell.v1.PingMessage
@@ -1223,15 +1365,17 @@ var file_cloudshell_cloudshell_proto_depIdxs = []int32{
 	10, // 9: cloudshell.v1.FileExplorerCommand.list_files:type_name -> cloudshell.v1.ListFilesCommand
 	13, // 10: cloudshell.v1.FileExplorerCommand.make_directory:type_name -> cloudshell.v1.MakeDirectoryCommand
 	15, // 11: cloudshell.v1.FileExplorerCommand.remove:type_name -> cloudshell.v1.RemoveCommand
-	11, // 12: cloudshell.v1.FileExplorerResponse.list_files:type_name -> cloudshell.v1.ListFilesResponse
-	14, // 13: cloudshell.v1.FileExplorerResponse.make_directory:type_name -> cloudshell.v1.MakeDirectoryResponse
-	16, // 14: cloudshell.v1.FileExplorerResponse.remove:type_name -> cloudshell.v1.RemoveResponse
-	12, // 15: cloudshell.v1.ListFilesResponse.files:type_name -> cloudshell.v1.FileInfo
-	16, // [16:16] is the sub-list for method output_type
-	16, // [16:16] is the sub-list for method input_type
-	16, // [16:16] is the sub-list for extension type_name
-	16, // [16:16] is the sub-list for extension extendee
-	0,  // [0:16] is the sub-list for field type_name
+	17, // 12: cloudshell.v1.FileExplorerCommand.get_cwd:type_name -> cloudshell.v1.GetCWDCommand
+	11, // 13: cloudshell.v1.FileExplorerResponse.list_files:type_name -> cloudshell.v1.ListFilesResponse
+	14, // 14: cloudshell.v1.FileExplorerResponse.make_directory:type_name -> cloudshell.v1.MakeDirectoryResponse
+	16, // 15: cloudshell.v1.FileExplorerResponse.remove:type_name -> cloudshell.v1.RemoveResponse
+	18, // 16: cloudshell.v1.FileExplorerResponse.get_cwd:type_name -> cloudshell.v1.GetCWDResponse
+	12, // 17: cloudshell.v1.ListFilesResponse.files:type_name -> cloudshell.v1.FileInfo
+	18, // [18:18] is the sub-list for method output_type
+	18, // [18:18] is the sub-list for method input_type
+	18, // [18:18] is the sub-list for extension type_name
+	18, // [18:18] is the sub-list for extension extendee
+	0,  // [0:18] is the sub-list for field type_name
 }
 
 func init() { file_cloudshell_cloudshell_proto_init() }
@@ -1256,22 +1400,25 @@ func file_cloudshell_cloudshell_proto_init() {
 		(*FileExplorerCommand_ListFiles)(nil),
 		(*FileExplorerCommand_MakeDirectory)(nil),
 		(*FileExplorerCommand_Remove)(nil),
+		(*FileExplorerCommand_GetCwd)(nil),
 	}
 	file_cloudshell_cloudshell_proto_msgTypes[9].OneofWrappers = []any{
 		(*FileExplorerResponse_ListFiles)(nil),
 		(*FileExplorerResponse_MakeDirectory)(nil),
 		(*FileExplorerResponse_Remove)(nil),
+		(*FileExplorerResponse_GetCwd)(nil),
 	}
 	file_cloudshell_cloudshell_proto_msgTypes[11].OneofWrappers = []any{}
 	file_cloudshell_cloudshell_proto_msgTypes[14].OneofWrappers = []any{}
 	file_cloudshell_cloudshell_proto_msgTypes[16].OneofWrappers = []any{}
+	file_cloudshell_cloudshell_proto_msgTypes[18].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloudshell_cloudshell_proto_rawDesc), len(file_cloudshell_cloudshell_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   17,
+			NumMessages:   19,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
