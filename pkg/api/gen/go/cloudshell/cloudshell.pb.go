@@ -743,6 +743,7 @@ func (*FileExplorerResponse_Remove) isFileExplorerResponse_Payload() {}
 type ListFilesCommand struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	ShowHidden    bool                   `protobuf:"varint,2,opt,name=show_hidden,json=showHidden,proto3" json:"show_hidden,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -782,6 +783,13 @@ func (x *ListFilesCommand) GetPath() string {
 		return x.Path
 	}
 	return ""
+}
+
+func (x *ListFilesCommand) GetShowHidden() bool {
+	if x != nil {
+		return x.ShowHidden
+	}
+	return false
 }
 
 // ListFilesResponse is a response containing the list of files in a directory.
@@ -1111,6 +1119,89 @@ func (x *RemoveResponse) GetError() string {
 	return ""
 }
 
+// GetCWDRequest is sent by the client to request the current working directory of the terminal session.
+// The terminal session is currently held on server side and identified by the connection, so no additional fields are needed in the request.
+type GetCWDRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetCWDRequest) Reset() {
+	*x = GetCWDRequest{}
+	mi := &file_cloudshell_cloudshell_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetCWDRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetCWDRequest) ProtoMessage() {}
+
+func (x *GetCWDRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloudshell_cloudshell_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetCWDRequest.ProtoReflect.Descriptor instead.
+func (*GetCWDRequest) Descriptor() ([]byte, []int) {
+	return file_cloudshell_cloudshell_proto_rawDescGZIP(), []int{17}
+}
+
+// GetCWDResponse is sent by the server in response to a GetCWDRequest, containing the current working directory path.
+type GetCWDResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"` // Current working directory path
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetCWDResponse) Reset() {
+	*x = GetCWDResponse{}
+	mi := &file_cloudshell_cloudshell_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetCWDResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetCWDResponse) ProtoMessage() {}
+
+func (x *GetCWDResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloudshell_cloudshell_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetCWDResponse.ProtoReflect.Descriptor instead.
+func (*GetCWDResponse) Descriptor() ([]byte, []int) {
+	return file_cloudshell_cloudshell_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *GetCWDResponse) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
 var File_cloudshell_cloudshell_proto protoreflect.FileDescriptor
 
 const file_cloudshell_cloudshell_proto_rawDesc = "" +
@@ -1152,9 +1243,11 @@ const file_cloudshell_cloudshell_proto_rawDesc = "" +
 	"list_files\x18\x01 \x01(\v2 .cloudshell.v1.ListFilesResponseH\x00R\tlistFiles\x12M\n" +
 	"\x0emake_directory\x18\x02 \x01(\v2$.cloudshell.v1.MakeDirectoryResponseH\x00R\rmakeDirectory\x127\n" +
 	"\x06remove\x18\x03 \x01(\v2\x1d.cloudshell.v1.RemoveResponseH\x00R\x06removeB\t\n" +
-	"\apayload\"&\n" +
+	"\apayload\"G\n" +
 	"\x10ListFilesCommand\x12\x12\n" +
-	"\x04path\x18\x01 \x01(\tR\x04path\"g\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x1f\n" +
+	"\vshow_hidden\x18\x02 \x01(\bR\n" +
+	"showHidden\"g\n" +
 	"\x11ListFilesResponse\x12-\n" +
 	"\x05files\x18\x01 \x03(\v2\x17.cloudshell.v1.FileInfoR\x05files\x12\x19\n" +
 	"\x05error\x18\x02 \x01(\tH\x00R\x05error\x88\x01\x01B\b\n" +
@@ -1176,7 +1269,10 @@ const file_cloudshell_cloudshell_proto_rawDesc = "" +
 	"\x04path\x18\x01 \x01(\tR\x04path\"5\n" +
 	"\x0eRemoveResponse\x12\x19\n" +
 	"\x05error\x18\x01 \x01(\tH\x00R\x05error\x88\x01\x01B\b\n" +
-	"\x06_errorBHZFgithub.com/k8shell-io/common/pkg/api/gen/go/cloudshell/v1;cloudshellv1b\x06proto3"
+	"\x06_error\"\x0f\n" +
+	"\rGetCWDRequest\"$\n" +
+	"\x0eGetCWDResponse\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04pathBHZFgithub.com/k8shell-io/common/pkg/api/gen/go/cloudshell/v1;cloudshellv1b\x06proto3"
 
 var (
 	file_cloudshell_cloudshell_proto_rawDescOnce sync.Once
@@ -1190,7 +1286,7 @@ func file_cloudshell_cloudshell_proto_rawDescGZIP() []byte {
 	return file_cloudshell_cloudshell_proto_rawDescData
 }
 
-var file_cloudshell_cloudshell_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_cloudshell_cloudshell_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
 var file_cloudshell_cloudshell_proto_goTypes = []any{
 	(*CloudshellMessage)(nil),     // 0: cloudshell.v1.CloudshellMessage
 	(*PingMessage)(nil),           // 1: cloudshell.v1.PingMessage
@@ -1209,6 +1305,8 @@ var file_cloudshell_cloudshell_proto_goTypes = []any{
 	(*MakeDirectoryResponse)(nil), // 14: cloudshell.v1.MakeDirectoryResponse
 	(*RemoveCommand)(nil),         // 15: cloudshell.v1.RemoveCommand
 	(*RemoveResponse)(nil),        // 16: cloudshell.v1.RemoveResponse
+	(*GetCWDRequest)(nil),         // 17: cloudshell.v1.GetCWDRequest
+	(*GetCWDResponse)(nil),        // 18: cloudshell.v1.GetCWDResponse
 }
 var file_cloudshell_cloudshell_proto_depIdxs = []int32{
 	1,  // 0: cloudshell.v1.CloudshellMessage.ping:type_name -> cloudshell.v1.PingMessage
@@ -1271,7 +1369,7 @@ func file_cloudshell_cloudshell_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloudshell_cloudshell_proto_rawDesc), len(file_cloudshell_cloudshell_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   17,
+			NumMessages:   19,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
