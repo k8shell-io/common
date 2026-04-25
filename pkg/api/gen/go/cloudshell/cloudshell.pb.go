@@ -549,6 +549,7 @@ type FileExplorerCommand struct {
 	//	*FileExplorerCommand_ListFiles
 	//	*FileExplorerCommand_MakeDirectory
 	//	*FileExplorerCommand_Remove
+	//	*FileExplorerCommand_GetCwd
 	Payload       isFileExplorerCommand_Payload `protobuf_oneof:"payload"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -618,6 +619,15 @@ func (x *FileExplorerCommand) GetRemove() *RemoveCommand {
 	return nil
 }
 
+func (x *FileExplorerCommand) GetGetCwd() *GetCWDRequest {
+	if x != nil {
+		if x, ok := x.Payload.(*FileExplorerCommand_GetCwd); ok {
+			return x.GetCwd
+		}
+	}
+	return nil
+}
+
 type isFileExplorerCommand_Payload interface {
 	isFileExplorerCommand_Payload()
 }
@@ -634,11 +644,17 @@ type FileExplorerCommand_Remove struct {
 	Remove *RemoveCommand `protobuf:"bytes,3,opt,name=remove,proto3,oneof"`
 }
 
+type FileExplorerCommand_GetCwd struct {
+	GetCwd *GetCWDRequest `protobuf:"bytes,4,opt,name=get_cwd,json=getCwd,proto3,oneof"`
+}
+
 func (*FileExplorerCommand_ListFiles) isFileExplorerCommand_Payload() {}
 
 func (*FileExplorerCommand_MakeDirectory) isFileExplorerCommand_Payload() {}
 
 func (*FileExplorerCommand_Remove) isFileExplorerCommand_Payload() {}
+
+func (*FileExplorerCommand_GetCwd) isFileExplorerCommand_Payload() {}
 
 // FileExplorerResponse represents a response sent from the server to the client in the file explorer component.
 type FileExplorerResponse struct {
@@ -648,6 +664,7 @@ type FileExplorerResponse struct {
 	//	*FileExplorerResponse_ListFiles
 	//	*FileExplorerResponse_MakeDirectory
 	//	*FileExplorerResponse_Remove
+	//	*FileExplorerResponse_GetCwd
 	Payload       isFileExplorerResponse_Payload `protobuf_oneof:"payload"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -717,6 +734,15 @@ func (x *FileExplorerResponse) GetRemove() *RemoveResponse {
 	return nil
 }
 
+func (x *FileExplorerResponse) GetGetCwd() *GetCWDResponse {
+	if x != nil {
+		if x, ok := x.Payload.(*FileExplorerResponse_GetCwd); ok {
+			return x.GetCwd
+		}
+	}
+	return nil
+}
+
 type isFileExplorerResponse_Payload interface {
 	isFileExplorerResponse_Payload()
 }
@@ -733,11 +759,17 @@ type FileExplorerResponse_Remove struct {
 	Remove *RemoveResponse `protobuf:"bytes,3,opt,name=remove,proto3,oneof"`
 }
 
+type FileExplorerResponse_GetCwd struct {
+	GetCwd *GetCWDResponse `protobuf:"bytes,4,opt,name=get_cwd,json=getCwd,proto3,oneof"`
+}
+
 func (*FileExplorerResponse_ListFiles) isFileExplorerResponse_Payload() {}
 
 func (*FileExplorerResponse_MakeDirectory) isFileExplorerResponse_Payload() {}
 
 func (*FileExplorerResponse_Remove) isFileExplorerResponse_Payload() {}
+
+func (*FileExplorerResponse_GetCwd) isFileExplorerResponse_Payload() {}
 
 // ListFilesCommand is a command to list files in a directory.
 type ListFilesCommand struct {
@@ -1231,18 +1263,20 @@ const file_cloudshell_cloudshell_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12>\n" +
 	"\acommand\x18\x02 \x01(\v2\".cloudshell.v1.FileExplorerCommandH\x00R\acommand\x12A\n" +
 	"\bresponse\x18\x03 \x01(\v2#.cloudshell.v1.FileExplorerResponseH\x00R\bresponseB\t\n" +
-	"\apayload\"\xe8\x01\n" +
+	"\apayload\"\xa1\x02\n" +
 	"\x13FileExplorerCommand\x12@\n" +
 	"\n" +
 	"list_files\x18\x01 \x01(\v2\x1f.cloudshell.v1.ListFilesCommandH\x00R\tlistFiles\x12L\n" +
 	"\x0emake_directory\x18\x02 \x01(\v2#.cloudshell.v1.MakeDirectoryCommandH\x00R\rmakeDirectory\x126\n" +
-	"\x06remove\x18\x03 \x01(\v2\x1c.cloudshell.v1.RemoveCommandH\x00R\x06removeB\t\n" +
-	"\apayload\"\xec\x01\n" +
+	"\x06remove\x18\x03 \x01(\v2\x1c.cloudshell.v1.RemoveCommandH\x00R\x06remove\x127\n" +
+	"\aget_cwd\x18\x04 \x01(\v2\x1c.cloudshell.v1.GetCWDRequestH\x00R\x06getCwdB\t\n" +
+	"\apayload\"\xa6\x02\n" +
 	"\x14FileExplorerResponse\x12A\n" +
 	"\n" +
 	"list_files\x18\x01 \x01(\v2 .cloudshell.v1.ListFilesResponseH\x00R\tlistFiles\x12M\n" +
 	"\x0emake_directory\x18\x02 \x01(\v2$.cloudshell.v1.MakeDirectoryResponseH\x00R\rmakeDirectory\x127\n" +
-	"\x06remove\x18\x03 \x01(\v2\x1d.cloudshell.v1.RemoveResponseH\x00R\x06removeB\t\n" +
+	"\x06remove\x18\x03 \x01(\v2\x1d.cloudshell.v1.RemoveResponseH\x00R\x06remove\x128\n" +
+	"\aget_cwd\x18\x04 \x01(\v2\x1d.cloudshell.v1.GetCWDResponseH\x00R\x06getCwdB\t\n" +
 	"\apayload\"G\n" +
 	"\x10ListFilesCommand\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\x12\x1f\n" +
@@ -1321,15 +1355,17 @@ var file_cloudshell_cloudshell_proto_depIdxs = []int32{
 	10, // 9: cloudshell.v1.FileExplorerCommand.list_files:type_name -> cloudshell.v1.ListFilesCommand
 	13, // 10: cloudshell.v1.FileExplorerCommand.make_directory:type_name -> cloudshell.v1.MakeDirectoryCommand
 	15, // 11: cloudshell.v1.FileExplorerCommand.remove:type_name -> cloudshell.v1.RemoveCommand
-	11, // 12: cloudshell.v1.FileExplorerResponse.list_files:type_name -> cloudshell.v1.ListFilesResponse
-	14, // 13: cloudshell.v1.FileExplorerResponse.make_directory:type_name -> cloudshell.v1.MakeDirectoryResponse
-	16, // 14: cloudshell.v1.FileExplorerResponse.remove:type_name -> cloudshell.v1.RemoveResponse
-	12, // 15: cloudshell.v1.ListFilesResponse.files:type_name -> cloudshell.v1.FileInfo
-	16, // [16:16] is the sub-list for method output_type
-	16, // [16:16] is the sub-list for method input_type
-	16, // [16:16] is the sub-list for extension type_name
-	16, // [16:16] is the sub-list for extension extendee
-	0,  // [0:16] is the sub-list for field type_name
+	17, // 12: cloudshell.v1.FileExplorerCommand.get_cwd:type_name -> cloudshell.v1.GetCWDRequest
+	11, // 13: cloudshell.v1.FileExplorerResponse.list_files:type_name -> cloudshell.v1.ListFilesResponse
+	14, // 14: cloudshell.v1.FileExplorerResponse.make_directory:type_name -> cloudshell.v1.MakeDirectoryResponse
+	16, // 15: cloudshell.v1.FileExplorerResponse.remove:type_name -> cloudshell.v1.RemoveResponse
+	18, // 16: cloudshell.v1.FileExplorerResponse.get_cwd:type_name -> cloudshell.v1.GetCWDResponse
+	12, // 17: cloudshell.v1.ListFilesResponse.files:type_name -> cloudshell.v1.FileInfo
+	18, // [18:18] is the sub-list for method output_type
+	18, // [18:18] is the sub-list for method input_type
+	18, // [18:18] is the sub-list for extension type_name
+	18, // [18:18] is the sub-list for extension extendee
+	0,  // [0:18] is the sub-list for field type_name
 }
 
 func init() { file_cloudshell_cloudshell_proto_init() }
@@ -1354,11 +1390,13 @@ func file_cloudshell_cloudshell_proto_init() {
 		(*FileExplorerCommand_ListFiles)(nil),
 		(*FileExplorerCommand_MakeDirectory)(nil),
 		(*FileExplorerCommand_Remove)(nil),
+		(*FileExplorerCommand_GetCwd)(nil),
 	}
 	file_cloudshell_cloudshell_proto_msgTypes[9].OneofWrappers = []any{
 		(*FileExplorerResponse_ListFiles)(nil),
 		(*FileExplorerResponse_MakeDirectory)(nil),
 		(*FileExplorerResponse_Remove)(nil),
+		(*FileExplorerResponse_GetCwd)(nil),
 	}
 	file_cloudshell_cloudshell_proto_msgTypes[11].OneofWrappers = []any{}
 	file_cloudshell_cloudshell_proto_msgTypes[14].OneofWrappers = []any{}

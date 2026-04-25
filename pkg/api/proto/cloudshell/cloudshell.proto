@@ -64,6 +64,7 @@ message FileExplorerCommand {
         ListFilesCommand list_files = 1;
         MakeDirectoryCommand make_directory = 2;
         RemoveCommand remove = 3;
+        GetCWDRequest get_cwd = 4;
     }
 }
 
@@ -73,6 +74,7 @@ message FileExplorerResponse {
         ListFilesResponse list_files = 1;
         MakeDirectoryResponse make_directory = 2;
         RemoveResponse remove = 3;
+        GetCWDResponse get_cwd = 4;
     }
 }
 
