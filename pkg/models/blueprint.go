@@ -25,7 +25,7 @@ type Blueprint struct {
 	ImagePullPolicy string                 `yaml:"imagePullPolicy,omitempty" validate:"omitempty,oneof=Always Never IfNotPresent"`
 	K8shelld        K8shelld               `yaml:"k8shelld" validate:"required"`
 	Env             map[string]string      `yaml:"env,omitempty" default:"{}"`
-	Network         Network                `yaml:"network,omitempty" default:"{networkPolicy:workspace}"`
+	Network         Network                `yaml:"network,omitempty" default:"{networkPolicyClass:workspace}"`
 	Resources       Resources              `yaml:"resources,omitempty" default:"{limits:{cpu:500m,memory:512Mi}}"`
 	Podman          Podman                 `yaml:"podman,omitempty" default:"{enabled:false}"`
 	Storages        map[string]Storage     `yaml:"storages,omitempty" default:"{}"`
@@ -93,9 +93,15 @@ type K8shelld struct {
 
 // Network defines network policy and egress rules for a workspace.
 type Network struct {
-	NetworkPolicy      string              `yaml:"networkPolicy,omitempty" validate:"oneof=workspace system isolated user organization"`
-	AllowEgressToCIDRs []string            `yaml:"allowEgressToCIDRs,omitempty" validate:"dive,cidr"`
-	AllowEgressToPods  []map[string]string `yaml:"allowEgressToPods,omitempty"`
+	// NetworkPolicyClass selects a predefined network policy class (workspace, system, isolated, user, organization).
+	NetworkPolicyClass string `yaml:"networkPolicyClass,omitempty" validate:"oneof=workspace system isolated user organization"`
+	// NetworkPolicySpec holds a raw Kubernetes NetworkPolicy spec (or CNI-extended spec such as Cilium).
+	// When set, it is applied as-is and takes precedence over the NetworkPolicy class for fine-grained control.
+	NetworkPolicySpec map[string]interface{} `yaml:"networkPolicySpec,omitempty"`
+	// AllowEgressToCIDRs is a convenience shorthand for permitting egress to specific CIDR ranges.
+	AllowEgressToCIDRs []string `yaml:"allowEgressToCIDRs,omitempty" validate:"dive,cidr"`
+	// AllowEgressToPods is a convenience shorthand for permitting egress to pods matching label selectors.
+	AllowEgressToPods []map[string]string `yaml:"allowEgressToPods,omitempty"`
 }
 
 // Resources represents resource limits
