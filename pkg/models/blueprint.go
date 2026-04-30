@@ -129,8 +129,8 @@ type Storage struct {
 	// SizeLimit applies to emptyDir and memory types (maps to emptyDir.sizeLimit)
 	SizeLimit            string                 `yaml:"sizeLimit,omitempty"`
 	ExistingClaim        string                 `yaml:"existingClaim,omitempty" validate:"required_if=Type shared Enabled true"`
-	FsOwnerUid           int                    `yaml:"fsOwnerUid,omitempty" default:"0"`
-	FsOwnerGid           int                    `yaml:"fsOwnerGid,omitempty" default:"0"`
+	FsOwnerUid           *int                   `yaml:"fsOwnerUid,omitempty"`
+	FsOwnerGid           *int                   `yaml:"fsOwnerGid,omitempty"`
 	ClaimSpec            map[string]interface{} `yaml:"claimSpec,omitempty" default:"{}"`
 	ClaimSpecAnnotations map[string]string      `yaml:"claimSpecAnnotations,omitempty" default:"{}"`
 }
