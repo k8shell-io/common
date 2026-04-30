@@ -95,9 +95,6 @@ type K8shelld struct {
 type Network struct {
 	// NetworkPolicyClass selects a predefined network policy class (workspace, system, isolated, user, organization).
 	NetworkPolicyClass string `yaml:"networkPolicyClass,omitempty" validate:"oneof=workspace system isolated user organization"`
-	// NetworkPolicySpec holds a raw Kubernetes NetworkPolicy spec (or CNI-extended spec such as Cilium).
-	// When set, it is applied as-is and takes precedence over the NetworkPolicy class for fine-grained control.
-	NetworkPolicySpec map[string]interface{} `yaml:"networkPolicySpec,omitempty"`
 	// AllowEgressToCIDRs is a convenience shorthand for permitting egress to specific CIDR ranges.
 	AllowEgressToCIDRs []string `yaml:"allowEgressToCIDRs,omitempty" validate:"dive,cidr"`
 	// AllowEgressToPods is a convenience shorthand for permitting egress to pods matching label selectors.
@@ -124,11 +121,13 @@ type Podman struct {
 
 // Storage represents storage configuration
 type Storage struct {
-	Enabled              bool                   `yaml:"enabled" default:"false"`
-	Id                   string                 `yaml:"id,omitempty" validate:"omitempty,alphanum"`
-	Type                 string                 `yaml:"type,omitempty" validate:"omitempty,oneof=local shared" default:"local"`
-	Path                 string                 `yaml:"path" validate:"required_if=Enabled true,startswith=/"`
-	Readonly             bool                   `yaml:"readonly" default:"false"`
+	Enabled  bool   `yaml:"enabled" default:"false"`
+	Id       string `yaml:"id,omitempty" validate:"omitempty,alphanum"`
+	Type     string `yaml:"type,omitempty" validate:"omitempty,oneof=local shared emptyDir memory" default:"local"`
+	Path     string `yaml:"path" validate:"required_if=Enabled true,startswith=/"`
+	Readonly bool   `yaml:"readonly" default:"false"`
+	// SizeLimit applies to emptyDir and memory types (maps to emptyDir.sizeLimit)
+	SizeLimit            string                 `yaml:"sizeLimit,omitempty"`
 	ExistingClaim        string                 `yaml:"existingClaim,omitempty" validate:"required_if=Type shared Enabled true"`
 	FsOwnerUid           int                    `yaml:"fsOwnerUid,omitempty" default:"0"`
 	FsOwnerGid           int                    `yaml:"fsOwnerGid,omitempty" default:"0"`
