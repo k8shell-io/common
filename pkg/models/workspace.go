@@ -11,8 +11,9 @@ const WORKSPACE_PORT = 2822 // port that workspace containers listen on for grpc
 // WorkspaceStatusMessage is the user-friendly status reported for a workspace pod.
 type WorkspaceStatusMessage string
 
-const (
+const ( 
 	WorkspaceStatusProvisioning WorkspaceStatusMessage = "Starting"
+	WorkspaceStatusWarning      WorkspaceStatusMessage = "Warning"
 	WorkspaceStatusPulling      WorkspaceStatusMessage = "Pulling"
 	WorkspaceStatusRunning      WorkspaceStatusMessage = "Running"
 	WorkspaceStatusFailing      WorkspaceStatusMessage = "Failing"
