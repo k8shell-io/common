@@ -64,7 +64,6 @@ message ExternalCredential {
   // external_id is the user's identity on the external service.
   string external_id = 5;
   // external_token is the access token for the external service.
-  // Treat as a secret — never log or expose this value.
   string external_token = 6;
 }
 
