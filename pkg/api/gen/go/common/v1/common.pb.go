@@ -219,9 +219,9 @@ func (x *User) GetSudo() bool {
 	return false
 }
 
-// ExternalCredential stores a token or credential issued by an external
+// UserCredential stores a token or credential issued by an external
 // service on behalf of a user (e.g. a GitHub OAuth token).
-type ExternalCredential struct {
+type UserCredential struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// id is the internal database identifier for this credential.
 	Id uint32 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -234,26 +234,29 @@ type ExternalCredential struct {
 	// external_id is the user's identity on the external service.
 	ExternalId string `protobuf:"bytes,5,opt,name=external_id,json=externalId,proto3" json:"external_id,omitempty"`
 	// external_token is the access token for the external service.
-	// Treat as a secret — never log or expose this value.
 	ExternalToken string `protobuf:"bytes,6,opt,name=external_token,json=externalToken,proto3" json:"external_token,omitempty"`
+	// expires_at is the time at which the external token expires, if known.
+	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	// service_scope is the scope or context within the service (e.g. a registry URL or org).
+	ServiceScope  string `protobuf:"bytes,8,opt,name=service_scope,json=serviceScope,proto3" json:"service_scope,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ExternalCredential) Reset() {
-	*x = ExternalCredential{}
+func (x *UserCredential) Reset() {
+	*x = UserCredential{}
 	mi := &file_common_v1_common_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ExternalCredential) String() string {
+func (x *UserCredential) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ExternalCredential) ProtoMessage() {}
+func (*UserCredential) ProtoMessage() {}
 
-func (x *ExternalCredential) ProtoReflect() protoreflect.Message {
+func (x *UserCredential) ProtoReflect() protoreflect.Message {
 	mi := &file_common_v1_common_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -265,49 +268,63 @@ func (x *ExternalCredential) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ExternalCredential.ProtoReflect.Descriptor instead.
-func (*ExternalCredential) Descriptor() ([]byte, []int) {
+// Deprecated: Use UserCredential.ProtoReflect.Descriptor instead.
+func (*UserCredential) Descriptor() ([]byte, []int) {
 	return file_common_v1_common_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *ExternalCredential) GetId() uint32 {
+func (x *UserCredential) GetId() uint32 {
 	if x != nil {
 		return x.Id
 	}
 	return 0
 }
 
-func (x *ExternalCredential) GetUsername() string {
+func (x *UserCredential) GetUsername() string {
 	if x != nil {
 		return x.Username
 	}
 	return ""
 }
 
-func (x *ExternalCredential) GetServiceName() string {
+func (x *UserCredential) GetServiceName() string {
 	if x != nil {
 		return x.ServiceName
 	}
 	return ""
 }
 
-func (x *ExternalCredential) GetServiceUrl() string {
+func (x *UserCredential) GetServiceUrl() string {
 	if x != nil {
 		return x.ServiceUrl
 	}
 	return ""
 }
 
-func (x *ExternalCredential) GetExternalId() string {
+func (x *UserCredential) GetExternalId() string {
 	if x != nil {
 		return x.ExternalId
 	}
 	return ""
 }
 
-func (x *ExternalCredential) GetExternalToken() string {
+func (x *UserCredential) GetExternalToken() string {
 	if x != nil {
 		return x.ExternalToken
+	}
+	return ""
+}
+
+func (x *UserCredential) GetExpiresAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return nil
+}
+
+func (x *UserCredential) GetServiceScope() string {
+	if x != nil {
+		return x.ServiceScope
 	}
 	return ""
 }
@@ -965,8 +982,8 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"blueprints\x12\x16\n" +
 	"\x06source\x18\x13 \x01(\tR\x06source\x12\x14\n" +
 	"\x05shell\x18\x14 \x01(\tR\x05shell\x12\x12\n" +
-	"\x04sudo\x18\x15 \x01(\bR\x04sudo\"\xcc\x01\n" +
-	"\x12ExternalCredential\x12\x0e\n" +
+	"\x04sudo\x18\x15 \x01(\bR\x04sudo\"\xa8\x02\n" +
+	"\x0eUserCredential\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\rR\x02id\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12!\n" +
 	"\fservice_name\x18\x03 \x01(\tR\vserviceName\x12\x1f\n" +
@@ -974,7 +991,10 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"serviceUrl\x12\x1f\n" +
 	"\vexternal_id\x18\x05 \x01(\tR\n" +
 	"externalId\x12%\n" +
-	"\x0eexternal_token\x18\x06 \x01(\tR\rexternalToken\"\xb6\x01\n" +
+	"\x0eexternal_token\x18\x06 \x01(\tR\rexternalToken\x129\n" +
+	"\n" +
+	"expires_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12#\n" +
+	"\rservice_scope\x18\b \x01(\tR\fserviceScope\"\xb6\x01\n" +
 	"\x15OnboardUserDeviceFlow\x12\x1a\n" +
 	"\bprovider\x18\x01 \x01(\tR\bprovider\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x1b\n" +
@@ -1047,7 +1067,7 @@ func file_common_v1_common_proto_rawDescGZIP() []byte {
 var file_common_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_common_v1_common_proto_goTypes = []any{
 	(*User)(nil),                  // 0: common.v1.User
-	(*ExternalCredential)(nil),    // 1: common.v1.ExternalCredential
+	(*UserCredential)(nil),        // 1: common.v1.UserCredential
 	(*OnboardUserDeviceFlow)(nil), // 2: common.v1.OnboardUserDeviceFlow
 	(*OnboardUserWebFlow)(nil),    // 3: common.v1.OnboardUserWebFlow
 	(*CompleteUserWebFlow)(nil),   // 4: common.v1.CompleteUserWebFlow
@@ -1059,13 +1079,14 @@ var file_common_v1_common_proto_goTypes = []any{
 }
 var file_common_v1_common_proto_depIdxs = []int32{
 	9, // 0: common.v1.User.expires_at:type_name -> google.protobuf.Timestamp
-	9, // 1: common.v1.WorkspaceStatus.created:type_name -> google.protobuf.Timestamp
-	6, // 2: common.v1.WorkspaceDetails.workspace_status:type_name -> common.v1.WorkspaceStatus
-	3, // [3:3] is the sub-list for method output_type
-	3, // [3:3] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	9, // 1: common.v1.UserCredential.expires_at:type_name -> google.protobuf.Timestamp
+	9, // 2: common.v1.WorkspaceStatus.created:type_name -> google.protobuf.Timestamp
+	6, // 3: common.v1.WorkspaceDetails.workspace_status:type_name -> common.v1.WorkspaceStatus
+	4, // [4:4] is the sub-list for method output_type
+	4, // [4:4] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_common_v1_common_proto_init() }

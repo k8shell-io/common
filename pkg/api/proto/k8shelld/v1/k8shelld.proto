@@ -18,7 +18,7 @@ message SystemInfoRequest {}
 message SystemInfoResponse {
   string time = 1;
   SystemMetrics system = 2;
-  repeated MountUsage mounts = 3;xxx
+  repeated MountUsage mounts = 3;
   DockerUsage docker = 4;
   string repository = 5; 
 }

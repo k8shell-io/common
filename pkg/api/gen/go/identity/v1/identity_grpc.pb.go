@@ -33,7 +33,8 @@ const (
 	IdentityService_AuthUserPublicKey_FullMethodName             = "/identity.v1.IdentityService/AuthUserPublicKey"
 	IdentityService_GetBlueprintByUserStr_FullMethodName         = "/identity.v1.IdentityService/GetBlueprintByUserStr"
 	IdentityService_ResolvePullRequestToRef_FullMethodName       = "/identity.v1.IdentityService/ResolvePullRequestToRef"
-	IdentityService_GetUserCredentials_FullMethodName            = "/identity.v1.IdentityService/GetUserCredentials"
+	IdentityService_ListUserCredentials_FullMethodName           = "/identity.v1.IdentityService/ListUserCredentials"
+	IdentityService_GetUserCredential_FullMethodName             = "/identity.v1.IdentityService/GetUserCredential"
 	IdentityService_AddUserCredential_FullMethodName             = "/identity.v1.IdentityService/AddUserCredential"
 	IdentityService_UpdateUserCredential_FullMethodName          = "/identity.v1.IdentityService/UpdateUserCredential"
 	IdentityService_DeleteUserCredential_FullMethodName          = "/identity.v1.IdentityService/DeleteUserCredential"
@@ -68,12 +69,14 @@ type IdentityServiceClient interface {
 	GetBlueprintByUserStr(ctx context.Context, in *UserStr, opts ...grpc.CallOption) (*Blueprint, error)
 	// ResolvePullRequestToRef resolves a pull request to a repository reference (e.g., branch or commit).
 	ResolvePullRequestToRef(ctx context.Context, in *RepoPullRequestRequest, opts ...grpc.CallOption) (*RepoRefResponse, error)
-	// GetUserCredentials retrieves all external credentials associated with a user.
-	GetUserCredentials(ctx context.Context, in *Username, opts ...grpc.CallOption) (*GetUserCredentialsResponse, error)
-	// AddUserCredential adds a new external credential for a user.
-	AddUserCredential(ctx context.Context, in *v1.ExternalCredential, opts ...grpc.CallOption) (*AddUserCredentialResponse, error)
-	// UpdateUserCredential updates an existing external credential for a user.
-	UpdateUserCredential(ctx context.Context, in *v1.ExternalCredential, opts ...grpc.CallOption) (*UpdateUserCredentialResponse, error)
+	// ListUserCredentials retrieves all credentials associated with a user.
+	ListUserCredentials(ctx context.Context, in *Username, opts ...grpc.CallOption) (*ListUserCredentialsResponse, error)
+	// GetUserCredential retrieves a specific credential for a user by service name and scope.
+	GetUserCredential(ctx context.Context, in *GetUserCredentialRequest, opts ...grpc.CallOption) (*v1.UserCredential, error)
+	// AddUserCredential adds a new credential for a user.
+	AddUserCredential(ctx context.Context, in *v1.UserCredential, opts ...grpc.CallOption) (*AddUserCredentialResponse, error)
+	// UpdateUserCredential updates an existing credential for a user.
+	UpdateUserCredential(ctx context.Context, in *v1.UserCredential, opts ...grpc.CallOption) (*UpdateUserCredentialResponse, error)
 	// DeleteUserCredential deletes an external credential by its ID.
 	DeleteUserCredential(ctx context.Context, in *DeleteUserCredentialRequest, opts ...grpc.CallOption) (*DeleteUserCredentialResponse, error)
 	// GetAvailableIdentityProviders returns a list of available identity providers.
@@ -188,17 +191,27 @@ func (c *identityServiceClient) ResolvePullRequestToRef(ctx context.Context, in 
 	return out, nil
 }
 
-func (c *identityServiceClient) GetUserCredentials(ctx context.Context, in *Username, opts ...grpc.CallOption) (*GetUserCredentialsResponse, error) {
+func (c *identityServiceClient) ListUserCredentials(ctx context.Context, in *Username, opts ...grpc.CallOption) (*ListUserCredentialsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetUserCredentialsResponse)
-	err := c.cc.Invoke(ctx, IdentityService_GetUserCredentials_FullMethodName, in, out, cOpts...)
+	out := new(ListUserCredentialsResponse)
+	err := c.cc.Invoke(ctx, IdentityService_ListUserCredentials_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *identityServiceClient) AddUserCredential(ctx context.Context, in *v1.ExternalCredential, opts ...grpc.CallOption) (*AddUserCredentialResponse, error) {
+func (c *identityServiceClient) GetUserCredential(ctx context.Context, in *GetUserCredentialRequest, opts ...grpc.CallOption) (*v1.UserCredential, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(v1.UserCredential)
+	err := c.cc.Invoke(ctx, IdentityService_GetUserCredential_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) AddUserCredential(ctx context.Context, in *v1.UserCredential, opts ...grpc.CallOption) (*AddUserCredentialResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AddUserCredentialResponse)
 	err := c.cc.Invoke(ctx, IdentityService_AddUserCredential_FullMethodName, in, out, cOpts...)
@@ -208,7 +221,7 @@ func (c *identityServiceClient) AddUserCredential(ctx context.Context, in *v1.Ex
 	return out, nil
 }
 
-func (c *identityServiceClient) UpdateUserCredential(ctx context.Context, in *v1.ExternalCredential, opts ...grpc.CallOption) (*UpdateUserCredentialResponse, error) {
+func (c *identityServiceClient) UpdateUserCredential(ctx context.Context, in *v1.UserCredential, opts ...grpc.CallOption) (*UpdateUserCredentialResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UpdateUserCredentialResponse)
 	err := c.cc.Invoke(ctx, IdentityService_UpdateUserCredential_FullMethodName, in, out, cOpts...)
@@ -266,12 +279,14 @@ type IdentityServiceServer interface {
 	GetBlueprintByUserStr(context.Context, *UserStr) (*Blueprint, error)
 	// ResolvePullRequestToRef resolves a pull request to a repository reference (e.g., branch or commit).
 	ResolvePullRequestToRef(context.Context, *RepoPullRequestRequest) (*RepoRefResponse, error)
-	// GetUserCredentials retrieves all external credentials associated with a user.
-	GetUserCredentials(context.Context, *Username) (*GetUserCredentialsResponse, error)
-	// AddUserCredential adds a new external credential for a user.
-	AddUserCredential(context.Context, *v1.ExternalCredential) (*AddUserCredentialResponse, error)
-	// UpdateUserCredential updates an existing external credential for a user.
-	UpdateUserCredential(context.Context, *v1.ExternalCredential) (*UpdateUserCredentialResponse, error)
+	// ListUserCredentials retrieves all credentials associated with a user.
+	ListUserCredentials(context.Context, *Username) (*ListUserCredentialsResponse, error)
+	// GetUserCredential retrieves a specific credential for a user by service name and scope.
+	GetUserCredential(context.Context, *GetUserCredentialRequest) (*v1.UserCredential, error)
+	// AddUserCredential adds a new credential for a user.
+	AddUserCredential(context.Context, *v1.UserCredential) (*AddUserCredentialResponse, error)
+	// UpdateUserCredential updates an existing credential for a user.
+	UpdateUserCredential(context.Context, *v1.UserCredential) (*UpdateUserCredentialResponse, error)
 	// DeleteUserCredential deletes an external credential by its ID.
 	DeleteUserCredential(context.Context, *DeleteUserCredentialRequest) (*DeleteUserCredentialResponse, error)
 	// GetAvailableIdentityProviders returns a list of available identity providers.
@@ -316,13 +331,16 @@ func (UnimplementedIdentityServiceServer) GetBlueprintByUserStr(context.Context,
 func (UnimplementedIdentityServiceServer) ResolvePullRequestToRef(context.Context, *RepoPullRequestRequest) (*RepoRefResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ResolvePullRequestToRef not implemented")
 }
-func (UnimplementedIdentityServiceServer) GetUserCredentials(context.Context, *Username) (*GetUserCredentialsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetUserCredentials not implemented")
+func (UnimplementedIdentityServiceServer) ListUserCredentials(context.Context, *Username) (*ListUserCredentialsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListUserCredentials not implemented")
 }
-func (UnimplementedIdentityServiceServer) AddUserCredential(context.Context, *v1.ExternalCredential) (*AddUserCredentialResponse, error) {
+func (UnimplementedIdentityServiceServer) GetUserCredential(context.Context, *GetUserCredentialRequest) (*v1.UserCredential, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUserCredential not implemented")
+}
+func (UnimplementedIdentityServiceServer) AddUserCredential(context.Context, *v1.UserCredential) (*AddUserCredentialResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddUserCredential not implemented")
 }
-func (UnimplementedIdentityServiceServer) UpdateUserCredential(context.Context, *v1.ExternalCredential) (*UpdateUserCredentialResponse, error) {
+func (UnimplementedIdentityServiceServer) UpdateUserCredential(context.Context, *v1.UserCredential) (*UpdateUserCredentialResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateUserCredential not implemented")
 }
 func (UnimplementedIdentityServiceServer) DeleteUserCredential(context.Context, *DeleteUserCredentialRequest) (*DeleteUserCredentialResponse, error) {
@@ -532,26 +550,44 @@ func _IdentityService_ResolvePullRequestToRef_Handler(srv interface{}, ctx conte
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IdentityService_GetUserCredentials_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IdentityService_ListUserCredentials_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Username)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IdentityServiceServer).GetUserCredentials(ctx, in)
+		return srv.(IdentityServiceServer).ListUserCredentials(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IdentityService_GetUserCredentials_FullMethodName,
+		FullMethod: IdentityService_ListUserCredentials_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IdentityServiceServer).GetUserCredentials(ctx, req.(*Username))
+		return srv.(IdentityServiceServer).ListUserCredentials(ctx, req.(*Username))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_GetUserCredential_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserCredentialRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).GetUserCredential(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_GetUserCredential_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).GetUserCredential(ctx, req.(*GetUserCredentialRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _IdentityService_AddUserCredential_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(v1.ExternalCredential)
+	in := new(v1.UserCredential)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -563,13 +599,13 @@ func _IdentityService_AddUserCredential_Handler(srv interface{}, ctx context.Con
 		FullMethod: IdentityService_AddUserCredential_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IdentityServiceServer).AddUserCredential(ctx, req.(*v1.ExternalCredential))
+		return srv.(IdentityServiceServer).AddUserCredential(ctx, req.(*v1.UserCredential))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _IdentityService_UpdateUserCredential_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(v1.ExternalCredential)
+	in := new(v1.UserCredential)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -581,7 +617,7 @@ func _IdentityService_UpdateUserCredential_Handler(srv interface{}, ctx context.
 		FullMethod: IdentityService_UpdateUserCredential_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IdentityServiceServer).UpdateUserCredential(ctx, req.(*v1.ExternalCredential))
+		return srv.(IdentityServiceServer).UpdateUserCredential(ctx, req.(*v1.UserCredential))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -670,8 +706,12 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _IdentityService_ResolvePullRequestToRef_Handler,
 		},
 		{
-			MethodName: "GetUserCredentials",
-			Handler:    _IdentityService_GetUserCredentials_Handler,
+			MethodName: "ListUserCredentials",
+			Handler:    _IdentityService_ListUserCredentials_Handler,
+		},
+		{
+			MethodName: "GetUserCredential",
+			Handler:    _IdentityService_GetUserCredential_Handler,
 		},
 		{
 			MethodName: "AddUserCredential",

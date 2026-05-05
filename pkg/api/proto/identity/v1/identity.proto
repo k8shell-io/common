@@ -44,14 +44,17 @@ service IdentityService {
   // ResolvePullRequestToRef resolves a pull request to a repository reference (e.g., branch or commit).
   rpc ResolvePullRequestToRef (RepoPullRequestRequest) returns (RepoRefResponse);
 
-  // GetUserCredentials retrieves all external credentials associated with a user.
-  rpc GetUserCredentials (Username) returns (GetUserCredentialsResponse);
+  // ListUserCredentials retrieves all credentials associated with a user.
+  rpc ListUserCredentials (Username) returns (ListUserCredentialsResponse);
 
-  // AddUserCredential adds a new external credential for a user.
-  rpc AddUserCredential (common.v1.ExternalCredential) returns (AddUserCredentialResponse);
+  // GetUserCredential retrieves a specific credential for a user by service name and scope.
+  rpc GetUserCredential (GetUserCredentialRequest) returns (common.v1.UserCredential);
 
-  // UpdateUserCredential updates an existing external credential for a user.
-  rpc UpdateUserCredential (common.v1.ExternalCredential) returns (UpdateUserCredentialResponse);
+  // AddUserCredential adds a new credential for a user.
+  rpc AddUserCredential (common.v1.UserCredential) returns (AddUserCredentialResponse);
+
+  // UpdateUserCredential updates an existing credential for a user.
+  rpc UpdateUserCredential (common.v1.UserCredential) returns (UpdateUserCredentialResponse);
 
   // DeleteUserCredential deletes an external credential by its ID.
   rpc DeleteUserCredential (DeleteUserCredentialRequest) returns (DeleteUserCredentialResponse);
@@ -77,19 +80,26 @@ message GetUserAccessTokenResponse {
   string access_token = 1;
 }
 
-// GetUserCredentialsResponse carries all external credentials associated with a user.
-message GetUserCredentialsResponse {
-  repeated common.v1.ExternalCredential credentials = 1;
+// ListUserCredentialsResponse carries all credentials associated with a user.
+message ListUserCredentialsResponse {
+  repeated common.v1.UserCredential credentials = 1;
 }
 
-// AddUserCredentialResponse carries the newly added external credential.
+// GetUserCredentialRequest identifies a specific credential by service name and optional scope.
+message GetUserCredentialRequest {
+  string username = 1;
+  string service_name = 2;
+  string service_scope = 3;
+}
+
+// AddUserCredentialResponse carries the newly added credential.
 message AddUserCredentialResponse {
-  common.v1.ExternalCredential credential = 1;
+  common.v1.UserCredential credential = 1;
 }
 
-// UpdateUserCredentialResponse carries the updated external credential.
+// UpdateUserCredentialResponse carries the updated credential.
 message UpdateUserCredentialResponse {
-  common.v1.ExternalCredential credential = 1;
+  common.v1.UserCredential credential = 1;
 }
 
 // DeleteUserCredentialRequest identifies the external credential to delete by its ID.

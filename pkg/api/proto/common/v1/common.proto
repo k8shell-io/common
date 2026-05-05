@@ -50,9 +50,9 @@ message User {
   bool sudo = 21;
 }
 
-// ExternalCredential stores a token or credential issued by an external
+// UserCredential stores a token or credential issued by an external
 // service on behalf of a user (e.g. a GitHub OAuth token).
-message ExternalCredential {
+message UserCredential {
   // id is the internal database identifier for this credential.
   uint32 id = 1;
   // username is the k8Shell user that owns this credential.
@@ -66,7 +66,9 @@ message ExternalCredential {
   // external_token is the access token for the external service.
   string external_token = 6;
   // expires_at is the time at which the external token expires, if known.
-  google.protobuf.Timestamp expires_at = 7; 
+  google.protobuf.Timestamp expires_at = 7;
+  // service_scope is the scope or context within the service (e.g. a registry URL or org).
+  string service_scope = 8;
 }
 
 // OnboardUserDeviceFlow carries the data needed to complete a Device
