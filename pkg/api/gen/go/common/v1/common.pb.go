@@ -227,18 +227,22 @@ type UserCredential struct {
 	Id uint32 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	// username is the k8Shell user that owns this credential.
 	Username string `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
-	// service_name is the human-readable name of the external service (e.g. "github").
+	// service_name identifies the type of service (e.g. "registry", "git", "kubernetes").
 	ServiceName string `protobuf:"bytes,3,opt,name=service_name,json=serviceName,proto3" json:"service_name,omitempty"`
-	// service_url is the base URL of the external service.
-	ServiceUrl string `protobuf:"bytes,4,opt,name=service_url,json=serviceUrl,proto3" json:"service_url,omitempty"`
-	// external_id is the user's identity on the external service.
-	ExternalId string `protobuf:"bytes,5,opt,name=external_id,json=externalId,proto3" json:"external_id,omitempty"`
-	// external_token is the access token for the external service.
-	ExternalToken string `protobuf:"bytes,6,opt,name=external_token,json=externalToken,proto3" json:"external_token,omitempty"`
-	// expires_at is the time at which the external token expires, if known.
-	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
-	// service_scope is the scope or context within the service (e.g. a registry URL or org).
-	ServiceScope  string `protobuf:"bytes,8,opt,name=service_scope,json=serviceScope,proto3" json:"service_scope,omitempty"`
+	// service_scope is the registry/host URL or Kubernetes namespace
+	ServiceScope string `protobuf:"bytes,4,opt,name=service_scope,json=serviceScope,proto3" json:"service_scope,omitempty"`
+	// subject is the login name or service account name
+	Subject string `protobuf:"bytes,5,opt,name=subject,proto3" json:"subject,omitempty"`
+	// secret is the stored credential (OAuth token, API key, password)
+	Secret string `protobuf:"bytes,6,opt,name=secret,proto3" json:"secret,omitempty"`
+	// is_active indicates whether this credential is currently active.
+	IsActive bool `protobuf:"varint,7,opt,name=is_active,json=isActive,proto3" json:"is_active,omitempty"`
+	// created_at is the time the credential was created.
+	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	// updated_at is the time the credential was last updated.
+	UpdatedAt *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	// expires_at is the time at which the secret expires, if known.
+	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -294,25 +298,46 @@ func (x *UserCredential) GetServiceName() string {
 	return ""
 }
 
-func (x *UserCredential) GetServiceUrl() string {
+func (x *UserCredential) GetServiceScope() string {
 	if x != nil {
-		return x.ServiceUrl
+		return x.ServiceScope
 	}
 	return ""
 }
 
-func (x *UserCredential) GetExternalId() string {
+func (x *UserCredential) GetSubject() string {
 	if x != nil {
-		return x.ExternalId
+		return x.Subject
 	}
 	return ""
 }
 
-func (x *UserCredential) GetExternalToken() string {
+func (x *UserCredential) GetSecret() string {
 	if x != nil {
-		return x.ExternalToken
+		return x.Secret
 	}
 	return ""
+}
+
+func (x *UserCredential) GetIsActive() bool {
+	if x != nil {
+		return x.IsActive
+	}
+	return false
+}
+
+func (x *UserCredential) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *UserCredential) GetUpdatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.UpdatedAt
+	}
+	return nil
 }
 
 func (x *UserCredential) GetExpiresAt() *timestamppb.Timestamp {
@@ -320,13 +345,6 @@ func (x *UserCredential) GetExpiresAt() *timestamppb.Timestamp {
 		return x.ExpiresAt
 	}
 	return nil
-}
-
-func (x *UserCredential) GetServiceScope() string {
-	if x != nil {
-		return x.ServiceScope
-	}
-	return ""
 }
 
 // OnboardUserDeviceFlow carries the data needed to complete a Device
@@ -982,19 +1000,22 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"blueprints\x12\x16\n" +
 	"\x06source\x18\x13 \x01(\tR\x06source\x12\x14\n" +
 	"\x05shell\x18\x14 \x01(\tR\x05shell\x12\x12\n" +
-	"\x04sudo\x18\x15 \x01(\bR\x04sudo\"\xa8\x02\n" +
+	"\x04sudo\x18\x15 \x01(\bR\x04sudo\"\x84\x03\n" +
 	"\x0eUserCredential\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\rR\x02id\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12!\n" +
-	"\fservice_name\x18\x03 \x01(\tR\vserviceName\x12\x1f\n" +
-	"\vservice_url\x18\x04 \x01(\tR\n" +
-	"serviceUrl\x12\x1f\n" +
-	"\vexternal_id\x18\x05 \x01(\tR\n" +
-	"externalId\x12%\n" +
-	"\x0eexternal_token\x18\x06 \x01(\tR\rexternalToken\x129\n" +
+	"\fservice_name\x18\x03 \x01(\tR\vserviceName\x12#\n" +
+	"\rservice_scope\x18\x04 \x01(\tR\fserviceScope\x12\x18\n" +
+	"\asubject\x18\x05 \x01(\tR\asubject\x12\x16\n" +
+	"\x06secret\x18\x06 \x01(\tR\x06secret\x12\x1b\n" +
+	"\tis_active\x18\a \x01(\bR\bisActive\x129\n" +
 	"\n" +
-	"expires_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12#\n" +
-	"\rservice_scope\x18\b \x01(\tR\fserviceScope\"\xb6\x01\n" +
+	"created_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"\n" +
+	"updated_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x129\n" +
+	"\n" +
+	"expires_at\x18\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"\xb6\x01\n" +
 	"\x15OnboardUserDeviceFlow\x12\x1a\n" +
 	"\bprovider\x18\x01 \x01(\tR\bprovider\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x1b\n" +
@@ -1079,14 +1100,16 @@ var file_common_v1_common_proto_goTypes = []any{
 }
 var file_common_v1_common_proto_depIdxs = []int32{
 	9, // 0: common.v1.User.expires_at:type_name -> google.protobuf.Timestamp
-	9, // 1: common.v1.UserCredential.expires_at:type_name -> google.protobuf.Timestamp
-	9, // 2: common.v1.WorkspaceStatus.created:type_name -> google.protobuf.Timestamp
-	6, // 3: common.v1.WorkspaceDetails.workspace_status:type_name -> common.v1.WorkspaceStatus
-	4, // [4:4] is the sub-list for method output_type
-	4, // [4:4] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	9, // 1: common.v1.UserCredential.created_at:type_name -> google.protobuf.Timestamp
+	9, // 2: common.v1.UserCredential.updated_at:type_name -> google.protobuf.Timestamp
+	9, // 3: common.v1.UserCredential.expires_at:type_name -> google.protobuf.Timestamp
+	9, // 4: common.v1.WorkspaceStatus.created:type_name -> google.protobuf.Timestamp
+	6, // 5: common.v1.WorkspaceDetails.workspace_status:type_name -> common.v1.WorkspaceStatus
+	6, // [6:6] is the sub-list for method output_type
+	6, // [6:6] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_common_v1_common_proto_init() }

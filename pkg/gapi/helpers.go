@@ -82,33 +82,50 @@ func ProtoToUser(pb *commonv1.User) *models.User {
 	}
 }
 
-// ExternalCredentialToProto converts a Go model to a protobuf message.
-func ExternalCredentialToProto(c *models.ExternalCredential) *commonv1.ExternalCredential {
+// UserCredentialToProto converts a Go model to a protobuf message.
+func UserCredentialToProto(c *models.UserCredential) *commonv1.UserCredential {
 	if c == nil {
 		return nil
 	}
-	return &commonv1.ExternalCredential{
-		Id:            uint32(c.ID),
-		Username:      c.Username,
-		ServiceName:   c.ServiceName,
-		ServiceUrl:    c.ServiceURL,
-		ExternalId:    c.ExternalID,
-		ExternalToken: c.ExternalToken,
+	var expiresAt *timestamppb.Timestamp
+	if c.ExpiresAt != nil {
+		expiresAt = timestamppb.New(*c.ExpiresAt)
+	}
+	return &commonv1.UserCredential{
+		Id:           c.ID,
+		Username:     c.Username,
+		ServiceName:  c.ServiceName,
+		ServiceScope: c.ServiceScope,
+		Subject:      c.Subject,
+		Secret:       c.Secret,
+		IsActive:     c.IsActive,
+		CreatedAt:    timestamppb.New(c.CreatedAt),
+		UpdatedAt:    timestamppb.New(c.UpdatedAt),
+		ExpiresAt:    expiresAt,
 	}
 }
 
-// ProtoToExternalCredential converts a protobuf message to a Go model.
-func ProtoToExternalCredential(pb *commonv1.ExternalCredential) *models.ExternalCredential {
+// ProtoToUserCredential converts a protobuf message to a Go model.
+func ProtoToUserCredential(pb *commonv1.UserCredential) *models.UserCredential {
 	if pb == nil {
 		return nil
 	}
-	return &models.ExternalCredential{
-		ID:            uint64(pb.GetId()),
-		Username:      pb.GetUsername(),
-		ServiceName:   pb.GetServiceName(),
-		ServiceURL:    pb.GetServiceUrl(),
-		ExternalID:    pb.GetExternalId(),
-		ExternalToken: pb.GetExternalToken(),
+	var expiresAt *time.Time
+	if ts := pb.GetExpiresAt(); ts != nil {
+		t := ts.AsTime()
+		expiresAt = &t
+	}
+	return &models.UserCredential{
+		ID:           pb.GetId(),
+		Username:     pb.GetUsername(),
+		ServiceName:  pb.GetServiceName(),
+		ServiceScope: pb.GetServiceScope(),
+		Subject:      pb.GetSubject(),
+		Secret:       pb.GetSecret(),
+		IsActive:     pb.GetIsActive(),
+		CreatedAt:    pb.GetCreatedAt().AsTime(),
+		UpdatedAt:    pb.GetUpdatedAt().AsTime(),
+		ExpiresAt:    expiresAt,
 	}
 }
 

@@ -57,18 +57,22 @@ message UserCredential {
   uint32 id = 1;
   // username is the k8Shell user that owns this credential.
   string username = 2;
-  // service_name is the human-readable name of the external service (e.g. "github").
+  // service_name identifies the type of service (e.g. "registry", "git", "kubernetes").
   string service_name = 3;
-  // service_url is the base URL of the external service.
-  string service_url = 4;
-  // external_id is the user's identity on the external service.
-  string external_id = 5;
-  // external_token is the access token for the external service.
-  string external_token = 6;
-  // expires_at is the time at which the external token expires, if known.
-  google.protobuf.Timestamp expires_at = 7;
-  // service_scope is the scope or context within the service (e.g. a registry URL or org).
-  string service_scope = 8;
+  // service_scope is the registry/host URL or Kubernetes namespace
+  string service_scope = 4;
+  // subject is the login name or service account name
+  string subject = 5;
+  // secret is the stored credential (OAuth token, API key, password)
+  string secret = 6;
+  // is_active indicates whether this credential is currently active.
+  bool is_active = 7;
+  // created_at is the time the credential was created.
+  google.protobuf.Timestamp created_at = 8;
+  // updated_at is the time the credential was last updated.
+  google.protobuf.Timestamp updated_at = 9;
+  // expires_at is the time at which the secret expires, if known.
+  google.protobuf.Timestamp expires_at = 10;
 }
 
 // OnboardUserDeviceFlow carries the data needed to complete a Device

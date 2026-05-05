@@ -160,12 +160,16 @@ type UserToken struct {
 	Token    string `json:"token"`
 }
 
-// ExternalCredential represents external service credentials for a user
-type ExternalCredential struct {
-	ID            uint64 `json:"id"`
-	Username      string `json:"username"`
-	ServiceName   string `json:"serviceName"`
-	ServiceURL    string `json:"serviceUrl"`
-	ExternalID    string `json:"externalId"`
-	ExternalToken string `json:"externalToken"`
+// UserCredential represents external service credentials for a user
+type UserCredential struct {
+	ID           uint32     `json:"id"`
+	Username     string     `json:"username"`
+	ServiceName  string     `json:"serviceName"`
+	ServiceScope string     `json:"serviceScope"`
+	Subject      string     `json:"subject"`
+	Secret       string     `json:"secret,omitempty"`
+	IsActive     bool       `json:"isActive"`
+	CreatedAt    time.Time  `json:"createdAt"`
+	UpdatedAt    time.Time  `json:"updatedAt"`
+	ExpiresAt    *time.Time `json:"expiresAt,omitempty"`
 }
