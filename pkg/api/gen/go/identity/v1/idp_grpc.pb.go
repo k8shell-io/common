@@ -30,7 +30,7 @@ const (
 	IdentityProviderService_OnboardUserWebFlow_FullMethodName      = "/identity.v1.IdentityProviderService/OnboardUserWebFlow"
 	IdentityProviderService_CompleteUserWebFlow_FullMethodName     = "/identity.v1.IdentityProviderService/CompleteUserWebFlow"
 	IdentityProviderService_AuthUserPublicKey_FullMethodName       = "/identity.v1.IdentityProviderService/AuthUserPublicKey"
-	IdentityProviderService_GetUserToken_FullMethodName            = "/identity.v1.IdentityProviderService/GetUserToken"
+	IdentityProviderService_GetUserGitToken_FullMethodName         = "/identity.v1.IdentityProviderService/GetUserGitToken"
 	IdentityProviderService_GetBlueprintByUserStr_FullMethodName   = "/identity.v1.IdentityProviderService/GetBlueprintByUserStr"
 	IdentityProviderService_ResolvePullRequestToRef_FullMethodName = "/identity.v1.IdentityProviderService/ResolvePullRequestToRef"
 )
@@ -56,8 +56,8 @@ type IdentityProviderServiceClient interface {
 	CompleteUserWebFlow(ctx context.Context, in *CompleteUserWebFlowRequest, opts ...grpc.CallOption) (*v1.User, error)
 	// AuthUserPublicKey authenticates a user using a public key and returns the authentication result
 	AuthUserPublicKey(ctx context.Context, in *AuthUserPublicKeyRequest, opts ...grpc.CallOption) (*AuthUserResponse, error)
-	// GetUserToken retrieves an authentication token for a user.
-	GetUserToken(ctx context.Context, in *Username, opts ...grpc.CallOption) (*UserToken, error)
+	// GetUserGitToken retrieves an authentication token for a user.
+	GetUserGitToken(ctx context.Context, in *Username, opts ...grpc.CallOption) (*UserToken, error)
 	// GetBlueprintByUserStr retrieves a blueprint associated with a user string identifier.
 	GetBlueprintByUserStr(ctx context.Context, in *UserStr, opts ...grpc.CallOption) (*Blueprint, error)
 	// ResolvePullRequestToRef resolves a pull request to a repository reference (e.g., branch or commit).
@@ -142,10 +142,10 @@ func (c *identityProviderServiceClient) AuthUserPublicKey(ctx context.Context, i
 	return out, nil
 }
 
-func (c *identityProviderServiceClient) GetUserToken(ctx context.Context, in *Username, opts ...grpc.CallOption) (*UserToken, error) {
+func (c *identityProviderServiceClient) GetUserGitToken(ctx context.Context, in *Username, opts ...grpc.CallOption) (*UserToken, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UserToken)
-	err := c.cc.Invoke(ctx, IdentityProviderService_GetUserToken_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IdentityProviderService_GetUserGitToken_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -193,8 +193,8 @@ type IdentityProviderServiceServer interface {
 	CompleteUserWebFlow(context.Context, *CompleteUserWebFlowRequest) (*v1.User, error)
 	// AuthUserPublicKey authenticates a user using a public key and returns the authentication result
 	AuthUserPublicKey(context.Context, *AuthUserPublicKeyRequest) (*AuthUserResponse, error)
-	// GetUserToken retrieves an authentication token for a user.
-	GetUserToken(context.Context, *Username) (*UserToken, error)
+	// GetUserGitToken retrieves an authentication token for a user.
+	GetUserGitToken(context.Context, *Username) (*UserToken, error)
 	// GetBlueprintByUserStr retrieves a blueprint associated with a user string identifier.
 	GetBlueprintByUserStr(context.Context, *UserStr) (*Blueprint, error)
 	// ResolvePullRequestToRef resolves a pull request to a repository reference (e.g., branch or commit).
@@ -230,8 +230,8 @@ func (UnimplementedIdentityProviderServiceServer) CompleteUserWebFlow(context.Co
 func (UnimplementedIdentityProviderServiceServer) AuthUserPublicKey(context.Context, *AuthUserPublicKeyRequest) (*AuthUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AuthUserPublicKey not implemented")
 }
-func (UnimplementedIdentityProviderServiceServer) GetUserToken(context.Context, *Username) (*UserToken, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetUserToken not implemented")
+func (UnimplementedIdentityProviderServiceServer) GetUserGitToken(context.Context, *Username) (*UserToken, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUserGitToken not implemented")
 }
 func (UnimplementedIdentityProviderServiceServer) GetBlueprintByUserStr(context.Context, *UserStr) (*Blueprint, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetBlueprintByUserStr not implemented")
@@ -387,20 +387,20 @@ func _IdentityProviderService_AuthUserPublicKey_Handler(srv interface{}, ctx con
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IdentityProviderService_GetUserToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IdentityProviderService_GetUserGitToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Username)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IdentityProviderServiceServer).GetUserToken(ctx, in)
+		return srv.(IdentityProviderServiceServer).GetUserGitToken(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IdentityProviderService_GetUserToken_FullMethodName,
+		FullMethod: IdentityProviderService_GetUserGitToken_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IdentityProviderServiceServer).GetUserToken(ctx, req.(*Username))
+		return srv.(IdentityProviderServiceServer).GetUserGitToken(ctx, req.(*Username))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -477,8 +477,8 @@ var IdentityProviderService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _IdentityProviderService_AuthUserPublicKey_Handler,
 		},
 		{
-			MethodName: "GetUserToken",
-			Handler:    _IdentityProviderService_GetUserToken_Handler,
+			MethodName: "GetUserGitToken",
+			Handler:    _IdentityProviderService_GetUserGitToken_Handler,
 		},
 		{
 			MethodName: "GetBlueprintByUserStr",

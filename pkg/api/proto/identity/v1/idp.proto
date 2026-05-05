@@ -34,8 +34,8 @@ service IdentityProviderService {
   // AuthUserPublicKey authenticates a user using a public key and returns the authentication result
   rpc AuthUserPublicKey(AuthUserPublicKeyRequest) returns (AuthUserResponse);
 
-  // GetUserToken retrieves an authentication token for a user.
-  rpc GetUserToken(Username) returns (UserToken);
+  // GetUserGitToken retrieves an authentication token for a user.
+  rpc GetUserGitToken(Username) returns (UserToken);
 
   // GetBlueprintByUserStr retrieves a blueprint associated with a user string identifier.
   rpc GetBlueprintByUserStr(UserStr) returns (Blueprint);
