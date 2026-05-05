@@ -65,6 +65,8 @@ message ExternalCredential {
   string external_id = 5;
   // external_token is the access token for the external service.
   string external_token = 6;
+  // expires_at is the time at which the external token expires, if known.
+  google.protobuf.Timestamp expires_at = 7; 
 }
 
 // OnboardUserDeviceFlow carries the data needed to complete a Device
