@@ -34,6 +34,10 @@ service IdentityProviderService {
   // AuthUserPublicKey authenticates a user using a public key and returns the authentication result
   rpc AuthUserPublicKey(AuthUserPublicKeyRequest) returns (AuthUserResponse);
 
+  // CompleteUserDeviceFlow is called by the client after the user has completed
+  // device-flow authorization
+  rpc CompleteUserDeviceFlow(CompleteUserDeviceFlowRequest) returns (CompleteUserDeviceFlowResponse);
+
   // GetUserGitToken retrieves an authentication token for a user.
   rpc GetUserGitToken(Username) returns (UserToken);
 
@@ -60,3 +64,14 @@ message UserToken {
   string token = 1;
   string service_name = 2;
 }
+
+// CompleteUserDeviceFlowRequest is sent by the client after the user has
+// authorized the device on the provider side.
+message CompleteUserDeviceFlowRequest {
+  string provider = 1;
+  string username = 2;
+}
+
+// CompleteUserDeviceFlowResponse is returned upon successful completion of
+// device-flow onboarding.
+message CompleteUserDeviceFlowResponse {}
