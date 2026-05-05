@@ -184,6 +184,98 @@ func (x *UserToken) GetServiceName() string {
 	return ""
 }
 
+// CompleteUserDeviceFlowRequest is sent by the client after the user has
+// authorized the device on the provider side.
+type CompleteUserDeviceFlowRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Provider      string                 `protobuf:"bytes,1,opt,name=provider,proto3" json:"provider,omitempty"`
+	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CompleteUserDeviceFlowRequest) Reset() {
+	*x = CompleteUserDeviceFlowRequest{}
+	mi := &file_identity_v1_idp_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CompleteUserDeviceFlowRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CompleteUserDeviceFlowRequest) ProtoMessage() {}
+
+func (x *CompleteUserDeviceFlowRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_idp_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CompleteUserDeviceFlowRequest.ProtoReflect.Descriptor instead.
+func (*CompleteUserDeviceFlowRequest) Descriptor() ([]byte, []int) {
+	return file_identity_v1_idp_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *CompleteUserDeviceFlowRequest) GetProvider() string {
+	if x != nil {
+		return x.Provider
+	}
+	return ""
+}
+
+func (x *CompleteUserDeviceFlowRequest) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+// CompleteUserDeviceFlowResponse is returned upon successful completion of
+// device-flow onboarding.
+type CompleteUserDeviceFlowResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CompleteUserDeviceFlowResponse) Reset() {
+	*x = CompleteUserDeviceFlowResponse{}
+	mi := &file_identity_v1_idp_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CompleteUserDeviceFlowResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CompleteUserDeviceFlowResponse) ProtoMessage() {}
+
+func (x *CompleteUserDeviceFlowResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_idp_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CompleteUserDeviceFlowResponse.ProtoReflect.Descriptor instead.
+func (*CompleteUserDeviceFlowResponse) Descriptor() ([]byte, []int) {
+	return file_identity_v1_idp_proto_rawDescGZIP(), []int{4}
+}
+
 var File_identity_v1_idp_proto protoreflect.FileDescriptor
 
 const file_identity_v1_idp_proto_rawDesc = "" +
@@ -198,7 +290,11 @@ const file_identity_v1_idp_proto_rawDesc = "" +
 	"\aaddress\x18\x04 \x01(\tR\aaddress\"D\n" +
 	"\tUserToken\x12\x14\n" +
 	"\x05token\x18\x01 \x01(\tR\x05token\x12!\n" +
-	"\fservice_name\x18\x02 \x01(\tR\vserviceName2\xd1\x06\n" +
+	"\fservice_name\x18\x02 \x01(\tR\vserviceName\"W\n" +
+	"\x1dCompleteUserDeviceFlowRequest\x12\x1a\n" +
+	"\bprovider\x18\x01 \x01(\tR\bprovider\x12\x1a\n" +
+	"\busername\x18\x02 \x01(\tR\busername\" \n" +
+	"\x1eCompleteUserDeviceFlowResponse2\xc4\a\n" +
 	"\x17IdentityProviderService\x12S\n" +
 	"\fProviderInfo\x12 .identity.v1.ProviderInfoRequest\x1a!.identity.v1.ProviderInfoResponse\x129\n" +
 	"\bFindUser\x12\x1c.identity.v1.FindUserRequest\x1a\x0f.common.v1.User\x12P\n" +
@@ -206,7 +302,8 @@ const file_identity_v1_idp_proto_rawDesc = "" +
 	"\x15OnboardUserDeviceFlow\x12).identity.v1.OnboardUserDeviceFlowRequest\x1a .common.v1.OnboardUserDeviceFlow\x12[\n" +
 	"\x12OnboardUserWebFlow\x12&.identity.v1.OnboardUserWebFlowRequest\x1a\x1d.common.v1.OnboardUserWebFlow\x12O\n" +
 	"\x13CompleteUserWebFlow\x12'.identity.v1.CompleteUserWebFlowRequest\x1a\x0f.common.v1.User\x12Y\n" +
-	"\x11AuthUserPublicKey\x12%.identity.v1.AuthUserPublicKeyRequest\x1a\x1d.identity.v1.AuthUserResponse\x12@\n" +
+	"\x11AuthUserPublicKey\x12%.identity.v1.AuthUserPublicKeyRequest\x1a\x1d.identity.v1.AuthUserResponse\x12q\n" +
+	"\x16CompleteUserDeviceFlow\x12*.identity.v1.CompleteUserDeviceFlowRequest\x1a+.identity.v1.CompleteUserDeviceFlowResponse\x12@\n" +
 	"\x0fGetUserGitToken\x12\x15.identity.v1.Username\x1a\x16.identity.v1.UserToken\x12E\n" +
 	"\x15GetBlueprintByUserStr\x12\x14.identity.v1.UserStr\x1a\x16.identity.v1.Blueprint\x12\\\n" +
 	"\x17ResolvePullRequestToRef\x12#.identity.v1.RepoPullRequestRequest\x1a\x1c.identity.v1.RepoRefResponseBDZBgithub.com/k8shell-io/common/pkg/api/gen/go/identity/v1;identityv1b\x06proto3"
@@ -223,50 +320,54 @@ func file_identity_v1_idp_proto_rawDescGZIP() []byte {
 	return file_identity_v1_idp_proto_rawDescData
 }
 
-var file_identity_v1_idp_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_identity_v1_idp_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_identity_v1_idp_proto_goTypes = []any{
-	(*ProviderInfoRequest)(nil),          // 0: identity.v1.ProviderInfoRequest
-	(*ProviderInfoResponse)(nil),         // 1: identity.v1.ProviderInfoResponse
-	(*UserToken)(nil),                    // 2: identity.v1.UserToken
-	(*FindUserRequest)(nil),              // 3: identity.v1.FindUserRequest
-	(*Username)(nil),                     // 4: identity.v1.Username
-	(*OnboardUserDeviceFlowRequest)(nil), // 5: identity.v1.OnboardUserDeviceFlowRequest
-	(*OnboardUserWebFlowRequest)(nil),    // 6: identity.v1.OnboardUserWebFlowRequest
-	(*CompleteUserWebFlowRequest)(nil),   // 7: identity.v1.CompleteUserWebFlowRequest
-	(*AuthUserPublicKeyRequest)(nil),     // 8: identity.v1.AuthUserPublicKeyRequest
-	(*UserStr)(nil),                      // 9: identity.v1.UserStr
-	(*RepoPullRequestRequest)(nil),       // 10: identity.v1.RepoPullRequestRequest
-	(*v1.User)(nil),                      // 11: common.v1.User
-	(*v1.UserOnboardCapability)(nil),     // 12: common.v1.UserOnboardCapability
-	(*v1.OnboardUserDeviceFlow)(nil),     // 13: common.v1.OnboardUserDeviceFlow
-	(*v1.OnboardUserWebFlow)(nil),        // 14: common.v1.OnboardUserWebFlow
-	(*AuthUserResponse)(nil),             // 15: identity.v1.AuthUserResponse
-	(*Blueprint)(nil),                    // 16: identity.v1.Blueprint
-	(*RepoRefResponse)(nil),              // 17: identity.v1.RepoRefResponse
+	(*ProviderInfoRequest)(nil),            // 0: identity.v1.ProviderInfoRequest
+	(*ProviderInfoResponse)(nil),           // 1: identity.v1.ProviderInfoResponse
+	(*UserToken)(nil),                      // 2: identity.v1.UserToken
+	(*CompleteUserDeviceFlowRequest)(nil),  // 3: identity.v1.CompleteUserDeviceFlowRequest
+	(*CompleteUserDeviceFlowResponse)(nil), // 4: identity.v1.CompleteUserDeviceFlowResponse
+	(*FindUserRequest)(nil),                // 5: identity.v1.FindUserRequest
+	(*Username)(nil),                       // 6: identity.v1.Username
+	(*OnboardUserDeviceFlowRequest)(nil),   // 7: identity.v1.OnboardUserDeviceFlowRequest
+	(*OnboardUserWebFlowRequest)(nil),      // 8: identity.v1.OnboardUserWebFlowRequest
+	(*CompleteUserWebFlowRequest)(nil),     // 9: identity.v1.CompleteUserWebFlowRequest
+	(*AuthUserPublicKeyRequest)(nil),       // 10: identity.v1.AuthUserPublicKeyRequest
+	(*UserStr)(nil),                        // 11: identity.v1.UserStr
+	(*RepoPullRequestRequest)(nil),         // 12: identity.v1.RepoPullRequestRequest
+	(*v1.User)(nil),                        // 13: common.v1.User
+	(*v1.UserOnboardCapability)(nil),       // 14: common.v1.UserOnboardCapability
+	(*v1.OnboardUserDeviceFlow)(nil),       // 15: common.v1.OnboardUserDeviceFlow
+	(*v1.OnboardUserWebFlow)(nil),          // 16: common.v1.OnboardUserWebFlow
+	(*AuthUserResponse)(nil),               // 17: identity.v1.AuthUserResponse
+	(*Blueprint)(nil),                      // 18: identity.v1.Blueprint
+	(*RepoRefResponse)(nil),                // 19: identity.v1.RepoRefResponse
 }
 var file_identity_v1_idp_proto_depIdxs = []int32{
 	0,  // 0: identity.v1.IdentityProviderService.ProviderInfo:input_type -> identity.v1.ProviderInfoRequest
-	3,  // 1: identity.v1.IdentityProviderService.FindUser:input_type -> identity.v1.FindUserRequest
-	4,  // 2: identity.v1.IdentityProviderService.OnboardUserCapability:input_type -> identity.v1.Username
-	5,  // 3: identity.v1.IdentityProviderService.OnboardUserDeviceFlow:input_type -> identity.v1.OnboardUserDeviceFlowRequest
-	6,  // 4: identity.v1.IdentityProviderService.OnboardUserWebFlow:input_type -> identity.v1.OnboardUserWebFlowRequest
-	7,  // 5: identity.v1.IdentityProviderService.CompleteUserWebFlow:input_type -> identity.v1.CompleteUserWebFlowRequest
-	8,  // 6: identity.v1.IdentityProviderService.AuthUserPublicKey:input_type -> identity.v1.AuthUserPublicKeyRequest
-	4,  // 7: identity.v1.IdentityProviderService.GetUserGitToken:input_type -> identity.v1.Username
-	9,  // 8: identity.v1.IdentityProviderService.GetBlueprintByUserStr:input_type -> identity.v1.UserStr
-	10, // 9: identity.v1.IdentityProviderService.ResolvePullRequestToRef:input_type -> identity.v1.RepoPullRequestRequest
-	1,  // 10: identity.v1.IdentityProviderService.ProviderInfo:output_type -> identity.v1.ProviderInfoResponse
-	11, // 11: identity.v1.IdentityProviderService.FindUser:output_type -> common.v1.User
-	12, // 12: identity.v1.IdentityProviderService.OnboardUserCapability:output_type -> common.v1.UserOnboardCapability
-	13, // 13: identity.v1.IdentityProviderService.OnboardUserDeviceFlow:output_type -> common.v1.OnboardUserDeviceFlow
-	14, // 14: identity.v1.IdentityProviderService.OnboardUserWebFlow:output_type -> common.v1.OnboardUserWebFlow
-	11, // 15: identity.v1.IdentityProviderService.CompleteUserWebFlow:output_type -> common.v1.User
-	15, // 16: identity.v1.IdentityProviderService.AuthUserPublicKey:output_type -> identity.v1.AuthUserResponse
-	2,  // 17: identity.v1.IdentityProviderService.GetUserGitToken:output_type -> identity.v1.UserToken
-	16, // 18: identity.v1.IdentityProviderService.GetBlueprintByUserStr:output_type -> identity.v1.Blueprint
-	17, // 19: identity.v1.IdentityProviderService.ResolvePullRequestToRef:output_type -> identity.v1.RepoRefResponse
-	10, // [10:20] is the sub-list for method output_type
-	0,  // [0:10] is the sub-list for method input_type
+	5,  // 1: identity.v1.IdentityProviderService.FindUser:input_type -> identity.v1.FindUserRequest
+	6,  // 2: identity.v1.IdentityProviderService.OnboardUserCapability:input_type -> identity.v1.Username
+	7,  // 3: identity.v1.IdentityProviderService.OnboardUserDeviceFlow:input_type -> identity.v1.OnboardUserDeviceFlowRequest
+	8,  // 4: identity.v1.IdentityProviderService.OnboardUserWebFlow:input_type -> identity.v1.OnboardUserWebFlowRequest
+	9,  // 5: identity.v1.IdentityProviderService.CompleteUserWebFlow:input_type -> identity.v1.CompleteUserWebFlowRequest
+	10, // 6: identity.v1.IdentityProviderService.AuthUserPublicKey:input_type -> identity.v1.AuthUserPublicKeyRequest
+	3,  // 7: identity.v1.IdentityProviderService.CompleteUserDeviceFlow:input_type -> identity.v1.CompleteUserDeviceFlowRequest
+	6,  // 8: identity.v1.IdentityProviderService.GetUserGitToken:input_type -> identity.v1.Username
+	11, // 9: identity.v1.IdentityProviderService.GetBlueprintByUserStr:input_type -> identity.v1.UserStr
+	12, // 10: identity.v1.IdentityProviderService.ResolvePullRequestToRef:input_type -> identity.v1.RepoPullRequestRequest
+	1,  // 11: identity.v1.IdentityProviderService.ProviderInfo:output_type -> identity.v1.ProviderInfoResponse
+	13, // 12: identity.v1.IdentityProviderService.FindUser:output_type -> common.v1.User
+	14, // 13: identity.v1.IdentityProviderService.OnboardUserCapability:output_type -> common.v1.UserOnboardCapability
+	15, // 14: identity.v1.IdentityProviderService.OnboardUserDeviceFlow:output_type -> common.v1.OnboardUserDeviceFlow
+	16, // 15: identity.v1.IdentityProviderService.OnboardUserWebFlow:output_type -> common.v1.OnboardUserWebFlow
+	13, // 16: identity.v1.IdentityProviderService.CompleteUserWebFlow:output_type -> common.v1.User
+	17, // 17: identity.v1.IdentityProviderService.AuthUserPublicKey:output_type -> identity.v1.AuthUserResponse
+	4,  // 18: identity.v1.IdentityProviderService.CompleteUserDeviceFlow:output_type -> identity.v1.CompleteUserDeviceFlowResponse
+	2,  // 19: identity.v1.IdentityProviderService.GetUserGitToken:output_type -> identity.v1.UserToken
+	18, // 20: identity.v1.IdentityProviderService.GetBlueprintByUserStr:output_type -> identity.v1.Blueprint
+	19, // 21: identity.v1.IdentityProviderService.ResolvePullRequestToRef:output_type -> identity.v1.RepoRefResponse
+	11, // [11:22] is the sub-list for method output_type
+	0,  // [0:11] is the sub-list for method input_type
 	0,  // [0:0] is the sub-list for extension type_name
 	0,  // [0:0] is the sub-list for extension extendee
 	0,  // [0:0] is the sub-list for field type_name
@@ -284,7 +385,7 @@ func file_identity_v1_idp_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_identity_v1_idp_proto_rawDesc), len(file_identity_v1_idp_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
