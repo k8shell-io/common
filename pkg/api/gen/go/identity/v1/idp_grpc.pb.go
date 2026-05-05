@@ -30,7 +30,6 @@ const (
 	IdentityProviderService_OnboardUserWebFlow_FullMethodName      = "/identity.v1.IdentityProviderService/OnboardUserWebFlow"
 	IdentityProviderService_CompleteUserWebFlow_FullMethodName     = "/identity.v1.IdentityProviderService/CompleteUserWebFlow"
 	IdentityProviderService_AuthUserPublicKey_FullMethodName       = "/identity.v1.IdentityProviderService/AuthUserPublicKey"
-	IdentityProviderService_CompleteUserDeviceFlow_FullMethodName  = "/identity.v1.IdentityProviderService/CompleteUserDeviceFlow"
 	IdentityProviderService_GetUserGitToken_FullMethodName         = "/identity.v1.IdentityProviderService/GetUserGitToken"
 	IdentityProviderService_GetBlueprintByUserStr_FullMethodName   = "/identity.v1.IdentityProviderService/GetBlueprintByUserStr"
 	IdentityProviderService_ResolvePullRequestToRef_FullMethodName = "/identity.v1.IdentityProviderService/ResolvePullRequestToRef"
@@ -57,9 +56,6 @@ type IdentityProviderServiceClient interface {
 	CompleteUserWebFlow(ctx context.Context, in *CompleteUserWebFlowRequest, opts ...grpc.CallOption) (*v1.User, error)
 	// AuthUserPublicKey authenticates a user using a public key and returns the authentication result
 	AuthUserPublicKey(ctx context.Context, in *AuthUserPublicKeyRequest, opts ...grpc.CallOption) (*AuthUserResponse, error)
-	// CompleteUserDeviceFlow is called by the client after the user has completed
-	// device-flow authorization
-	CompleteUserDeviceFlow(ctx context.Context, in *CompleteUserDeviceFlowRequest, opts ...grpc.CallOption) (*CompleteUserDeviceFlowResponse, error)
 	// GetUserGitToken retrieves an authentication token for a user.
 	GetUserGitToken(ctx context.Context, in *Username, opts ...grpc.CallOption) (*UserToken, error)
 	// GetBlueprintByUserStr retrieves a blueprint associated with a user string identifier.
@@ -146,16 +142,6 @@ func (c *identityProviderServiceClient) AuthUserPublicKey(ctx context.Context, i
 	return out, nil
 }
 
-func (c *identityProviderServiceClient) CompleteUserDeviceFlow(ctx context.Context, in *CompleteUserDeviceFlowRequest, opts ...grpc.CallOption) (*CompleteUserDeviceFlowResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CompleteUserDeviceFlowResponse)
-	err := c.cc.Invoke(ctx, IdentityProviderService_CompleteUserDeviceFlow_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *identityProviderServiceClient) GetUserGitToken(ctx context.Context, in *Username, opts ...grpc.CallOption) (*UserToken, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UserToken)
@@ -207,9 +193,6 @@ type IdentityProviderServiceServer interface {
 	CompleteUserWebFlow(context.Context, *CompleteUserWebFlowRequest) (*v1.User, error)
 	// AuthUserPublicKey authenticates a user using a public key and returns the authentication result
 	AuthUserPublicKey(context.Context, *AuthUserPublicKeyRequest) (*AuthUserResponse, error)
-	// CompleteUserDeviceFlow is called by the client after the user has completed
-	// device-flow authorization
-	CompleteUserDeviceFlow(context.Context, *CompleteUserDeviceFlowRequest) (*CompleteUserDeviceFlowResponse, error)
 	// GetUserGitToken retrieves an authentication token for a user.
 	GetUserGitToken(context.Context, *Username) (*UserToken, error)
 	// GetBlueprintByUserStr retrieves a blueprint associated with a user string identifier.
@@ -246,9 +229,6 @@ func (UnimplementedIdentityProviderServiceServer) CompleteUserWebFlow(context.Co
 }
 func (UnimplementedIdentityProviderServiceServer) AuthUserPublicKey(context.Context, *AuthUserPublicKeyRequest) (*AuthUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AuthUserPublicKey not implemented")
-}
-func (UnimplementedIdentityProviderServiceServer) CompleteUserDeviceFlow(context.Context, *CompleteUserDeviceFlowRequest) (*CompleteUserDeviceFlowResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CompleteUserDeviceFlow not implemented")
 }
 func (UnimplementedIdentityProviderServiceServer) GetUserGitToken(context.Context, *Username) (*UserToken, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserGitToken not implemented")
@@ -407,24 +387,6 @@ func _IdentityProviderService_AuthUserPublicKey_Handler(srv interface{}, ctx con
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IdentityProviderService_CompleteUserDeviceFlow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CompleteUserDeviceFlowRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(IdentityProviderServiceServer).CompleteUserDeviceFlow(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: IdentityProviderService_CompleteUserDeviceFlow_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IdentityProviderServiceServer).CompleteUserDeviceFlow(ctx, req.(*CompleteUserDeviceFlowRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _IdentityProviderService_GetUserGitToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Username)
 	if err := dec(in); err != nil {
@@ -513,10 +475,6 @@ var IdentityProviderService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AuthUserPublicKey",
 			Handler:    _IdentityProviderService_AuthUserPublicKey_Handler,
-		},
-		{
-			MethodName: "CompleteUserDeviceFlow",
-			Handler:    _IdentityProviderService_CompleteUserDeviceFlow_Handler,
 		},
 		{
 			MethodName: "GetUserGitToken",

@@ -31,6 +31,7 @@ const (
 	IdentityService_OnboardUserWebFlow_FullMethodName            = "/identity.v1.IdentityService/OnboardUserWebFlow"
 	IdentityService_CompleteUserWebFlow_FullMethodName           = "/identity.v1.IdentityService/CompleteUserWebFlow"
 	IdentityService_AuthUserPublicKey_FullMethodName             = "/identity.v1.IdentityService/AuthUserPublicKey"
+	IdentityService_CompleteUserDeviceFlow_FullMethodName        = "/identity.v1.IdentityService/CompleteUserDeviceFlow"
 	IdentityService_GetBlueprintByUserStr_FullMethodName         = "/identity.v1.IdentityService/GetBlueprintByUserStr"
 	IdentityService_ResolvePullRequestToRef_FullMethodName       = "/identity.v1.IdentityService/ResolvePullRequestToRef"
 	IdentityService_ListUserCredentials_FullMethodName           = "/identity.v1.IdentityService/ListUserCredentials"
@@ -65,6 +66,10 @@ type IdentityServiceClient interface {
 	// AuthUserPublicKey authenticates a user using a public key and returns the authentication result
 	// along with user details if valid.
 	AuthUserPublicKey(ctx context.Context, in *AuthUserPublicKeyRequest, opts ...grpc.CallOption) (*AuthUserResponse, error)
+	// CompleteUserDeviceFlow is called by the client after the user has completed
+	// device-flow authorization on the provider side. It provisions the git
+	// credential and returns the user's access token.
+	CompleteUserDeviceFlow(ctx context.Context, in *CompleteUserDeviceFlowRequest, opts ...grpc.CallOption) (*CompleteUserDeviceFlowResponse, error)
 	// GetBlueprintByUserStr retrieves a blueprint associated with a user string identifier.
 	GetBlueprintByUserStr(ctx context.Context, in *UserStr, opts ...grpc.CallOption) (*Blueprint, error)
 	// ResolvePullRequestToRef resolves a pull request to a repository reference (e.g., branch or commit).
@@ -165,6 +170,16 @@ func (c *identityServiceClient) AuthUserPublicKey(ctx context.Context, in *AuthU
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AuthUserResponse)
 	err := c.cc.Invoke(ctx, IdentityService_AuthUserPublicKey_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) CompleteUserDeviceFlow(ctx context.Context, in *CompleteUserDeviceFlowRequest, opts ...grpc.CallOption) (*CompleteUserDeviceFlowResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CompleteUserDeviceFlowResponse)
+	err := c.cc.Invoke(ctx, IdentityService_CompleteUserDeviceFlow_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -275,6 +290,10 @@ type IdentityServiceServer interface {
 	// AuthUserPublicKey authenticates a user using a public key and returns the authentication result
 	// along with user details if valid.
 	AuthUserPublicKey(context.Context, *AuthUserPublicKeyRequest) (*AuthUserResponse, error)
+	// CompleteUserDeviceFlow is called by the client after the user has completed
+	// device-flow authorization on the provider side. It provisions the git
+	// credential and returns the user's access token.
+	CompleteUserDeviceFlow(context.Context, *CompleteUserDeviceFlowRequest) (*CompleteUserDeviceFlowResponse, error)
 	// GetBlueprintByUserStr retrieves a blueprint associated with a user string identifier.
 	GetBlueprintByUserStr(context.Context, *UserStr) (*Blueprint, error)
 	// ResolvePullRequestToRef resolves a pull request to a repository reference (e.g., branch or commit).
@@ -324,6 +343,9 @@ func (UnimplementedIdentityServiceServer) CompleteUserWebFlow(context.Context, *
 }
 func (UnimplementedIdentityServiceServer) AuthUserPublicKey(context.Context, *AuthUserPublicKeyRequest) (*AuthUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AuthUserPublicKey not implemented")
+}
+func (UnimplementedIdentityServiceServer) CompleteUserDeviceFlow(context.Context, *CompleteUserDeviceFlowRequest) (*CompleteUserDeviceFlowResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CompleteUserDeviceFlow not implemented")
 }
 func (UnimplementedIdentityServiceServer) GetBlueprintByUserStr(context.Context, *UserStr) (*Blueprint, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetBlueprintByUserStr not implemented")
@@ -514,6 +536,24 @@ func _IdentityService_AuthUserPublicKey_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IdentityService_CompleteUserDeviceFlow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CompleteUserDeviceFlowRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).CompleteUserDeviceFlow(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_CompleteUserDeviceFlow_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).CompleteUserDeviceFlow(ctx, req.(*CompleteUserDeviceFlowRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _IdentityService_GetBlueprintByUserStr_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UserStr)
 	if err := dec(in); err != nil {
@@ -696,6 +736,10 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AuthUserPublicKey",
 			Handler:    _IdentityService_AuthUserPublicKey_Handler,
+		},
+		{
+			MethodName: "CompleteUserDeviceFlow",
+			Handler:    _IdentityService_CompleteUserDeviceFlow_Handler,
 		},
 		{
 			MethodName: "GetBlueprintByUserStr",

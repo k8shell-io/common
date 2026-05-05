@@ -38,6 +38,11 @@ service IdentityService {
   // along with user details if valid.
   rpc AuthUserPublicKey (AuthUserPublicKeyRequest) returns (AuthUserResponse);
 
+  // CompleteUserDeviceFlow is called by the client after the user has completed
+  // device-flow authorization on the provider side. It provisions the git
+  // credential and returns the user's access token.
+  rpc CompleteUserDeviceFlow (CompleteUserDeviceFlowRequest) returns (CompleteUserDeviceFlowResponse);
+
   // GetBlueprintByUserStr retrieves a blueprint associated with a user string identifier.
   rpc GetBlueprintByUserStr (UserStr) returns (Blueprint);
 
@@ -69,6 +74,17 @@ service IdentityService {
 message GetUserAccessTokenRequest {
   string username = 1;
 }
+
+// CompleteUserDeviceFlowRequest is sent by the client after the user has
+// authorized the device on the provider side.
+message CompleteUserDeviceFlowRequest {
+  string provider = 1;
+  string username = 2;
+}
+
+// CompleteUserDeviceFlowResponse is returned upon successful completion of
+// device-flow onboarding.
+message CompleteUserDeviceFlowResponse {}
 
 // CompleteUserWebFlowResponse carries the user token issued upon successful completion of the web flow onboarding process.
 message CompleteUserWebFlowResponse {
