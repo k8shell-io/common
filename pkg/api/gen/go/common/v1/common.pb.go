@@ -231,6 +231,8 @@ type UserCredential struct {
 	ServiceName string `protobuf:"bytes,3,opt,name=service_name,json=serviceName,proto3" json:"service_name,omitempty"`
 	// service_scope is the registry/host URL or Kubernetes namespace
 	ServiceScope string `protobuf:"bytes,4,opt,name=service_scope,json=serviceScope,proto3" json:"service_scope,omitempty"`
+	// credential_source identifies how the credential was provisioned (e.g. "oauth", "manual", "dynamic").
+	CredentialSource string `protobuf:"bytes,11,opt,name=credential_source,json=credentialSource,proto3" json:"credential_source,omitempty"`
 	// subject is the login name or service account name
 	Subject string `protobuf:"bytes,5,opt,name=subject,proto3" json:"subject,omitempty"`
 	// secret is the stored credential (OAuth token, API key, password)
@@ -301,6 +303,13 @@ func (x *UserCredential) GetServiceName() string {
 func (x *UserCredential) GetServiceScope() string {
 	if x != nil {
 		return x.ServiceScope
+	}
+	return ""
+}
+
+func (x *UserCredential) GetCredentialSource() string {
+	if x != nil {
+		return x.CredentialSource
 	}
 	return ""
 }
@@ -1000,12 +1009,13 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"blueprints\x12\x16\n" +
 	"\x06source\x18\x13 \x01(\tR\x06source\x12\x14\n" +
 	"\x05shell\x18\x14 \x01(\tR\x05shell\x12\x12\n" +
-	"\x04sudo\x18\x15 \x01(\bR\x04sudo\"\x84\x03\n" +
+	"\x04sudo\x18\x15 \x01(\bR\x04sudo\"\xb1\x03\n" +
 	"\x0eUserCredential\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\rR\x02id\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12!\n" +
 	"\fservice_name\x18\x03 \x01(\tR\vserviceName\x12#\n" +
-	"\rservice_scope\x18\x04 \x01(\tR\fserviceScope\x12\x18\n" +
+	"\rservice_scope\x18\x04 \x01(\tR\fserviceScope\x12+\n" +
+	"\x11credential_source\x18\v \x01(\tR\x10credentialSource\x12\x18\n" +
 	"\asubject\x18\x05 \x01(\tR\asubject\x12\x16\n" +
 	"\x06secret\x18\x06 \x01(\tR\x06secret\x12\x1b\n" +
 	"\tis_active\x18\a \x01(\bR\bisActive\x129\n" +

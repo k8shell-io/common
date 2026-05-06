@@ -61,6 +61,8 @@ message UserCredential {
   string service_name = 3;
   // service_scope is the registry/host URL or Kubernetes namespace
   string service_scope = 4;
+  // credential_source identifies how the credential was provisioned (e.g. "oauth", "manual", "dynamic").
+  string credential_source = 11;
   // subject is the login name or service account name
   string subject = 5;
   // secret is the stored credential (OAuth token, API key, password)

@@ -92,16 +92,17 @@ func UserCredentialToProto(c *models.UserCredential) *commonv1.UserCredential {
 		expiresAt = timestamppb.New(*c.ExpiresAt)
 	}
 	return &commonv1.UserCredential{
-		Id:           c.ID,
-		Username:     c.Username,
-		ServiceName:  c.ServiceName,
-		ServiceScope: c.ServiceScope,
-		Subject:      c.Subject,
-		Secret:       c.Secret,
-		IsActive:     c.IsActive,
-		CreatedAt:    timestamppb.New(c.CreatedAt),
-		UpdatedAt:    timestamppb.New(c.UpdatedAt),
-		ExpiresAt:    expiresAt,
+		Id:               c.ID,
+		Username:         c.Username,
+		ServiceName:      c.ServiceName,
+		ServiceScope:     c.ServiceScope,
+		CredentialSource: c.CredentialSource,
+		Subject:          c.Subject,
+		Secret:           c.Secret,
+		IsActive:         c.IsActive,
+		CreatedAt:        timestamppb.New(c.CreatedAt),
+		UpdatedAt:        timestamppb.New(c.UpdatedAt),
+		ExpiresAt:        expiresAt,
 	}
 }
 
@@ -116,16 +117,17 @@ func ProtoToUserCredential(pb *commonv1.UserCredential) *models.UserCredential {
 		expiresAt = &t
 	}
 	return &models.UserCredential{
-		ID:           pb.GetId(),
-		Username:     pb.GetUsername(),
-		ServiceName:  pb.GetServiceName(),
-		ServiceScope: pb.GetServiceScope(),
-		Subject:      pb.GetSubject(),
-		Secret:       pb.GetSecret(),
-		IsActive:     pb.GetIsActive(),
-		CreatedAt:    pb.GetCreatedAt().AsTime(),
-		UpdatedAt:    pb.GetUpdatedAt().AsTime(),
-		ExpiresAt:    expiresAt,
+		ID:               pb.GetId(),
+		Username:         pb.GetUsername(),
+		ServiceName:      pb.GetServiceName(),
+		ServiceScope:     pb.GetServiceScope(),
+		CredentialSource: pb.GetCredentialSource(),
+		Subject:          pb.GetSubject(),
+		Secret:           pb.GetSecret(),
+		IsActive:         pb.GetIsActive(),
+		CreatedAt:        pb.GetCreatedAt().AsTime(),
+		UpdatedAt:        pb.GetUpdatedAt().AsTime(),
+		ExpiresAt:        expiresAt,
 	}
 }
 

@@ -162,14 +162,15 @@ type UserToken struct {
 
 // UserCredential represents external service credentials for a user
 type UserCredential struct {
-	ID           uint32     `json:"id"`
-	Username     string     `json:"username"`
-	ServiceName  string     `json:"serviceName"`
-	ServiceScope string     `json:"serviceScope"`
-	Subject      string     `json:"subject"`
-	Secret       string     `json:"secret,omitempty"`
-	IsActive     bool       `json:"isActive"`
-	CreatedAt    time.Time  `json:"createdAt"`
-	UpdatedAt    time.Time  `json:"updatedAt"`
-	ExpiresAt    *time.Time `json:"expiresAt,omitempty"`
+	ID               uint32     `json:"id"`
+	Username         string     `json:"username"`
+	ServiceName      string     `json:"serviceName"`
+	ServiceScope     string     `json:"serviceScope"`
+	CredentialSource string     `json:"credentialSource"`
+	Subject          string     `json:"subject"`
+	Secret           string     `json:"secret,omitempty"`
+	IsActive         bool       `json:"isActive"`
+	CreatedAt        time.Time  `json:"createdAt"`
+	UpdatedAt        time.Time  `json:"updatedAt"`
+	ExpiresAt        *time.Time `json:"expiresAt,omitempty"`
 }
