@@ -16,6 +16,7 @@ type Identity struct {
 type Config struct {
 	System           System           `yaml:"system"`
 	Identity         Identity         `yaml:"identity"`
+	SaToken          SaToken          `yaml:"saToken"`
 	TerminateOrphans TerminateOrphans `yaml:"terminateOrphans"`
 	ReapZombies      ReapZombies      `yaml:"reapZombies"`
 	Shells           Shells           `yaml:"shells,omitempty"`
@@ -45,6 +46,15 @@ type TerminateOrphans struct {
 // ReapZombies represents the configuration for the reap-zombies feature.
 type ReapZombies struct {
 	Enabled bool `yaml:"enabled"`
+}
+
+// SaToken holds configuration for the Kubernetes credential helper that retrieves
+// service account tokens via the API server for Kubernetes API access.
+type SaToken struct {
+	// Enabled controls whether the SA token credential helper is active.
+	Enabled bool `yaml:"enabled"`
+	// CacheTokens controls whether retrieved tokens are cached to avoid redundant API server calls.
+	CacheTokens bool `yaml:"cacheTokens"`
 }
 
 // Shells holds shell session configuration.
