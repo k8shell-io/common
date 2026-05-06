@@ -94,7 +94,7 @@ type K8shelld struct {
 // Network defines network policy and egress rules for a workspace.
 type Network struct {
 	// NetworkPolicyClass selects a predefined network policy class (workspace, system, isolated, user, organization).
-	NetworkPolicyClass string `yaml:"networkPolicyClass,omitempty" validate:"oneof=workspace system isolated user organization"`
+	NetworkPolicyClass string `yaml:"networkPolicyClass,omitempty" validate:"omitempty,oneof=workspace system isolated user organization"`
 	// AllowEgressToCIDRs is a convenience shorthand for permitting egress to specific CIDR ranges.
 	AllowEgressToCIDRs []string `yaml:"allowEgressToCIDRs,omitempty" validate:"dive,cidr"`
 	// AllowEgressToPods is a convenience shorthand for permitting egress to pods matching label selectors.
