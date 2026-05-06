@@ -19,9 +19,12 @@ message UserStr {
   string userstr = 1;
 }
 
-// Blueprint carries a JSON-encoded custom blueprint definition.
+// Blueprint carries a raw blueprint definition and the address of its source repository.
 message Blueprint {
-  string blueprint_json = 1;
+  // blueprint holds the raw blueprint content.
+  bytes  blueprint    = 1;
+  // repo_address is the URL or address of the repository that owns this blueprint.
+  string repo_address = 2;
 }
 
 // UserList holds a paginated list of users.
@@ -74,11 +77,6 @@ message OnboardUserWebFlowRequest {
 message CompleteUserWebFlowRequest {
   string state = 1;
   string code  = 2;
-}
-
-// GetBlueprintByUserStrResponse carries the raw blueprint string for a user.
-message GetBlueprintByUserStrResponse {
-  string blueprint = 1;
 }
 
 // RepoPullRequestRequest identifies a pull request within a repository for a given user.

@@ -8,13 +8,9 @@ package identity
 
 import (
 	"context"
-	"encoding/json"
 
 	identityv1 "github.com/k8shell-io/common/pkg/api/gen/go/identity/v1"
 	"github.com/k8shell-io/common/pkg/gapi"
-	"github.com/k8shell-io/common/pkg/models"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 // IdentityClient is a gRPC client for the Identity service.
@@ -93,17 +89,4 @@ func NewIdpClient(cfg gapi.ClientConfig) (IdpClient, error) {
 	c.address = info.Address
 
 	return c, nil
-}
-
-// BlueprintProtoToCustomBlueprint converts a Blueprint protobuf message to a CustomBlueprint model.
-func BlueprintProtoToCustomBlueprint(bp *identityv1.Blueprint) (*models.CustomBlueprint, error) {
-	if bp == nil {
-		return nil, nil
-	}
-	var customBlueprint models.CustomBlueprint
-	err := json.Unmarshal([]byte(bp.BlueprintJson), &customBlueprint)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Failed to parse custom blueprint JSON: %v", err)
-	}
-	return &customBlueprint, nil
 }

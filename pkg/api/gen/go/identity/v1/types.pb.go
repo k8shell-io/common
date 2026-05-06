@@ -115,10 +115,13 @@ func (x *UserStr) GetUserstr() string {
 	return ""
 }
 
-// Blueprint carries a JSON-encoded custom blueprint definition.
+// Blueprint carries a raw blueprint definition and the address of its source repository.
 type Blueprint struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	BlueprintJson string                 `protobuf:"bytes,1,opt,name=blueprint_json,json=blueprintJson,proto3" json:"blueprint_json,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// blueprint holds the raw blueprint content.
+	Blueprint []byte `protobuf:"bytes,1,opt,name=blueprint,proto3" json:"blueprint,omitempty"`
+	// repo_address is the URL or address of the repository that owns this blueprint.
+	RepoAddress   string `protobuf:"bytes,2,opt,name=repo_address,json=repoAddress,proto3" json:"repo_address,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -153,9 +156,16 @@ func (*Blueprint) Descriptor() ([]byte, []int) {
 	return file_identity_v1_types_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *Blueprint) GetBlueprintJson() string {
+func (x *Blueprint) GetBlueprint() []byte {
 	if x != nil {
-		return x.BlueprintJson
+		return x.Blueprint
+	}
+	return nil
+}
+
+func (x *Blueprint) GetRepoAddress() string {
+	if x != nil {
+		return x.RepoAddress
 	}
 	return ""
 }
@@ -621,51 +631,6 @@ func (x *CompleteUserWebFlowRequest) GetCode() string {
 	return ""
 }
 
-// GetBlueprintByUserStrResponse carries the raw blueprint string for a user.
-type GetBlueprintByUserStrResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Blueprint     string                 `protobuf:"bytes,1,opt,name=blueprint,proto3" json:"blueprint,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetBlueprintByUserStrResponse) Reset() {
-	*x = GetBlueprintByUserStrResponse{}
-	mi := &file_identity_v1_types_proto_msgTypes[12]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetBlueprintByUserStrResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetBlueprintByUserStrResponse) ProtoMessage() {}
-
-func (x *GetBlueprintByUserStrResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[12]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetBlueprintByUserStrResponse.ProtoReflect.Descriptor instead.
-func (*GetBlueprintByUserStrResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{12}
-}
-
-func (x *GetBlueprintByUserStrResponse) GetBlueprint() string {
-	if x != nil {
-		return x.Blueprint
-	}
-	return ""
-}
-
 // RepoPullRequestRequest identifies a pull request within a repository for a given user.
 type RepoPullRequestRequest struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
@@ -679,7 +644,7 @@ type RepoPullRequestRequest struct {
 
 func (x *RepoPullRequestRequest) Reset() {
 	*x = RepoPullRequestRequest{}
-	mi := &file_identity_v1_types_proto_msgTypes[13]
+	mi := &file_identity_v1_types_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -691,7 +656,7 @@ func (x *RepoPullRequestRequest) String() string {
 func (*RepoPullRequestRequest) ProtoMessage() {}
 
 func (x *RepoPullRequestRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[13]
+	mi := &file_identity_v1_types_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -704,7 +669,7 @@ func (x *RepoPullRequestRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RepoPullRequestRequest.ProtoReflect.Descriptor instead.
 func (*RepoPullRequestRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{13}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *RepoPullRequestRequest) GetUsername() string {
@@ -745,7 +710,7 @@ type RepoRefResponse struct {
 
 func (x *RepoRefResponse) Reset() {
 	*x = RepoRefResponse{}
-	mi := &file_identity_v1_types_proto_msgTypes[14]
+	mi := &file_identity_v1_types_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -757,7 +722,7 @@ func (x *RepoRefResponse) String() string {
 func (*RepoRefResponse) ProtoMessage() {}
 
 func (x *RepoRefResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[14]
+	mi := &file_identity_v1_types_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -770,7 +735,7 @@ func (x *RepoRefResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RepoRefResponse.ProtoReflect.Descriptor instead.
 func (*RepoRefResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{14}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *RepoRefResponse) GetRepoRef() string {
@@ -790,7 +755,7 @@ type IdentityProviderInfo struct {
 
 func (x *IdentityProviderInfo) Reset() {
 	*x = IdentityProviderInfo{}
-	mi := &file_identity_v1_types_proto_msgTypes[15]
+	mi := &file_identity_v1_types_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -802,7 +767,7 @@ func (x *IdentityProviderInfo) String() string {
 func (*IdentityProviderInfo) ProtoMessage() {}
 
 func (x *IdentityProviderInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[15]
+	mi := &file_identity_v1_types_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -815,7 +780,7 @@ func (x *IdentityProviderInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IdentityProviderInfo.ProtoReflect.Descriptor instead.
 func (*IdentityProviderInfo) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{15}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *IdentityProviderInfo) GetName() string {
@@ -833,9 +798,10 @@ const file_identity_v1_types_proto_rawDesc = "" +
 	"\bUsername\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\"#\n" +
 	"\aUserStr\x12\x18\n" +
-	"\auserstr\x18\x01 \x01(\tR\auserstr\"2\n" +
-	"\tBlueprint\x12%\n" +
-	"\x0eblueprint_json\x18\x01 \x01(\tR\rblueprintJson\"1\n" +
+	"\auserstr\x18\x01 \x01(\tR\auserstr\"L\n" +
+	"\tBlueprint\x12\x1c\n" +
+	"\tblueprint\x18\x01 \x01(\fR\tblueprint\x12!\n" +
+	"\frepo_address\x18\x02 \x01(\tR\vrepoAddress\"1\n" +
 	"\bUserList\x12%\n" +
 	"\x05users\x18\x01 \x03(\v2\x0f.common.v1.UserR\x05users\"C\n" +
 	"\x0fFindUserRequest\x12\x1a\n" +
@@ -861,9 +827,7 @@ const file_identity_v1_types_proto_rawDesc = "" +
 	"\fredirect_uri\x18\x02 \x01(\tR\vredirectUri\"F\n" +
 	"\x1aCompleteUserWebFlowRequest\x12\x14\n" +
 	"\x05state\x18\x01 \x01(\tR\x05state\x12\x12\n" +
-	"\x04code\x18\x02 \x01(\tR\x04code\"=\n" +
-	"\x1dGetBlueprintByUserStrResponse\x12\x1c\n" +
-	"\tblueprint\x18\x01 \x01(\tR\tblueprint\"\xa0\x01\n" +
+	"\x04code\x18\x02 \x01(\tR\x04code\"\xa0\x01\n" +
 	"\x16RepoPullRequestRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\x1d\n" +
 	"\n" +
@@ -887,30 +851,29 @@ func file_identity_v1_types_proto_rawDescGZIP() []byte {
 	return file_identity_v1_types_proto_rawDescData
 }
 
-var file_identity_v1_types_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_identity_v1_types_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_identity_v1_types_proto_goTypes = []any{
-	(*Username)(nil),                      // 0: identity.v1.Username
-	(*UserStr)(nil),                       // 1: identity.v1.UserStr
-	(*Blueprint)(nil),                     // 2: identity.v1.Blueprint
-	(*UserList)(nil),                      // 3: identity.v1.UserList
-	(*FindUserRequest)(nil),               // 4: identity.v1.FindUserRequest
-	(*GetUsersRequest)(nil),               // 5: identity.v1.GetUsersRequest
-	(*GetUsersResponse)(nil),              // 6: identity.v1.GetUsersResponse
-	(*AuthUserPublicKeyRequest)(nil),      // 7: identity.v1.AuthUserPublicKeyRequest
-	(*AuthUserResponse)(nil),              // 8: identity.v1.AuthUserResponse
-	(*OnboardUserDeviceFlowRequest)(nil),  // 9: identity.v1.OnboardUserDeviceFlowRequest
-	(*OnboardUserWebFlowRequest)(nil),     // 10: identity.v1.OnboardUserWebFlowRequest
-	(*CompleteUserWebFlowRequest)(nil),    // 11: identity.v1.CompleteUserWebFlowRequest
-	(*GetBlueprintByUserStrResponse)(nil), // 12: identity.v1.GetBlueprintByUserStrResponse
-	(*RepoPullRequestRequest)(nil),        // 13: identity.v1.RepoPullRequestRequest
-	(*RepoRefResponse)(nil),               // 14: identity.v1.RepoRefResponse
-	(*IdentityProviderInfo)(nil),          // 15: identity.v1.IdentityProviderInfo
-	(*v1.User)(nil),                       // 16: common.v1.User
+	(*Username)(nil),                     // 0: identity.v1.Username
+	(*UserStr)(nil),                      // 1: identity.v1.UserStr
+	(*Blueprint)(nil),                    // 2: identity.v1.Blueprint
+	(*UserList)(nil),                     // 3: identity.v1.UserList
+	(*FindUserRequest)(nil),              // 4: identity.v1.FindUserRequest
+	(*GetUsersRequest)(nil),              // 5: identity.v1.GetUsersRequest
+	(*GetUsersResponse)(nil),             // 6: identity.v1.GetUsersResponse
+	(*AuthUserPublicKeyRequest)(nil),     // 7: identity.v1.AuthUserPublicKeyRequest
+	(*AuthUserResponse)(nil),             // 8: identity.v1.AuthUserResponse
+	(*OnboardUserDeviceFlowRequest)(nil), // 9: identity.v1.OnboardUserDeviceFlowRequest
+	(*OnboardUserWebFlowRequest)(nil),    // 10: identity.v1.OnboardUserWebFlowRequest
+	(*CompleteUserWebFlowRequest)(nil),   // 11: identity.v1.CompleteUserWebFlowRequest
+	(*RepoPullRequestRequest)(nil),       // 12: identity.v1.RepoPullRequestRequest
+	(*RepoRefResponse)(nil),              // 13: identity.v1.RepoRefResponse
+	(*IdentityProviderInfo)(nil),         // 14: identity.v1.IdentityProviderInfo
+	(*v1.User)(nil),                      // 15: common.v1.User
 }
 var file_identity_v1_types_proto_depIdxs = []int32{
-	16, // 0: identity.v1.UserList.users:type_name -> common.v1.User
-	16, // 1: identity.v1.GetUsersResponse.users:type_name -> common.v1.User
-	16, // 2: identity.v1.AuthUserResponse.user:type_name -> common.v1.User
+	15, // 0: identity.v1.UserList.users:type_name -> common.v1.User
+	15, // 1: identity.v1.GetUsersResponse.users:type_name -> common.v1.User
+	15, // 2: identity.v1.AuthUserResponse.user:type_name -> common.v1.User
 	3,  // [3:3] is the sub-list for method output_type
 	3,  // [3:3] is the sub-list for method input_type
 	3,  // [3:3] is the sub-list for extension type_name
@@ -929,7 +892,7 @@ func file_identity_v1_types_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_identity_v1_types_proto_rawDesc), len(file_identity_v1_types_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   16,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
