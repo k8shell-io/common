@@ -36,6 +36,8 @@ const (
 	ProvisionerService_UpgradeWorkspaceResources_FullMethodName = "/provisioner.v1.ProvisionerService/UpgradeWorkspaceResources"
 	ProvisionerService_DeleteWorkspace_FullMethodName           = "/provisioner.v1.ProvisionerService/DeleteWorkspace"
 	ProvisionerService_StopWorkspace_FullMethodName             = "/provisioner.v1.ProvisionerService/StopWorkspace"
+	ProvisionerService_InjectWorkspaceStream_FullMethodName     = "/provisioner.v1.ProvisionerService/InjectWorkspaceStream"
+	ProvisionerService_EjectWorkspace_FullMethodName            = "/provisioner.v1.ProvisionerService/EjectWorkspace"
 )
 
 // ProvisionerServiceClient is the client API for ProvisionerService service.
@@ -67,6 +69,13 @@ type ProvisionerServiceClient interface {
 	DeleteWorkspace(ctx context.Context, in *DeleteWorkspaceRequest, opts ...grpc.CallOption) (*DeleteWorkspaceResponse, error)
 	// StopWorkspace suspends a running workspace without removing its state.
 	StopWorkspace(ctx context.Context, in *StopWorkspaceRequest, opts ...grpc.CallOption) (*StopWorkspaceResponse, error)
+	// InjectWorkspaceStream injects a k8shell workspace as a sidecar into an
+	// existing Deployment in the specified namespace, streams provisioning events,
+	// and resolves when the injected pods are Running.
+	InjectWorkspaceStream(ctx context.Context, in *InjectWorkspaceRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[InjectWorkspaceResponse], error)
+	// EjectWorkspace removes a previously injected workspace from a Deployment
+	// and deletes all supporting resources (ConfigMaps, PVCs, NetworkPolicies).
+	EjectWorkspace(ctx context.Context, in *EjectWorkspaceRequest, opts ...grpc.CallOption) (*EjectWorkspaceResponse, error)
 }
 
 type provisionerServiceClient struct {
@@ -185,6 +194,35 @@ func (c *provisionerServiceClient) StopWorkspace(ctx context.Context, in *StopWo
 	return out, nil
 }
 
+func (c *provisionerServiceClient) InjectWorkspaceStream(ctx context.Context, in *InjectWorkspaceRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[InjectWorkspaceResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &ProvisionerService_ServiceDesc.Streams[2], ProvisionerService_InjectWorkspaceStream_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[InjectWorkspaceRequest, InjectWorkspaceResponse]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type ProvisionerService_InjectWorkspaceStreamClient = grpc.ServerStreamingClient[InjectWorkspaceResponse]
+
+func (c *provisionerServiceClient) EjectWorkspace(ctx context.Context, in *EjectWorkspaceRequest, opts ...grpc.CallOption) (*EjectWorkspaceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EjectWorkspaceResponse)
+	err := c.cc.Invoke(ctx, ProvisionerService_EjectWorkspace_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ProvisionerServiceServer is the server API for ProvisionerService service.
 // All implementations must embed UnimplementedProvisionerServiceServer
 // for forward compatibility.
@@ -214,6 +252,13 @@ type ProvisionerServiceServer interface {
 	DeleteWorkspace(context.Context, *DeleteWorkspaceRequest) (*DeleteWorkspaceResponse, error)
 	// StopWorkspace suspends a running workspace without removing its state.
 	StopWorkspace(context.Context, *StopWorkspaceRequest) (*StopWorkspaceResponse, error)
+	// InjectWorkspaceStream injects a k8shell workspace as a sidecar into an
+	// existing Deployment in the specified namespace, streams provisioning events,
+	// and resolves when the injected pods are Running.
+	InjectWorkspaceStream(*InjectWorkspaceRequest, grpc.ServerStreamingServer[InjectWorkspaceResponse]) error
+	// EjectWorkspace removes a previously injected workspace from a Deployment
+	// and deletes all supporting resources (ConfigMaps, PVCs, NetworkPolicies).
+	EjectWorkspace(context.Context, *EjectWorkspaceRequest) (*EjectWorkspaceResponse, error)
 	mustEmbedUnimplementedProvisionerServiceServer()
 }
 
@@ -250,6 +295,12 @@ func (UnimplementedProvisionerServiceServer) DeleteWorkspace(context.Context, *D
 }
 func (UnimplementedProvisionerServiceServer) StopWorkspace(context.Context, *StopWorkspaceRequest) (*StopWorkspaceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StopWorkspace not implemented")
+}
+func (UnimplementedProvisionerServiceServer) InjectWorkspaceStream(*InjectWorkspaceRequest, grpc.ServerStreamingServer[InjectWorkspaceResponse]) error {
+	return status.Errorf(codes.Unimplemented, "method InjectWorkspaceStream not implemented")
+}
+func (UnimplementedProvisionerServiceServer) EjectWorkspace(context.Context, *EjectWorkspaceRequest) (*EjectWorkspaceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EjectWorkspace not implemented")
 }
 func (UnimplementedProvisionerServiceServer) mustEmbedUnimplementedProvisionerServiceServer() {}
 func (UnimplementedProvisionerServiceServer) testEmbeddedByValue()                            {}
@@ -420,6 +471,35 @@ func _ProvisionerService_StopWorkspace_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProvisionerService_InjectWorkspaceStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(InjectWorkspaceRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ProvisionerServiceServer).InjectWorkspaceStream(m, &grpc.GenericServerStream[InjectWorkspaceRequest, InjectWorkspaceResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type ProvisionerService_InjectWorkspaceStreamServer = grpc.ServerStreamingServer[InjectWorkspaceResponse]
+
+func _ProvisionerService_EjectWorkspace_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EjectWorkspaceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProvisionerServiceServer).EjectWorkspace(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProvisionerService_EjectWorkspace_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProvisionerServiceServer).EjectWorkspace(ctx, req.(*EjectWorkspaceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ProvisionerService_ServiceDesc is the grpc.ServiceDesc for ProvisionerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -455,6 +535,10 @@ var ProvisionerService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "StopWorkspace",
 			Handler:    _ProvisionerService_StopWorkspace_Handler,
 		},
+		{
+			MethodName: "EjectWorkspace",
+			Handler:    _ProvisionerService_EjectWorkspace_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
@@ -465,6 +549,11 @@ var ProvisionerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "UpgradeWorkspaceStream",
 			Handler:       _ProvisionerService_UpgradeWorkspaceStream_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "InjectWorkspaceStream",
+			Handler:       _ProvisionerService_InjectWorkspaceStream_Handler,
 			ServerStreams: true,
 		},
 	},
