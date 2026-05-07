@@ -98,12 +98,12 @@ func NewClient(
 // Handshake performs a handshake with the k8shelld service to establish a session.
 // The caller's identity JWT (user.UserToken) is sent so the server can verify it
 // matches the workspace identity token.
-func (c *K8shelld) Handshake(ctx context.Context) (*k8shelldv1.HandshakeResponse, error) {
+func (c *K8shelld) Handshake(ctx context.Context, userToken string) (*k8shelldv1.HandshakeResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	req := &k8shelldv1.HandshakeRequest{
-		UserToken: "", // Deprecated: the server verifies the token from the context metadata instead
+		UserToken: userToken,
 	}
 
 	return c.systemClient.Handshake(ctx, req)
