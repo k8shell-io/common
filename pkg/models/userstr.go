@@ -203,9 +203,15 @@ func (u *UserStr) Canonicalize() (*CanonicalUserStr, error) {
 	}
 
 	canonicalUserStr.CanonicalKey = buildWorkspaceKey(&canonicalUserStr.Identity, opt.IncludeBlueprintInKey)
-	canonicalUserStr.CanonicalUserStr = buildCanonicalUserStr(&canonicalUserStr.Identity, u.User)
+	canonicalUserStr.CanonicalUserStr = buildCanonicalUserStr(&canonicalUserStr.Identity, u.User, u.Name)
 	canonicalUserStr.Aliases = buildAliases(u, resolvedRef)
-	canonicalUserStr.WorkspaceName = buildWorkspaceName(u.Username, canonicalUserStr.CanonicalKey)
+
+	// Use the name parameter as workspace name if provided, otherwise generate one
+	if u.Name != "" {
+		canonicalUserStr.WorkspaceName = u.Name
+	} else {
+		canonicalUserStr.WorkspaceName = buildWorkspaceName(u.Username, canonicalUserStr.CanonicalKey)
+	}
 
 	var err error
 	canonicalUserStr.CanonicalUserStrObj, err = NewUserStr(canonicalUserStr.CanonicalUserStr, false)
@@ -241,8 +247,17 @@ func buildWorkspaceKey(id *WorkspaceIdentity, includeBlueprint bool) string {
 }
 
 // BuildCanonicalUserStr builds the canonical user string from the given identity.
-func buildCanonicalUserStr(id *WorkspaceIdentity, user string) string {
+func buildCanonicalUserStr(id *WorkspaceIdentity, user string, name string) string {
 	canonicalUser := strings.ToLower(strings.TrimSpace(user))
+	canonicalName := strings.ToLower(strings.TrimSpace(name))
+
+	if canonicalName != "" {
+		if canonicalUser != "" {
+			return fmt.Sprintf("%s~name=%s+user=%s", id.Username,
+				url.PathEscape(canonicalName), url.PathEscape(canonicalUser))
+		}
+		return fmt.Sprintf("%s~name=%s", id.Username, url.PathEscape(canonicalName))
+	}
 
 	if id.RepoOwner != "" && id.RepoName != "" {
 		b := NewUserStrWith(id.Username).
