@@ -78,62 +78,80 @@ type JWTVerifierConfig struct {
 	// SecretKey is the HMAC verification secret (used with hs256).
 	SecretKey string `yaml:"secretKey"`
 
+	// PublicKey is the PEM-encoded RSA or ECDSA public key as an inline string
+	// (used with rs256 / es256). Takes precedence over PublicKeyFile.
+	PublicKey string `yaml:"publicKey"`
+
 	// PublicKeyFile is the path to a PEM-encoded RSA or ECDSA public key
-	// (used with rs256 / es256). Takes precedence over PrivateKeyFile.
+	// (used with rs256 / es256). Takes precedence over PrivateKey and PrivateKeyFile.
 	PublicKeyFile string `yaml:"publicKeyFile"`
+
+	// PrivateKey is the PEM-encoded RSA or ECDSA private key as an inline string.
+	// The public key is extracted from it and used for verification when
+	// PublicKey and PublicKeyFile are not set.
+	PrivateKey string `yaml:"privateKey"`
 
 	// PrivateKeyFile is the path to a PEM-encoded RSA or ECDSA private key.
 	// The public key is extracted from it and used for verification when
-	// PublicKeyFile is not set.
+	// PublicKey, PublicKeyFile, and PrivateKey are not set.
 	PrivateKeyFile string `yaml:"privateKeyFile"`
 }
 
-// GetPublicKey returns the public key material for this JWT configuration.
-// It returns the PEM-encoded public key string, either
-// read directly from PublicKeyFile or extracted from PrivateKeyFile.
+// GetPublicKey returns the PEM-encoded public key for this JWT configuration.
+// Resolution order: PublicKey (inline) → PublicKeyFile → PrivateKey (inline) → PrivateKeyFile.
 func (c JWTVerifierConfig) GetPublicKey() (string, error) {
-	if pkFile := c.PublicKeyFile; pkFile != "" {
-		pkContent, err := os.ReadFile(pkFile)
+	if c.PublicKey != "" {
+		return c.PublicKey, nil
+	}
+	if c.PublicKeyFile != "" {
+		pkContent, err := os.ReadFile(c.PublicKeyFile)
 		if err != nil {
-			return "", fmt.Errorf("failed to read jwt public key file %s: %w", pkFile, err)
+			return "", fmt.Errorf("failed to read jwt public key file %s: %w", c.PublicKeyFile, err)
 		}
 		return string(pkContent), nil
-	} else if privFile := c.PrivateKeyFile; privFile != "" {
-		privPEM, err := os.ReadFile(privFile)
-		if err != nil {
-			return "", fmt.Errorf("failed to read jwt private key file %s: %w", privFile, err)
-		}
-		block, _ := pem.Decode(privPEM)
-		if block == nil {
-			return "", fmt.Errorf("failed to decode PEM block from %s", privFile)
-		}
-		var pubKeyDER []byte
-		switch c.SigningMethod {
-		case "rs256":
-			priv, err := x509.ParsePKCS1PrivateKey(block.Bytes)
-			if err != nil {
-				return "", fmt.Errorf("failed to parse RSA private key from %s: %w", privFile, err)
-			}
-			pubKeyDER, err = x509.MarshalPKIXPublicKey(&priv.PublicKey)
-			if err != nil {
-				return "", fmt.Errorf("failed to marshal RSA public key: %w", err)
-			}
-		case "es256":
-			priv, err := x509.ParseECPrivateKey(block.Bytes)
-			if err != nil {
-				return "", fmt.Errorf("failed to parse EC private key from %s: %w", privFile, err)
-			}
-			pubKeyDER, err = x509.MarshalPKIXPublicKey(&priv.PublicKey)
-			if err != nil {
-				return "", fmt.Errorf("failed to marshal EC public key: %w", err)
-			}
-		}
-		return string(pem.EncodeToMemory(&pem.Block{
-			Type:  "PUBLIC KEY",
-			Bytes: pubKeyDER,
-		})), nil
 	}
-	return "", fmt.Errorf("no key file specified in JWT config")
+	// Extract the public key from a private key (inline string or file).
+	var privPEM []byte
+	if c.PrivateKey != "" {
+		privPEM = []byte(c.PrivateKey)
+	} else if c.PrivateKeyFile != "" {
+		var err error
+		privPEM, err = os.ReadFile(c.PrivateKeyFile)
+		if err != nil {
+			return "", fmt.Errorf("failed to read jwt private key file %s: %w", c.PrivateKeyFile, err)
+		}
+	} else {
+		return "", fmt.Errorf("no key material specified in JWT config")
+	}
+	block, _ := pem.Decode(privPEM)
+	if block == nil {
+		return "", fmt.Errorf("failed to decode PEM block from private key")
+	}
+	var pubKeyDER []byte
+	switch c.SigningMethod {
+	case "rs256":
+		priv, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+		if err != nil {
+			return "", fmt.Errorf("failed to parse RSA private key: %w", err)
+		}
+		pubKeyDER, err = x509.MarshalPKIXPublicKey(&priv.PublicKey)
+		if err != nil {
+			return "", fmt.Errorf("failed to marshal RSA public key: %w", err)
+		}
+	case "es256":
+		priv, err := x509.ParseECPrivateKey(block.Bytes)
+		if err != nil {
+			return "", fmt.Errorf("failed to parse EC private key: %w", err)
+		}
+		pubKeyDER, err = x509.MarshalPKIXPublicKey(&priv.PublicKey)
+		if err != nil {
+			return "", fmt.Errorf("failed to marshal EC public key: %w", err)
+		}
+	}
+	return string(pem.EncodeToMemory(&pem.Block{
+		Type:  "PUBLIC KEY",
+		Bytes: pubKeyDER,
+	})), nil
 }
 
 // UserClaims are the JWT claims embedded in tokens issued for a user.
@@ -354,37 +372,63 @@ func NewJWTVerifier(cfg JWTVerifierConfig) (*JWTVerifier, error) {
 		v.verificationKey = []byte(cfg.SecretKey)
 
 	case "rs256":
-		if cfg.PublicKeyFile != "" {
+		switch {
+		case cfg.PublicKey != "":
+			pub, err := jwt.ParseRSAPublicKeyFromPEM([]byte(cfg.PublicKey))
+			if err != nil {
+				return nil, fmt.Errorf("jwt: parse RSA public key: %w", err)
+			}
+			v.verificationKey = pub
+		case cfg.PublicKeyFile != "":
 			pub, err := loadRSAPublicKey(cfg.PublicKeyFile)
 			if err != nil {
 				return nil, fmt.Errorf("jwt: load RSA public key: %w", err)
 			}
 			v.verificationKey = pub
-		} else if cfg.PrivateKeyFile != "" {
+		case cfg.PrivateKey != "":
+			priv, err := jwt.ParseRSAPrivateKeyFromPEM([]byte(cfg.PrivateKey))
+			if err != nil {
+				return nil, fmt.Errorf("jwt: parse RSA private key: %w", err)
+			}
+			v.verificationKey = &priv.PublicKey
+		case cfg.PrivateKeyFile != "":
 			priv, err := loadRSAPrivateKey(cfg.PrivateKeyFile)
 			if err != nil {
 				return nil, fmt.Errorf("jwt: load RSA private key: %w", err)
 			}
 			v.verificationKey = &priv.PublicKey
-		} else {
-			return nil, fmt.Errorf("jwt: rs256 requires publicKeyFile or privateKeyFile")
+		default:
+			return nil, fmt.Errorf("jwt: rs256 requires publicKey, publicKeyFile, privateKey, or privateKeyFile")
 		}
 
 	case "es256":
-		if cfg.PublicKeyFile != "" {
+		switch {
+		case cfg.PublicKey != "":
+			pub, err := jwt.ParseECPublicKeyFromPEM([]byte(cfg.PublicKey))
+			if err != nil {
+				return nil, fmt.Errorf("jwt: parse EC public key: %w", err)
+			}
+			v.verificationKey = pub
+		case cfg.PublicKeyFile != "":
 			pub, err := loadECPublicKey(cfg.PublicKeyFile)
 			if err != nil {
 				return nil, fmt.Errorf("jwt: load EC public key: %w", err)
 			}
 			v.verificationKey = pub
-		} else if cfg.PrivateKeyFile != "" {
+		case cfg.PrivateKey != "":
+			priv, err := jwt.ParseECPrivateKeyFromPEM([]byte(cfg.PrivateKey))
+			if err != nil {
+				return nil, fmt.Errorf("jwt: parse EC private key: %w", err)
+			}
+			v.verificationKey = &priv.PublicKey
+		case cfg.PrivateKeyFile != "":
 			priv, err := loadECPrivateKey(cfg.PrivateKeyFile)
 			if err != nil {
 				return nil, fmt.Errorf("jwt: load EC private key: %w", err)
 			}
 			v.verificationKey = &priv.PublicKey
-		} else {
-			return nil, fmt.Errorf("jwt: es256 requires publicKeyFile or privateKeyFile")
+		default:
+			return nil, fmt.Errorf("jwt: es256 requires publicKey, publicKeyFile, privateKey, or privateKeyFile")
 		}
 
 	default:
