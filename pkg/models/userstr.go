@@ -6,7 +6,7 @@
 //	ws-spec     = bp-name [ "+" user-kv ] | param-list
 //	param-list  = kv *( "+" kv )
 //	kv          = key "=" value
-//	key         = "repo" | "ref" | "pr" | "user"
+//	key         = "repo" | "ref" | "pr" | "user" | "name"
 //
 //	bp-name     = <url-path-escaped string>          ; decoded with url.PathUnescape
 //	value       = <url-path-escaped string>          ; decoded with url.PathUnescape
@@ -16,14 +16,16 @@
 //	USERSTR     = ( "b64-" | "base64-" ) b64url-raw   ; decodes to USERSTR, then parsed normally
 //
 // Rules:
-// - Allowed param keys: repo, ref, pr, user. Any other key is an error.
+// - Allowed param keys: repo, ref, pr, user, name. Any other key is an error.
 // - Keys are normalized to lowercase.
 // - Values are url.PathUnescape-decoded (keys are NOT decoded).
 // - Slash "/" is allowed; when escaped as %2F it is decoded back to "/".
 // - Reserved delimiters in the USERSTR syntax: @ ~ + = (escape as %XX inside values if needed).
 // - Mutual exclusion: "ref" and "pr" cannot both be specified.
 // - ref and pr are valid only when repo is specified.
-// - user is valid in both repo and blueprint forms.
+// - user is valid with explicit blueprint form, repo form, and name form.
+// - name creates a standalone form (username~name=xxx or username~name=xxx+user=yyy) with implicit blueprint.
+// - name cannot be used with explicit blueprint names, repo, ref, or pr parameters.
 // - pr must be a base-10 integer (>0) if present.
 // - If pr is specified (and ref is not), Canonicalize() may resolve pr -> ref via RefResolver.
 //
@@ -62,7 +64,7 @@ var (
 	ErrB64UserStrInvalid = errors.New("base64 userstr invalid")
 
 	// allowed param keys in userstr
-	AllowedParams = []string{"repo", "ref", "pr", "user"}
+	AllowedParams = []string{"repo", "ref", "pr", "user", "name"}
 )
 
 // BlueprintKind represents the kind of blueprint used for a workspace.
@@ -100,6 +102,7 @@ type UserStr struct {
 	Raw             string            // original raw input
 	Username        string            // normalized username
 	User            string            // optional user param value
+	Name            string            // optional workspace name param value
 	Blueprint       string            // computed blueprint name
 	BlueprintKind   BlueprintKind     // kind of blueprint used
 	ParamsRaw       map[string]string // raw params map
@@ -429,7 +432,7 @@ func newUserStr(input string, depth int, allowInvalid bool) (*UserStr, error) {
 			}
 
 			if k != "user" {
-				validationError = fmt.Errorf("%w: only user param is allowed with blueprint form", ErrBadParam)
+				validationError = fmt.Errorf("%w: only user param is allowed with explicit blueprint form", ErrBadParam)
 				if !allowInvalid {
 					return nil, validationError
 				}
@@ -447,6 +450,7 @@ func newUserStr(input string, depth int, allowInvalid bool) (*UserStr, error) {
 			Raw:             raw,
 			Username:        username,
 			User:            mapValue(params, "user"),
+			Name:            "", // name not allowed with explicit blueprint
 			Blueprint:       decodedBlueprint,
 			BlueprintKind:   BlueprintKindExplicit,
 			ParamsRaw:       params,
@@ -501,6 +505,39 @@ func newUserStr(input string, depth int, allowInvalid bool) (*UserStr, error) {
 		}
 
 		params[k] = strings.ToLower(val)
+	}
+
+	// Validate that name is not used with repo/ref/pr params
+	if params["name"] != "" && (params["repo"] != "" || params["ref"] != "" || params["pr"] != "") {
+		validationError = fmt.Errorf("%w: name param cannot be used with repo, ref, or pr", ErrBadParam)
+		if !allowInvalid {
+			return nil, validationError
+		}
+		delete(params, "name")
+	}
+
+	// If name is present, this is a name-based workspace (implicit blueprint)
+	if params["name"] != "" {
+		// Only user param is allowed with name
+		for k := range params {
+			if k != "name" && k != "user" {
+				validationError = fmt.Errorf("%w: only user param can be used with name", ErrBadParam)
+				if !allowInvalid {
+					return nil, validationError
+				}
+				delete(params, k)
+			}
+		}
+		return &UserStr{
+			Raw:             raw,
+			Username:        username,
+			User:            params["user"],
+			Name:            params["name"],
+			Blueprint:       "", // implicit blueprint with name
+			BlueprintKind:   BlueprintKindImplicit,
+			ParamsRaw:       params,
+			ValidationError: validationError,
+		}, nil
 	}
 
 	var repoPullReq int
@@ -571,6 +608,7 @@ func newUserStr(input string, depth int, allowInvalid bool) (*UserStr, error) {
 		Raw:             raw,
 		Username:        username,
 		User:            user,
+		Name:            "", // name not allowed in repo form
 		Blueprint:       blueprintName,
 		BlueprintKind:   BlueprintKindCustom,
 		ParamsRaw:       params,
@@ -625,6 +663,11 @@ func (b *UserStrBuilder) WithRef(ref string) *UserStrBuilder {
 
 func (b *UserStrBuilder) WithParam(key, value string) *UserStrBuilder {
 	b.params[strings.ToLower(strings.TrimSpace(key))] = value
+	return b
+}
+
+func (b *UserStrBuilder) WithName(name string) *UserStrBuilder {
+	b.params["name"] = name
 	return b
 }
 
