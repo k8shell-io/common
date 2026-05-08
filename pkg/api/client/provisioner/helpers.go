@@ -8,7 +8,7 @@ import (
 
 	provisionerv1 "github.com/k8shell-io/common/pkg/api/gen/go/provisioner/v1"
 	"github.com/k8shell-io/common/pkg/gapi"
-	"github.com/k8shell-io/common/userstr"
+	"github.com/k8shell-io/common/pkg/userstr"
 	"google.golang.org/grpc"
 )
 
