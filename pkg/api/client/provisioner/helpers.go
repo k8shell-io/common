@@ -8,7 +8,7 @@ import (
 
 	provisionerv1 "github.com/k8shell-io/common/pkg/api/gen/go/provisioner/v1"
 	"github.com/k8shell-io/common/pkg/gapi"
-	"github.com/k8shell-io/common/pkg/models"
+	"github.com/k8shell-io/common/userstr"
 	"google.golang.org/grpc"
 )
 
@@ -36,9 +36,9 @@ func (c *Client) Close() error {
 }
 
 // ProvisionHandshake reads the first stream event that needs to be handshake.
-func (c *Client) ProvisionHandshake(ctx context.Context, userstr models.UserStr, timeout int32) (workspaceName string, jobID string, stream grpc.ServerStreamingClient[provisionerv1.ProvisionWorkspaceResponse], err error) {
+func (c *Client) ProvisionHandshake(ctx context.Context, us userstr.UserStr, timeout int32) (workspaceName string, jobID string, stream grpc.ServerStreamingClient[provisionerv1.ProvisionWorkspaceResponse], err error) {
 	stream, err = c.ProvisionWorkspaceStream(ctx, &provisionerv1.ProvisionWorkspaceRequest{
-		Userstr:      userstr.Raw,
+		Userstr:      us.Raw,
 		SendProgress: true,
 		SendEvents:   true,
 		Timeout:      timeout,
