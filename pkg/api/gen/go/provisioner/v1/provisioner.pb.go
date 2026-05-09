@@ -1133,10 +1133,6 @@ type InjectWorkspaceRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// userstr identifies the workspace to inject (same format as ProvisionWorkspaceRequest).
 	Userstr string `protobuf:"bytes,1,opt,name=userstr,proto3" json:"userstr,omitempty"`
-	// namespace is the Kubernetes namespace that contains the target Deployment.
-	Namespace string `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
-	// deployment_name is the name of the existing Deployment to inject into.
-	DeploymentName string `protobuf:"bytes,3,opt,name=deployment_name,json=deploymentName,proto3" json:"deployment_name,omitempty"`
 	// timeout_seconds is how long to wait for the rolling update to complete.
 	// Defaults to 120 if unset or 0.
 	TimeoutSeconds int32 `protobuf:"varint,4,opt,name=timeout_seconds,json=timeoutSeconds,proto3" json:"timeout_seconds,omitempty"`
@@ -1181,20 +1177,6 @@ func (*InjectWorkspaceRequest) Descriptor() ([]byte, []int) {
 func (x *InjectWorkspaceRequest) GetUserstr() string {
 	if x != nil {
 		return x.Userstr
-	}
-	return ""
-}
-
-func (x *InjectWorkspaceRequest) GetNamespace() string {
-	if x != nil {
-		return x.Namespace
-	}
-	return ""
-}
-
-func (x *InjectWorkspaceRequest) GetDeploymentName() string {
-	if x != nil {
-		return x.DeploymentName
 	}
 	return ""
 }
@@ -1516,11 +1498,9 @@ const file_provisioner_v1_provisioner_proto_rawDesc = "" +
 	"\x1bCanUpgradeWorkspaceResponse\x12\x1f\n" +
 	"\vcan_upgrade\x18\x01 \x01(\bR\n" +
 	"canUpgrade\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"\xe8\x01\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"\xa1\x01\n" +
 	"\x16InjectWorkspaceRequest\x12\x18\n" +
-	"\auserstr\x18\x01 \x01(\tR\auserstr\x12\x1c\n" +
-	"\tnamespace\x18\x02 \x01(\tR\tnamespace\x12'\n" +
-	"\x0fdeployment_name\x18\x03 \x01(\tR\x0edeploymentName\x12'\n" +
+	"\auserstr\x18\x01 \x01(\tR\auserstr\x12'\n" +
 	"\x0ftimeout_seconds\x18\x04 \x01(\x05R\x0etimeoutSeconds\x12\x1f\n" +
 	"\vsend_events\x18\x05 \x01(\bR\n" +
 	"sendEvents\x12#\n" +

@@ -229,10 +229,6 @@ message CanUpgradeWorkspaceResponse {
 message InjectWorkspaceRequest {
   // userstr identifies the workspace to inject (same format as ProvisionWorkspaceRequest).
   string userstr = 1;
-  // namespace is the Kubernetes namespace that contains the target Deployment.
-  string namespace = 2;
-  // deployment_name is the name of the existing Deployment to inject into.
-  string deployment_name = 3;
   // timeout_seconds is how long to wait for the rolling update to complete.
   // Defaults to 120 if unset or 0.
   int32 timeout_seconds = 4;

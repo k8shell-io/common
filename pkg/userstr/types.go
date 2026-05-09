@@ -84,8 +84,6 @@ func (u *UserStr) RepoRef() string              { return u.repoRef }
 // WorkspaceIdentity is the canonical identity model.
 type WorkspaceIdentity struct {
 	username      string
-	pod           string
-	namespace     string
 	blueprint     string
 	blueprintKind BlueprintKind
 	repoOwner     string
@@ -94,14 +92,7 @@ type WorkspaceIdentity struct {
 }
 
 // Getters for WorkspaceIdentity
-func (w *WorkspaceIdentity) Username() string { return w.username }
-func (w *WorkspaceIdentity) Pod() string      { return w.pod }
-func (w *WorkspaceIdentity) Namespace(defaultValue string) string {
-	if w.namespace == "" {
-		return defaultValue
-	}
-	return w.namespace
-}
+func (w *WorkspaceIdentity) Username() string             { return w.username }
 func (w *WorkspaceIdentity) Blueprint() string            { return w.blueprint }
 func (w *WorkspaceIdentity) BlueprintKind() BlueprintKind { return w.blueprintKind }
 func (w *WorkspaceIdentity) RepoOwner() string            { return w.repoOwner }
@@ -124,3 +115,8 @@ func (c *CanonicalUserStr) CanonicalUserStr() string      { return c.canonicalUs
 func (c *CanonicalUserStr) CanonicalUserStrObj() *UserStr { return c.canonicalUserStrObj }
 func (c *CanonicalUserStr) Aliases() []string             { return c.aliases }
 func (c *CanonicalUserStr) WorkspaceName() string         { return c.workspaceName }
+
+// CanonicalId returns a unique identifier for the workspace based on the username and canonical key
+func (c *CanonicalUserStr) CanonicalId() string {
+	return buildCanonicalId(c.identity.Username(), c.canonicalKey)
+}

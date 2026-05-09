@@ -16,8 +16,6 @@ func (u *UserStr) Canonicalize() (*CanonicalUserStr, error) {
 
 	identity := WorkspaceIdentity{
 		username:      u.username,
-		pod:           u.pod,
-		namespace:     u.namespace,
 		blueprint:     u.blueprint,
 		blueprintKind: u.blueprintKind,
 		repoOwner:     u.repoOwner,
@@ -32,7 +30,7 @@ func (u *UserStr) Canonicalize() (*CanonicalUserStr, error) {
 	if u.pod != "" {
 		out.workspaceName = u.pod
 	} else {
-		out.workspaceName = buildWorkspaceName(u.username, out.canonicalKey)
+		out.workspaceName = buildCanonicalId(u.username, out.canonicalKey)
 	}
 
 	parsed, err := ParseUserStr(out.canonicalUserStr)
@@ -46,12 +44,6 @@ func (u *UserStr) Canonicalize() (*CanonicalUserStr, error) {
 
 func buildWorkspaceKey(id WorkspaceIdentity) string {
 	parts := []string{"u=" + id.username}
-	if id.pod != "" {
-		parts = append(parts, "pod="+id.pod)
-	}
-	if id.namespace != "" {
-		parts = append(parts, "ns="+id.namespace)
-	}
 	if id.repoOwner != "" && id.repoName != "" {
 		parts = append(parts, "r="+id.repoOwner+"/"+id.repoName)
 	}
@@ -67,28 +59,8 @@ func buildWorkspaceKey(id WorkspaceIdentity) string {
 func buildCanonicalUserStr(id WorkspaceIdentity, user string) string {
 	canonicalUser := strings.ToLower(strings.TrimSpace(user))
 
-	if id.pod != "" {
-		params := map[string]string{"pod": id.pod}
-		if id.namespace != "" {
-			params["ns"] = id.namespace
-		}
-		if id.repoOwner != "" && id.repoName != "" {
-			params["repo"] = id.repoOwner + "/" + id.repoName
-			if id.repoRef != "" {
-				params["ref"] = id.repoRef
-			}
-		}
-		if canonicalUser != "" {
-			params["user"] = canonicalUser
-		}
-		return id.username + "~" + joinParamsCanonical(params)
-	}
-
 	if id.repoOwner != "" && id.repoName != "" {
 		params := map[string]string{"repo": id.repoOwner + "/" + id.repoName}
-		if id.namespace != "" {
-			params["ns"] = id.namespace
-		}
 		if id.repoRef != "" {
 			params["ref"] = id.repoRef
 		}
@@ -134,7 +106,7 @@ func shortHash(s string, n int) string {
 	return hex.EncodeToString(h[:])[:n]
 }
 
-func buildWorkspaceName(username, canonicalKey string) string {
+func buildCanonicalId(username, canonicalKey string) string {
 	const hashLen = 7
 	return fmt.Sprintf("%s-%s", username, shortHash(canonicalKey, hashLen))
 }
