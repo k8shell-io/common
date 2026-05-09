@@ -48,47 +48,79 @@ var (
 
 // UserStr is the parsed user string object.
 type UserStr struct {
-	Raw           string
-	Form          UserStrForm
-	Username      string
-	User          string
-	Pod           string
-	Target        string
-	TargetKind    string
-	TargetName    string
-	Namespace     string
-	Blueprint     string
-	BlueprintKind BlueprintKind
-	ParamsRaw     map[string]string
-	RepoOwner     string
-	RepoName      string
-	RepoRef       string
+	raw           string
+	form          UserStrForm
+	username      string
+	user          string
+	pod           string
+	namespace     string
+	blueprint     string
+	blueprintKind BlueprintKind
+	paramsRaw     map[string]string
+	repoOwner     string
+	repoName      string
+	repoRef       string
 }
+
+// Getters for UserStr
+func (u *UserStr) Raw() string       { return u.raw }
+func (u *UserStr) Form() UserStrForm { return u.form }
+func (u *UserStr) Username() string  { return u.username }
+func (u *UserStr) User() string      { return u.user }
+func (u *UserStr) Pod() string       { return u.pod }
+func (u *UserStr) Namespace(defaultValue string) string {
+	if u.namespace == "" {
+		return defaultValue
+	}
+	return u.namespace
+}
+func (u *UserStr) Blueprint() string            { return u.blueprint }
+func (u *UserStr) BlueprintKind() BlueprintKind { return u.blueprintKind }
+func (u *UserStr) ParamsRaw() map[string]string { return u.paramsRaw }
+func (u *UserStr) RepoOwner() string            { return u.repoOwner }
+func (u *UserStr) RepoName() string             { return u.repoName }
+func (u *UserStr) RepoRef() string              { return u.repoRef }
 
 // WorkspaceIdentity is the canonical identity model.
 type WorkspaceIdentity struct {
-	Username      string
-	Pod           string
-	Target        string
-	TargetKind    string
-	TargetName    string
-	Namespace     string
-	Blueprint     string
-	BlueprintKind BlueprintKind
-	RepoOwner     string
-	RepoName      string
-	RepoRef       string
+	username      string
+	pod           string
+	namespace     string
+	blueprint     string
+	blueprintKind BlueprintKind
+	repoOwner     string
+	repoName      string
+	repoRef       string
 }
+
+// Getters for WorkspaceIdentity
+func (w *WorkspaceIdentity) Username() string { return w.username }
+func (w *WorkspaceIdentity) Pod() string      { return w.pod }
+func (w *WorkspaceIdentity) Namespace(defaultValue string) string {
+	if w.namespace == "" {
+		return defaultValue
+	}
+	return w.namespace
+}
+func (w *WorkspaceIdentity) Blueprint() string            { return w.blueprint }
+func (w *WorkspaceIdentity) BlueprintKind() BlueprintKind { return w.blueprintKind }
+func (w *WorkspaceIdentity) RepoOwner() string            { return w.repoOwner }
+func (w *WorkspaceIdentity) RepoName() string             { return w.repoName }
+func (w *WorkspaceIdentity) RepoRef() string              { return w.repoRef }
 
 type CanonicalUserStr struct {
-	Identity            WorkspaceIdentity
-	CanonicalKey        string
-	CanonicalUserStr    string
-	CanonicalUserStrObj *UserStr
-	Aliases             []string
-	WorkspaceName       string
+	identity            WorkspaceIdentity
+	canonicalKey        string
+	canonicalUserStr    string
+	canonicalUserStrObj *UserStr
+	aliases             []string
+	workspaceName       string
 }
 
-type CanonicalizeOptions struct {
-	IncludeBlueprintInKey bool
-}
+// Getters for CanonicalUserStr
+func (c *CanonicalUserStr) Identity() WorkspaceIdentity   { return c.identity }
+func (c *CanonicalUserStr) CanonicalKey() string          { return c.canonicalKey }
+func (c *CanonicalUserStr) CanonicalUserStr() string      { return c.canonicalUserStr }
+func (c *CanonicalUserStr) CanonicalUserStrObj() *UserStr { return c.canonicalUserStrObj }
+func (c *CanonicalUserStr) Aliases() []string             { return c.aliases }
+func (c *CanonicalUserStr) WorkspaceName() string         { return c.workspaceName }

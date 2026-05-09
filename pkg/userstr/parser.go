@@ -8,28 +8,6 @@ import (
 	"unicode/utf8"
 )
 
-var allowedTargetKinds = map[string]bool{
-	"deploy": true,
-	"sts":    true,
-	"ds":     true,
-}
-
-func parseTarget(target string) (kind string, name string, err error) {
-	k, n, ok := cutOnce(strings.TrimSpace(target), "/")
-	if !ok {
-		return "", "", fmt.Errorf("%w: target must be kind/name", ErrUserStrInvalid)
-	}
-	kind = strings.ToLower(strings.TrimSpace(k))
-	name = strings.ToLower(strings.TrimSpace(n))
-	if kind == "" || name == "" {
-		return "", "", fmt.Errorf("%w: target kind and name are required", ErrUserStrInvalid)
-	}
-	if !allowedTargetKinds[kind] {
-		return "", "", fmt.Errorf("%w: target kind %q is not supported, use deploy|sts|ds", ErrUserStrInvalid, kind)
-	}
-	return kind, name, nil
-}
-
 func ParseUserStr(input string) (*UserStr, error) {
 	g := DefaultGrammar()
 	return ParseUserStrWithGrammar(input, g)
@@ -66,10 +44,10 @@ func ParseUserStrWithGrammar(input string, grammar UserStrGrammar) (*UserStr, er
 
 	if strings.TrimSpace(wsSpec) == "" {
 		return &UserStr{
-			Raw:           rawTrimmed,
-			Form:          UserStrFormImplicit,
-			Username:      username,
-			BlueprintKind: BlueprintKindImplicit,
+			raw:           rawTrimmed,
+			form:          UserStrFormImplicit,
+			username:      username,
+			blueprintKind: BlueprintKindImplicit,
 		}, nil
 	}
 
@@ -101,37 +79,22 @@ func ParseUserStrWithGrammar(input string, grammar UserStrGrammar) (*UserStr, er
 			}
 		}
 
-		target, hasTarget := params["target"]
 		ns, hasNS := params["ns"]
-		targetKind := ""
-		targetName := ""
-		if hasNS && (!hasTarget || strings.TrimSpace(target) == "") {
-			return nil, fmt.Errorf("%w: ns requires non-empty target", ErrUserStrInvalid)
-		}
-		if hasTarget && strings.TrimSpace(target) != "" && !hasNS {
-			return nil, fmt.Errorf("%w: target requires ns", ErrUserStrInvalid)
-		}
-		if strings.TrimSpace(target) != "" {
-			var targetErr error
-			targetKind, targetName, targetErr = parseTarget(target)
-			if targetErr != nil {
-				return nil, targetErr
-			}
-			target = targetKind + "/" + targetName
+		pod := params["pod"]
+		if hasNS && strings.TrimSpace(pod) == "" {
+			return nil, fmt.Errorf("%w: ns requires pod", ErrUserStrInvalid)
 		}
 
 		return &UserStr{
-			Raw:           rawTrimmed,
-			Form:          UserStrFormExplicitBlueprint,
-			Username:      username,
-			User:          params["user"],
-			Target:        target,
-			TargetKind:    targetKind,
-			TargetName:    targetName,
-			Namespace:     ns,
-			Blueprint:     bpDecoded,
-			BlueprintKind: BlueprintKindExplicit,
-			ParamsRaw:     cloneMap(params),
+			raw:           rawTrimmed,
+			form:          UserStrFormExplicitBlueprint,
+			username:      username,
+			user:          params["user"],
+			pod:           pod,
+			namespace:     ns,
+			blueprint:     bpDecoded,
+			blueprintKind: BlueprintKindExplicit,
+			paramsRaw:     cloneMap(params),
 		}, nil
 	}
 
@@ -140,58 +103,27 @@ func ParseUserStrWithGrammar(input string, grammar UserStrGrammar) (*UserStr, er
 		return nil, err
 	}
 
-	target, hasTarget := params["target"]
 	ns, hasNS := params["ns"]
-	targetKind := ""
-	targetName := ""
-	if hasNS && ((params["pod"] == "" && strings.TrimSpace(target) == "") || (!hasTarget && params["pod"] == "")) {
-		return nil, fmt.Errorf("%w: ns requires pod or non-empty target", ErrUserStrInvalid)
-	}
-	if hasTarget && strings.TrimSpace(target) != "" && !hasNS {
-		return nil, fmt.Errorf("%w: target requires ns", ErrUserStrInvalid)
-	}
-	if strings.TrimSpace(target) != "" {
-		var targetErr error
-		targetKind, targetName, targetErr = parseTarget(target)
-		if targetErr != nil {
-			return nil, targetErr
-		}
-		target = targetKind + "/" + targetName
+	pod := params["pod"]
+	if hasNS && strings.TrimSpace(pod) == "" && params["repo"] == "" {
+		return nil, fmt.Errorf("%w: ns requires pod", ErrUserStrInvalid)
 	}
 
-	if params["pod"] != "" {
+	if strings.TrimSpace(pod) != "" && params["repo"] == "" {
 		for k := range params {
 			if !isParamAllowedInForm(grammar, k, UserStrFormNamedWorkspace) {
 				return nil, fmt.Errorf("%w: param %q is not allowed with pod form", ErrUserStrInvalid, k)
 			}
 		}
-		if !hasNS || strings.TrimSpace(ns) == "" {
-			return nil, fmt.Errorf("%w: pod requires ns", ErrUserStrInvalid)
-		}
 		return &UserStr{
-			Raw:           rawTrimmed,
-			Form:          UserStrFormNamedWorkspace,
-			Username:      username,
-			User:          params["user"],
-			Pod:           params["pod"],
-			Namespace:     ns,
-			BlueprintKind: BlueprintKindImplicit,
-			ParamsRaw:     cloneMap(params),
-		}, nil
-	}
-
-	if strings.TrimSpace(target) != "" && params["repo"] == "" {
-		return &UserStr{
-			Raw:           rawTrimmed,
-			Form:          UserStrFormImplicit,
-			Username:      username,
-			User:          params["user"],
-			Target:        target,
-			TargetKind:    targetKind,
-			TargetName:    targetName,
-			Namespace:     ns,
-			BlueprintKind: BlueprintKindImplicit,
-			ParamsRaw:     cloneMap(params),
+			raw:           rawTrimmed,
+			form:          UserStrFormNamedWorkspace,
+			username:      username,
+			user:          params["user"],
+			pod:           pod,
+			namespace:     ns,
+			blueprintKind: BlueprintKindImplicit,
+			paramsRaw:     cloneMap(params),
 		}, nil
 	}
 
@@ -207,9 +139,6 @@ func ParseUserStrWithGrammar(input string, grammar UserStrGrammar) (*UserStr, er
 	}
 
 	repoRef := params["ref"]
-	if strings.TrimSpace(target) != "" && strings.TrimSpace(repoRef) == "" {
-		return nil, fmt.Errorf("%w: target in repo form requires ref", ErrUserStrInvalid)
-	}
 
 	repoOwner := username
 	repoName := repo
@@ -224,20 +153,18 @@ func ParseUserStrWithGrammar(input string, grammar UserStrGrammar) (*UserStr, er
 	blueprint := fmt.Sprintf("repo-%s-%s", repoOwner, repoName)
 
 	return &UserStr{
-		Raw:           rawTrimmed,
-		Form:          UserStrFormRepoWorkspace,
-		Username:      username,
-		User:          params["user"],
-		Target:        target,
-		TargetKind:    targetKind,
-		TargetName:    targetName,
-		Namespace:     ns,
-		Blueprint:     blueprint,
-		BlueprintKind: BlueprintKindCustom,
-		ParamsRaw:     cloneMap(params),
-		RepoOwner:     repoOwner,
-		RepoName:      repoName,
-		RepoRef:       repoRef,
+		raw:           rawTrimmed,
+		form:          UserStrFormRepoWorkspace,
+		username:      username,
+		user:          params["user"],
+		pod:           pod,
+		namespace:     ns,
+		blueprint:     blueprint,
+		blueprintKind: BlueprintKindCustom,
+		paramsRaw:     cloneMap(params),
+		repoOwner:     repoOwner,
+		repoName:      repoName,
+		repoRef:       repoRef,
 	}, nil
 }
 

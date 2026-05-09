@@ -28,21 +28,17 @@ func DefaultGrammar() UserStrGrammar {
 				},
 			},
 			"pod": {
-				AllowedIn: map[UserStrForm]bool{UserStrFormNamedWorkspace: true},
-			},
-			"target": {
 				AllowedIn: map[UserStrForm]bool{
-					UserStrFormImplicit:          true,
 					UserStrFormExplicitBlueprint: true,
+					UserStrFormNamedWorkspace:    true,
 					UserStrFormRepoWorkspace:     true,
 				},
 			},
 			"ns": {
 				AllowedIn: map[UserStrForm]bool{
-					UserStrFormNamedWorkspace:    true,
 					UserStrFormExplicitBlueprint: true,
+					UserStrFormNamedWorkspace:    true,
 					UserStrFormRepoWorkspace:     true,
-					UserStrFormImplicit:          true,
 				},
 			},
 		},

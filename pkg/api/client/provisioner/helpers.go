@@ -38,7 +38,7 @@ func (c *Client) Close() error {
 // ProvisionHandshake reads the first stream event that needs to be handshake.
 func (c *Client) ProvisionHandshake(ctx context.Context, us userstr.UserStr, timeout int32) (workspaceName string, jobID string, stream grpc.ServerStreamingClient[provisionerv1.ProvisionWorkspaceResponse], err error) {
 	stream, err = c.ProvisionWorkspaceStream(ctx, &provisionerv1.ProvisionWorkspaceRequest{
-		Userstr:      us.Raw,
+		Userstr:      us.Raw(),
 		SendProgress: true,
 		SendEvents:   true,
 		Timeout:      timeout,

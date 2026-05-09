@@ -9,74 +9,57 @@ import (
 	"strings"
 )
 
-func normalizedTarget(kind, name, fallback string) string {
-	if strings.TrimSpace(kind) != "" && strings.TrimSpace(name) != "" {
-		return strings.ToLower(strings.TrimSpace(kind)) + "/" + strings.ToLower(strings.TrimSpace(name))
-	}
-	return fallback
-}
-
-func (u *UserStr) Canonicalize(opt CanonicalizeOptions) (*CanonicalUserStr, error) {
+func (u *UserStr) Canonicalize() (*CanonicalUserStr, error) {
 	if u == nil {
 		return nil, fmt.Errorf("%w: nil userstr", ErrUserStrInvalid)
 	}
 
-	if !opt.IncludeBlueprintInKey {
-		opt.IncludeBlueprintInKey = true
-	}
-
 	identity := WorkspaceIdentity{
-		Username:      u.Username,
-		Pod:           u.Pod,
-		Target:        normalizedTarget(u.TargetKind, u.TargetName, u.Target),
-		TargetKind:    u.TargetKind,
-		TargetName:    u.TargetName,
-		Namespace:     u.Namespace,
-		Blueprint:     u.Blueprint,
-		BlueprintKind: u.BlueprintKind,
-		RepoOwner:     u.RepoOwner,
-		RepoName:      u.RepoName,
-		RepoRef:       u.RepoRef,
+		username:      u.username,
+		pod:           u.pod,
+		namespace:     u.namespace,
+		blueprint:     u.blueprint,
+		blueprintKind: u.blueprintKind,
+		repoOwner:     u.repoOwner,
+		repoName:      u.repoName,
+		repoRef:       u.repoRef,
 	}
 
-	out := &CanonicalUserStr{Identity: identity}
-	out.CanonicalKey = buildWorkspaceKey(identity, opt.IncludeBlueprintInKey)
-	out.CanonicalUserStr = buildCanonicalUserStr(identity, u.User)
-	out.Aliases = buildAliases(u)
-	if u.Pod != "" {
-		out.WorkspaceName = u.Pod
+	out := &CanonicalUserStr{identity: identity}
+	out.canonicalKey = buildWorkspaceKey(identity)
+	out.canonicalUserStr = buildCanonicalUserStr(identity, u.user)
+	out.aliases = buildAliases(u)
+	if u.pod != "" {
+		out.workspaceName = u.pod
 	} else {
-		out.WorkspaceName = buildWorkspaceName(u.Username, out.CanonicalKey)
+		out.workspaceName = buildWorkspaceName(u.username, out.canonicalKey)
 	}
 
-	parsed, err := ParseUserStr(out.CanonicalUserStr)
+	parsed, err := ParseUserStr(out.canonicalUserStr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse canonical userstr: %w", err)
 	}
-	out.CanonicalUserStrObj = parsed
+	out.canonicalUserStrObj = parsed
 
 	return out, nil
 }
 
-func buildWorkspaceKey(id WorkspaceIdentity, includeBlueprint bool) string {
-	parts := []string{"u=" + id.Username}
-	if id.Pod != "" {
-		parts = append(parts, "pod="+id.Pod)
+func buildWorkspaceKey(id WorkspaceIdentity) string {
+	parts := []string{"u=" + id.username}
+	if id.pod != "" {
+		parts = append(parts, "pod="+id.pod)
 	}
-	if id.Target != "" {
-		parts = append(parts, "target="+id.Target)
+	if id.namespace != "" {
+		parts = append(parts, "ns="+id.namespace)
 	}
-	if id.Namespace != "" {
-		parts = append(parts, "ns="+id.Namespace)
+	if id.repoOwner != "" && id.repoName != "" {
+		parts = append(parts, "r="+id.repoOwner+"/"+id.repoName)
 	}
-	if id.RepoOwner != "" && id.RepoName != "" {
-		parts = append(parts, "r="+id.RepoOwner+"/"+id.RepoName)
+	if id.repoRef != "" {
+		parts = append(parts, "ref="+id.repoRef)
 	}
-	if id.RepoRef != "" {
-		parts = append(parts, "ref="+id.RepoRef)
-	}
-	if includeBlueprint && id.Blueprint != "" {
-		parts = append(parts, "bp="+id.Blueprint)
+	if id.blueprint != "" {
+		parts = append(parts, "bp="+id.blueprint)
 	}
 	return strings.Join(parts, "|")
 }
@@ -84,64 +67,45 @@ func buildWorkspaceKey(id WorkspaceIdentity, includeBlueprint bool) string {
 func buildCanonicalUserStr(id WorkspaceIdentity, user string) string {
 	canonicalUser := strings.ToLower(strings.TrimSpace(user))
 
-	if id.Pod != "" {
-		params := map[string]string{
-			"pod": id.Pod,
-			"ns":  id.Namespace,
+	if id.pod != "" {
+		params := map[string]string{"pod": id.pod}
+		if id.namespace != "" {
+			params["ns"] = id.namespace
 		}
-		if canonicalUser != "" {
-			params["user"] = canonicalUser
-		}
-		return id.Username + "~" + joinParamsCanonical(params)
-	}
-
-	if id.RepoOwner != "" && id.RepoName != "" {
-		params := map[string]string{"repo": id.RepoOwner + "/" + id.RepoName}
-		if id.RepoRef != "" {
-			params["ref"] = id.RepoRef
-		}
-		target := normalizedTarget(id.TargetKind, id.TargetName, id.Target)
-		if target != "" {
-			params["target"] = target
-			params["ns"] = id.Namespace
-		}
-		if canonicalUser != "" {
-			params["user"] = canonicalUser
-		}
-		return id.Username + "~" + joinParamsCanonical(params)
-	}
-
-	if id.Blueprint != "" {
-		target := normalizedTarget(id.TargetKind, id.TargetName, id.Target)
-		if target != "" {
-			params := map[string]string{
-				"target": target,
-				"ns":     id.Namespace,
+		if id.repoOwner != "" && id.repoName != "" {
+			params["repo"] = id.repoOwner + "/" + id.repoName
+			if id.repoRef != "" {
+				params["ref"] = id.repoRef
 			}
-			if canonicalUser != "" {
-				params["user"] = canonicalUser
-			}
-			return fmt.Sprintf("%s~%s+%s", id.Username, url.PathEscape(id.Blueprint), joinParamsCanonical(params))
-		}
-		if canonicalUser != "" {
-			return fmt.Sprintf("%s~%s+user=%s", id.Username, url.PathEscape(id.Blueprint), url.PathEscape(canonicalUser))
-		}
-		return fmt.Sprintf("%s~%s", id.Username, url.PathEscape(id.Blueprint))
-	}
-
-	target := normalizedTarget(id.TargetKind, id.TargetName, id.Target)
-	if target != "" || id.Namespace != "" {
-		params := map[string]string{"target": target}
-		if id.Namespace != "" {
-			params["ns"] = id.Namespace
 		}
 		if canonicalUser != "" {
 			params["user"] = canonicalUser
 		}
-		return id.Username + "~" + joinParamsCanonical(params)
+		return id.username + "~" + joinParamsCanonical(params)
 	}
 
-	return id.Username
+	if id.repoOwner != "" && id.repoName != "" {
+		params := map[string]string{"repo": id.repoOwner + "/" + id.repoName}
+		if id.namespace != "" {
+			params["ns"] = id.namespace
+		}
+		if id.repoRef != "" {
+			params["ref"] = id.repoRef
+		}
+		if canonicalUser != "" {
+			params["user"] = canonicalUser
+		}
+		return id.username + "~" + joinParamsCanonical(params)
+	}
+
+	if id.blueprint != "" {
+		if canonicalUser != "" {
+			return fmt.Sprintf("%s~%s+user=%s", id.username, url.PathEscape(id.blueprint), url.PathEscape(canonicalUser))
+		}
+		return fmt.Sprintf("%s~%s", id.username, url.PathEscape(id.blueprint))
+	}
+
+	return id.username
 }
 
 func joinParamsCanonical(params map[string]string) string {
@@ -158,9 +122,9 @@ func joinParamsCanonical(params map[string]string) string {
 }
 
 func buildAliases(u *UserStr) []string {
-	aliases := []string{"raw:" + u.Raw}
-	if u.RepoOwner != "" && u.RepoName != "" && u.RepoRef != "" {
-		aliases = append(aliases, fmt.Sprintf("u=%s|r=%s/%s|ref=%s", u.Username, u.RepoOwner, u.RepoName, u.RepoRef))
+	aliases := []string{"raw:" + u.raw}
+	if u.repoOwner != "" && u.repoName != "" && u.repoRef != "" {
+		aliases = append(aliases, fmt.Sprintf("u=%s|r=%s/%s|ref=%s", u.username, u.repoOwner, u.repoName, u.repoRef))
 	}
 	return aliases
 }
