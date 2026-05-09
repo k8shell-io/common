@@ -46,11 +46,6 @@ service ProvisionerService {
   // StopWorkspace suspends a running workspace without removing its state.
   rpc StopWorkspace(StopWorkspaceRequest) returns (StopWorkspaceResponse);
 
-  // InjectWorkspaceStream injects a k8shell workspace as a sidecar into an
-  // existing Deployment in the specified namespace, streams provisioning events,
-  // and resolves when the injected pods are Running.
-  rpc InjectWorkspaceStream(InjectWorkspaceRequest) returns (stream InjectWorkspaceResponse);
-
   // EjectWorkspace removes a previously injected workspace from a Deployment
   // and deletes all supporting resources (ConfigMaps, PVCs, NetworkPolicies).
   rpc EjectWorkspace(EjectWorkspaceRequest) returns (EjectWorkspaceResponse);
@@ -223,29 +218,6 @@ message CanUpgradeWorkspaceResponse {
   bool can_upgrade = 1;
   // message explains why an upgrade is or is not possible.
   string message = 2;
-}
-
-// InjectWorkspaceRequest identifies the Deployment to inject a k8shell workspace into.
-message InjectWorkspaceRequest {
-  // userstr identifies the workspace to inject (same format as ProvisionWorkspaceRequest).
-  string userstr = 1;
-  // timeout_seconds is how long to wait for the rolling update to complete.
-  // Defaults to 120 if unset or 0.
-  int32 timeout_seconds = 4;
-  // send_events controls whether raw pod event messages are streamed back.
-  bool send_events = 5;
-  // send_progress controls whether progress percentage messages are streamed.
-  bool send_progress = 6;
-}
-
-// InjectWorkspaceResponse is a single message in the injection stream.
-// It carries the initial Handshake, zero-or-more ProvisionEvents, and a final Status.
-message InjectWorkspaceResponse {
-  oneof data {
-    HandshakeResponse        handshake = 1;
-    ProvisionEvent           event     = 2;
-    common.v1.WorkspaceStatus status    = 3;
-  }
 }
 
 // EjectWorkspaceRequest identifies the Deployment from which to eject a workspace.
