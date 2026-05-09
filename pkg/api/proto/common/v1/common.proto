@@ -169,8 +169,6 @@ message WorkspaceDetails {
   int32 port = 12;
   // tls_enabled indicates whether TLS is enabled for the workspace endpoint.
   bool tls_enabled = 13;
-  // splash is the URL or path of the workspace splash/loading screen asset.
-  string splash = 14;
   // cpu is the CPU resource allocation in Kubernetes quantity format (e.g. "500m").
   string cpu = 15;
   // memory is the memory resource allocation in Kubernetes quantity format (e.g. "1Gi").
@@ -179,6 +177,8 @@ message WorkspaceDetails {
   string hostname = 17;
   // job_id is the identifier of the provisioning job that created this workspace.
   string job_id = 18;
+  // namespace is the Kubernetes namespace in which the workspace pod is running.
+  string namespace = 19;
 }
 
 // BlueprintSummary is a lightweight representation of a blueprint used in

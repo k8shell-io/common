@@ -11,7 +11,7 @@ const WORKSPACE_PORT = 2822 // port that workspace containers listen on for grpc
 // WorkspaceStatusMessage is the user-friendly status reported for a workspace pod.
 type WorkspaceStatusMessage string
 
-const ( 
+const (
 	WorkspaceStatusProvisioning WorkspaceStatusMessage = "Starting"
 	WorkspaceStatusWarning      WorkspaceStatusMessage = "Warning"
 	WorkspaceStatusPulling      WorkspaceStatusMessage = "Pulling"
@@ -50,7 +50,7 @@ type WorkspaceDetails struct {
 	PodIP        string `json:"podIP"`
 	Port         int    `json:"port"`
 	TLSEnabled   bool   `json:"tlsEnabled"`
-	Splash       string `json:"splash,omitempty"`
+	Namespace    string `json:"namespace"`
 	Hostname     string `json:"hostname,omitempty"`
 	JobId        string `json:"jobId,omitempty"`
 }

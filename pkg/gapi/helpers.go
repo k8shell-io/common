@@ -292,12 +292,12 @@ func WorkspaceDetailsToProto(m *models.WorkspaceDetails) *commonv1.WorkspaceDeta
 		PodIp:           m.PodIP,
 		Port:            int32(m.Port),
 		TlsEnabled:      m.TLSEnabled,
-		Splash:          m.Splash,
 		AppVersion:      m.AppVersion,
 		Cpu:             m.CPU,
 		Memory:          m.Memory,
 		Hostname:        m.Hostname,
 		JobId:           m.JobId,
+		Namespace:       m.Namespace,
 	}
 }
 
@@ -320,12 +320,12 @@ func ProtoToWorkspaceDetails(pb *commonv1.WorkspaceDetails) *models.WorkspaceDet
 		PodIP:           pb.GetPodIp(),
 		Port:            int(pb.GetPort()),
 		TLSEnabled:      pb.GetTlsEnabled(),
-		Splash:          pb.GetSplash(),
 		AppVersion:      pb.GetAppVersion(),
 		CPU:             pb.GetCpu(),
 		Memory:          pb.GetMemory(),
 		Hostname:        pb.GetHostname(),
 		JobId:           pb.GetJobId(),
+		Namespace:       pb.GetNamespace(),
 	}
 }
 

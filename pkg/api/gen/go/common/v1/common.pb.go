@@ -747,8 +747,6 @@ type WorkspaceDetails struct {
 	Port int32 `protobuf:"varint,12,opt,name=port,proto3" json:"port,omitempty"`
 	// tls_enabled indicates whether TLS is enabled for the workspace endpoint.
 	TlsEnabled bool `protobuf:"varint,13,opt,name=tls_enabled,json=tlsEnabled,proto3" json:"tls_enabled,omitempty"`
-	// splash is the URL or path of the workspace splash/loading screen asset.
-	Splash string `protobuf:"bytes,14,opt,name=splash,proto3" json:"splash,omitempty"`
 	// cpu is the CPU resource allocation in Kubernetes quantity format (e.g. "500m").
 	Cpu string `protobuf:"bytes,15,opt,name=cpu,proto3" json:"cpu,omitempty"`
 	// memory is the memory resource allocation in Kubernetes quantity format (e.g. "1Gi").
@@ -756,7 +754,9 @@ type WorkspaceDetails struct {
 	// hostname is the externally reachable hostname of the workspace.
 	Hostname string `protobuf:"bytes,17,opt,name=hostname,proto3" json:"hostname,omitempty"`
 	// job_id is the identifier of the provisioning job that created this workspace.
-	JobId         string `protobuf:"bytes,18,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
+	JobId string `protobuf:"bytes,18,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
+	// namespace is the Kubernetes namespace in which the workspace pod is running.
+	Namespace     string `protobuf:"bytes,19,opt,name=namespace,proto3" json:"namespace,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -882,13 +882,6 @@ func (x *WorkspaceDetails) GetTlsEnabled() bool {
 	return false
 }
 
-func (x *WorkspaceDetails) GetSplash() string {
-	if x != nil {
-		return x.Splash
-	}
-	return ""
-}
-
 func (x *WorkspaceDetails) GetCpu() string {
 	if x != nil {
 		return x.Cpu
@@ -913,6 +906,13 @@ func (x *WorkspaceDetails) GetHostname() string {
 func (x *WorkspaceDetails) GetJobId() string {
 	if x != nil {
 		return x.JobId
+	}
+	return ""
+}
+
+func (x *WorkspaceDetails) GetNamespace() string {
+	if x != nil {
+		return x.Namespace
 	}
 	return ""
 }
@@ -1052,7 +1052,7 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"\x06status\x18\x02 \x01(\tR\x06status\x12\x18\n" +
 	"\amessage\x18\x03 \x01(\tR\amessage\x12\x1a\n" +
 	"\brestarts\x18\x04 \x01(\x05R\brestarts\x12*\n" +
-	"\x11last_fail_message\x18\x05 \x01(\tR\x0flastFailMessage\"\xa5\x04\n" +
+	"\x11last_fail_message\x18\x05 \x01(\tR\x0flastFailMessage\"\xab\x04\n" +
 	"\x10WorkspaceDetails\x12E\n" +
 	"\x10workspace_status\x18\x01 \x01(\v2\x1a.common.v1.WorkspaceStatusR\x0fworkspaceStatus\x12\x1f\n" +
 	"\vapp_version\x18\x02 \x01(\tR\n" +
@@ -1071,12 +1071,12 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"\x06pod_ip\x18\v \x01(\tR\x05podIp\x12\x12\n" +
 	"\x04port\x18\f \x01(\x05R\x04port\x12\x1f\n" +
 	"\vtls_enabled\x18\r \x01(\bR\n" +
-	"tlsEnabled\x12\x16\n" +
-	"\x06splash\x18\x0e \x01(\tR\x06splash\x12\x10\n" +
+	"tlsEnabled\x12\x10\n" +
 	"\x03cpu\x18\x0f \x01(\tR\x03cpu\x12\x16\n" +
 	"\x06memory\x18\x10 \x01(\tR\x06memory\x12\x1a\n" +
 	"\bhostname\x18\x11 \x01(\tR\bhostname\x12\x15\n" +
-	"\x06job_id\x18\x12 \x01(\tR\x05jobId\"i\n" +
+	"\x06job_id\x18\x12 \x01(\tR\x05jobId\x12\x1c\n" +
+	"\tnamespace\x18\x13 \x01(\tR\tnamespace\"i\n" +
 	"\x10BlueprintSummary\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x1f\n" +
