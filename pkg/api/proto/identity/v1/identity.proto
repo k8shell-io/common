@@ -77,7 +77,7 @@ message IssueUserTokenRequest {
 
 // IssueUserTokenResponse carries the newly issued JWT access token.
 message IssueUserTokenResponse {
-  string access_token = 1;
+  string user_token = 1;
 }
 
 // CompleteUserDeviceFlowRequest is sent by the client after the user has
@@ -94,11 +94,6 @@ message CompleteUserDeviceFlowResponse {}
 // CompleteUserWebFlowResponse carries the user token issued upon successful completion of the web flow onboarding process.
 message CompleteUserWebFlowResponse {
   string user_token = 1;
-}
-
-// IssueUserTokenResponse carries the newly issued JWT access token.
-message IssueUserTokenResponse {
-  string access_token = 1;
 }
 
 // ListUserCredentialsResponse carries all credentials associated with a user.

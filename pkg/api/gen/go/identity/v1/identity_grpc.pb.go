@@ -25,7 +25,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	IdentityService_FindUser_FullMethodName                      = "/identity.v1.IdentityService/FindUser"
 	IdentityService_GetUsers_FullMethodName                      = "/identity.v1.IdentityService/GetUsers"
-	IdentityService_GetUserAccessToken_FullMethodName            = "/identity.v1.IdentityService/GetUserAccessToken"
+	IdentityService_IssueUserToken_FullMethodName                = "/identity.v1.IdentityService/IssueUserToken"
 	IdentityService_GetUserOnboardCapability_FullMethodName      = "/identity.v1.IdentityService/GetUserOnboardCapability"
 	IdentityService_OnboardUserDeviceFlow_FullMethodName         = "/identity.v1.IdentityService/OnboardUserDeviceFlow"
 	IdentityService_OnboardUserWebFlow_FullMethodName            = "/identity.v1.IdentityService/OnboardUserWebFlow"
@@ -53,8 +53,8 @@ type IdentityServiceClient interface {
 	FindUser(ctx context.Context, in *FindUserRequest, opts ...grpc.CallOption) (*v1.User, error)
 	// GetUsers retrieves a list of users with pagination support.
 	GetUsers(ctx context.Context, in *GetUsersRequest, opts ...grpc.CallOption) (*UserList, error)
-	// GetUserAccessToken returns the current JWT access token for a user.
-	GetUserAccessToken(ctx context.Context, in *GetUserAccessTokenRequest, opts ...grpc.CallOption) (*GetUserAccessTokenResponse, error)
+	// IssueUserToken issues a new JWT access token for a user
+	IssueUserToken(ctx context.Context, in *IssueUserTokenRequest, opts ...grpc.CallOption) (*IssueUserTokenResponse, error)
 	// GetUserOnboardCapability checks if the identity provider supports onboarding and returns the capability details.
 	GetUserOnboardCapability(ctx context.Context, in *Username, opts ...grpc.CallOption) (*v1.UserOnboardCapability, error)
 	// OnboardUserDeviceFlow initiates the device flow onboarding process for a user.
@@ -116,10 +116,10 @@ func (c *identityServiceClient) GetUsers(ctx context.Context, in *GetUsersReques
 	return out, nil
 }
 
-func (c *identityServiceClient) GetUserAccessToken(ctx context.Context, in *GetUserAccessTokenRequest, opts ...grpc.CallOption) (*GetUserAccessTokenResponse, error) {
+func (c *identityServiceClient) IssueUserToken(ctx context.Context, in *IssueUserTokenRequest, opts ...grpc.CallOption) (*IssueUserTokenResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetUserAccessTokenResponse)
-	err := c.cc.Invoke(ctx, IdentityService_GetUserAccessToken_FullMethodName, in, out, cOpts...)
+	out := new(IssueUserTokenResponse)
+	err := c.cc.Invoke(ctx, IdentityService_IssueUserToken_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -277,8 +277,8 @@ type IdentityServiceServer interface {
 	FindUser(context.Context, *FindUserRequest) (*v1.User, error)
 	// GetUsers retrieves a list of users with pagination support.
 	GetUsers(context.Context, *GetUsersRequest) (*UserList, error)
-	// GetUserAccessToken returns the current JWT access token for a user.
-	GetUserAccessToken(context.Context, *GetUserAccessTokenRequest) (*GetUserAccessTokenResponse, error)
+	// IssueUserToken issues a new JWT access token for a user
+	IssueUserToken(context.Context, *IssueUserTokenRequest) (*IssueUserTokenResponse, error)
 	// GetUserOnboardCapability checks if the identity provider supports onboarding and returns the capability details.
 	GetUserOnboardCapability(context.Context, *Username) (*v1.UserOnboardCapability, error)
 	// OnboardUserDeviceFlow initiates the device flow onboarding process for a user.
@@ -326,8 +326,8 @@ func (UnimplementedIdentityServiceServer) FindUser(context.Context, *FindUserReq
 func (UnimplementedIdentityServiceServer) GetUsers(context.Context, *GetUsersRequest) (*UserList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUsers not implemented")
 }
-func (UnimplementedIdentityServiceServer) GetUserAccessToken(context.Context, *GetUserAccessTokenRequest) (*GetUserAccessTokenResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetUserAccessToken not implemented")
+func (UnimplementedIdentityServiceServer) IssueUserToken(context.Context, *IssueUserTokenRequest) (*IssueUserTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method IssueUserToken not implemented")
 }
 func (UnimplementedIdentityServiceServer) GetUserOnboardCapability(context.Context, *Username) (*v1.UserOnboardCapability, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserOnboardCapability not implemented")
@@ -428,20 +428,20 @@ func _IdentityService_GetUsers_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IdentityService_GetUserAccessToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetUserAccessTokenRequest)
+func _IdentityService_IssueUserToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IssueUserTokenRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IdentityServiceServer).GetUserAccessToken(ctx, in)
+		return srv.(IdentityServiceServer).IssueUserToken(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IdentityService_GetUserAccessToken_FullMethodName,
+		FullMethod: IdentityService_IssueUserToken_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IdentityServiceServer).GetUserAccessToken(ctx, req.(*GetUserAccessTokenRequest))
+		return srv.(IdentityServiceServer).IssueUserToken(ctx, req.(*IssueUserTokenRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -714,8 +714,8 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _IdentityService_GetUsers_Handler,
 		},
 		{
-			MethodName: "GetUserAccessToken",
-			Handler:    _IdentityService_GetUserAccessToken_Handler,
+			MethodName: "IssueUserToken",
+			Handler:    _IdentityService_IssueUserToken_Handler,
 		},
 		{
 			MethodName: "GetUserOnboardCapability",
