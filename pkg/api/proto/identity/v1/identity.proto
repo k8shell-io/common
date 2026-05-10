@@ -73,6 +73,7 @@ service IdentityService {
 // IssueUserTokenRequest carries the username for a token issuance request.
 message IssueUserTokenRequest {
   string username = 1;
+  string source = 2;
 }
 
 // IssueUserTokenResponse carries the newly issued JWT access token.

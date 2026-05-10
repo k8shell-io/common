@@ -29,6 +29,7 @@ const (
 type IssueUserTokenRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Username      string                 `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+	Source        string                 `protobuf:"bytes,2,opt,name=source,proto3" json:"source,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -66,6 +67,13 @@ func (*IssueUserTokenRequest) Descriptor() ([]byte, []int) {
 func (x *IssueUserTokenRequest) GetUsername() string {
 	if x != nil {
 		return x.Username
+	}
+	return ""
+}
+
+func (x *IssueUserTokenRequest) GetSource() string {
+	if x != nil {
+		return x.Source
 	}
 	return ""
 }
@@ -624,9 +632,10 @@ var File_identity_v1_identity_proto protoreflect.FileDescriptor
 
 const file_identity_v1_identity_proto_rawDesc = "" +
 	"\n" +
-	"\x1aidentity/v1/identity.proto\x12\videntity.v1\x1a\x16common/v1/common.proto\x1a\x17identity/v1/types.proto\"3\n" +
+	"\x1aidentity/v1/identity.proto\x12\videntity.v1\x1a\x16common/v1/common.proto\x1a\x17identity/v1/types.proto\"K\n" +
 	"\x15IssueUserTokenRequest\x12\x1a\n" +
-	"\busername\x18\x01 \x01(\tR\busername\"7\n" +
+	"\busername\x18\x01 \x01(\tR\busername\x12\x16\n" +
+	"\x06source\x18\x02 \x01(\tR\x06source\"7\n" +
 	"\x16IssueUserTokenResponse\x12\x1d\n" +
 	"\n" +
 	"user_token\x18\x01 \x01(\tR\tuserToken\"W\n" +
