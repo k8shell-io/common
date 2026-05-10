@@ -19,8 +19,8 @@ service IdentityService {
   // GetUsers retrieves a list of users with pagination support.
   rpc GetUsers (GetUsersRequest) returns (UserList);
 
-  // GetUserAccessToken returns the current JWT access token for a user.
-  rpc GetUserAccessToken (GetUserAccessTokenRequest) returns (GetUserAccessTokenResponse);
+  // IssueUserToken issues a new JWT access token for a user
+  rpc IssueUserToken (IssueUserTokenRequest) returns (IssueUserTokenResponse);
 
   // GetUserOnboardCapability checks if the identity provider supports onboarding and returns the capability details.
   rpc GetUserOnboardCapability (Username) returns (common.v1.UserOnboardCapability);
@@ -70,9 +70,14 @@ service IdentityService {
 
 // Messages
 
-// GetUserAccessTokenRequest carries the username for a token retrieval request.
-message GetUserAccessTokenRequest {
+// IssueUserTokenRequest carries the username for a token issuance request.
+message IssueUserTokenRequest {
   string username = 1;
+}
+
+// IssueUserTokenResponse carries the newly issued JWT access token.
+message IssueUserTokenResponse {
+  string access_token = 1;
 }
 
 // CompleteUserDeviceFlowRequest is sent by the client after the user has
@@ -91,8 +96,8 @@ message CompleteUserWebFlowResponse {
   string user_token = 1;
 }
 
-// GetUserAccessTokenResponse carries the JWT access token for the requested user.
-message GetUserAccessTokenResponse {
+// IssueUserTokenResponse carries the newly issued JWT access token.
+message IssueUserTokenResponse {
   string access_token = 1;
 }
 
