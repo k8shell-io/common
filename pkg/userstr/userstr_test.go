@@ -1,6 +1,9 @@
 package userstr
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestUserStr(t *testing.T) {
 	type testCase struct {
@@ -55,5 +58,157 @@ func TestUserStr(t *testing.T) {
 				t.Fatalf("invalid expected value %q (must be PASS or FAIL)", tc.expected)
 			}
 		})
+	}
+}
+
+func TestUserStrFieldsToRawUserStr(t *testing.T) {
+	t.Run("implicit form", func(t *testing.T) {
+		raw, err := (UserStrFields{Username: "Alice"}).ToRawUserStr()
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if raw != "alice" {
+			t.Fatalf("unexpected raw userstr: got %q want %q", raw, "alice")
+		}
+	})
+
+	t.Run("explicit blueprint form", func(t *testing.T) {
+		raw, err := (UserStrFields{Username: "alice", Blueprint: "dev branch"}).ToRawUserStr()
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if raw != "alice~dev%20branch" {
+			t.Fatalf("unexpected raw userstr: got %q want %q", raw, "alice~dev%20branch")
+		}
+	})
+
+	t.Run("repo form defaults owner to username", func(t *testing.T) {
+		raw, err := (UserStrFields{Username: "alice", RepoName: "proj"}).ToRawUserStr()
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if raw != "alice~repo=alice%2Fproj" {
+			t.Fatalf("unexpected raw userstr: got %q want %q", raw, "alice~repo=alice%2Fproj")
+		}
+	})
+
+	t.Run("repo form with ref", func(t *testing.T) {
+		raw, err := (UserStrFields{Username: "alice", RepoOwner: "Org", RepoName: "Proj", RepoRef: "main"}).ToRawUserStr()
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if raw != "alice~repo=org%2Fproj+ref=main" {
+			t.Fatalf("unexpected raw userstr: got %q want %q", raw, "alice~repo=org%2Fproj+ref=main")
+		}
+	})
+
+	t.Run("explicit blueprint with params", func(t *testing.T) {
+		raw, err := (UserStrFields{Username: "alice", Blueprint: "dev", Pod: "workspace1", Namespace: "team-a"}).ToRawUserStr()
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if raw != "alice~dev+pod=workspace1+ns=team-a" {
+			t.Fatalf("unexpected raw userstr: got %q want %q", raw, "alice~dev+pod=workspace1+ns=team-a")
+		}
+	})
+
+	t.Run("named workspace form", func(t *testing.T) {
+		raw, err := (UserStrFields{Username: "alice", Pod: "workspace1", Namespace: "team-a"}).ToRawUserStr()
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if raw != "alice~pod=workspace1+ns=team-a" {
+			t.Fatalf("unexpected raw userstr: got %q want %q", raw, "alice~pod=workspace1+ns=team-a")
+		}
+	})
+
+	t.Run("repo form with pod ns", func(t *testing.T) {
+		raw, err := (UserStrFields{Username: "alice", RepoOwner: "Org", RepoName: "Proj", RepoRef: "main", Pod: "workspace1", Namespace: "team-a"}).ToRawUserStr()
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if raw != "alice~repo=org%2Fproj+ref=main+pod=workspace1+ns=team-a" {
+			t.Fatalf("unexpected raw userstr: got %q want %q", raw, "alice~repo=org%2Fproj+ref=main+pod=workspace1+ns=team-a")
+		}
+	})
+}
+
+func TestUserStrFieldsValidation(t *testing.T) {
+	cases := []struct {
+		name   string
+		fields UserStrFields
+		msg    string
+	}{
+		{
+			name:   "missing username",
+			fields: UserStrFields{},
+			msg:    "username is required",
+		},
+		{
+			name:   "blueprint with repo fields",
+			fields: UserStrFields{Username: "alice", Blueprint: "dev", RepoName: "proj"},
+			msg:    "blueprint cannot be specified when repo fields are present",
+		},
+		{
+			name:   "repo fields missing repo name",
+			fields: UserStrFields{Username: "alice", RepoOwner: "org"},
+			msg:    "repoName is required when specifying repo fields",
+		},
+		{
+			name:   "namespace without pod outside repo form",
+			fields: UserStrFields{Username: "alice", Namespace: "team-a"},
+			msg:    "pod is required",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := tc.fields.ToRawUserStr()
+			if err == nil {
+				t.Fatalf("expected error, got nil")
+			}
+			if !strings.Contains(err.Error(), tc.msg) {
+				t.Fatalf("unexpected error: got %q, want to contain %q", err.Error(), tc.msg)
+			}
+		})
+	}
+}
+
+func TestUserStrFieldsToUserStrAndBack(t *testing.T) {
+	fields := UserStrFields{
+		Username:  "alice",
+		RepoOwner: "org",
+		RepoName:  "proj",
+		RepoRef:   "main",
+		Pod:       "workspace1",
+		Namespace: "team-a",
+	}
+
+	u, err := fields.ToUserStr()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if u.Form() != UserStrFormRepoWorkspace {
+		t.Fatalf("unexpected form: got %v want %v", u.Form(), UserStrFormRepoWorkspace)
+	}
+
+	roundTrip := UserStrFieldsFromUserStr(u)
+	if roundTrip.Username != "alice" {
+		t.Fatalf("unexpected username: got %q", roundTrip.Username)
+	}
+	if roundTrip.RepoOwner != "org" {
+		t.Fatalf("unexpected repo owner: got %q", roundTrip.RepoOwner)
+	}
+	if roundTrip.RepoName != "proj" {
+		t.Fatalf("unexpected repo name: got %q", roundTrip.RepoName)
+	}
+	if roundTrip.RepoRef != "main" {
+		t.Fatalf("unexpected repo ref: got %q", roundTrip.RepoRef)
+	}
+	if roundTrip.Pod != "workspace1" {
+		t.Fatalf("unexpected pod: got %q", roundTrip.Pod)
+	}
+	if roundTrip.Namespace != "team-a" {
+		t.Fatalf("unexpected namespace: got %q", roundTrip.Namespace)
 	}
 }
