@@ -61,6 +61,77 @@ func TestUserStr(t *testing.T) {
 	}
 }
 
+func TestCanonicalizePreservesPodAndNamespace(t *testing.T) {
+	cases := []struct {
+		name     string
+		input    string
+		wantPod  string
+		wantNs   string
+		wantForm UserStrForm
+	}{
+		{
+			name:     "implicit with pod and ns",
+			input:    "alice~pod=workspace1+ns=team-a",
+			wantPod:  "workspace1",
+			wantNs:   "team-a",
+			wantForm: UserStrFormNamedWorkspace,
+		},
+		{
+			name:     "blueprint with pod and ns",
+			input:    "alice~dev+pod=workspace1+ns=team-a",
+			wantPod:  "workspace1",
+			wantNs:   "team-a",
+			wantForm: UserStrFormExplicitBlueprint,
+		},
+		{
+			name:     "repo with pod and ns",
+			input:    "alice~repo=org/proj+ref=main+pod=workspace1+ns=team-a",
+			wantPod:  "workspace1",
+			wantNs:   "team-a",
+			wantForm: UserStrFormRepoWorkspace,
+		},
+		{
+			name:     "repo without pod",
+			input:    "alice~repo=org/proj",
+			wantPod:  "",
+			wantNs:   "",
+			wantForm: UserStrFormRepoWorkspace,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			u, err := ParseUserStr(tc.input)
+			if err != nil {
+				t.Fatalf("parse failed: %v", err)
+			}
+			c, err := u.Canonicalize()
+			if err != nil {
+				t.Fatalf("canonicalize failed: %v", err)
+			}
+
+			obj := c.CanonicalUserStrObj()
+			if obj == nil {
+				t.Fatal("CanonicalUserStrObj is nil")
+			}
+			if obj.Form() != tc.wantForm {
+				t.Errorf("form: got %v want %v", obj.Form(), tc.wantForm)
+			}
+			if obj.Pod() != tc.wantPod {
+				t.Errorf("pod: got %q want %q (canonical userstr: %q)", obj.Pod(), tc.wantPod, c.CanonicalUserStr())
+			}
+			if obj.Namespace("") != tc.wantNs {
+				t.Errorf("namespace: got %q want %q", obj.Namespace(""), tc.wantNs)
+			}
+			// identity must not contain pod or namespace
+			id := c.Identity()
+			if id.Username() == "" {
+				t.Error("identity username should not be empty")
+			}
+		})
+	}
+}
+
 func TestUserStrFieldsToRawUserStr(t *testing.T) {
 	t.Run("implicit form", func(t *testing.T) {
 		raw, err := (UserStrFields{Username: "Alice"}).ToRawUserStr()
