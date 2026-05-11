@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"time"
@@ -57,7 +58,13 @@ func runDBMigrations(connString, serviceName string) error {
 	if err != nil {
 		return fmt.Errorf("init migrate: %w (src=%s)", err, src)
 	}
+	// in runDBMigrations:
 	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		var dirtyErr migrate.ErrDirty
+		if errors.As(err, &dirtyErr) {
+			return fmt.Errorf("apply migrate: migration version %d is dirty — the SQL in db/migrations/ "+
+				"likely has a syntax error: %w", dirtyErr.Version, err)
+		}
 		return fmt.Errorf("apply migrate: %w", err)
 	}
 	return nil
@@ -138,8 +145,8 @@ func NewDB(config DBConfig, serviceName string) (*DB, error) {
 		pool.Close()
 		return nil, fmt.Errorf("run database migrations: %w", err)
 	}
-	log.Info().Msg("Database migrations applied")
 
+	log.Info().Msg("Database migrations applied")
 	return &DB{config: config, Pool: pool, log: log}, nil
 }
 
