@@ -29,7 +29,7 @@ func (u *UserStr) Canonicalize() (*CanonicalUserStr, error) {
 	out.aliases = buildAliases(u)
 	if u.pod != "" {
 		out.workspaceName = u.pod
-	} else if u.deploy == "" {
+	} else {
 		out.workspaceName = buildCanonicalId(u.username, out.canonicalKey)
 	}
 
@@ -52,6 +52,12 @@ func buildWorkspaceKey(id WorkspaceIdentity) string {
 	}
 	if id.blueprint != "" {
 		parts = append(parts, "bp="+id.blueprint)
+	}
+	if id.deploy != "" {
+		parts = append(parts, "deploy="+id.deploy)
+	}
+	if id.namespace != "" {
+		parts = append(parts, "ns="+id.namespace)
 	}
 	return strings.Join(parts, "|")
 }

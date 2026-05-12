@@ -91,6 +91,8 @@ type WorkspaceIdentity struct {
 	repoOwner     string
 	repoName      string
 	repoRef       string
+	deploy        string
+	namespace     string
 }
 
 // Getters for WorkspaceIdentity
@@ -100,6 +102,8 @@ func (w *WorkspaceIdentity) BlueprintKind() BlueprintKind { return w.blueprintKi
 func (w *WorkspaceIdentity) RepoOwner() string            { return w.repoOwner }
 func (w *WorkspaceIdentity) RepoName() string             { return w.repoName }
 func (w *WorkspaceIdentity) RepoRef() string              { return w.repoRef }
+func (w *WorkspaceIdentity) Deploy() string               { return w.deploy }
+func (w *WorkspaceIdentity) Namespace() string            { return w.namespace }
 
 type CanonicalUserStr struct {
 	identity            WorkspaceIdentity
