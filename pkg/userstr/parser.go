@@ -79,20 +79,22 @@ func ParseUserStrWithGrammar(input string, grammar UserStrGrammar) (*UserStr, er
 			}
 		}
 
-		bpDeploy := params["deploy"]
+		bpWorkload := params["workload"]
 		bpNs := params["ns"]
-		if bpDeploy != "" && bpNs == "" {
-			return nil, fmt.Errorf("%w: ns is required with deploy", ErrUserStrInvalid)
+		if bpWorkload != "" && bpNs == "" {
+			return nil, fmt.Errorf("%w: ns is required with workload", ErrUserStrInvalid)
 		}
-		if bpNs != "" && bpDeploy == "" {
-			return nil, fmt.Errorf("%w: deploy is required with ns in blueprint form", ErrUserStrInvalid)
+		if bpNs != "" && bpWorkload == "" {
+			return nil, fmt.Errorf("%w: workload is required with ns in blueprint form", ErrUserStrInvalid)
 		}
+		bpWorkloadKind, bpWorkloadName, _ := strings.Cut(bpWorkload, "/")
 		return &UserStr{
 			raw:           rawTrimmed,
 			form:          UserStrFormExplicitBlueprint,
 			username:      username,
 			user:          params["user"],
-			deploy:        bpDeploy,
+			workloadKind:  bpWorkloadKind,
+			workloadName:  bpWorkloadName,
 			namespace:     bpNs,
 			blueprint:     bpDecoded,
 			blueprintKind: BlueprintKindExplicit,
@@ -107,16 +109,17 @@ func ParseUserStrWithGrammar(input string, grammar UserStrGrammar) (*UserStr, er
 
 	ns := params["ns"]
 	pod := params["pod"]
-	deploy := params["deploy"]
+	workload := params["workload"]
 	repo := params["repo"]
+	workloadKind, workloadName, _ := strings.Cut(workload, "/")
 
 	// Named workspace form: pod is the primary key; no repo, no deploy allowed.
 	if pod != "" {
 		if repo != "" {
 			return nil, fmt.Errorf("%w: pod cannot be combined with repo", ErrUserStrInvalid)
 		}
-		if deploy != "" {
-			return nil, fmt.Errorf("%w: pod cannot be combined with deploy", ErrUserStrInvalid)
+		if params["workload"] != "" {
+			return nil, fmt.Errorf("%w: pod cannot be combined with workload", ErrUserStrInvalid)
 		}
 		for k := range params {
 			if !isParamAllowedInForm(grammar, k, UserStrFormNamedWorkspace) {
@@ -145,11 +148,11 @@ func ParseUserStrWithGrammar(input string, grammar UserStrGrammar) (*UserStr, er
 	if repo == "" {
 		return nil, fmt.Errorf("%w: repo is required in param-list form", ErrUserStrInvalid)
 	}
-	if deploy != "" && ns == "" {
-		return nil, fmt.Errorf("%w: ns is required with deploy", ErrUserStrInvalid)
+	if workload != "" && ns == "" {
+		return nil, fmt.Errorf("%w: ns is required with workload", ErrUserStrInvalid)
 	}
-	if ns != "" && deploy == "" {
-		return nil, fmt.Errorf("%w: ns requires deploy in repo form", ErrUserStrInvalid)
+	if ns != "" && workload == "" {
+		return nil, fmt.Errorf("%w: ns requires workload in repo form", ErrUserStrInvalid)
 	}
 
 	repoRef := params["ref"]
@@ -171,7 +174,8 @@ func ParseUserStrWithGrammar(input string, grammar UserStrGrammar) (*UserStr, er
 		form:          UserStrFormRepoWorkspace,
 		username:      username,
 		user:          params["user"],
-		deploy:        deploy,
+		workloadKind:  workloadKind,
+		workloadName:  workloadName,
 		namespace:     ns,
 		blueprint:     blueprint,
 		blueprintKind: BlueprintKindCustom,
@@ -206,7 +210,12 @@ func parseKVParts(parts []string, grammar UserStrGrammar) (map[string]string, er
 		if err != nil {
 			return nil, fmt.Errorf("%w: value decode failed for key %q: %v", ErrUserStrMalformed, key, err)
 		}
-		params[key] = strings.ToLower(decoded)
+		// workload kind is case-sensitive (e.g. Deployment, StatefulSet); preserve case
+		if key == "workload" {
+			params[key] = decoded
+		} else {
+			params[key] = strings.ToLower(decoded)
+		}
 	}
 	if len(params) == 0 {
 		return nil, nil

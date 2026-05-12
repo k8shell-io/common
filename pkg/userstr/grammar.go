@@ -39,7 +39,7 @@ func DefaultGrammar() UserStrGrammar {
 					UserStrFormRepoWorkspace:     true,
 				},
 			},
-			"deploy": {
+			"workload": {
 				AllowedIn: map[UserStrForm]bool{
 					UserStrFormExplicitBlueprint: true,
 					UserStrFormRepoWorkspace:     true,

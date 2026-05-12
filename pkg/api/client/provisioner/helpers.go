@@ -49,21 +49,6 @@ func (c *Client) ProvisionHandshake(ctx context.Context, us userstr.UserStr, tim
 	return c.waitForHandshakeMessage(stream)
 }
 
-// UpgradeHandshake reads the first stream event that needs to be handshake.
-func (c *Client) UpgradeHandshake(ctx context.Context, workspace string, forceUpgrade bool, timeout int32) (workspaceName string, jobID string, stream grpc.ServerStreamingClient[provisionerv1.ProvisionWorkspaceResponse], err error) {
-	stream, err = c.UpgradeWorkspaceStream(ctx, &provisionerv1.UpgradeWorkspaceRequest{
-		Workspace:    workspace,
-		SendProgress: true,
-		SendEvents:   true,
-		Force:        forceUpgrade,
-		Timeout:      timeout,
-	})
-	if err != nil {
-		return "", "", nil, fmt.Errorf("failed to start upgrade stream: %w", err)
-	}
-	return c.waitForHandshakeMessage(stream)
-}
-
 func (c *Client) waitForHandshakeMessage(
 	stream grpc.ServerStreamingClient[provisionerv1.ProvisionWorkspaceResponse],
 ) (string, string, grpc.ServerStreamingClient[provisionerv1.ProvisionWorkspaceResponse], error) {

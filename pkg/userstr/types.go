@@ -53,7 +53,8 @@ type UserStr struct {
 	username      string
 	user          string
 	pod           string
-	deploy        string
+	workloadKind  string
+	workloadName  string
 	namespace     string
 	blueprint     string
 	blueprintKind BlueprintKind
@@ -64,12 +65,13 @@ type UserStr struct {
 }
 
 // Getters for UserStr
-func (u *UserStr) Raw() string       { return u.raw }
-func (u *UserStr) Form() UserStrForm { return u.form }
-func (u *UserStr) Username() string  { return u.username }
-func (u *UserStr) User() string      { return u.user }
-func (u *UserStr) Pod() string       { return u.pod }
-func (u *UserStr) Deploy() string    { return u.deploy }
+func (u *UserStr) Raw() string          { return u.raw }
+func (u *UserStr) Form() UserStrForm    { return u.form }
+func (u *UserStr) Username() string     { return u.username }
+func (u *UserStr) User() string         { return u.user }
+func (u *UserStr) Pod() string          { return u.pod }
+func (u *UserStr) WorkloadKind() string { return u.workloadKind }
+func (u *UserStr) WorkloadName() string { return u.workloadName }
 func (u *UserStr) Namespace(defaultValue string) string {
 	if u.namespace == "" {
 		return defaultValue
@@ -91,7 +93,8 @@ type WorkspaceIdentity struct {
 	repoOwner     string
 	repoName      string
 	repoRef       string
-	deploy        string
+	workloadKind  string
+	workloadName  string
 	namespace     string
 }
 
@@ -102,7 +105,8 @@ func (w *WorkspaceIdentity) BlueprintKind() BlueprintKind { return w.blueprintKi
 func (w *WorkspaceIdentity) RepoOwner() string            { return w.repoOwner }
 func (w *WorkspaceIdentity) RepoName() string             { return w.repoName }
 func (w *WorkspaceIdentity) RepoRef() string              { return w.repoRef }
-func (w *WorkspaceIdentity) Deploy() string               { return w.deploy }
+func (w *WorkspaceIdentity) WorkloadKind() string         { return w.workloadKind }
+func (w *WorkspaceIdentity) WorkloadName() string         { return w.workloadName }
 func (w *WorkspaceIdentity) Namespace() string            { return w.namespace }
 
 type CanonicalUserStr struct {

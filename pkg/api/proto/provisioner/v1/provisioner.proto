@@ -13,8 +13,8 @@ option go_package = "github.com/k8shell-io/common/pkg/api/gen/go/provisioner/v1;
 import "common/v1/common.proto";
 
 // ProvisionerService manages the full lifecycle of user workspaces.
-// Clients interact with this service to provision new workspaces, upgrade
-// existing ones, query workspace state, and tear down workspaces.
+// Clients interact with this service to provision new workspaces
+// query workspace state, and tear down workspaces.
 service ProvisionerService {
   // GetWorkspaces returns all workspaces matching the given filter criteria.
   rpc GetWorkspaces(GetWorkspacesRequest) returns (GetWorkspacesResponse);
@@ -32,24 +32,13 @@ service ProvisionerService {
   // events back to the caller until the workspace is ready or an error occurs.
   rpc ProvisionWorkspaceStream(ProvisionWorkspaceRequest) returns (stream ProvisionWorkspaceResponse);
 
-  // UpgradeWorkspaceStream upgrades an existing workspace (e.g. new blueprint
-  // version) and streams progress events back to the caller.
-  rpc UpgradeWorkspaceStream(UpgradeWorkspaceRequest) returns (stream ProvisionWorkspaceResponse);
-
-  // CanUpgradeWorkspace checks whether a workspace is eligible for an upgrade.
-  rpc CanUpgradeWorkspace(CanUpgradeWorkspaceRequest) returns (CanUpgradeWorkspaceResponse);
-
-  // UpgradeWorkspaceResources updates the CPU and memory allocation of a
-  // running workspace without reprovisioning it.
-  rpc UpgradeWorkspaceResources(UpgradeWorkspaceResourcesRequest) returns (UpgradeWorkspaceResourcesResponse);
-
   // DeleteWorkspace deprovisions and permanently removes a workspace.
   rpc DeleteWorkspace(DeleteWorkspaceRequest) returns (DeleteWorkspaceResponse);
 
   // StopWorkspace suspends a running workspace without removing its state.
   rpc StopWorkspace(StopWorkspaceRequest) returns (StopWorkspaceResponse);
 
-  // EjectWorkspace removes a previously injected workspace from a Deployment
+  // EjectWorkspace removes a previously injected workspace from a workload
   // and deletes all supporting resources (ConfigMaps, PVCs, NetworkPolicies).
   rpc EjectWorkspace(EjectWorkspaceRequest) returns (EjectWorkspaceResponse);
 }
@@ -126,7 +115,7 @@ message ProvisionWorkspaceResponse {
   }
 }
 
-// HandshakeResponse is the first message returned in a provisioning or upgrade
+// HandshakeResponse is the first message returned in a provisioning 
 // stream, confirming the job has been accepted.
 message HandshakeResponse {
   // workspace is the name assigned to the workspace being provisioned.
@@ -137,40 +126,8 @@ message HandshakeResponse {
   string error = 3;
 }
 
-// UpgradeWorkspaceRequest initiates an upgrade of an existing workspace.
-message UpgradeWorkspaceRequest {
-  // workspace is the name of the workspace to upgrade.
-  string workspace = 1;
-  // timeout is the maximum number of seconds to wait for the upgrade to complete.
-  int32 timeout = 2;
-  // send_progress controls whether intermediate progress updates are streamed.
-  bool send_progress = 3;
-  // send_events controls whether Kubernetes object events are included in the stream.
-  bool send_events = 4;
-  // force bypasses upgrade eligibility checks when true.
-  bool force = 5;
-}
-
-// UpgradeWorkspaceResourcesRequest changes the resource allocation of a workspace.
-message UpgradeWorkspaceResourcesRequest {
-  // workspace is the name of the workspace whose resources will be updated.
-  string workspace = 1;
-  // cpu is the new CPU request/limit in Kubernetes resource quantity format (e.g. "500m", "2").
-  string cpu = 2;
-  // memory is the new memory request/limit in Kubernetes resource quantity format (e.g. "512Mi", "2Gi").
-  string memory = 3;
-}
-
-// UpgradeWorkspaceResourcesResponse reports the result of the resource update.
-message UpgradeWorkspaceResourcesResponse {
-  // status is a short machine-readable result code (e.g. "ok", "error").
-  string status = 1;
-  // message provides a human-readable description of the result.
-  string message = 2;
-}
-
 // ProvisionEvent represents a single lifecycle event emitted during
-// workspace provisioning or upgrade.
+// workspace provisionings.
 message ProvisionEvent {
   // type is the event category (e.g. "pod", "deployment", "job").
   string type = 1;
@@ -214,31 +171,19 @@ message StopWorkspaceResponse {
   string message = 1;
 }
 
-// CanUpgradeWorkspaceRequest identifies the workspace to check.
-message CanUpgradeWorkspaceRequest {
-  // workspace is the name of the workspace to check for upgrade eligibility.
-  string workspace = 1;
-}
-
-// CanUpgradeWorkspaceResponse reports whether the workspace can be upgraded.
-message CanUpgradeWorkspaceResponse {
-  // can_upgrade is true when the workspace is eligible for an upgrade.
-  bool can_upgrade = 1;
-  // message explains why an upgrade is or is not possible.
-  string message = 2;
-}
-
-// EjectWorkspaceRequest identifies the Deployment from which to eject a workspace.
+// EjectWorkspaceRequest identifies the workload from which to eject a workspace.
 message EjectWorkspaceRequest {
   // userstr identifies the workspace to eject.
   string userstr = 1;
-  // namespace is the Kubernetes namespace that contains the target Deployment.
+  // namespace is the Kubernetes namespace that contains the target workload.
   string namespace = 2;
-  // deployment_name is the name of the Deployment to eject from.
-  string deployment_name = 3;
+  // workload_kind is the Kubernetes resource kind of the target workload (e.g. Deployment, StatefulSet, DaemonSet).
+  string workload_kind = 3;
+  // workload_name is the name of the target workload to eject from.
+  string workload_name = 4;
   // timeout_seconds is how long to wait for the rolling update to settle.
   // Defaults to 60 if unset or 0.
-  int32 timeout_seconds = 4;
+  int32 timeout_seconds = 5;
 }
 
 // EjectWorkspaceResponse reports the outcome of the eject operation.

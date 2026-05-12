@@ -21,15 +21,22 @@ func (u *UserStr) Canonicalize() (*CanonicalUserStr, error) {
 		repoOwner:     u.repoOwner,
 		repoName:      u.repoName,
 		repoRef:       u.repoRef,
+		workloadKind:  u.workloadKind,
+		workloadName:  u.workloadName,
+	}
+
+	workload := ""
+	if u.workloadKind != "" {
+		workload = u.workloadKind + "/" + u.workloadName
 	}
 
 	out := &CanonicalUserStr{identity: identity}
 	out.canonicalKey = buildWorkspaceKey(identity)
-	out.canonicalUserStr = buildCanonicalUserStr(identity, u.user, u.pod, u.deploy, u.namespace)
+	out.canonicalUserStr = buildCanonicalUserStr(identity, u.user, u.pod, workload, u.namespace)
 	out.aliases = buildAliases(u)
 	if u.pod != "" {
 		out.workspaceName = u.pod
-	} else {
+	} else if u.workloadKind == "" {
 		out.workspaceName = buildCanonicalId(u.username, out.canonicalKey)
 	}
 
@@ -53,8 +60,8 @@ func buildWorkspaceKey(id WorkspaceIdentity) string {
 	if id.blueprint != "" {
 		parts = append(parts, "bp="+id.blueprint)
 	}
-	if id.deploy != "" {
-		parts = append(parts, "deploy="+id.deploy)
+	if id.workloadKind != "" {
+		parts = append(parts, "workload="+id.workloadKind+"/"+id.workloadName)
 	}
 	if id.namespace != "" {
 		parts = append(parts, "ns="+id.namespace)
@@ -62,20 +69,20 @@ func buildWorkspaceKey(id WorkspaceIdentity) string {
 	return strings.Join(parts, "|")
 }
 
-func buildCanonicalUserStr(id WorkspaceIdentity, user, pod, deploy, ns string) string {
+func buildCanonicalUserStr(id WorkspaceIdentity, user, pod, workload, ns string) string {
 	canonicalUser := strings.ToLower(strings.TrimSpace(user))
 	canonicalPod := strings.ToLower(strings.TrimSpace(pod))
-	canonicalDeploy := strings.ToLower(strings.TrimSpace(deploy))
+	canonicalWorkload := strings.TrimSpace(workload)
 	canonicalNs := strings.ToLower(strings.TrimSpace(ns))
 
-	// Repo form: deploy+ns are optional and must appear together.
+	// Repo form: workload+ns are optional and must appear together.
 	if id.repoOwner != "" && id.repoName != "" {
 		params := map[string]string{"repo": id.repoOwner + "/" + id.repoName}
 		if id.repoRef != "" {
 			params["ref"] = id.repoRef
 		}
-		if canonicalDeploy != "" {
-			params["deploy"] = canonicalDeploy
+		if canonicalWorkload != "" {
+			params["workload"] = canonicalWorkload
 			params["ns"] = canonicalNs
 		}
 		if canonicalUser != "" {
@@ -87,8 +94,8 @@ func buildCanonicalUserStr(id WorkspaceIdentity, user, pod, deploy, ns string) s
 	// Blueprint form.
 	if id.blueprint != "" {
 		raw := id.username + "~" + url.PathEscape(id.blueprint)
-		if canonicalDeploy != "" {
-			raw += "+deploy=" + url.PathEscape(canonicalDeploy)
+		if canonicalWorkload != "" {
+			raw += "+workload=" + url.PathEscape(canonicalWorkload)
 			raw += "+ns=" + url.PathEscape(canonicalNs)
 		}
 		if canonicalUser != "" {
