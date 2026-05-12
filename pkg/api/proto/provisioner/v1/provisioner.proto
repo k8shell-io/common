@@ -22,6 +22,9 @@ service ProvisionerService {
   // FindWorkspace returns the details of a single workspace by name.
   rpc FindWorkspace(FindWorkspaceRequest) returns (common.v1.WorkspaceDetails);
 
+  // GetWorkspacesByUserStr returns workspaces for the given userstr
+  rpc GetWorkspacesByUserStr(GetWorkspacesByUserStrRequest) returns (GetWorkspacesResponse);
+
   // GetUserBlueprints returns the list of blueprints available to a user.
   rpc GetUserBlueprints(GetUserBlueprintsRequest) returns (GetUserBlueprintsResponse);
 
@@ -74,6 +77,11 @@ message GetWorkspacesRequest {
   string repo_owner = 6;
   // repo_ref filters by the source repository ref (branch, tag, or commit).
   string repo_ref = 7;
+}
+
+message GetWorkspacesByUserStrRequest {
+  // userstr is the serialised user context string to filter workspaces by.
+  string userstr = 1;
 }
 
 // GetWorkspacesResponse contains the list of matching workspaces.
