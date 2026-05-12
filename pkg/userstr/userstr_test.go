@@ -56,6 +56,7 @@ func TestUserStr(t *testing.T) {
 				if u.Pod() != "" && c.WorkspaceName() != u.Pod() {
 					t.Fatalf("workspace name must match pod when pod is set for input %q: workspaceName=%q pod=%q", tc.userstr, c.WorkspaceName(), u.Pod())
 				}
+				t.Logf("success\nUSERSTR: %q\nWORKSPACENAME: %q", tc.userstr, c.WorkspaceName())
 			case "FAIL":
 				if err == nil {
 					t.Fatalf("expected FAIL, got PASS for input %q", tc.userstr)
@@ -70,39 +71,49 @@ func TestUserStr(t *testing.T) {
 
 func TestCanonicalizePreservesPodAndNamespace(t *testing.T) {
 	cases := []struct {
-		name     string
-		input    string
-		wantPod  string
-		wantNs   string
-		wantForm UserStrForm
+		name              string
+		input             string
+		wantPod           string
+		wantNs            string
+		wantForm          UserStrForm
+		wantWorkspaceName string // empty string means "should be empty"
+		wantWorkspaceSet  bool   // true if workspaceName should be non-empty
 	}{
 		{
-			name:     "named workspace with pod and ns",
-			input:    "alice~pod=workspace1+ns=team-a",
-			wantPod:  "workspace1",
-			wantNs:   "team-a",
-			wantForm: UserStrFormNamedWorkspace,
+			name:              "named workspace with pod and ns",
+			input:             "alice~pod=workspace1+ns=team-a",
+			wantPod:           "workspace1",
+			wantNs:            "team-a",
+			wantForm:          UserStrFormNamedWorkspace,
+			wantWorkspaceName: "workspace1",
+			wantWorkspaceSet:  true,
 		},
 		{
-			name:     "blueprint with deploy and ns",
-			input:    "alice~dev+deploy=myapp+ns=team-a",
-			wantPod:  "",
-			wantNs:   "team-a",
-			wantForm: UserStrFormExplicitBlueprint,
+			name:              "blueprint with deploy and ns",
+			input:             "alice~dev+deploy=myapp+ns=team-a",
+			wantPod:           "",
+			wantNs:            "team-a",
+			wantForm:          UserStrFormExplicitBlueprint,
+			wantWorkspaceName: "",
+			wantWorkspaceSet:  false,
 		},
 		{
-			name:     "repo with deploy and ns",
-			input:    "alice~repo=org/proj+ref=main+deploy=myapp+ns=team-a",
-			wantPod:  "",
-			wantNs:   "team-a",
-			wantForm: UserStrFormRepoWorkspace,
+			name:              "repo with deploy and ns",
+			input:             "alice~repo=org/proj+ref=main+deploy=myapp+ns=team-a",
+			wantPod:           "",
+			wantNs:            "team-a",
+			wantForm:          UserStrFormRepoWorkspace,
+			wantWorkspaceName: "",
+			wantWorkspaceSet:  false,
 		},
 		{
-			name:     "repo without deploy",
-			input:    "alice~repo=org/proj",
-			wantPod:  "",
-			wantNs:   "",
-			wantForm: UserStrFormRepoWorkspace,
+			name:              "repo without deploy",
+			input:             "alice~repo=org/proj",
+			wantPod:           "",
+			wantNs:            "",
+			wantForm:          UserStrFormRepoWorkspace,
+			wantWorkspaceName: "",
+			wantWorkspaceSet:  true, // no deploy, so canonical ID is generated
 		},
 	}
 
@@ -129,6 +140,15 @@ func TestCanonicalizePreservesPodAndNamespace(t *testing.T) {
 			}
 			if obj.Namespace("") != tc.wantNs {
 				t.Errorf("namespace: got %q want %q", obj.Namespace(""), tc.wantNs)
+			}
+			if tc.wantWorkspaceSet && c.WorkspaceName() == "" {
+				t.Errorf("workspace name should be non-empty")
+			}
+			if !tc.wantWorkspaceSet && c.WorkspaceName() != "" {
+				t.Errorf("workspace name should be empty when deploy is set, got %q", c.WorkspaceName())
+			}
+			if tc.wantWorkspaceName != "" && c.WorkspaceName() != tc.wantWorkspaceName {
+				t.Errorf("workspace name: got %q want %q", c.WorkspaceName(), tc.wantWorkspaceName)
 			}
 			// identity must not contain pod, deploy, or namespace
 			id := c.Identity()
