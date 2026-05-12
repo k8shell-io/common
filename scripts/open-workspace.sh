@@ -28,7 +28,7 @@ shift 2
 
 HOST="${DEFAULT_HOST}"
 REF_NAME=""
-POD_NAME=""
+POD_NAME=""s
 NAMESPACE=""
 
 while [[ $# -gt 0 ]]; do
