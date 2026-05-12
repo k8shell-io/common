@@ -19,19 +19,26 @@ func TestUserStr(t *testing.T) {
 		{name: "pod standalone no ns", userstr: "alice~pod=workspace1", expected: "PASS"},
 		{name: "pod standalone user", userstr: "alice~pod=workspace1+ns=test+user=root", expected: "PASS"},
 		{name: "repo simple", userstr: "alice~repo=org/proj", expected: "PASS"},
-		{name: "repo with ns", userstr: "alice~repo=org/proj+ns=test", expected: "PASS"},
-		{name: "repo with ref with ns", userstr: "alice~repo=org/proj+ref=main+ns=test", expected: "PASS"},
 		{name: "repo with ref", userstr: "alice~repo=org/proj+ref=main", expected: "PASS"},
-		{name: "repo with pod", userstr: "alice~repo=org/proj+pod=workspace1+ns=test", expected: "PASS"},
-		{name: "repo with pod no ns", userstr: "alice~repo=org/proj+pod=workspace1", expected: "PASS"},
-		{name: "repo with ref and pod", userstr: "alice~repo=org/proj+ref=main+pod=workspace1+ns=test+user=root",
-			expected: "PASS"},
-		{name: "explicit blueprint with pod", userstr: "alice~dev+pod=workspace1+ns=test", expected: "PASS"},
-		{name: "explicit blueprint with pod no ns", userstr: "alice~dev+pod=workspace1", expected: "PASS"},
+		{name: "repo with deploy and ns", userstr: "alice~repo=org/proj+deploy=myapp+ns=k8s-test", expected: "PASS"},
+		{name: "repo with ref deploy ns", userstr: "alice~repo=org/proj+ref=main+deploy=myapp+ns=k8s-test", expected: "PASS"},
+		{name: "repo with ref deploy ns user", userstr: "alice~repo=org/proj+ref=main+deploy=myapp+ns=k8s-test+user=root", expected: "PASS"},
+		{name: "explicit blueprint with deploy and ns", userstr: "alice~dev+deploy=myapp+ns=k8s-test", expected: "PASS"},
+		{name: "explicit blueprint with deploy ns user", userstr: "alice~dev+deploy=myapp+ns=k8s-test+user=root", expected: "PASS"},
+		{name: "deploy with explicit blueprint", userstr: "alice~dev+deploy=myapp+ns=k8s-test", expected: "PASS"},
 
+		{name: "deploy form standalone", userstr: "alice~deploy=myapp+ns=k8s-test", expected: "FAIL"},
+		{name: "deploy form standalone with user", userstr: "alice~deploy=myapp+ns=k8s-test+user=root", expected: "FAIL"},
 		{name: "ns without pod", userstr: "alice~ns=test", expected: "FAIL"},
 		{name: "pod with ref no repo", userstr: "alice~pod=workspace1+ns=test+ref=main", expected: "FAIL"},
 		{name: "target removed", userstr: "alice~target=deploy/identity+ns=test", expected: "FAIL"},
+		{name: "repo with ns no deploy", userstr: "alice~repo=org/proj+ns=test", expected: "FAIL"},
+		{name: "repo with pod", userstr: "alice~repo=org/proj+pod=workspace1", expected: "FAIL"},
+		{name: "explicit blueprint with pod", userstr: "alice~dev+pod=workspace1", expected: "FAIL"},
+		{name: "explicit blueprint with ns", userstr: "alice~dev+ns=test", expected: "FAIL"},
+		{name: "deploy without ns", userstr: "alice~deploy=myapp", expected: "FAIL"},
+		{name: "deploy with pod", userstr: "alice~deploy=myapp+pod=ws1+ns=k8s-test", expected: "FAIL"},
+		{name: "repo deploy without ns", userstr: "alice~repo=org/proj+deploy=myapp", expected: "FAIL"},
 	}
 
 	for _, tc := range cases {
@@ -70,28 +77,28 @@ func TestCanonicalizePreservesPodAndNamespace(t *testing.T) {
 		wantForm UserStrForm
 	}{
 		{
-			name:     "implicit with pod and ns",
+			name:     "named workspace with pod and ns",
 			input:    "alice~pod=workspace1+ns=team-a",
 			wantPod:  "workspace1",
 			wantNs:   "team-a",
 			wantForm: UserStrFormNamedWorkspace,
 		},
 		{
-			name:     "blueprint with pod and ns",
-			input:    "alice~dev+pod=workspace1+ns=team-a",
-			wantPod:  "workspace1",
+			name:     "blueprint with deploy and ns",
+			input:    "alice~dev+deploy=myapp+ns=team-a",
+			wantPod:  "",
 			wantNs:   "team-a",
 			wantForm: UserStrFormExplicitBlueprint,
 		},
 		{
-			name:     "repo with pod and ns",
-			input:    "alice~repo=org/proj+ref=main+pod=workspace1+ns=team-a",
-			wantPod:  "workspace1",
+			name:     "repo with deploy and ns",
+			input:    "alice~repo=org/proj+ref=main+deploy=myapp+ns=team-a",
+			wantPod:  "",
 			wantNs:   "team-a",
 			wantForm: UserStrFormRepoWorkspace,
 		},
 		{
-			name:     "repo without pod",
+			name:     "repo without deploy",
 			input:    "alice~repo=org/proj",
 			wantPod:  "",
 			wantNs:   "",
@@ -123,7 +130,7 @@ func TestCanonicalizePreservesPodAndNamespace(t *testing.T) {
 			if obj.Namespace("") != tc.wantNs {
 				t.Errorf("namespace: got %q want %q", obj.Namespace(""), tc.wantNs)
 			}
-			// identity must not contain pod or namespace
+			// identity must not contain pod, deploy, or namespace
 			id := c.Identity()
 			if id.Username() == "" {
 				t.Error("identity username should not be empty")
@@ -173,16 +180,6 @@ func TestUserStrFieldsToRawUserStr(t *testing.T) {
 		}
 	})
 
-	t.Run("explicit blueprint with params", func(t *testing.T) {
-		raw, err := (UserStrFields{Username: "alice", Blueprint: "dev", Pod: "workspace1", Namespace: "team-a"}).ToRawUserStr()
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-		if raw != "alice~dev+pod=workspace1+ns=team-a" {
-			t.Fatalf("unexpected raw userstr: got %q want %q", raw, "alice~dev+pod=workspace1+ns=team-a")
-		}
-	})
-
 	t.Run("named workspace form", func(t *testing.T) {
 		raw, err := (UserStrFields{Username: "alice", Pod: "workspace1", Namespace: "team-a"}).ToRawUserStr()
 		if err != nil {
@@ -193,13 +190,13 @@ func TestUserStrFieldsToRawUserStr(t *testing.T) {
 		}
 	})
 
-	t.Run("repo form with pod ns", func(t *testing.T) {
-		raw, err := (UserStrFields{Username: "alice", RepoOwner: "Org", RepoName: "Proj", RepoRef: "main", Pod: "workspace1", Namespace: "team-a"}).ToRawUserStr()
+	t.Run("repo form with deploy and ns", func(t *testing.T) {
+		raw, err := (UserStrFields{Username: "alice", RepoOwner: "Org", RepoName: "Proj", RepoRef: "main", Deploy: "myapp", Namespace: "team-a"}).ToRawUserStr()
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
-		if raw != "alice~repo=org%2Fproj+ref=main+pod=workspace1+ns=team-a" {
-			t.Fatalf("unexpected raw userstr: got %q want %q", raw, "alice~repo=org%2Fproj+ref=main+pod=workspace1+ns=team-a")
+		if raw != "alice~repo=org%2Fproj+ref=main+deploy=myapp+ns=team-a" {
+			t.Fatalf("unexpected raw userstr: got %q want %q", raw, "alice~repo=org%2Fproj+ref=main+deploy=myapp+ns=team-a")
 		}
 	})
 }
@@ -226,9 +223,34 @@ func TestUserStrFieldsValidation(t *testing.T) {
 			msg:    "repoName is required when specifying repo fields",
 		},
 		{
-			name:   "namespace without pod outside repo form",
+			name:   "namespace without pod or deploy",
 			fields: UserStrFields{Username: "alice", Namespace: "team-a"},
 			msg:    "pod is required",
+		},
+		{
+			name:   "pod with repo fields",
+			fields: UserStrFields{Username: "alice", RepoName: "proj", Pod: "ws1"},
+			msg:    "pod cannot be combined with repo",
+		},
+		{
+			name:   "deploy without repo or blueprint",
+			fields: UserStrFields{Username: "alice", Deploy: "myapp"},
+			msg:    "deploy requires repo or blueprint fields",
+		},
+		{
+			name:   "ns without deploy in repo form",
+			fields: UserStrFields{Username: "alice", RepoName: "proj", Namespace: "team-a"},
+			msg:    "ns requires deploy in repo form",
+		},
+		{
+			name:   "deploy with explicit blueprint",
+			fields: UserStrFields{Username: "alice", RepoName: "proj", Blueprint: "dev", Deploy: "myapp", Namespace: "team-a"},
+			msg:    "blueprint cannot be specified when repo fields are present",
+		},
+		{
+			name:   "blueprint deploy without ns",
+			fields: UserStrFields{Username: "alice", Blueprint: "dev", Deploy: "myapp"},
+			msg:    "ns is required with deploy",
 		},
 	}
 
@@ -251,7 +273,7 @@ func TestUserStrFieldsToUserStrAndBack(t *testing.T) {
 		RepoOwner: "org",
 		RepoName:  "proj",
 		RepoRef:   "main",
-		Pod:       "workspace1",
+		Deploy:    "myapp",
 		Namespace: "team-a",
 	}
 
@@ -276,10 +298,13 @@ func TestUserStrFieldsToUserStrAndBack(t *testing.T) {
 	if roundTrip.RepoRef != "main" {
 		t.Fatalf("unexpected repo ref: got %q", roundTrip.RepoRef)
 	}
-	if roundTrip.Pod != "workspace1" {
-		t.Fatalf("unexpected pod: got %q", roundTrip.Pod)
+	if roundTrip.Deploy != "myapp" {
+		t.Fatalf("unexpected deploy: got %q", roundTrip.Deploy)
 	}
 	if roundTrip.Namespace != "team-a" {
 		t.Fatalf("unexpected namespace: got %q", roundTrip.Namespace)
+	}
+	if roundTrip.Pod != "" {
+		t.Fatalf("unexpected pod (should be empty): got %q", roundTrip.Pod)
 	}
 }

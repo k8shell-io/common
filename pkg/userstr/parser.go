@@ -79,19 +79,21 @@ func ParseUserStrWithGrammar(input string, grammar UserStrGrammar) (*UserStr, er
 			}
 		}
 
-		ns, hasNS := params["ns"]
-		pod := params["pod"]
-		if hasNS && strings.TrimSpace(pod) == "" {
-			return nil, fmt.Errorf("%w: ns requires pod", ErrUserStrInvalid)
+		bpDeploy := params["deploy"]
+		bpNs := params["ns"]
+		if bpDeploy != "" && bpNs == "" {
+			return nil, fmt.Errorf("%w: ns is required with deploy", ErrUserStrInvalid)
 		}
-
+		if bpNs != "" && bpDeploy == "" {
+			return nil, fmt.Errorf("%w: deploy is required with ns in blueprint form", ErrUserStrInvalid)
+		}
 		return &UserStr{
 			raw:           rawTrimmed,
 			form:          UserStrFormExplicitBlueprint,
 			username:      username,
 			user:          params["user"],
-			pod:           pod,
-			namespace:     ns,
+			deploy:        bpDeploy,
+			namespace:     bpNs,
 			blueprint:     bpDecoded,
 			blueprintKind: BlueprintKindExplicit,
 			paramsRaw:     cloneMap(params),
@@ -103,13 +105,19 @@ func ParseUserStrWithGrammar(input string, grammar UserStrGrammar) (*UserStr, er
 		return nil, err
 	}
 
-	ns, hasNS := params["ns"]
+	ns := params["ns"]
 	pod := params["pod"]
-	if hasNS && strings.TrimSpace(pod) == "" && params["repo"] == "" {
-		return nil, fmt.Errorf("%w: ns requires pod", ErrUserStrInvalid)
-	}
+	deploy := params["deploy"]
+	repo := params["repo"]
 
-	if strings.TrimSpace(pod) != "" && params["repo"] == "" {
+	// Named workspace form: pod is the primary key; no repo, no deploy allowed.
+	if pod != "" {
+		if repo != "" {
+			return nil, fmt.Errorf("%w: pod cannot be combined with repo", ErrUserStrInvalid)
+		}
+		if deploy != "" {
+			return nil, fmt.Errorf("%w: pod cannot be combined with deploy", ErrUserStrInvalid)
+		}
 		for k := range params {
 			if !isParamAllowedInForm(grammar, k, UserStrFormNamedWorkspace) {
 				return nil, fmt.Errorf("%w: param %q is not allowed with pod form", ErrUserStrInvalid, k)
@@ -127,15 +135,21 @@ func ParseUserStrWithGrammar(input string, grammar UserStrGrammar) (*UserStr, er
 		}, nil
 	}
 
+	// Repo form (repo required; deploy+ns optional but must appear together).
 	for k := range params {
 		if !isParamAllowedInForm(grammar, k, UserStrFormRepoWorkspace) {
 			return nil, fmt.Errorf("%w: param %q is not allowed in repo form", ErrUserStrInvalid, k)
 		}
 	}
 
-	repo := params["repo"]
 	if repo == "" {
 		return nil, fmt.Errorf("%w: repo is required in param-list form", ErrUserStrInvalid)
+	}
+	if deploy != "" && ns == "" {
+		return nil, fmt.Errorf("%w: ns is required with deploy", ErrUserStrInvalid)
+	}
+	if ns != "" && deploy == "" {
+		return nil, fmt.Errorf("%w: ns requires deploy in repo form", ErrUserStrInvalid)
 	}
 
 	repoRef := params["ref"]
@@ -157,7 +171,7 @@ func ParseUserStrWithGrammar(input string, grammar UserStrGrammar) (*UserStr, er
 		form:          UserStrFormRepoWorkspace,
 		username:      username,
 		user:          params["user"],
-		pod:           pod,
+		deploy:        deploy,
 		namespace:     ns,
 		blueprint:     blueprint,
 		blueprintKind: BlueprintKindCustom,

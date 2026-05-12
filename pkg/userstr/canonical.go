@@ -25,7 +25,7 @@ func (u *UserStr) Canonicalize() (*CanonicalUserStr, error) {
 
 	out := &CanonicalUserStr{identity: identity}
 	out.canonicalKey = buildWorkspaceKey(identity)
-	out.canonicalUserStr = buildCanonicalUserStr(identity, u.user, u.pod, u.namespace)
+	out.canonicalUserStr = buildCanonicalUserStr(identity, u.user, u.pod, u.deploy, u.namespace)
 	out.aliases = buildAliases(u)
 	if u.pod != "" {
 		out.workspaceName = u.pod
@@ -56,20 +56,20 @@ func buildWorkspaceKey(id WorkspaceIdentity) string {
 	return strings.Join(parts, "|")
 }
 
-func buildCanonicalUserStr(id WorkspaceIdentity, user, pod, ns string) string {
+func buildCanonicalUserStr(id WorkspaceIdentity, user, pod, deploy, ns string) string {
 	canonicalUser := strings.ToLower(strings.TrimSpace(user))
 	canonicalPod := strings.ToLower(strings.TrimSpace(pod))
+	canonicalDeploy := strings.ToLower(strings.TrimSpace(deploy))
 	canonicalNs := strings.ToLower(strings.TrimSpace(ns))
 
+	// Repo form: deploy+ns are optional and must appear together.
 	if id.repoOwner != "" && id.repoName != "" {
 		params := map[string]string{"repo": id.repoOwner + "/" + id.repoName}
 		if id.repoRef != "" {
 			params["ref"] = id.repoRef
 		}
-		if canonicalPod != "" {
-			params["pod"] = canonicalPod
-		}
-		if canonicalNs != "" {
+		if canonicalDeploy != "" {
+			params["deploy"] = canonicalDeploy
 			params["ns"] = canonicalNs
 		}
 		if canonicalUser != "" {
@@ -78,30 +78,29 @@ func buildCanonicalUserStr(id WorkspaceIdentity, user, pod, ns string) string {
 		return id.username + "~" + joinParamsCanonical(params)
 	}
 
+	// Blueprint form.
 	if id.blueprint != "" {
 		raw := id.username + "~" + url.PathEscape(id.blueprint)
-		var extra []string
-		if canonicalPod != "" {
-			extra = append(extra, "pod="+url.PathEscape(canonicalPod))
-		}
-		if canonicalNs != "" {
-			extra = append(extra, "ns="+url.PathEscape(canonicalNs))
+		if canonicalDeploy != "" {
+			raw += "+deploy=" + url.PathEscape(canonicalDeploy)
+			raw += "+ns=" + url.PathEscape(canonicalNs)
 		}
 		if canonicalUser != "" {
-			extra = append(extra, "user="+url.PathEscape(canonicalUser))
-		}
-		if len(extra) > 0 {
-			raw += "+" + strings.Join(extra, "+")
+			raw += "+user=" + url.PathEscape(canonicalUser)
 		}
 		return raw
 	}
 
+	// Named workspace form.
 	if canonicalPod != "" {
-		params := []string{"pod=" + url.PathEscape(canonicalPod)}
+		parts := []string{"pod=" + url.PathEscape(canonicalPod)}
 		if canonicalNs != "" {
-			params = append(params, "ns="+url.PathEscape(canonicalNs))
+			parts = append(parts, "ns="+url.PathEscape(canonicalNs))
 		}
-		return id.username + "~" + strings.Join(params, "+")
+		if canonicalUser != "" {
+			parts = append(parts, "user="+url.PathEscape(canonicalUser))
+		}
+		return id.username + "~" + strings.Join(parts, "+")
 	}
 
 	return id.username

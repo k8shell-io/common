@@ -10,6 +10,7 @@ import (
 type UserStrFields struct {
 	Username  string `json:"username"`
 	Blueprint string `json:"blueprint,omitempty"`
+	Deploy    string `json:"deploy,omitempty"`
 	Pod       string `json:"pod,omitempty"`
 	Namespace string `json:"namespace,omitempty"`
 	RepoOwner string `json:"repoOwner,omitempty"`
@@ -35,15 +36,22 @@ func (f UserStrFields) ToRawUserStr() (string, error) {
 
 	pod := strings.ToLower(strings.TrimSpace(f.Pod))
 	ns := strings.ToLower(strings.TrimSpace(f.Namespace))
+	deploy := strings.ToLower(strings.TrimSpace(f.Deploy))
 	repoOwner := strings.ToLower(strings.TrimSpace(f.RepoOwner))
 	repoName := strings.ToLower(strings.TrimSpace(f.RepoName))
 	repoRef := strings.TrimSpace(f.RepoRef)
 	blueprint := strings.TrimSpace(f.Blueprint)
 
 	hasAnyRepoField := repoOwner != "" || repoName != "" || repoRef != ""
+	if deploy != "" && !hasAnyRepoField && blueprint == "" {
+		return "", fmt.Errorf("%w: deploy requires repo or blueprint fields", ErrUserStrInvalid)
+	}
 	if hasAnyRepoField {
 		if blueprint != "" {
 			return "", fmt.Errorf("%w: blueprint cannot be specified when repo fields are present", ErrUserStrInvalid)
+		}
+		if pod != "" {
+			return "", fmt.Errorf("%w: pod cannot be combined with repo", ErrUserStrInvalid)
 		}
 		if repoName == "" {
 			return "", fmt.Errorf("%w: repoName is required when specifying repo fields", ErrUserStrInvalid)
@@ -51,15 +59,19 @@ func (f UserStrFields) ToRawUserStr() (string, error) {
 		if repoOwner == "" {
 			repoOwner = username
 		}
+		if deploy != "" && ns == "" {
+			return "", fmt.Errorf("%w: ns is required with deploy", ErrUserStrInvalid)
+		}
+		if ns != "" && deploy == "" {
+			return "", fmt.Errorf("%w: ns requires deploy in repo form", ErrUserStrInvalid)
+		}
 
 		params := []string{"repo=" + url.PathEscape(repoOwner+"/"+repoName)}
 		if repoRef != "" {
 			params = append(params, "ref="+url.PathEscape(repoRef))
 		}
-		if pod != "" {
-			params = append(params, "pod="+url.PathEscape(pod))
-		}
-		if ns != "" {
+		if deploy != "" {
+			params = append(params, "deploy="+url.PathEscape(deploy))
 			params = append(params, "ns="+url.PathEscape(ns))
 		}
 
@@ -71,16 +83,18 @@ func (f UserStrFields) ToRawUserStr() (string, error) {
 	}
 
 	if blueprint != "" {
-		raw := username + "~" + url.PathEscape(blueprint)
-		params := make([]string, 0, 3)
 		if pod != "" {
-			params = append(params, "pod="+url.PathEscape(pod))
+			return "", fmt.Errorf("%w: pod cannot be combined with explicit blueprint", ErrUserStrInvalid)
 		}
-		if ns != "" {
-			params = append(params, "ns="+url.PathEscape(ns))
+		if deploy != "" && ns == "" {
+			return "", fmt.Errorf("%w: ns is required with deploy", ErrUserStrInvalid)
 		}
-		if len(params) > 0 {
-			raw += "+" + strings.Join(params, "+")
+		if ns != "" && deploy == "" {
+			return "", fmt.Errorf("%w: deploy is required with ns in blueprint form", ErrUserStrInvalid)
+		}
+		raw := username + "~" + url.PathEscape(blueprint)
+		if deploy != "" {
+			raw += "+deploy=" + url.PathEscape(deploy) + "+ns=" + url.PathEscape(ns)
 		}
 		if _, err := ParseUserStr(raw); err != nil {
 			return "", err
@@ -88,9 +102,10 @@ func (f UserStrFields) ToRawUserStr() (string, error) {
 		return raw, nil
 	}
 
+	// Named workspace form.
 	if pod != "" || ns != "" {
 		if pod == "" {
-			return "", fmt.Errorf("%w: pod is required when specifying namespace or user without blueprint or repo", ErrUserStrInvalid)
+			return "", fmt.Errorf("%w: pod is required when specifying namespace without blueprint, repo, or deploy", ErrUserStrInvalid)
 		}
 
 		params := []string{"pod=" + url.PathEscape(pod)}
@@ -118,6 +133,7 @@ func UserStrFieldsFromUserStr(u *UserStr) UserStrFields {
 	return UserStrFields{
 		Username:  u.Username(),
 		Blueprint: u.Blueprint(),
+		Deploy:    u.Deploy(),
 		Pod:       u.Pod(),
 		Namespace: u.Namespace(""),
 		RepoOwner: u.RepoOwner(),

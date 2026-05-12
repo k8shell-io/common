@@ -29,15 +29,19 @@ func DefaultGrammar() UserStrGrammar {
 			},
 			"pod": {
 				AllowedIn: map[UserStrForm]bool{
-					UserStrFormExplicitBlueprint: true,
-					UserStrFormNamedWorkspace:    true,
-					UserStrFormRepoWorkspace:     true,
+					UserStrFormNamedWorkspace: true,
 				},
 			},
 			"ns": {
 				AllowedIn: map[UserStrForm]bool{
 					UserStrFormExplicitBlueprint: true,
 					UserStrFormNamedWorkspace:    true,
+					UserStrFormRepoWorkspace:     true,
+				},
+			},
+			"deploy": {
+				AllowedIn: map[UserStrForm]bool{
+					UserStrFormExplicitBlueprint: true,
 					UserStrFormRepoWorkspace:     true,
 				},
 			},

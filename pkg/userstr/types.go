@@ -53,6 +53,7 @@ type UserStr struct {
 	username      string
 	user          string
 	pod           string
+	deploy        string
 	namespace     string
 	blueprint     string
 	blueprintKind BlueprintKind
@@ -68,6 +69,7 @@ func (u *UserStr) Form() UserStrForm { return u.form }
 func (u *UserStr) Username() string  { return u.username }
 func (u *UserStr) User() string      { return u.user }
 func (u *UserStr) Pod() string       { return u.pod }
+func (u *UserStr) Deploy() string    { return u.deploy }
 func (u *UserStr) Namespace(defaultValue string) string {
 	if u.namespace == "" {
 		return defaultValue
