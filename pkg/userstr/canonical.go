@@ -36,7 +36,7 @@ func (u *UserStr) Canonicalize() (*CanonicalUserStr, error) {
 	out.aliases = buildAliases(u)
 	if u.pod != "" {
 		out.workspaceName = u.pod
-	} else {
+	} else if u.workloadKind == "" {
 		out.workspaceName = buildCanonicalId(u.username, out.canonicalKey)
 	}
 

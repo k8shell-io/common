@@ -319,7 +319,7 @@ func TestUserStrFieldsToUserStrAndBack(t *testing.T) {
 	if roundTrip.RepoRef != "main" {
 		t.Fatalf("unexpected repo ref: got %q", roundTrip.RepoRef)
 	}
-	if roundTrip.WorkloadKind != "Deployment" {
+	if roundTrip.WorkloadKind != "deployment" {
 		t.Fatalf("unexpected workload kind: got %q", roundTrip.WorkloadKind)
 	}
 	if roundTrip.WorkloadName != "myapp" {

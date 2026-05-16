@@ -210,12 +210,7 @@ func parseKVParts(parts []string, grammar UserStrGrammar) (map[string]string, er
 		if err != nil {
 			return nil, fmt.Errorf("%w: value decode failed for key %q: %v", ErrUserStrMalformed, key, err)
 		}
-		// workload kind is case-sensitive (e.g. Deployment, StatefulSet); preserve case
-		if key == "workload" {
-			params[key] = decoded
-		} else {
-			params[key] = strings.ToLower(decoded)
-		}
+		params[key] = strings.ToLower(decoded)
 	}
 	if len(params) == 0 {
 		return nil, nil
