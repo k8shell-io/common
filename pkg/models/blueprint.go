@@ -21,7 +21,6 @@ type Blueprint struct {
 	Hostname        string                 `yaml:"hostname,omitempty" validate:"omitempty,plainhostname"`
 	Subdomain       string                 `yaml:"subdomain,omitempty" validate:"omitempty,plainhostname"`
 	Image           string                 `yaml:"image" validate:"required"`
-	ImagePullSecret string                 `yaml:"imagePullSecret,omitempty"`
 	ImagePullPolicy string                 `yaml:"imagePullPolicy,omitempty" validate:"omitempty,oneof=Always Never IfNotPresent"`
 	K8shelld        K8shelld               `yaml:"k8shelld" validate:"required"`
 	Env             map[string]string      `yaml:"env,omitempty" default:"{}"`
