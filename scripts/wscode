@@ -19,8 +19,12 @@ if [[ -z "$USERNAME" || -z "$OWNER_REPO" ]]; then
   echo "  --ref <ref>         Git reference to use (branch, tag, or commit SHA)"
   echo "  --pod <pod>         Pod name to target a specific workspace pod"
   echo "  --namespace <ns>    Kubernetes namespace of the pod (requires --pod)"
+  echo "  --workload <w>      Workload to inject into, in kind/name format (e.g. deployment/identity)"
+  echo "  --ns <ns>           Kubernetes namespace for the workload (requires --workload)"
+  echo "  --test              Print the user string and its base64 encoding instead of opening VS Code"
   echo
   echo "If --ref is not specified, the default repository ref is used."
+  echo "--pod and --workload are mutually exclusive."
   exit 1
 fi
 
@@ -28,8 +32,11 @@ shift 2
 
 HOST="${DEFAULT_HOST}"
 REF_NAME=""
-POD_NAME=""s
+POD_NAME=""
 NAMESPACE=""
+WORKLOAD=""
+WS_NAMESPACE=""
+TEST=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -53,6 +60,20 @@ while [[ $# -gt 0 ]]; do
       [[ -n "$NAMESPACE" ]] || { echo "Error: --namespace requires a value"; exit 1; }
       shift 2
       ;;
+    --workload)
+      WORKLOAD="${2:-}"
+      [[ -n "$WORKLOAD" ]] || { echo "Error: --workload requires a value"; exit 1; }
+      shift 2
+      ;;
+    --ns)
+      WS_NAMESPACE="${2:-}"
+      [[ -n "$WS_NAMESPACE" ]] || { echo "Error: --ns requires a value"; exit 1; }
+      shift 2
+      ;;
+    --test)
+      TEST=1
+      shift
+      ;;
     *)
       echo "Error: unknown option '$1'"
       exit 1
@@ -65,10 +86,29 @@ if [[ -n "$NAMESPACE" && -z "$POD_NAME" ]]; then
   exit 1
 fi
 
+if [[ -n "$WORKLOAD" && -z "$WS_NAMESPACE" ]]; then
+  echo "Error: --workload requires --ns"
+  exit 1
+fi
+
+if [[ -n "$WS_NAMESPACE" && -z "$WORKLOAD" ]]; then
+  echo "Error: --ns requires --workload"
+  exit 1
+fi
+
+if [[ -n "$POD_NAME" && -n "$WORKLOAD" ]]; then
+  echo "Error: --pod and --workload are mutually exclusive"
+  exit 1
+fi
+
 USER_STRING="${USERNAME}~repo=${OWNER_REPO}"
 
 if [[ -n "$REF_NAME" ]]; then
   USER_STRING+="+ref=${REF_NAME}"
+fi
+
+if [[ -n "$WORKLOAD" ]]; then
+  USER_STRING+="+workload=${WORKLOAD}+ns=${WS_NAMESPACE}"
 fi
 
 if [[ -n "$POD_NAME" ]]; then
@@ -87,4 +127,9 @@ ENCODED="$(
 
 REPO_NAME="${OWNER_REPO##*/}"
 
-code -n --folder-uri="vscode-remote://ssh-remote+b64-${ENCODED}@${HOST}/home/${USERNAME}/${REPO_NAME}"
+if [[ "$TEST" -eq 1 ]]; then
+  echo "user string : ${USER_STRING}"
+  echo "b64 encoded : b64-${ENCODED}"
+else
+  code -n --folder-uri="vscode-remote://ssh-remote+b64-${ENCODED}@${HOST}/home/${USERNAME}/${REPO_NAME}"
+fi
