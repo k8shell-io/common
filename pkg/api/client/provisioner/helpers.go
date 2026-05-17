@@ -79,7 +79,7 @@ func (c *Client) waitForHandshakeMessage(
 	workspaceName := hs.GetWorkspace()
 	jobID := hs.GetJobid()
 	if workspaceName == "" {
-		return "", "", nil, fmt.Errorf("handshake missing required field: workspace")
+		workspaceName = "n/a"
 	}
 
 	return workspaceName, jobID, stream, nil
