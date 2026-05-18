@@ -17,7 +17,10 @@ import (
 
 // ClientConfig holds configuration for gRPC client
 type ClientConfig struct {
-	// Address of the gRPC server, e.g. "localhost:50051"
+	// Address of the gRPC server, e.g. "localhost:50051".
+	// Use the dns:/// scheme to enable client-side round-robin load balancing
+	// across multiple endpoints (e.g. a headless Service in Kubernetes):
+	// "dns:///grpc-server-headless.default.svc.cluster.local:50051"
 	Address string `yaml:"address"`
 
 	// ServerName is optional TLS ServerName for hostname verification.
@@ -108,9 +111,17 @@ func NewClient(cfg ClientConfig) (*Client, error) {
 		dialOpt = grpc.WithTransportCredentials(credentials.NewTLS(tlsCfg))
 	}
 
+	var lbOpt grpc.DialOption
+	if strings.HasPrefix(cfg.Address, "dns:///") {
+		lbOpt = grpc.WithDefaultServiceConfig(`{"loadBalancingConfig": [{"round_robin":{}}]}`)
+	} else {
+		lbOpt = grpc.WithDefaultServiceConfig(`{"loadBalancingConfig": [{"pick_first":{}}]}`)
+	}
+
 	cc, err := grpc.NewClient(
 		cfg.Address,
 		dialOpt,
+		lbOpt,
 		grpc.WithPerRPCCredentials(creds),
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(32<<20)),
 	)
