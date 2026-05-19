@@ -28,7 +28,7 @@ type Blueprint struct {
 	Resources       Resources              `yaml:"resources,omitempty" default:"{limits:{cpu:500m,memory:512Mi}}"`
 	Podman          Podman                 `yaml:"podman,omitempty" default:"{enabled:false}"`
 	Storages        map[string]Storage     `yaml:"storages,omitempty" default:"{}"`
-	InitScripts     []InitScript           `yaml:"initScripts,omitempty" default:"[]"`
+	InitScripts     []InitScript           `yaml:"initScripts,omitempty" default:"[]" validate:"dive"`
 	SecurityContext map[string]interface{} `yaml:"securityContext,omitempty" default:"{}"`
 	ExtFiles        map[string]string      `yaml:"extFiles,omitempty" default:"{}"`
 	EnableApps      bool                   `yaml:"enableApps,omitempty" default:"false"`
