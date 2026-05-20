@@ -12,27 +12,28 @@ import (
 
 // Blueprint represents a single blueprint configuration
 type Blueprint struct {
-	Metadata        BlueprintMetadata
-	Name            string                 `yaml:"name" validate:"required,min=1,max=40"`
-	Description     string                 `yaml:"description,omitempty" validate:"max=500"`
-	IsTemplate      bool                   `yaml:"isTemplate,omitempty" default:"false"`
-	Splash          string                 `yaml:"splash,omitempty"`
-	Template        string                 `yaml:"template"`
-	Hostname        string                 `yaml:"hostname,omitempty" validate:"omitempty,plainhostname"`
-	Subdomain       string                 `yaml:"subdomain,omitempty" validate:"omitempty,plainhostname"`
-	Image           string                 `yaml:"image" validate:"required"`
-	ImagePullPolicy string                 `yaml:"imagePullPolicy,omitempty" validate:"omitempty,oneof=Always Never IfNotPresent"`
-	K8shelld        K8shelld               `yaml:"k8shelld" validate:"required"`
-	Env             map[string]string      `yaml:"env,omitempty" default:"{}"`
-	Network         Network                `yaml:"network,omitempty" default:"{networkPolicyClass:workspace}"`
-	Resources       Resources              `yaml:"resources,omitempty" default:"{limits:{cpu:500m,memory:512Mi}}"`
-	Podman          Podman                 `yaml:"podman,omitempty" default:"{enabled:false}"`
-	Storages        map[string]Storage     `yaml:"storages,omitempty" default:"{}"`
-	InitScripts     []InitScript           `yaml:"initScripts,omitempty" default:"[]" validate:"dive"`
-	SecurityContext map[string]interface{} `yaml:"securityContext,omitempty" default:"{}"`
-	ExtFiles        map[string]string      `yaml:"extFiles,omitempty" default:"{}"`
-	EnableApps      bool                   `yaml:"enableApps,omitempty" default:"false"`
-	Apps            map[string]AppSpec     `yaml:"apps,omitempty" default:"{}"`
+	Metadata             BlueprintMetadata
+	Name                 string                 `yaml:"name" validate:"required,min=1,max=40"`
+	Description          string                 `yaml:"description,omitempty" validate:"max=500"`
+	IsTemplate           bool                   `yaml:"isTemplate,omitempty" default:"false"`
+	Splash               string                 `yaml:"splash,omitempty"`
+	Template             string                 `yaml:"template"`
+	Hostname             string                 `yaml:"hostname,omitempty" validate:"omitempty,plainhostname"`
+	Subdomain            string                 `yaml:"subdomain,omitempty" validate:"omitempty,plainhostname"`
+	Image                string                 `yaml:"image" validate:"required"`
+	ImagePullPolicy      string                 `yaml:"imagePullPolicy,omitempty" validate:"omitempty,oneof=Always Never IfNotPresent"`
+	K8shelld             K8shelld               `yaml:"k8shelld" validate:"required"`
+	Env                  map[string]string      `yaml:"env,omitempty" default:"{}"`
+	Network              Network                `yaml:"network,omitempty" default:"{networkPolicyClass:workspace}"`
+	Resources            Resources              `yaml:"resources,omitempty" default:"{limits:{cpu:500m,memory:512Mi}}"`
+	Podman               Podman                 `yaml:"podman,omitempty" default:"{enabled:false}"`
+	Storages             map[string]Storage     `yaml:"storages,omitempty" default:"{}"`
+	InitScripts          []InitScript           `yaml:"initScripts,omitempty" default:"[]" validate:"dive"`
+	ShowInitScriptStatus bool                   `yaml:"showInitScriptStatus,omitempty" default:"false"`
+	SecurityContext      map[string]interface{} `yaml:"securityContext,omitempty" default:"{}"`
+	ExtFiles             map[string]string      `yaml:"extFiles,omitempty" default:"{}"`
+	EnableApps           bool                   `yaml:"enableApps,omitempty" default:"false"`
+	Apps                 map[string]AppSpec     `yaml:"apps,omitempty" default:"{}"`
 }
 
 // BlueprintMetadata holds metadata information for a blueprint.
@@ -51,18 +52,19 @@ type K8shellFile struct {
 
 // CustomBlueprint represents a custom blueprint configuration
 type CustomBlueprint struct {
-	Metadata    BlueprintMetadata
-	Name        string             `yaml:"name,omitempty"`
-	Template    string             `yaml:"template" validate:"required"`
-	Splash      string             `yaml:"splash,omitempty"`
-	Image       string             `yaml:"image,omitempty"`
-	Env         map[string]string  `yaml:"env,omitempty"`
-	Network     Network            `yaml:"network,omitempty"`
-	Resources   Resources          `yaml:"resources,omitempty"`
-	Storages    map[string]Storage `yaml:"storages,omitempty"`
-	InitScripts []InitScript       `yaml:"initScripts,omitempty"`
-	EnableApps  bool               `yaml:"enableApps,omitempty"`
-	Apps        map[string]AppSpec `yaml:"apps,omitempty"`
+	Metadata             BlueprintMetadata
+	Name                 string             `yaml:"name,omitempty"`
+	Template             string             `yaml:"template" validate:"required"`
+	Splash               string             `yaml:"splash,omitempty"`
+	Image                string             `yaml:"image,omitempty"`
+	Env                  map[string]string  `yaml:"env,omitempty"`
+	Network              Network            `yaml:"network,omitempty"`
+	Resources            Resources          `yaml:"resources,omitempty"`
+	Storages             map[string]Storage `yaml:"storages,omitempty"`
+	InitScripts          []InitScript       `yaml:"initScripts,omitempty"`
+	ShowInitScriptStatus bool               `yaml:"showInitScriptStatus,omitempty"`
+	EnableApps           bool               `yaml:"enableApps,omitempty"`
+	Apps                 map[string]AppSpec `yaml:"apps,omitempty"`
 }
 
 type BlueprintSummary struct {

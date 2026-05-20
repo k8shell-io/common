@@ -190,6 +190,7 @@ func (c *K8shelld) RunShell(
 	usePty bool,
 	lockId string,
 	detachOnClose bool,
+	showInitScriptStatus bool,
 	enableRecording bool,
 	notifyPtyName NotifyPtyNameFunc,
 ) error {
@@ -224,14 +225,15 @@ func (c *K8shelld) RunShell(
 	startReq := &k8shelldv1.ShellRequest{
 		Request: &k8shelldv1.ShellRequest_StartRequest{
 			StartRequest: &k8shelldv1.ShellStartRequest{
-				CmdShell:      "/bin/sh",
-				SetEnvVars:    envVars,
-				UsePty:        usePty,
-				Width:         width,
-				Height:        height,
-				AsUser:        asUser,
-				LockId:        lockId,
-				DetachOnClose: detachOnClose,
+				CmdShell:             "/bin/sh",
+				SetEnvVars:           envVars,
+				UsePty:               usePty,
+				Width:                width,
+				Height:               height,
+				AsUser:               asUser,
+				LockId:               lockId,
+				DetachOnClose:        detachOnClose,
+				ShowInitScriptStatus: showInitScriptStatus,
 			},
 		},
 	}
