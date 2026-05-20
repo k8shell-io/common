@@ -35,7 +35,6 @@ message UserList {
 // FindUserRequest looks up a user by username or access token.
 message FindUserRequest {
   string username = 1;
-  string token    = 2;
 }
 
 // GetUsersRequest carries pagination parameters for listing users.
