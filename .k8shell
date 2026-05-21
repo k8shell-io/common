@@ -6,8 +6,6 @@ blueprint:
     memory: 16Gi
   network:
     networkPolicyClass: system
-  podman:
-    enabled: false
   initScripts:
     - name: init-go
       script: |
