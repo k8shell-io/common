@@ -1,0 +1,109 @@
+// Copyright 2026 the k8Shell authors.
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+syntax = "proto3";
+
+package webfiles.v1;
+
+option go_package = "github.com/k8shell-io/common/pkg/api/gen/go/console/webfiles/v1;webfilesv1";
+
+// WebFilesMessage is the top-level message that can contain any of the other message types as its payload.
+message WebFilesMessage {
+    oneof payload {
+        PingMessage ping = 1;
+        PongMessage pong = 2;
+        FileExplorerMessage file_explorer = 6;
+    }
+}
+
+// PingMessage is sent by the client to keep the connection alive
+message PingMessage {}
+
+// PongMessage is sent by the server in response to a PingMessage
+message PongMessage {}
+
+// FileExplorerMessage is used for both commands and responses in the file explorer component.
+message FileExplorerMessage {
+    // Id is used to correlate commands and responses between the client and server.
+    string id = 1;
+
+    oneof payload {
+        FileExplorerCommand command = 2;
+        FileExplorerResponse response = 3;
+    }
+}
+
+// FileExplorerCommand represents a command sent from the client to the server in the file explorer component.
+message FileExplorerCommand {
+    oneof payload {
+        ListFilesCommand list_files = 1;
+        MakeDirectoryCommand make_directory = 2;
+        RemoveCommand remove = 3;
+        GetCWDCommand get_cwd = 4;
+    }
+}
+
+// FileExplorerResponse represents a response sent from the server to the client in the file explorer component.
+message FileExplorerResponse {
+    oneof payload {
+        ListFilesResponse list_files = 1;
+        MakeDirectoryResponse make_directory = 2;
+        RemoveResponse remove = 3;
+        GetCWDResponse get_cwd = 4;
+    }
+}
+
+// ListFilesCommand is a command to list files in a directory.
+message ListFilesCommand {
+    string path = 1;
+    bool show_hidden = 2;
+}
+
+// ListFilesResponse is a response containing the list of files in a directory.
+message ListFilesResponse {
+    repeated FileInfo files = 1;
+    optional string error = 2;
+}
+
+// FileInfo represents information about a file or directory.
+message FileInfo {
+    string name= 1;
+    string path = 2;
+    int64 size = 3;
+    string mode = 4;
+    bool is_dir = 5;
+    string mod_time = 6;
+}
+
+// MakeDirectoryCommand is used to create a directory in `path` which name is `name`
+message MakeDirectoryCommand {
+    string path = 1;
+    string name = 2;
+}
+
+// MakeDirectoryResponse represents response to MakeDirectoryCommand. When error is empty, the command was successful
+message MakeDirectoryResponse {
+    optional string error = 1;
+}
+
+// RemoveCommand is used to remove a file or directory specified by `path`.
+// When `path` is a directory, it removes all files in it and the specified directory. 
+message RemoveCommand {
+    string path = 1;
+}
+
+// RemoveResponse represents response to RemoveCommand. When error is empty, the command was successful.
+message RemoveResponse {
+    optional string error = 1;
+}
+
+// GetCWDCommand is sent by the client to request the current working directory of the terminal session.
+// The terminal session is currently held on server side and identified by the connection, so no additional fields are needed in the request.
+message GetCWDCommand {
+}
+
+// GetCWDResponse is sent by the server in response to a GetCWDCommand, containing the current working directory path.
+message GetCWDResponse {
+    string path = 1; // Current working directory path
+    optional string error = 2; // Error message if the request failed, empty if successful
+}
