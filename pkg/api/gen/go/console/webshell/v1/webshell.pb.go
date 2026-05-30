@@ -34,6 +34,8 @@ type WebShellMessage struct {
 	//	*WebShellMessage_TerminalInput
 	//	*WebShellMessage_TerminalOutput
 	//	*WebShellMessage_TerminalResize
+	//	*WebShellMessage_GetCwdMessage
+	//	*WebShellMessage_GetCwdResponse
 	//	*WebShellMessage_TerminalError
 	Payload       isWebShellMessage_Payload `protobuf_oneof:"payload"`
 	unknownFields protoimpl.UnknownFields
@@ -122,6 +124,24 @@ func (x *WebShellMessage) GetTerminalResize() *TerminalResizeMessage {
 	return nil
 }
 
+func (x *WebShellMessage) GetGetCwdMessage() *GetCWDMessage {
+	if x != nil {
+		if x, ok := x.Payload.(*WebShellMessage_GetCwdMessage); ok {
+			return x.GetCwdMessage
+		}
+	}
+	return nil
+}
+
+func (x *WebShellMessage) GetGetCwdResponse() *GetCWDResponse {
+	if x != nil {
+		if x, ok := x.Payload.(*WebShellMessage_GetCwdResponse); ok {
+			return x.GetCwdResponse
+		}
+	}
+	return nil
+}
+
 func (x *WebShellMessage) GetTerminalError() *TerminalErrorMessage {
 	if x != nil {
 		if x, ok := x.Payload.(*WebShellMessage_TerminalError); ok {
@@ -155,8 +175,16 @@ type WebShellMessage_TerminalResize struct {
 	TerminalResize *TerminalResizeMessage `protobuf:"bytes,5,opt,name=terminal_resize,json=terminalResize,proto3,oneof"`
 }
 
+type WebShellMessage_GetCwdMessage struct {
+	GetCwdMessage *GetCWDMessage `protobuf:"bytes,6,opt,name=get_cwd_message,json=getCwdMessage,proto3,oneof"`
+}
+
+type WebShellMessage_GetCwdResponse struct {
+	GetCwdResponse *GetCWDResponse `protobuf:"bytes,7,opt,name=get_cwd_response,json=getCwdResponse,proto3,oneof"`
+}
+
 type WebShellMessage_TerminalError struct {
-	TerminalError *TerminalErrorMessage `protobuf:"bytes,7,opt,name=terminal_error,json=terminalError,proto3,oneof"`
+	TerminalError *TerminalErrorMessage `protobuf:"bytes,8,opt,name=terminal_error,json=terminalError,proto3,oneof"`
 }
 
 func (*WebShellMessage_Ping) isWebShellMessage_Payload() {}
@@ -168,6 +196,10 @@ func (*WebShellMessage_TerminalInput) isWebShellMessage_Payload() {}
 func (*WebShellMessage_TerminalOutput) isWebShellMessage_Payload() {}
 
 func (*WebShellMessage_TerminalResize) isWebShellMessage_Payload() {}
+
+func (*WebShellMessage_GetCwdMessage) isWebShellMessage_Payload() {}
+
+func (*WebShellMessage_GetCwdResponse) isWebShellMessage_Payload() {}
 
 func (*WebShellMessage_TerminalError) isWebShellMessage_Payload() {}
 
@@ -433,18 +465,110 @@ func (x *TerminalResizeMessage) GetRows() uint32 {
 	return 0
 }
 
+// GetCWDMessage is sent by the client to request the current working directory of the terminal session.
+type GetCWDMessage struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetCWDMessage) Reset() {
+	*x = GetCWDMessage{}
+	mi := &file_console_webshell_v1_webshell_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetCWDMessage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetCWDMessage) ProtoMessage() {}
+
+func (x *GetCWDMessage) ProtoReflect() protoreflect.Message {
+	mi := &file_console_webshell_v1_webshell_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetCWDMessage.ProtoReflect.Descriptor instead.
+func (*GetCWDMessage) Descriptor() ([]byte, []int) {
+	return file_console_webshell_v1_webshell_proto_rawDescGZIP(), []int{7}
+}
+
+// GetCWDResponse is sent by the server in response to a GetCWDMessage, containing the current working directory path.
+type GetCWDResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`         // Current working directory path
+	Error         *string                `protobuf:"bytes,2,opt,name=error,proto3,oneof" json:"error,omitempty"` // Error message if the request failed, empty if successful
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetCWDResponse) Reset() {
+	*x = GetCWDResponse{}
+	mi := &file_console_webshell_v1_webshell_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetCWDResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetCWDResponse) ProtoMessage() {}
+
+func (x *GetCWDResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_console_webshell_v1_webshell_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetCWDResponse.ProtoReflect.Descriptor instead.
+func (*GetCWDResponse) Descriptor() ([]byte, []int) {
+	return file_console_webshell_v1_webshell_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *GetCWDResponse) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *GetCWDResponse) GetError() string {
+	if x != nil && x.Error != nil {
+		return *x.Error
+	}
+	return ""
+}
+
 var File_console_webshell_v1_webshell_proto protoreflect.FileDescriptor
 
 const file_console_webshell_v1_webshell_proto_rawDesc = "" +
 	"\n" +
-	"\"console/webshell/v1/webshell.proto\x12\vwebshell.v1\"\xb2\x03\n" +
+	"\"console/webshell/v1/webshell.proto\x12\vwebshell.v1\"\xc1\x04\n" +
 	"\x0fWebShellMessage\x12.\n" +
 	"\x04ping\x18\x01 \x01(\v2\x18.webshell.v1.PingMessageH\x00R\x04ping\x12.\n" +
 	"\x04pong\x18\x02 \x01(\v2\x18.webshell.v1.PongMessageH\x00R\x04pong\x12J\n" +
 	"\x0eterminal_input\x18\x03 \x01(\v2!.webshell.v1.TerminalInputMessageH\x00R\rterminalInput\x12M\n" +
 	"\x0fterminal_output\x18\x04 \x01(\v2\".webshell.v1.TerminalOutputMessageH\x00R\x0eterminalOutput\x12M\n" +
-	"\x0fterminal_resize\x18\x05 \x01(\v2\".webshell.v1.TerminalResizeMessageH\x00R\x0eterminalResize\x12J\n" +
-	"\x0eterminal_error\x18\a \x01(\v2!.webshell.v1.TerminalErrorMessageH\x00R\rterminalErrorB\t\n" +
+	"\x0fterminal_resize\x18\x05 \x01(\v2\".webshell.v1.TerminalResizeMessageH\x00R\x0eterminalResize\x12D\n" +
+	"\x0fget_cwd_message\x18\x06 \x01(\v2\x1a.webshell.v1.GetCWDMessageH\x00R\rgetCwdMessage\x12G\n" +
+	"\x10get_cwd_response\x18\a \x01(\v2\x1b.webshell.v1.GetCWDResponseH\x00R\x0egetCwdResponse\x12J\n" +
+	"\x0eterminal_error\x18\b \x01(\v2!.webshell.v1.TerminalErrorMessageH\x00R\rterminalErrorB\t\n" +
 	"\apayload\"\r\n" +
 	"\vPingMessage\"\r\n" +
 	"\vPongMessage\"*\n" +
@@ -456,7 +580,12 @@ const file_console_webshell_v1_webshell_proto_rawDesc = "" +
 	"\x04data\x18\x01 \x01(\tR\x04data\"?\n" +
 	"\x15TerminalResizeMessage\x12\x12\n" +
 	"\x04cols\x18\x01 \x01(\rR\x04cols\x12\x12\n" +
-	"\x04rows\x18\x02 \x01(\rR\x04rowsBLZJgithub.com/k8shell-io/common/pkg/api/gen/go/console/webshell/v1;webshellv1b\x06proto3"
+	"\x04rows\x18\x02 \x01(\rR\x04rows\"\x0f\n" +
+	"\rGetCWDMessage\"I\n" +
+	"\x0eGetCWDResponse\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x19\n" +
+	"\x05error\x18\x02 \x01(\tH\x00R\x05error\x88\x01\x01B\b\n" +
+	"\x06_errorBLZJgithub.com/k8shell-io/common/pkg/api/gen/go/console/webshell/v1;webshellv1b\x06proto3"
 
 var (
 	file_console_webshell_v1_webshell_proto_rawDescOnce sync.Once
@@ -470,7 +599,7 @@ func file_console_webshell_v1_webshell_proto_rawDescGZIP() []byte {
 	return file_console_webshell_v1_webshell_proto_rawDescData
 }
 
-var file_console_webshell_v1_webshell_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_console_webshell_v1_webshell_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_console_webshell_v1_webshell_proto_goTypes = []any{
 	(*WebShellMessage)(nil),       // 0: webshell.v1.WebShellMessage
 	(*PingMessage)(nil),           // 1: webshell.v1.PingMessage
@@ -479,6 +608,8 @@ var file_console_webshell_v1_webshell_proto_goTypes = []any{
 	(*TerminalOutputMessage)(nil), // 4: webshell.v1.TerminalOutputMessage
 	(*TerminalErrorMessage)(nil),  // 5: webshell.v1.TerminalErrorMessage
 	(*TerminalResizeMessage)(nil), // 6: webshell.v1.TerminalResizeMessage
+	(*GetCWDMessage)(nil),         // 7: webshell.v1.GetCWDMessage
+	(*GetCWDResponse)(nil),        // 8: webshell.v1.GetCWDResponse
 }
 var file_console_webshell_v1_webshell_proto_depIdxs = []int32{
 	1, // 0: webshell.v1.WebShellMessage.ping:type_name -> webshell.v1.PingMessage
@@ -486,12 +617,14 @@ var file_console_webshell_v1_webshell_proto_depIdxs = []int32{
 	3, // 2: webshell.v1.WebShellMessage.terminal_input:type_name -> webshell.v1.TerminalInputMessage
 	4, // 3: webshell.v1.WebShellMessage.terminal_output:type_name -> webshell.v1.TerminalOutputMessage
 	6, // 4: webshell.v1.WebShellMessage.terminal_resize:type_name -> webshell.v1.TerminalResizeMessage
-	5, // 5: webshell.v1.WebShellMessage.terminal_error:type_name -> webshell.v1.TerminalErrorMessage
-	6, // [6:6] is the sub-list for method output_type
-	6, // [6:6] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	7, // 5: webshell.v1.WebShellMessage.get_cwd_message:type_name -> webshell.v1.GetCWDMessage
+	8, // 6: webshell.v1.WebShellMessage.get_cwd_response:type_name -> webshell.v1.GetCWDResponse
+	5, // 7: webshell.v1.WebShellMessage.terminal_error:type_name -> webshell.v1.TerminalErrorMessage
+	8, // [8:8] is the sub-list for method output_type
+	8, // [8:8] is the sub-list for method input_type
+	8, // [8:8] is the sub-list for extension type_name
+	8, // [8:8] is the sub-list for extension extendee
+	0, // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_console_webshell_v1_webshell_proto_init() }
@@ -505,15 +638,18 @@ func file_console_webshell_v1_webshell_proto_init() {
 		(*WebShellMessage_TerminalInput)(nil),
 		(*WebShellMessage_TerminalOutput)(nil),
 		(*WebShellMessage_TerminalResize)(nil),
+		(*WebShellMessage_GetCwdMessage)(nil),
+		(*WebShellMessage_GetCwdResponse)(nil),
 		(*WebShellMessage_TerminalError)(nil),
 	}
+	file_console_webshell_v1_webshell_proto_msgTypes[8].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_console_webshell_v1_webshell_proto_rawDesc), len(file_console_webshell_v1_webshell_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

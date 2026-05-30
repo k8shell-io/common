@@ -15,7 +15,9 @@ message WebShellMessage {
         TerminalInputMessage terminal_input = 3;
         TerminalOutputMessage terminal_output = 4;
         TerminalResizeMessage terminal_resize = 5;
-        TerminalErrorMessage terminal_error = 7;
+        GetCWDMessage get_cwd_message = 6;
+        GetCWDResponse get_cwd_response = 7;
+        TerminalErrorMessage terminal_error = 8;
     }
 }
 
@@ -44,4 +46,14 @@ message TerminalErrorMessage {
 message TerminalResizeMessage {
     uint32 cols = 1;
     uint32 rows = 2;
+}
+
+// GetCWDMessage is sent by the client to request the current working directory of the terminal session.
+message GetCWDMessage {
+}
+
+// GetCWDResponse is sent by the server in response to a GetCWDMessage, containing the current working directory path.
+message GetCWDResponse {
+    string path = 1; // Current working directory path
+    optional string error = 2; // Error message if the request failed, empty if successful
 }

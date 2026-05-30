@@ -297,7 +297,6 @@ type FileExplorerCommand struct {
 	//	*FileExplorerCommand_ListFiles
 	//	*FileExplorerCommand_MakeDirectory
 	//	*FileExplorerCommand_Remove
-	//	*FileExplorerCommand_GetCwd
 	Payload       isFileExplorerCommand_Payload `protobuf_oneof:"payload"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -367,15 +366,6 @@ func (x *FileExplorerCommand) GetRemove() *RemoveCommand {
 	return nil
 }
 
-func (x *FileExplorerCommand) GetGetCwd() *GetCWDCommand {
-	if x != nil {
-		if x, ok := x.Payload.(*FileExplorerCommand_GetCwd); ok {
-			return x.GetCwd
-		}
-	}
-	return nil
-}
-
 type isFileExplorerCommand_Payload interface {
 	isFileExplorerCommand_Payload()
 }
@@ -392,17 +382,11 @@ type FileExplorerCommand_Remove struct {
 	Remove *RemoveCommand `protobuf:"bytes,3,opt,name=remove,proto3,oneof"`
 }
 
-type FileExplorerCommand_GetCwd struct {
-	GetCwd *GetCWDCommand `protobuf:"bytes,4,opt,name=get_cwd,json=getCwd,proto3,oneof"`
-}
-
 func (*FileExplorerCommand_ListFiles) isFileExplorerCommand_Payload() {}
 
 func (*FileExplorerCommand_MakeDirectory) isFileExplorerCommand_Payload() {}
 
 func (*FileExplorerCommand_Remove) isFileExplorerCommand_Payload() {}
-
-func (*FileExplorerCommand_GetCwd) isFileExplorerCommand_Payload() {}
 
 // FileExplorerResponse represents a response sent from the server to the client in the file explorer component.
 type FileExplorerResponse struct {
@@ -412,7 +396,6 @@ type FileExplorerResponse struct {
 	//	*FileExplorerResponse_ListFiles
 	//	*FileExplorerResponse_MakeDirectory
 	//	*FileExplorerResponse_Remove
-	//	*FileExplorerResponse_GetCwd
 	Payload       isFileExplorerResponse_Payload `protobuf_oneof:"payload"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -482,15 +465,6 @@ func (x *FileExplorerResponse) GetRemove() *RemoveResponse {
 	return nil
 }
 
-func (x *FileExplorerResponse) GetGetCwd() *GetCWDResponse {
-	if x != nil {
-		if x, ok := x.Payload.(*FileExplorerResponse_GetCwd); ok {
-			return x.GetCwd
-		}
-	}
-	return nil
-}
-
 type isFileExplorerResponse_Payload interface {
 	isFileExplorerResponse_Payload()
 }
@@ -507,17 +481,11 @@ type FileExplorerResponse_Remove struct {
 	Remove *RemoveResponse `protobuf:"bytes,3,opt,name=remove,proto3,oneof"`
 }
 
-type FileExplorerResponse_GetCwd struct {
-	GetCwd *GetCWDResponse `protobuf:"bytes,4,opt,name=get_cwd,json=getCwd,proto3,oneof"`
-}
-
 func (*FileExplorerResponse_ListFiles) isFileExplorerResponse_Payload() {}
 
 func (*FileExplorerResponse_MakeDirectory) isFileExplorerResponse_Payload() {}
 
 func (*FileExplorerResponse_Remove) isFileExplorerResponse_Payload() {}
-
-func (*FileExplorerResponse_GetCwd) isFileExplorerResponse_Payload() {}
 
 // ListFilesCommand is a command to list files in a directory.
 type ListFilesCommand struct {
@@ -899,97 +867,6 @@ func (x *RemoveResponse) GetError() string {
 	return ""
 }
 
-// GetCWDCommand is sent by the client to request the current working directory of the terminal session.
-// The terminal session is currently held on server side and identified by the connection, so no additional fields are needed in the request.
-type GetCWDCommand struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetCWDCommand) Reset() {
-	*x = GetCWDCommand{}
-	mi := &file_console_webfiles_v1_webfiles_proto_msgTypes[13]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetCWDCommand) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetCWDCommand) ProtoMessage() {}
-
-func (x *GetCWDCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_console_webfiles_v1_webfiles_proto_msgTypes[13]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetCWDCommand.ProtoReflect.Descriptor instead.
-func (*GetCWDCommand) Descriptor() ([]byte, []int) {
-	return file_console_webfiles_v1_webfiles_proto_rawDescGZIP(), []int{13}
-}
-
-// GetCWDResponse is sent by the server in response to a GetCWDCommand, containing the current working directory path.
-type GetCWDResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`         // Current working directory path
-	Error         *string                `protobuf:"bytes,2,opt,name=error,proto3,oneof" json:"error,omitempty"` // Error message if the request failed, empty if successful
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetCWDResponse) Reset() {
-	*x = GetCWDResponse{}
-	mi := &file_console_webfiles_v1_webfiles_proto_msgTypes[14]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetCWDResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetCWDResponse) ProtoMessage() {}
-
-func (x *GetCWDResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_console_webfiles_v1_webfiles_proto_msgTypes[14]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetCWDResponse.ProtoReflect.Descriptor instead.
-func (*GetCWDResponse) Descriptor() ([]byte, []int) {
-	return file_console_webfiles_v1_webfiles_proto_rawDescGZIP(), []int{14}
-}
-
-func (x *GetCWDResponse) GetPath() string {
-	if x != nil {
-		return x.Path
-	}
-	return ""
-}
-
-func (x *GetCWDResponse) GetError() string {
-	if x != nil && x.Error != nil {
-		return *x.Error
-	}
-	return ""
-}
-
 var File_console_webfiles_v1_webfiles_proto protoreflect.FileDescriptor
 
 const file_console_webfiles_v1_webfiles_proto_rawDesc = "" +
@@ -1006,20 +883,18 @@ const file_console_webfiles_v1_webfiles_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12<\n" +
 	"\acommand\x18\x02 \x01(\v2 .webfiles.v1.FileExplorerCommandH\x00R\acommand\x12?\n" +
 	"\bresponse\x18\x03 \x01(\v2!.webfiles.v1.FileExplorerResponseH\x00R\bresponseB\t\n" +
-	"\apayload\"\x99\x02\n" +
+	"\apayload\"\xe2\x01\n" +
 	"\x13FileExplorerCommand\x12>\n" +
 	"\n" +
 	"list_files\x18\x01 \x01(\v2\x1d.webfiles.v1.ListFilesCommandH\x00R\tlistFiles\x12J\n" +
 	"\x0emake_directory\x18\x02 \x01(\v2!.webfiles.v1.MakeDirectoryCommandH\x00R\rmakeDirectory\x124\n" +
-	"\x06remove\x18\x03 \x01(\v2\x1a.webfiles.v1.RemoveCommandH\x00R\x06remove\x125\n" +
-	"\aget_cwd\x18\x04 \x01(\v2\x1a.webfiles.v1.GetCWDCommandH\x00R\x06getCwdB\t\n" +
-	"\apayload\"\x9e\x02\n" +
+	"\x06remove\x18\x03 \x01(\v2\x1a.webfiles.v1.RemoveCommandH\x00R\x06removeB\t\n" +
+	"\apayload\"\xe6\x01\n" +
 	"\x14FileExplorerResponse\x12?\n" +
 	"\n" +
 	"list_files\x18\x01 \x01(\v2\x1e.webfiles.v1.ListFilesResponseH\x00R\tlistFiles\x12K\n" +
 	"\x0emake_directory\x18\x02 \x01(\v2\".webfiles.v1.MakeDirectoryResponseH\x00R\rmakeDirectory\x125\n" +
-	"\x06remove\x18\x03 \x01(\v2\x1b.webfiles.v1.RemoveResponseH\x00R\x06remove\x126\n" +
-	"\aget_cwd\x18\x04 \x01(\v2\x1b.webfiles.v1.GetCWDResponseH\x00R\x06getCwdB\t\n" +
+	"\x06remove\x18\x03 \x01(\v2\x1b.webfiles.v1.RemoveResponseH\x00R\x06removeB\t\n" +
 	"\apayload\"G\n" +
 	"\x10ListFilesCommand\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\x12\x1f\n" +
@@ -1046,11 +921,6 @@ const file_console_webfiles_v1_webfiles_proto_rawDesc = "" +
 	"\x04path\x18\x01 \x01(\tR\x04path\"5\n" +
 	"\x0eRemoveResponse\x12\x19\n" +
 	"\x05error\x18\x01 \x01(\tH\x00R\x05error\x88\x01\x01B\b\n" +
-	"\x06_error\"\x0f\n" +
-	"\rGetCWDCommand\"I\n" +
-	"\x0eGetCWDResponse\x12\x12\n" +
-	"\x04path\x18\x01 \x01(\tR\x04path\x12\x19\n" +
-	"\x05error\x18\x02 \x01(\tH\x00R\x05error\x88\x01\x01B\b\n" +
 	"\x06_errorBLZJgithub.com/k8shell-io/common/pkg/api/gen/go/console/webfiles/v1;webfilesv1b\x06proto3"
 
 var (
@@ -1065,7 +935,7 @@ func file_console_webfiles_v1_webfiles_proto_rawDescGZIP() []byte {
 	return file_console_webfiles_v1_webfiles_proto_rawDescData
 }
 
-var file_console_webfiles_v1_webfiles_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_console_webfiles_v1_webfiles_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_console_webfiles_v1_webfiles_proto_goTypes = []any{
 	(*WebFilesMessage)(nil),       // 0: webfiles.v1.WebFilesMessage
 	(*PingMessage)(nil),           // 1: webfiles.v1.PingMessage
@@ -1080,8 +950,6 @@ var file_console_webfiles_v1_webfiles_proto_goTypes = []any{
 	(*MakeDirectoryResponse)(nil), // 10: webfiles.v1.MakeDirectoryResponse
 	(*RemoveCommand)(nil),         // 11: webfiles.v1.RemoveCommand
 	(*RemoveResponse)(nil),        // 12: webfiles.v1.RemoveResponse
-	(*GetCWDCommand)(nil),         // 13: webfiles.v1.GetCWDCommand
-	(*GetCWDResponse)(nil),        // 14: webfiles.v1.GetCWDResponse
 }
 var file_console_webfiles_v1_webfiles_proto_depIdxs = []int32{
 	1,  // 0: webfiles.v1.WebFilesMessage.ping:type_name -> webfiles.v1.PingMessage
@@ -1092,17 +960,15 @@ var file_console_webfiles_v1_webfiles_proto_depIdxs = []int32{
 	6,  // 5: webfiles.v1.FileExplorerCommand.list_files:type_name -> webfiles.v1.ListFilesCommand
 	9,  // 6: webfiles.v1.FileExplorerCommand.make_directory:type_name -> webfiles.v1.MakeDirectoryCommand
 	11, // 7: webfiles.v1.FileExplorerCommand.remove:type_name -> webfiles.v1.RemoveCommand
-	13, // 8: webfiles.v1.FileExplorerCommand.get_cwd:type_name -> webfiles.v1.GetCWDCommand
-	7,  // 9: webfiles.v1.FileExplorerResponse.list_files:type_name -> webfiles.v1.ListFilesResponse
-	10, // 10: webfiles.v1.FileExplorerResponse.make_directory:type_name -> webfiles.v1.MakeDirectoryResponse
-	12, // 11: webfiles.v1.FileExplorerResponse.remove:type_name -> webfiles.v1.RemoveResponse
-	14, // 12: webfiles.v1.FileExplorerResponse.get_cwd:type_name -> webfiles.v1.GetCWDResponse
-	8,  // 13: webfiles.v1.ListFilesResponse.files:type_name -> webfiles.v1.FileInfo
-	14, // [14:14] is the sub-list for method output_type
-	14, // [14:14] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	7,  // 8: webfiles.v1.FileExplorerResponse.list_files:type_name -> webfiles.v1.ListFilesResponse
+	10, // 9: webfiles.v1.FileExplorerResponse.make_directory:type_name -> webfiles.v1.MakeDirectoryResponse
+	12, // 10: webfiles.v1.FileExplorerResponse.remove:type_name -> webfiles.v1.RemoveResponse
+	8,  // 11: webfiles.v1.ListFilesResponse.files:type_name -> webfiles.v1.FileInfo
+	12, // [12:12] is the sub-list for method output_type
+	12, // [12:12] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_console_webfiles_v1_webfiles_proto_init() }
@@ -1123,25 +989,22 @@ func file_console_webfiles_v1_webfiles_proto_init() {
 		(*FileExplorerCommand_ListFiles)(nil),
 		(*FileExplorerCommand_MakeDirectory)(nil),
 		(*FileExplorerCommand_Remove)(nil),
-		(*FileExplorerCommand_GetCwd)(nil),
 	}
 	file_console_webfiles_v1_webfiles_proto_msgTypes[5].OneofWrappers = []any{
 		(*FileExplorerResponse_ListFiles)(nil),
 		(*FileExplorerResponse_MakeDirectory)(nil),
 		(*FileExplorerResponse_Remove)(nil),
-		(*FileExplorerResponse_GetCwd)(nil),
 	}
 	file_console_webfiles_v1_webfiles_proto_msgTypes[7].OneofWrappers = []any{}
 	file_console_webfiles_v1_webfiles_proto_msgTypes[10].OneofWrappers = []any{}
 	file_console_webfiles_v1_webfiles_proto_msgTypes[12].OneofWrappers = []any{}
-	file_console_webfiles_v1_webfiles_proto_msgTypes[14].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_console_webfiles_v1_webfiles_proto_rawDesc), len(file_console_webfiles_v1_webfiles_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   15,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
