@@ -63,6 +63,12 @@ message EvaluateResponse {
   // reason is a human-readable explanation of the decision.
   // Populated on both allow and deny.
   string reason = 2;
+
+  // obligations carries effective attributes after policy enforcement.
+  // Callers must apply these key/value pairs to the resource or request
+  // before proceeding — e.g. forcing "privileged" to "false" for non-admins.
+  // Empty when the policy imposes no additional constraints.
+  map<string, string> obligations = 3;
 }
 
 // BatchEvaluateRequest carries one or more independent checks.

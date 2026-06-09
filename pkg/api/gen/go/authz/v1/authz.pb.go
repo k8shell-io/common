@@ -175,7 +175,12 @@ type EvaluateResponse struct {
 	Allowed bool `protobuf:"varint,1,opt,name=allowed,proto3" json:"allowed,omitempty"`
 	// reason is a human-readable explanation of the decision.
 	// Populated on both allow and deny.
-	Reason        string `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`
+	Reason string `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`
+	// obligations carries effective attributes after policy enforcement.
+	// Callers must apply these key/value pairs to the resource or request
+	// before proceeding — e.g. forcing "privileged" to "false" for non-admins.
+	// Empty when the policy imposes no additional constraints.
+	Obligations   map[string]string `protobuf:"bytes,3,rep,name=obligations,proto3" json:"obligations,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -222,6 +227,13 @@ func (x *EvaluateResponse) GetReason() string {
 		return x.Reason
 	}
 	return ""
+}
+
+func (x *EvaluateResponse) GetObligations() map[string]string {
+	if x != nil {
+		return x.Obligations
+	}
+	return nil
 }
 
 // BatchEvaluateRequest carries one or more independent checks.
@@ -335,10 +347,14 @@ const file_authz_v1_authz_proto_rawDesc = "" +
 	"\acontext\x18\x04 \x03(\v2&.authz.v1.EvaluateRequest.ContextEntryR\acontext\x1a:\n" +
 	"\fContextEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"D\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xd3\x01\n" +
 	"\x10EvaluateResponse\x12\x18\n" +
 	"\aallowed\x18\x01 \x01(\bR\aallowed\x12\x16\n" +
-	"\x06reason\x18\x02 \x01(\tR\x06reason\"M\n" +
+	"\x06reason\x18\x02 \x01(\tR\x06reason\x12M\n" +
+	"\vobligations\x18\x03 \x03(\v2+.authz.v1.EvaluateResponse.ObligationsEntryR\vobligations\x1a>\n" +
+	"\x10ObligationsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"M\n" +
 	"\x14BatchEvaluateRequest\x125\n" +
 	"\brequests\x18\x01 \x03(\v2\x19.authz.v1.EvaluateRequestR\brequests\"Q\n" +
 	"\x15BatchEvaluateResponse\x128\n" +
@@ -359,7 +375,7 @@ func file_authz_v1_authz_proto_rawDescGZIP() []byte {
 	return file_authz_v1_authz_proto_rawDescData
 }
 
-var file_authz_v1_authz_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_authz_v1_authz_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_authz_v1_authz_proto_goTypes = []any{
 	(*Resource)(nil),              // 0: authz.v1.Resource
 	(*EvaluateRequest)(nil),       // 1: authz.v1.EvaluateRequest
@@ -368,22 +384,24 @@ var file_authz_v1_authz_proto_goTypes = []any{
 	(*BatchEvaluateResponse)(nil), // 4: authz.v1.BatchEvaluateResponse
 	nil,                           // 5: authz.v1.Resource.AttributesEntry
 	nil,                           // 6: authz.v1.EvaluateRequest.ContextEntry
+	nil,                           // 7: authz.v1.EvaluateResponse.ObligationsEntry
 }
 var file_authz_v1_authz_proto_depIdxs = []int32{
 	5, // 0: authz.v1.Resource.attributes:type_name -> authz.v1.Resource.AttributesEntry
 	0, // 1: authz.v1.EvaluateRequest.resource:type_name -> authz.v1.Resource
 	6, // 2: authz.v1.EvaluateRequest.context:type_name -> authz.v1.EvaluateRequest.ContextEntry
-	1, // 3: authz.v1.BatchEvaluateRequest.requests:type_name -> authz.v1.EvaluateRequest
-	2, // 4: authz.v1.BatchEvaluateResponse.responses:type_name -> authz.v1.EvaluateResponse
-	1, // 5: authz.v1.AuthzService.Evaluate:input_type -> authz.v1.EvaluateRequest
-	3, // 6: authz.v1.AuthzService.BatchEvaluate:input_type -> authz.v1.BatchEvaluateRequest
-	2, // 7: authz.v1.AuthzService.Evaluate:output_type -> authz.v1.EvaluateResponse
-	4, // 8: authz.v1.AuthzService.BatchEvaluate:output_type -> authz.v1.BatchEvaluateResponse
-	7, // [7:9] is the sub-list for method output_type
-	5, // [5:7] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	7, // 3: authz.v1.EvaluateResponse.obligations:type_name -> authz.v1.EvaluateResponse.ObligationsEntry
+	1, // 4: authz.v1.BatchEvaluateRequest.requests:type_name -> authz.v1.EvaluateRequest
+	2, // 5: authz.v1.BatchEvaluateResponse.responses:type_name -> authz.v1.EvaluateResponse
+	1, // 6: authz.v1.AuthzService.Evaluate:input_type -> authz.v1.EvaluateRequest
+	3, // 7: authz.v1.AuthzService.BatchEvaluate:input_type -> authz.v1.BatchEvaluateRequest
+	2, // 8: authz.v1.AuthzService.Evaluate:output_type -> authz.v1.EvaluateResponse
+	4, // 9: authz.v1.AuthzService.BatchEvaluate:output_type -> authz.v1.BatchEvaluateResponse
+	8, // [8:10] is the sub-list for method output_type
+	6, // [6:8] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_authz_v1_authz_proto_init() }
@@ -397,7 +415,7 @@ func file_authz_v1_authz_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_authz_v1_authz_proto_rawDesc), len(file_authz_v1_authz_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
