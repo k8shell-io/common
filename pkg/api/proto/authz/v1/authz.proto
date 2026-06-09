@@ -1,0 +1,76 @@
+// Copyright 2026 the k8Shell authors.
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+syntax = "proto3";
+
+package authz.v1;
+
+option go_package = "github.com/k8shell-io/common/pkg/api/gen/go/authz/v1;authzv1";
+
+// AuthzService evaluates authorization requests against an OPA Rego policy
+// stored on the server. The caller must supply a signed JWT; the service
+// verifies the token and extracts subject claims before policy evaluation.
+service AuthzService {
+
+  // Evaluate checks whether the subject encoded in token is permitted to
+  // perform action on resource, given the supplied context attributes.
+  rpc Evaluate(EvaluateRequest) returns (EvaluateResponse);
+
+  // BatchEvaluate runs multiple independent Evaluate checks in a single
+  // round-trip. Responses are returned in the same order as the requests.
+  // Useful for filtering a list (e.g. which blueprints the user may launch).
+  rpc BatchEvaluate(BatchEvaluateRequest) returns (BatchEvaluateResponse);
+}
+
+// Resource identifies the object being acted upon.
+message Resource {
+  // type is the resource kind: "blueprint", "workspace", "app", etc.
+  string type = 1;
+
+  // id is the resource name or unique identifier.
+  string id = 2;
+
+  // attributes carries ABAC metadata about the resource, e.g.:
+  //   "owner"      -> username
+  //   "org"        -> organization
+  //   "visibility" -> "public" | "private"
+  map<string, string> attributes = 3;
+}
+
+// EvaluateRequest is the input to a single authorization check.
+message EvaluateRequest {
+  // token is the signed JWT for the already-authenticated user.
+  // The service verifies the signature and extracts claims as the OPA subject.
+  string token = 1;
+
+  // action is the operation being attempted, in "resource_type:verb" form.
+  // Examples: "blueprint:launch", "workspace:delete", "app:access".
+  string action = 2;
+
+  // resource is the object the action is being performed on.
+  Resource resource = 3;
+
+  // context carries ambient attributes not present in the JWT or resource,
+  // e.g. "namespace", "environment", "team".
+  map<string, string> context = 4;
+}
+
+// EvaluateResponse is the result of a single authorization check.
+message EvaluateResponse {
+  // allowed is true when the policy permits the action.
+  bool allowed = 1;
+
+  // reason is a human-readable explanation of the decision.
+  // Populated on both allow and deny.
+  string reason = 2;
+}
+
+// BatchEvaluateRequest carries one or more independent checks.
+message BatchEvaluateRequest {
+  repeated EvaluateRequest requests = 1;
+}
+
+// BatchEvaluateResponse carries one response per request, in the same order.
+message BatchEvaluateResponse {
+  repeated EvaluateResponse responses = 1;
+}
