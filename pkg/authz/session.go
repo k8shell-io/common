@@ -42,6 +42,23 @@ var validSessionTypes = map[SessionType]struct{}{
 	SessionTypeTCPIP: {},
 }
 
+// SessionSource identifies the component that initiated the session.
+type SessionSource string
+
+const (
+	// SessionSourceSSHProxy is set when the session originates from the SSH proxy.
+	SessionSourceSSHProxy SessionSource = "ssh-proxy"
+
+	// SessionSourceAPIServer is set when the session originates from the API server.
+	SessionSourceAPIServer SessionSource = "api-server"
+)
+
+// validSessionSources is the set of recognized session sources for fast lookup.
+var validSessionSources = map[SessionSource]struct{}{
+	SessionSourceSSHProxy:  {},
+	SessionSourceAPIServer: {},
+}
+
 // SessionWorkspaceResource holds the workspace-scoped attributes of the resource
 // being accessed.
 type SessionWorkspaceResource struct {
@@ -61,6 +78,9 @@ type SessionWorkspaceResource struct {
 type SessionContext struct {
 	// Type is the kind of session being established (context["session_type"]).
 	Type SessionType
+
+	// Source is the component that initiated the session (context["session_source"]).
+	Source SessionSource
 }
 
 // SessionEvalRequest is the validated, typed model for session policy evaluation.
@@ -84,6 +104,12 @@ func NewSessionEvalRequest(action SessionAction, workspaceID string, sessionType
 		Resource: SessionWorkspaceResource{ID: workspaceID},
 		Context:  SessionContext{Type: sessionType},
 	}
+}
+
+// WithSource sets the session source on the context.
+func (r *SessionEvalRequest) WithSource(source SessionSource) *SessionEvalRequest {
+	r.Context.Source = source
+	return r
 }
 
 // WithOwner sets the workspace owner on the resource.
@@ -127,7 +153,8 @@ func (r *SessionEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
 			Attributes: attrs,
 		},
 		Context: map[string]string{
-			"session_type": string(r.Context.Type),
+			"session_type":   string(r.Context.Type),
+			"session_source": string(r.Context.Source),
 		},
 	}
 }
@@ -157,7 +184,8 @@ func SessionEvalRequestFromProto(req *authzv1.EvaluateRequest) (*SessionEvalRequ
 			Blueprint: attrs["blueprint"],
 		},
 		Context: SessionContext{
-			Type: SessionType(ctx["session_type"]),
+			Type:   SessionType(ctx["session_type"]),
+			Source: SessionSource(ctx["session_source"]),
 		},
 	}
 
@@ -184,6 +212,10 @@ func (r *SessionEvalRequest) Validate() error {
 	if _, ok := validSessionTypes[r.Context.Type]; !ok {
 		return fmt.Errorf("session: context \"session_type\" must be %q or %q, got %q",
 			SessionTypeShell, SessionTypeTCPIP, r.Context.Type)
+	}
+	if _, ok := validSessionSources[r.Context.Source]; !ok {
+		return fmt.Errorf("session: context \"session_source\" must be %q or %q, got %q",
+			SessionSourceSSHProxy, SessionSourceAPIServer, r.Context.Source)
 	}
 	return nil
 }
