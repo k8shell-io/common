@@ -71,19 +71,25 @@ func normalizeByDomain(req *authzv1.EvaluateRequest) (*authzv1.EvaluateRequest, 
 		if err != nil {
 			return nil, err
 		}
-		return sshReq.ToProto(""), nil
+		normalized := sshReq.ToProto("")
+		normalized.Package = req.Package
+		return normalized, nil
 	case strings.HasPrefix(action, "user:"):
 		userReq, err := UserEvalRequestFromProto(req)
 		if err != nil {
 			return nil, err
 		}
-		return userReq.ToProto(""), nil
+		normalized := userReq.ToProto("")
+		normalized.Package = req.Package
+		return normalized, nil
 	case strings.HasPrefix(action, "session:"):
 		sessionReq, err := SessionEvalRequestFromProto(req)
 		if err != nil {
 			return nil, err
 		}
-		return sessionReq.ToProto(""), nil
+		normalized := sessionReq.ToProto("")
+		normalized.Package = req.Package
+		return normalized, nil
 	default:
 		return req, nil
 	}
