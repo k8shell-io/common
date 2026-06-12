@@ -8,18 +8,20 @@ import (
 	"strings"
 
 	authzv1 "github.com/k8shell-io/common/pkg/api/gen/go/authz/v1"
+	"gopkg.in/yaml.v3"
 )
 
 // PolicyInput is the assembled input to a policy evaluation engine (e.g. OPA).
 // It combines the decoded JWT subject with the validated, normalized fields from
 // the gRPC EvaluateRequest. Construct via BuildPolicyInput.
 type PolicyInput struct {
-	Username string
-	Roles    []string
-	Package  string
-	Action   string
-	Resource PolicyResource
-	Context  map[string]string
+	Username  string
+	Roles     []string
+	Package   string
+	Action    string
+	Resource  PolicyResource
+	Context   map[string]string
+	Blueprint map[string]any // non-nil for workspace:* actions; decoded from context["blueprint"]
 }
 
 // PolicyResource holds the resource fields for policy evaluation,
@@ -90,6 +92,14 @@ func normalizeByDomain(req *authzv1.EvaluateRequest) (*authzv1.EvaluateRequest, 
 		normalized := sessionReq.ToProto("")
 		normalized.Package = req.Package
 		return normalized, nil
+	case strings.HasPrefix(action, "workspace:"):
+		workspaceReq, err := WorkspaceEvalRequestFromProto(req)
+		if err != nil {
+			return nil, err
+		}
+		normalized := workspaceReq.ToProto("")
+		normalized.Package = req.Package
+		return normalized, nil
 	default:
 		return req, nil
 	}
@@ -110,6 +120,14 @@ func policyInputFromProto(req *authzv1.EvaluateRequest, username string, roles [
 			Type:       r.GetType(),
 			ID:         r.GetId(),
 			Attributes: r.GetAttributes(),
+		}
+	}
+	if strings.HasPrefix(req.GetAction(), "workspace:") {
+		if raw, ok := req.GetContext()["blueprint"]; ok {
+			var bp map[string]any
+			if err := yaml.Unmarshal([]byte(raw), &bp); err == nil {
+				input.Blueprint = bp
+			}
 		}
 	}
 	return input

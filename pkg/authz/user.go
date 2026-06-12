@@ -24,6 +24,7 @@ const (
 	// The auth method is carried in context["method"] ("publickey" or "password").
 	// For publickey auth, context["fingerprint"] holds the SHA256 key fingerprint.
 	UserActionAuth UserAction = "user:auth"
+
 )
 
 // validUserActions is the set of recognized user actions for fast lookup.
@@ -182,7 +183,6 @@ func UserEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserEvalRequest, e
 			Fingerprint: ctx["fingerprint"],
 		},
 	}
-
 	if err := r.Validate(); err != nil {
 		return nil, err
 	}
