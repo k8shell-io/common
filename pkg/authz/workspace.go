@@ -29,6 +29,24 @@ var validWorkspaceActions = map[WorkspaceAction]struct{}{
 	WorkspaceActionProvision: {},
 }
 
+// WorkspaceProvisionMode controls how the workspace is attached to its runtime.
+type WorkspaceProvisionMode string
+
+const (
+	// WorkspaceProvisionModeStandalone creates a new independent workspace pod.
+	WorkspaceProvisionModeStandalone WorkspaceProvisionMode = "standalone"
+
+	// WorkspaceProvisionModeInject injects the workspace into an existing
+	// workload. WorkloadName, WorkloadNamespace, and WorkloadKind are required.
+	WorkspaceProvisionModeInject WorkspaceProvisionMode = "inject"
+)
+
+// validWorkspaceProvisionModes is the set of recognized provision modes.
+var validWorkspaceProvisionModes = map[WorkspaceProvisionMode]struct{}{
+	WorkspaceProvisionModeStandalone: {},
+	WorkspaceProvisionModeInject:     {},
+}
+
 // WorkspaceResource holds the resource-scoped attributes for a workspace policy check.
 type WorkspaceResource struct {
 	// ID is the workspace name (resource.id in the EvaluateRequest).
@@ -42,11 +60,15 @@ type WorkspaceResource struct {
 	Blueprint string
 }
 
-// WorkspaceProvisionContext holds the full blueprint being provisioned.
-// The enforcer must apply any ProvisionPatch obligations to this struct
-// before provisioning proceeds.
+// WorkspaceProvisionContext holds the full blueprint being provisioned and the
+// provisioning mode. The enforcer must apply any ProvisionPatch obligations to
+// Blueprint before provisioning proceeds.
 type WorkspaceProvisionContext struct {
-	Blueprint *models.Blueprint
+	Blueprint          *models.Blueprint
+	Mode               WorkspaceProvisionMode
+	WorkloadName       string
+	WorkloadNamespace  string
+	WorkloadKind       string
 }
 
 // WorkspaceEvalRequest is the validated, typed model for workspace policy
@@ -90,6 +112,21 @@ func (r *WorkspaceEvalRequest) WithBlueprint(bp *models.Blueprint) *WorkspaceEva
 	return r
 }
 
+// WithMode sets the provisioning mode; required for WorkspaceActionProvision.
+func (r *WorkspaceEvalRequest) WithMode(mode WorkspaceProvisionMode) *WorkspaceEvalRequest {
+	r.Context.Mode = mode
+	return r
+}
+
+// WithWorkload sets the target workload fields; required when mode is
+// WorkspaceProvisionModeInject.
+func (r *WorkspaceEvalRequest) WithWorkload(name, namespace, kind string) *WorkspaceEvalRequest {
+	r.Context.WorkloadName = name
+	r.Context.WorkloadNamespace = namespace
+	r.Context.WorkloadKind = kind
+	return r
+}
+
 // Build validates the request and returns it if all constraints are satisfied.
 // It is the required terminator for the builder chain.
 func (r *WorkspaceEvalRequest) Build() (*WorkspaceEvalRequest, error) {
@@ -116,6 +153,18 @@ func (r *WorkspaceEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
 		if data, err := yaml.Marshal(r.Context.Blueprint); err == nil {
 			ctx["blueprint"] = string(data)
 		}
+	}
+	if r.Context.Mode != "" {
+		ctx["mode"] = string(r.Context.Mode)
+	}
+	if r.Context.WorkloadName != "" {
+		ctx["workload_name"] = r.Context.WorkloadName
+	}
+	if r.Context.WorkloadNamespace != "" {
+		ctx["workload_namespace"] = r.Context.WorkloadNamespace
+	}
+	if r.Context.WorkloadKind != "" {
+		ctx["workload_kind"] = r.Context.WorkloadKind
 	}
 
 	return &authzv1.EvaluateRequest{
@@ -163,6 +212,10 @@ func WorkspaceEvalRequestFromProto(req *authzv1.EvaluateRequest) (*WorkspaceEval
 		}
 		r.Context.Blueprint = &bp
 	}
+	r.Context.Mode = WorkspaceProvisionMode(ctx["mode"])
+	r.Context.WorkloadName = ctx["workload_name"]
+	r.Context.WorkloadNamespace = ctx["workload_namespace"]
+	r.Context.WorkloadKind = ctx["workload_kind"]
 
 	if err := r.Validate(); err != nil {
 		return nil, err
@@ -186,6 +239,21 @@ func (r *WorkspaceEvalRequest) Validate() error {
 	}
 	if r.Context.Blueprint == nil {
 		return fmt.Errorf("workspace: provision context blueprint is required")
+	}
+	if _, ok := validWorkspaceProvisionModes[r.Context.Mode]; !ok {
+		return fmt.Errorf("workspace: context \"mode\" must be %q or %q, got %q",
+			WorkspaceProvisionModeStandalone, WorkspaceProvisionModeInject, r.Context.Mode)
+	}
+	if r.Context.Mode == WorkspaceProvisionModeInject {
+		if r.Context.WorkloadName == "" {
+			return fmt.Errorf("workspace: context \"workload_name\" is required for inject mode")
+		}
+		if r.Context.WorkloadNamespace == "" {
+			return fmt.Errorf("workspace: context \"workload_namespace\" is required for inject mode")
+		}
+		if r.Context.WorkloadKind == "" {
+			return fmt.Errorf("workspace: context \"workload_kind\" is required for inject mode")
+		}
 	}
 	return nil
 }
