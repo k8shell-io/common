@@ -77,6 +77,10 @@ type SSHContext struct {
 	// SocketPath is the Unix socket path for ssh:direct-streamlocal channels
 	// (context["socket_path"]).
 	SocketPath string
+
+	// AsUser is the Linux user the session runs as inside the workspace
+	// (context["as_user"]). Optional; empty means the workspace default user.
+	AsUser string
 }
 
 // SSHEvalRequest is the validated, typed model for SSH policy evaluation.
@@ -143,6 +147,13 @@ func (r *SSHEvalRequest) WithSocketPath(path string) *SSHEvalRequest {
 	return r
 }
 
+// WithAsUser sets the Linux user the session runs as inside the workspace.
+// Optional for SSHActionShell and SSHActionExec; empty means the workspace default user.
+func (r *SSHEvalRequest) WithAsUser(user string) *SSHEvalRequest {
+	r.Context.AsUser = user
+	return r
+}
+
 // Build validates the request and returns it if all constraints are satisfied.
 // It is the required terminator for the builder chain.
 func (r *SSHEvalRequest) Build() (*SSHEvalRequest, error) {
@@ -179,6 +190,9 @@ func (r *SSHEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
 	}
 	if r.Context.SocketPath != "" {
 		ctx["socket_path"] = r.Context.SocketPath
+	}
+	if r.Context.AsUser != "" {
+		ctx["as_user"] = r.Context.AsUser
 	}
 
 	return &authzv1.EvaluateRequest{
@@ -223,6 +237,7 @@ func SSHEvalRequestFromProto(req *authzv1.EvaluateRequest) (*SSHEvalRequest, err
 			Host:       ctx["host"],
 			Port:       ctx["port"],
 			SocketPath: ctx["socket_path"],
+			AsUser:     ctx["as_user"],
 		},
 	}
 
