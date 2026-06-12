@@ -53,6 +53,9 @@ message EvaluateRequest {
   // context carries ambient attributes not present in the JWT or resource,
   // e.g. "namespace", "environment", "team".
   map<string, string> context = 4;
+
+  // package is the OPA policy package to evaluate the request against
+  string package = 5;
 }
 
 // EvaluateResponse is the result of a single authorization check.

@@ -105,7 +105,11 @@ type EvaluateRequest struct {
 	Resource *Resource `protobuf:"bytes,3,opt,name=resource,proto3" json:"resource,omitempty"`
 	// context carries ambient attributes not present in the JWT or resource,
 	// e.g. "namespace", "environment", "team".
-	Context       map[string]string `protobuf:"bytes,4,rep,name=context,proto3" json:"context,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Context map[string]string `protobuf:"bytes,4,rep,name=context,proto3" json:"context,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// package is the OPA policy package to evaluate the request against,
+	// e.g. "authz.ssh", "authz.user", "authz.session". When empty the service
+	// uses its configured default package.
+	Package       string `protobuf:"bytes,5,opt,name=package,proto3" json:"package,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -166,6 +170,13 @@ func (x *EvaluateRequest) GetContext() map[string]string {
 		return x.Context
 	}
 	return nil
+}
+
+func (x *EvaluateRequest) GetPackage() string {
+	if x != nil {
+		return x.Package
+	}
+	return ""
 }
 
 // EvaluateResponse is the result of a single authorization check.
@@ -339,12 +350,13 @@ const file_authz_v1_authz_proto_rawDesc = "" +
 	"attributes\x1a=\n" +
 	"\x0fAttributesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xed\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x87\x02\n" +
 	"\x0fEvaluateRequest\x12\x14\n" +
 	"\x05token\x18\x01 \x01(\tR\x05token\x12\x16\n" +
 	"\x06action\x18\x02 \x01(\tR\x06action\x12.\n" +
 	"\bresource\x18\x03 \x01(\v2\x12.authz.v1.ResourceR\bresource\x12@\n" +
-	"\acontext\x18\x04 \x03(\v2&.authz.v1.EvaluateRequest.ContextEntryR\acontext\x1a:\n" +
+	"\acontext\x18\x04 \x03(\v2&.authz.v1.EvaluateRequest.ContextEntryR\acontext\x12\x18\n" +
+	"\apackage\x18\x05 \x01(\tR\apackage\x1a:\n" +
 	"\fContextEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xd3\x01\n" +

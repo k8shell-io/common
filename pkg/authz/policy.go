@@ -16,6 +16,7 @@ import (
 type PolicyInput struct {
 	Username string
 	Roles    []string
+	Package  string
 	Action   string
 	Resource PolicyResource
 	Context  map[string]string
@@ -77,6 +78,12 @@ func normalizeByDomain(req *authzv1.EvaluateRequest) (*authzv1.EvaluateRequest, 
 			return nil, err
 		}
 		return userReq.ToProto(""), nil
+	case strings.HasPrefix(action, "session:"):
+		sessionReq, err := SessionEvalRequestFromProto(req)
+		if err != nil {
+			return nil, err
+		}
+		return sessionReq.ToProto(""), nil
 	default:
 		return req, nil
 	}
@@ -88,6 +95,7 @@ func policyInputFromProto(req *authzv1.EvaluateRequest, username string, roles [
 	input := &PolicyInput{
 		Username: username,
 		Roles:    roles,
+		Package:  req.GetPackage(),
 		Action:   req.GetAction(),
 		Context:  req.GetContext(),
 	}
