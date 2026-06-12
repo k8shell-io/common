@@ -281,3 +281,37 @@ func ParseRolesObligation(obligations map[string]string) (RolesObligation, bool)
 	}
 	return RolesObligation{Roles: roles}, true
 }
+
+const (
+	// ObligationKeyBlueprints is the key the policy engine writes to assign
+	// allowed blueprints during onboarding. The value is a comma-separated
+	// list of blueprint names; "*" grants access to all blueprints.
+	ObligationKeyBlueprints = "blueprints"
+)
+
+// BlueprintsObligation is the typed representation of the "blueprints"
+// obligation key returned by the policy engine in a PolicyResult for
+// user:onboard.
+type BlueprintsObligation struct {
+	// Blueprints is the list of blueprint names the policy assigns to the user.
+	// An entry of "*" grants access to all blueprints.
+	Blueprints []string
+}
+
+// ParseBlueprintsObligation reads the "blueprints" key from the obligations map.
+// Returns (obligation, true) when the key is present, (zero value, false) when
+// the policy did not set a blueprints obligation — in that case the enforcer
+// should preserve its existing default rather than overwriting it.
+func ParseBlueprintsObligation(obligations map[string]string) (BlueprintsObligation, bool) {
+	v, ok := obligations[ObligationKeyBlueprints]
+	if !ok {
+		return BlueprintsObligation{}, false
+	}
+	var blueprints []string
+	for b := range strings.SplitSeq(v, ",") {
+		if b = strings.TrimSpace(b); b != "" {
+			blueprints = append(blueprints, b)
+		}
+	}
+	return BlueprintsObligation{Blueprints: blueprints}, true
+}
