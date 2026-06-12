@@ -5,6 +5,7 @@ package authz
 
 import (
 	"fmt"
+	"strings"
 
 	authzv1 "github.com/k8shell-io/common/pkg/api/gen/go/authz/v1"
 )
@@ -190,30 +191,49 @@ func (r *SessionEvalRequest) Validate() error {
 const (
 	// ObligationKeyRecord is the key the policy engine writes when expressing a
 	// session recording obligation. The enforcer reads this key and activates
-	// the appropriate recording backend before the session begins.
+	// the appropriate recording backends before the session begins.
 	ObligationKeyRecord = "record"
 
-	// ObligationRecordNone explicitly disables session recording.
+	// ObligationRecordNone explicitly disables all session recording.
 	ObligationRecordNone = "none"
+
+	// Recording channel name tokens used as comma-separated values of the
+	// "record" obligation key.
+	ObligationRecordShell       = "shell"
+	ObligationRecordExec        = "exec"
+	ObligationRecordDirectTCPIP = "direct-tcpip"
 )
 
 // RecordObligation is the typed representation of the "record" obligation key
 // returned by the policy engine in a PolicyResult for session:start.
+// Each field corresponds to one recording channel; all default to false.
 type RecordObligation struct {
-	// Mode is the recording backend to activate. SessionTypeShell and
-	// SessionTypeTCPIP are the valid recording modes; ObligationRecordNone
-	// explicitly disables recording.
-	Mode SessionType
+	Shell       bool
+	Exec        bool
+	DirectTCPIP bool
 }
 
 // ParseRecordObligation reads the "record" key from the obligations map.
-// Returns (obligation, true) when the key is present, (zero value, false) when
-// the policy did not set a record obligation — in that case the enforcer should
-// apply its configured default (typically no recording).
+// The value is a comma-separated list of channel tokens ("shell", "exec",
+// "direct-tcpip"); "none" or an unrecognised value leaves all fields false.
+// Returns (obligation, true) when the key is present, (zero, false) when the
+// policy did not set a record obligation — the enforcer should then apply its
+// configured default (typically no recording).
 func ParseRecordObligation(obligations map[string]string) (RecordObligation, bool) {
 	v, ok := obligations[ObligationKeyRecord]
 	if !ok {
 		return RecordObligation{}, false
 	}
-	return RecordObligation{Mode: SessionType(v)}, true
+	var ob RecordObligation
+	for ch := range strings.SplitSeq(v, ",") {
+		switch strings.TrimSpace(ch) {
+		case ObligationRecordShell:
+			ob.Shell = true
+		case ObligationRecordExec:
+			ob.Exec = true
+		case ObligationRecordDirectTCPIP:
+			ob.DirectTCPIP = true
+		}
+	}
+	return ob, true
 }
