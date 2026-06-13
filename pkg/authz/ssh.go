@@ -3,6 +3,26 @@
 
 package authz
 
+// Contract: ssh:shell | ssh:exec | ssh:sftp | ssh:direct-tcpip | ssh:direct-streamlocal | ssh:agent-forward
+//
+// Resource  type="workspace"
+//   id            workspace name            (required)
+//   owner         workspace owner username  (required)
+//   blueprint     blueprint name            (optional)
+//
+// Context
+//   pty           "true" if PTY requested                           (optional; shell/exec)
+//   command       command string                                    (required for exec)
+//   host          destination host                                  (required for direct-tcpip)
+//   port          destination port                                  (required for direct-tcpip)
+//   socket_path   Unix socket path                                  (required for direct-streamlocal)
+//   as_user       Linux user to run as inside workspace             (optional; shell/exec)
+//
+// Subject   injected by the backend from JWT claims (username, roles, email, ...)
+//
+// Obligations
+//   (none)
+
 import (
 	"fmt"
 
@@ -54,9 +74,9 @@ type SSHWorkspaceResource struct {
 	// Owner is the username of the workspace owner (resource.attributes["owner"]).
 	Owner string
 
-	// Blueprint is the blueprint the workspace was launched from
+	// BlueprintName is the blueprint the workspace was launched from
 	// (resource.attributes["blueprint"]).
-	Blueprint string
+	BlueprintName string
 }
 
 // SSHContext holds the ambient SSH channel/request attributes supplied by the
@@ -111,9 +131,9 @@ func (r *SSHEvalRequest) WithOwner(owner string) *SSHEvalRequest {
 	return r
 }
 
-// WithBlueprint sets the blueprint name on the resource.
-func (r *SSHEvalRequest) WithBlueprint(blueprint string) *SSHEvalRequest {
-	r.Resource.Blueprint = blueprint
+// WithBlueprintName sets the blueprint name on the resource.
+func (r *SSHEvalRequest) WithBlueprintName(blueprint string) *SSHEvalRequest {
+	r.Resource.BlueprintName = blueprint
 	return r
 }
 
@@ -171,8 +191,8 @@ func (r *SSHEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
 	attrs := map[string]string{
 		"owner": r.Resource.Owner,
 	}
-	if r.Resource.Blueprint != "" {
-		attrs["blueprint"] = r.Resource.Blueprint
+	if r.Resource.BlueprintName != "" {
+		attrs["blueprint"] = r.Resource.BlueprintName
 	}
 
 	ctx := map[string]string{}
@@ -227,9 +247,9 @@ func SSHEvalRequestFromProto(req *authzv1.EvaluateRequest) (*SSHEvalRequest, err
 	r := &SSHEvalRequest{
 		Action: SSHAction(req.Action),
 		Resource: SSHWorkspaceResource{
-			ID:        req.Resource.Id,
-			Owner:     attrs["owner"],
-			Blueprint: attrs["blueprint"],
+			ID:            req.Resource.Id,
+			Owner:         attrs["owner"],
+			BlueprintName: attrs["blueprint"],
 		},
 		Context: SSHContext{
 			PTY:        ctx["pty"] == "true",

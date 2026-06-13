@@ -3,35 +3,47 @@
 
 package authz
 
+// Contract: user:onboard
+//
+// Resource  type="user"
+//   id   username               (required)
+//   idp  identity provider name (required)
+//   org  organization name      (optional)
+//
+// Context   (none)
+//
+// Subject   injected by the backend from JWT claims (username, roles, email, ...)
+//
+// Obligations
+//   sudo       true | false
+//   roles      JSON array of role name strings  (e.g. ["admin","dev"])
+//   blueprints comma-separated blueprint names or "*" for all
+//
+// ---
+//
+// Contract: user:auth
+//
+// Resource  type="user"
+//   id   username               (required)
+//   idp  identity provider name (required)
+//   org  organization name      (optional)
+//
+// Context
+//   method       publickey | password          (required)
+//   fingerprint  SHA256 public key fingerprint (required for publickey)
+//
+// Subject   injected by the backend from JWT claims (username, roles, email, ...)
+//
+// Obligations  (none)
+
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
 	authzv1 "github.com/k8shell-io/common/pkg/api/gen/go/authz/v1"
 	"github.com/k8shell-io/common/pkg/models"
 )
-
-// UserAction is the typed representation of a user policy action.
-type UserAction string
-
-const (
-	// UserActionOnboard is the action evaluated when a user is created via an
-	// identity provider. The policy result may carry obligations (e.g. sudo)
-	// that the enforcer must apply to the stored user record.
-	UserActionOnboard UserAction = "user:onboard"
-
-	// UserActionAuth is the action evaluated when a user authenticates via SSH.
-	// The auth method is carried in context["method"] ("publickey" or "password").
-	// For publickey auth, context["fingerprint"] holds the SHA256 key fingerprint.
-	UserActionAuth UserAction = "user:auth"
-
-)
-
-// validUserActions is the set of recognized user actions for fast lookup.
-var validUserActions = map[UserAction]struct{}{
-	UserActionOnboard: {},
-	UserActionAuth:    {},
-}
 
 // UserAuthMethod is the typed representation of an SSH authentication method.
 type UserAuthMethod string
@@ -40,17 +52,6 @@ const (
 	UserAuthMethodPublicKey UserAuthMethod = "publickey"
 	UserAuthMethodPassword  UserAuthMethod = "password"
 )
-
-// UserAuthContext holds the ambient authentication attributes for user:auth
-// policy checks.
-type UserAuthContext struct {
-	// Method is the SSH authentication method ("publickey" or "password").
-	Method UserAuthMethod
-
-	// Fingerprint is the SHA256 public key fingerprint; set only when
-	// Method is UserAuthMethodPublicKey (context["fingerprint"]).
-	Fingerprint string
-}
 
 // UserResource holds the resource-scoped attributes for a user policy check.
 type UserResource struct {
@@ -65,56 +66,67 @@ type UserResource struct {
 	Org string
 }
 
-// UserEvalRequest is the validated, typed model for user policy evaluation.
-// Use NewUserEvalRequest to start building, then chain With* methods and call
-// Build to get a validated instance. Use UserEvalRequestFromProto to convert
-// directly from a gRPC EvaluateRequest.
-type UserEvalRequest struct {
-	Action   UserAction
-	Resource UserResource
-	Context  UserAuthContext
+func userResourceToAttrs(r UserResource) map[string]string {
+	attrs := map[string]string{
+		"idp": r.IDP,
+	}
+	if r.Org != "" {
+		attrs["org"] = r.Org
+	}
+	return attrs
 }
 
-var _ EvalRequest = (*UserEvalRequest)(nil)
+func userResourceFromAttrs(id string, attrs map[string]string) UserResource {
+	return UserResource{
+		ID:  id,
+		IDP: attrs["idp"],
+		Org: attrs["org"],
+	}
+}
 
-// NewUserEvalRequest begins building a UserEvalRequest for the given action and
-// username. Chain With* methods to supply additional fields, then call Build to
-// validate and obtain the final struct.
-func NewUserEvalRequest(action UserAction, username string) *UserEvalRequest {
-	return &UserEvalRequest{
-		Action:   action,
+func validateUserResource(r UserResource) error {
+	if r.ID == "" {
+		return fmt.Errorf("user: resource ID (username) is required")
+	}
+	if r.IDP == "" {
+		return fmt.Errorf("user: resource attribute \"idp\" is required")
+	}
+	return nil
+}
+
+// UserOnboardEvalRequest is the validated, typed model for user:onboard policy
+// evaluation. Use NewUserOnboardEvalRequest to start building, then chain With*
+// methods and call Build to get a validated instance.
+type UserOnboardEvalRequest struct {
+	Resource UserResource
+}
+
+var _ EvalRequest = (*UserOnboardEvalRequest)(nil)
+
+// NewUserOnboardEvalRequest begins building a UserOnboardEvalRequest for the
+// given username. Chain With* methods to supply additional fields, then call
+// Build to validate and obtain the final struct.
+func NewUserOnboardEvalRequest(username string) *UserOnboardEvalRequest {
+	return &UserOnboardEvalRequest{
 		Resource: UserResource{ID: username},
 	}
 }
 
 // WithIDP sets the identity provider name on the resource.
-func (r *UserEvalRequest) WithIDP(idp string) *UserEvalRequest {
+func (r *UserOnboardEvalRequest) WithIDP(idp string) *UserOnboardEvalRequest {
 	r.Resource.IDP = idp
 	return r
 }
 
 // WithOrg sets the organization on the resource.
-func (r *UserEvalRequest) WithOrg(org string) *UserEvalRequest {
+func (r *UserOnboardEvalRequest) WithOrg(org string) *UserOnboardEvalRequest {
 	r.Resource.Org = org
-	return r
-}
-
-// WithAuthMethod sets the authentication method; required for UserActionAuth.
-func (r *UserEvalRequest) WithAuthMethod(method UserAuthMethod) *UserEvalRequest {
-	r.Context.Method = method
-	return r
-}
-
-// WithFingerprint sets the public key fingerprint; required for UserActionAuth
-// with UserAuthMethodPublicKey.
-func (r *UserEvalRequest) WithFingerprint(fp string) *UserEvalRequest {
-	r.Context.Fingerprint = fp
 	return r
 }
 
 // Build validates the request and returns it if all constraints are satisfied.
 // It is the required terminator for the builder chain.
-func (r *UserEvalRequest) Build() (*UserEvalRequest, error) {
+func (r *UserOnboardEvalRequest) Build() (*UserOnboardEvalRequest, error) {
 	if err := r.Validate(); err != nil {
 		return nil, err
 	}
@@ -122,62 +134,154 @@ func (r *UserEvalRequest) Build() (*UserEvalRequest, error) {
 }
 
 // ToProto serializes the typed request into a gRPC EvaluateRequest, attaching
-// the supplied JWT token. Only non-empty resource attributes and context fields
-// are included.
+// the supplied JWT token.
 // Implements EvalRequest.
-func (r *UserEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
-	attrs := map[string]string{}
-	if r.Resource.IDP != "" {
-		attrs["idp"] = r.Resource.IDP
+func (r *UserOnboardEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
+	return &authzv1.EvaluateRequest{
+		Token:  token,
+		Action: "user:onboard",
+		Resource: &authzv1.Resource{
+			Type:       "user",
+			Id:         r.Resource.ID,
+			Attributes: userResourceToAttrs(r.Resource),
+		},
 	}
-	if r.Resource.Org != "" {
-		attrs["org"] = r.Resource.Org
-	}
+}
 
-	ctx := map[string]string{}
-	if r.Context.Method != "" {
-		ctx["method"] = string(r.Context.Method)
+// UserOnboardEvalRequestFromProto converts a gRPC EvaluateRequest into a
+// validated UserOnboardEvalRequest. Returns an error if the request does not
+// conform to the user:onboard contract.
+func UserOnboardEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserOnboardEvalRequest, error) {
+	if req == nil {
+		return nil, fmt.Errorf("user:onboard: EvaluateRequest is nil")
+	}
+	if req.Action != "user:onboard" {
+		return nil, fmt.Errorf("user:onboard: action must be \"user:onboard\", got %q", req.Action)
+	}
+	if req.Resource == nil {
+		return nil, fmt.Errorf("user:onboard: resource is nil")
+	}
+	if req.Resource.Type != "user" {
+		return nil, fmt.Errorf("user:onboard: resource type must be \"user\", got %q", req.Resource.Type)
+	}
+	r := &UserOnboardEvalRequest{
+		Resource: userResourceFromAttrs(req.Resource.Id, req.Resource.Attributes),
+	}
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// Validate checks the request against the user:onboard contract.
+// Implements EvalRequest.
+func (r *UserOnboardEvalRequest) Validate() error {
+	return validateUserResource(r.Resource)
+}
+
+// UserAuthEvalRequest is the validated, typed model for user:auth policy
+// evaluation. Use NewUserAuthEvalRequest to start building, then chain With*
+// methods and call Build to get a validated instance.
+type UserAuthEvalRequest struct {
+	Resource UserResource
+	Context  UserAuthContext
+}
+
+// UserAuthContext holds the ambient authentication attributes for user:auth.
+type UserAuthContext struct {
+	// Method is the SSH authentication method ("publickey" or "password").
+	Method UserAuthMethod
+
+	// Fingerprint is the SHA256 public key fingerprint; set only when
+	// Method is UserAuthMethodPublicKey (context["fingerprint"]).
+	Fingerprint string
+}
+
+var _ EvalRequest = (*UserAuthEvalRequest)(nil)
+
+// NewUserAuthEvalRequest begins building a UserAuthEvalRequest for the given
+// username. Chain With* methods to supply additional fields, then call Build
+// to validate and obtain the final struct.
+func NewUserAuthEvalRequest(username string) *UserAuthEvalRequest {
+	return &UserAuthEvalRequest{
+		Resource: UserResource{ID: username},
+	}
+}
+
+// WithIDP sets the identity provider name on the resource.
+func (r *UserAuthEvalRequest) WithIDP(idp string) *UserAuthEvalRequest {
+	r.Resource.IDP = idp
+	return r
+}
+
+// WithOrg sets the organization on the resource.
+func (r *UserAuthEvalRequest) WithOrg(org string) *UserAuthEvalRequest {
+	r.Resource.Org = org
+	return r
+}
+
+// WithAuthMethod sets the authentication method.
+func (r *UserAuthEvalRequest) WithAuthMethod(method UserAuthMethod) *UserAuthEvalRequest {
+	r.Context.Method = method
+	return r
+}
+
+// WithFingerprint sets the public key fingerprint; required for publickey auth.
+func (r *UserAuthEvalRequest) WithFingerprint(fp string) *UserAuthEvalRequest {
+	r.Context.Fingerprint = fp
+	return r
+}
+
+// Build validates the request and returns it if all constraints are satisfied.
+// It is the required terminator for the builder chain.
+func (r *UserAuthEvalRequest) Build() (*UserAuthEvalRequest, error) {
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// ToProto serializes the typed request into a gRPC EvaluateRequest, attaching
+// the supplied JWT token.
+// Implements EvalRequest.
+func (r *UserAuthEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
+	ctx := map[string]string{
+		"method": string(r.Context.Method),
 	}
 	if r.Context.Fingerprint != "" {
 		ctx["fingerprint"] = r.Context.Fingerprint
 	}
-
 	return &authzv1.EvaluateRequest{
 		Token:  token,
-		Action: string(r.Action),
+		Action: "user:auth",
 		Resource: &authzv1.Resource{
 			Type:       "user",
 			Id:         r.Resource.ID,
-			Attributes: attrs,
+			Attributes: userResourceToAttrs(r.Resource),
 		},
 		Context: ctx,
 	}
 }
 
-// UserEvalRequestFromProto converts a gRPC EvaluateRequest into a validated
-// UserEvalRequest. Returns an error if the request does not conform to the
-// user policy contract.
-func UserEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserEvalRequest, error) {
+// UserAuthEvalRequestFromProto converts a gRPC EvaluateRequest into a
+// validated UserAuthEvalRequest. Returns an error if the request does not
+// conform to the user:auth contract.
+func UserAuthEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserAuthEvalRequest, error) {
 	if req == nil {
-		return nil, fmt.Errorf("user: EvaluateRequest is nil")
+		return nil, fmt.Errorf("user:auth: EvaluateRequest is nil")
+	}
+	if req.Action != "user:auth" {
+		return nil, fmt.Errorf("user:auth: action must be \"user:auth\", got %q", req.Action)
 	}
 	if req.Resource == nil {
-		return nil, fmt.Errorf("user: resource is nil")
+		return nil, fmt.Errorf("user:auth: resource is nil")
 	}
 	if req.Resource.Type != "user" {
-		return nil, fmt.Errorf("user: resource type must be \"user\", got %q", req.Resource.Type)
+		return nil, fmt.Errorf("user:auth: resource type must be \"user\", got %q", req.Resource.Type)
 	}
-
-	attrs := req.Resource.Attributes
 	ctx := req.Context
-
-	r := &UserEvalRequest{
-		Action: UserAction(req.Action),
-		Resource: UserResource{
-			ID:  req.Resource.Id,
-			IDP: attrs["idp"],
-			Org: attrs["org"],
-		},
+	r := &UserAuthEvalRequest{
+		Resource: userResourceFromAttrs(req.Resource.Id, req.Resource.Attributes),
 		Context: UserAuthContext{
 			Method:      UserAuthMethod(ctx["method"]),
 			Fingerprint: ctx["fingerprint"],
@@ -189,32 +293,23 @@ func UserEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserEvalRequest, e
 	return r, nil
 }
 
-// Validate checks the request against the user policy contract: the action
-// must be recognized, and both ID and IDP are required. For user:auth the
-// method must also be set, and publickey auth requires a fingerprint.
+// Validate checks the request against the user:auth contract: ID and IDP are
+// required, method must be set, and publickey auth requires a fingerprint.
 // Implements EvalRequest.
-func (r *UserEvalRequest) Validate() error {
-	if _, ok := validUserActions[r.Action]; !ok {
-		return fmt.Errorf("user: unknown action %q", r.Action)
+func (r *UserAuthEvalRequest) Validate() error {
+	if err := validateUserResource(r.Resource); err != nil {
+		return err
 	}
-	if r.Resource.ID == "" {
-		return fmt.Errorf("user: resource ID (username) is required")
-	}
-	if r.Resource.IDP == "" {
-		return fmt.Errorf("user: resource attribute \"idp\" is required")
-	}
-	if r.Action == UserActionAuth {
-		switch r.Context.Method {
-		case UserAuthMethodPublicKey:
-			if r.Context.Fingerprint == "" {
-				return fmt.Errorf("user: context \"fingerprint\" is required for publickey auth")
-			}
-		case UserAuthMethodPassword:
-			// no additional fields required
-		default:
-			return fmt.Errorf("user: context \"method\" must be %q or %q for action %q, got %q",
-				UserAuthMethodPublicKey, UserAuthMethodPassword, r.Action, r.Context.Method)
+	switch r.Context.Method {
+	case UserAuthMethodPublicKey:
+		if r.Context.Fingerprint == "" {
+			return fmt.Errorf("user:auth: context \"fingerprint\" is required for publickey auth")
 		}
+	case UserAuthMethodPassword:
+		// no additional fields required
+	default:
+		return fmt.Errorf("user:auth: context \"method\" must be %q or %q, got %q",
+			UserAuthMethodPublicKey, UserAuthMethodPassword, r.Context.Method)
 	}
 	return nil
 }
@@ -253,7 +348,7 @@ func ParseSudoObligation(obligations map[string]string) (SudoObligation, bool) {
 
 const (
 	// ObligationKeyRoles is the key the policy engine writes to assign roles
-	// during onboarding. The value is a comma-separated list of role names.
+	// during onboarding. The value is a JSON-encoded array of role name strings.
 	ObligationKeyRoles = "roles"
 )
 
@@ -273,9 +368,13 @@ func ParseRolesObligation(obligations map[string]string) (RolesObligation, bool)
 	if !ok {
 		return RolesObligation{}, false
 	}
-	var roles []models.Role
-	for r := range strings.SplitSeq(v, ",") {
-		if r = strings.TrimSpace(r); r != "" {
+	var raw []string
+	if err := json.Unmarshal([]byte(v), &raw); err != nil {
+		return RolesObligation{}, false
+	}
+	roles := make([]models.Role, 0, len(raw))
+	for _, r := range raw {
+		if r != "" {
 			roles = append(roles, models.Role(r))
 		}
 	}

@@ -3,6 +3,22 @@
 
 package authz
 
+// Contract: session:start
+//
+// Resource  type="workspace"
+//   id             workspace name            (required)
+//   owner          workspace owner username  (required)
+//   blueprint      blueprint name            (optional)
+//
+// Context
+//   session_type    shell | tcpip            (required)
+//   session_source  ssh-proxy | api-server   (required)
+//
+// Subject   injected by the backend from JWT claims (username, roles, email, ...)
+//
+// Obligations
+//   record  none | shell,exec,direct-tcpip  (comma-separated channel tokens)
+
 import (
 	"fmt"
 	"strings"

@@ -3,6 +3,25 @@
 
 package authz
 
+// Contract: workspace:provision
+//
+// Resource  type="workspace"
+//   id         workspace name            (required)
+//   owner      provisioning username     (required)
+//   blueprint  blueprint name            (optional)
+//
+// Context
+//   blueprint          YAML-encoded blueprint struct       (required)
+//   mode               standalone | inject                 (required)
+//   workload_name      target workload name                (required for inject)
+//   workload_namespace target workload namespace           (required for inject)
+//   workload_kind      target workload kind                (required for inject)
+//
+// Subject   injected by the backend from JWT claims (username, roles, email, ...)
+//
+// Obligations
+//   patch:<json-pointer>  string value to write at that path in the blueprint
+
 import (
 	"fmt"
 	"strings"
@@ -64,11 +83,11 @@ type WorkspaceResource struct {
 // provisioning mode. The enforcer must apply any ProvisionPatch obligations to
 // Blueprint before provisioning proceeds.
 type WorkspaceProvisionContext struct {
-	Blueprint          *models.Blueprint
-	Mode               WorkspaceProvisionMode
-	WorkloadName       string
-	WorkloadNamespace  string
-	WorkloadKind       string
+	Blueprint         *models.Blueprint
+	Mode              WorkspaceProvisionMode
+	WorkloadName      string
+	WorkloadNamespace string
+	WorkloadKind      string
 }
 
 // WorkspaceEvalRequest is the validated, typed model for workspace policy
