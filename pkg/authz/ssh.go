@@ -18,7 +18,7 @@ package authz
 //   socket_path   Unix socket path                                  (required for direct-streamlocal)
 //   as_user       Linux user to run as inside workspace             (optional; shell/exec)
 //
-// Subject   injected by the backend from JWT claims (username, roles, email, …)
+// Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
 // Obligations
 //   (none)
