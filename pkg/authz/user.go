@@ -45,7 +45,8 @@ package authz
 // Resource  type="user"
 //   id   username (required)
 //
-// Context   (none)
+// Context
+//   data_type  profile | sessions | credentials | blueprints  (required)
 //
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
@@ -71,6 +72,16 @@ import (
 
 	authzv1 "github.com/k8shell-io/common/pkg/api/gen/go/authz/v1"
 	"github.com/k8shell-io/common/pkg/models"
+)
+
+// UserDataType identifies which slice of user data is being read in user:read.
+type UserDataType string
+
+const (
+	UserDataTypeProfile     UserDataType = "profile"
+	UserDataTypeSessions    UserDataType = "sessions"
+	UserDataTypeCredentials UserDataType = "credentials"
+	UserDataTypeBlueprints  UserDataType = "blueprints"
 )
 
 // UserAuthMethod is the typed representation of an SSH authentication method.
@@ -348,6 +359,8 @@ func (r *UserAuthEvalRequest) Validate() error {
 type UserReadEvalRequest struct {
 	// Username is the target of the read (resource.id).
 	Username string
+	// DataType identifies which user data is being accessed (context["data_type"]).
+	DataType UserDataType
 }
 
 var _ EvalRequest = (*UserReadEvalRequest)(nil)
@@ -356,6 +369,12 @@ var _ EvalRequest = (*UserReadEvalRequest)(nil)
 // target username.
 func NewUserReadEvalRequest(username string) *UserReadEvalRequest {
 	return &UserReadEvalRequest{Username: username}
+}
+
+// WithDataType sets the data type being accessed.
+func (r *UserReadEvalRequest) WithDataType(dt UserDataType) *UserReadEvalRequest {
+	r.DataType = dt
+	return r
 }
 
 // Build validates the request and returns it if all constraints are satisfied.
@@ -378,6 +397,7 @@ func (r *UserReadEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
 			Type: "user",
 			Id:   r.Username,
 		},
+		Context: map[string]string{"data_type": string(r.DataType)},
 	}
 }
 
@@ -396,7 +416,10 @@ func UserReadEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserReadEvalRe
 	if req.Resource.Type != "user" {
 		return nil, fmt.Errorf("user:read: resource type must be \"user\", got %q", req.Resource.Type)
 	}
-	r := &UserReadEvalRequest{Username: req.Resource.Id}
+	r := &UserReadEvalRequest{
+		Username: req.Resource.Id,
+		DataType: UserDataType(req.Context["data_type"]),
+	}
 	if err := r.Validate(); err != nil {
 		return nil, err
 	}
@@ -408,6 +431,12 @@ func UserReadEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserReadEvalRe
 func (r *UserReadEvalRequest) Validate() error {
 	if r.Username == "" {
 		return fmt.Errorf("user:read: resource ID (username) is required")
+	}
+	switch r.DataType {
+	case UserDataTypeProfile, UserDataTypeSessions, UserDataTypeCredentials, UserDataTypeBlueprints:
+	default:
+		return fmt.Errorf("user:read: context \"data_type\" must be %q, %q, %q, or %q, got %q",
+			UserDataTypeProfile, UserDataTypeSessions, UserDataTypeCredentials, UserDataTypeBlueprints, r.DataType)
 	}
 	return nil
 }
