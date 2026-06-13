@@ -300,6 +300,41 @@ func (j *JWTIssuer) IssueToken(user *models.User) (claims *UserClaims, signed st
 	return claims, signed, nil
 }
 
+// IssueEphemeralToken creates a short-lived signed JWT for a user that does not
+// yet exist in the system (e.g. for user:preonboard checks). The token carries
+// only the username and source; all other user attributes are omitted.
+// The provided expiry overrides the issuer's configured default.
+func (j *JWTIssuer) IssueEphemeralToken(username, source string, expiry time.Duration) (string, error) {
+	now := time.Now()
+
+	jti, err := newJTI()
+	if err != nil {
+		return "", fmt.Errorf("jwt: generate jti: %w", err)
+	}
+
+	claims := &UserClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        jti,
+			Subject:   username,
+			Issuer:    j.cfg.Issuer,
+			IssuedAt:  jwt.NewNumericDate(now),
+			ExpiresAt: jwt.NewNumericDate(now.Add(expiry)),
+		},
+		Source: source,
+	}
+
+	if j.cfg.Audience != "" {
+		claims.Audience = jwt.ClaimStrings{j.cfg.Audience}
+	}
+
+	signed, err := jwt.NewWithClaims(j.signingMethod, claims).SignedString(j.signingKey)
+	if err != nil {
+		return "", fmt.Errorf("jwt: sign ephemeral token: %w", err)
+	}
+
+	return signed, nil
+}
+
 // loadRSAPrivateKey reads and parses a PEM-encoded RSA private key from path.
 func loadRSAPrivateKey(path string) (*rsa.PrivateKey, error) {
 	data, err := os.ReadFile(path)
