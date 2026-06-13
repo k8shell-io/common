@@ -92,6 +92,22 @@ func normalizeByDomain(req *authzv1.EvaluateRequest) (*authzv1.EvaluateRequest, 
 		normalized := authReq.ToProto("")
 		normalized.Package = req.Package
 		return normalized, nil
+	case action == "user:read":
+		readReq, err := UserReadEvalRequestFromProto(req)
+		if err != nil {
+			return nil, err
+		}
+		normalized := readReq.ToProto("")
+		normalized.Package = req.Package
+		return normalized, nil
+	case action == "user:list":
+		listReq, err := UserListEvalRequestFromProto(req)
+		if err != nil {
+			return nil, err
+		}
+		normalized := listReq.ToProto("")
+		normalized.Package = req.Package
+		return normalized, nil
 	case strings.HasPrefix(action, "session:"):
 		sessionReq, err := SessionEvalRequestFromProto(req)
 		if err != nil {
@@ -100,12 +116,52 @@ func normalizeByDomain(req *authzv1.EvaluateRequest) (*authzv1.EvaluateRequest, 
 		normalized := sessionReq.ToProto("")
 		normalized.Package = req.Package
 		return normalized, nil
-	case strings.HasPrefix(action, "workspace:"):
+	case action == "workspace:provision":
 		workspaceReq, err := WorkspaceEvalRequestFromProto(req)
 		if err != nil {
 			return nil, err
 		}
 		normalized := workspaceReq.ToProto("")
+		normalized.Package = req.Package
+		return normalized, nil
+	case action == "workspace:list", action == "workspace:create":
+		ownerReq, err := WorkspaceOwnerEvalRequestFromProto(req)
+		if err != nil {
+			return nil, err
+		}
+		normalized := ownerReq.ToProto("")
+		normalized.Package = req.Package
+		return normalized, nil
+	case action == "workspace:read", action == "workspace:delete":
+		accessReq, err := WorkspaceAccessEvalRequestFromProto(req)
+		if err != nil {
+			return nil, err
+		}
+		normalized := accessReq.ToProto("")
+		normalized.Package = req.Package
+		return normalized, nil
+	case action == "workspace:connect":
+		connectReq, err := WorkspaceConnectEvalRequestFromProto(req)
+		if err != nil {
+			return nil, err
+		}
+		normalized := connectReq.ToProto("")
+		normalized.Package = req.Package
+		return normalized, nil
+	case action == "workspace:files":
+		filesReq, err := WorkspaceFilesEvalRequestFromProto(req)
+		if err != nil {
+			return nil, err
+		}
+		normalized := filesReq.ToProto("")
+		normalized.Package = req.Package
+		return normalized, nil
+	case action == "workspace:app":
+		appReq, err := WorkspaceAppEvalRequestFromProto(req)
+		if err != nil {
+			return nil, err
+		}
+		normalized := appReq.ToProto("")
 		normalized.Package = req.Package
 		return normalized, nil
 	default:

@@ -37,6 +37,32 @@ package authz
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
 // Obligations  (none)
+//
+// ---
+//
+// Contract: user:read
+//
+// Resource  type="user"
+//   id   username (required)
+//
+// Context   (none)
+//
+// Subject   injected by the backend from JWT claims (username, roles, email, ...)
+//
+// Obligations  (none) — allow/deny only
+//
+// ---
+//
+// Contract: user:list
+//
+// Resource  type="user"
+//   id   (none)
+//
+// Context   (none)
+//
+// Subject   injected by the backend from JWT claims (username, roles, email, ...)
+//
+// Obligations  (none) — allow/deny only
 
 import (
 	"encoding/json"
@@ -315,6 +341,127 @@ func (r *UserAuthEvalRequest) Validate() error {
 	}
 	return nil
 }
+
+// UserReadEvalRequest is the validated, typed model for user:read policy
+// evaluation. Use NewUserReadEvalRequest to start building, then call Build
+// to get a validated instance.
+type UserReadEvalRequest struct {
+	// Username is the target of the read (resource.id).
+	Username string
+}
+
+var _ EvalRequest = (*UserReadEvalRequest)(nil)
+
+// NewUserReadEvalRequest begins building a UserReadEvalRequest for the given
+// target username.
+func NewUserReadEvalRequest(username string) *UserReadEvalRequest {
+	return &UserReadEvalRequest{Username: username}
+}
+
+// Build validates the request and returns it if all constraints are satisfied.
+// It is the required terminator for the builder chain.
+func (r *UserReadEvalRequest) Build() (*UserReadEvalRequest, error) {
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// ToProto serializes the typed request into a gRPC EvaluateRequest, attaching
+// the supplied JWT token.
+// Implements EvalRequest.
+func (r *UserReadEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
+	return &authzv1.EvaluateRequest{
+		Token:  token,
+		Action: "user:read",
+		Resource: &authzv1.Resource{
+			Type: "user",
+			Id:   r.Username,
+		},
+	}
+}
+
+// UserReadEvalRequestFromProto converts a gRPC EvaluateRequest into a
+// validated UserReadEvalRequest.
+func UserReadEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserReadEvalRequest, error) {
+	if req == nil {
+		return nil, fmt.Errorf("user:read: EvaluateRequest is nil")
+	}
+	if req.Action != "user:read" {
+		return nil, fmt.Errorf("user:read: action must be \"user:read\", got %q", req.Action)
+	}
+	if req.Resource == nil {
+		return nil, fmt.Errorf("user:read: resource is nil")
+	}
+	if req.Resource.Type != "user" {
+		return nil, fmt.Errorf("user:read: resource type must be \"user\", got %q", req.Resource.Type)
+	}
+	r := &UserReadEvalRequest{Username: req.Resource.Id}
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// Validate checks the request against the user:read contract.
+// Implements EvalRequest.
+func (r *UserReadEvalRequest) Validate() error {
+	if r.Username == "" {
+		return fmt.Errorf("user:read: resource ID (username) is required")
+	}
+	return nil
+}
+
+// UserListEvalRequest is the validated, typed model for user:list policy
+// evaluation. No resource id is required; the subject claims determine access.
+type UserListEvalRequest struct{}
+
+var _ EvalRequest = (*UserListEvalRequest)(nil)
+
+// NewUserListEvalRequest returns a UserListEvalRequest ready to be built.
+func NewUserListEvalRequest() *UserListEvalRequest {
+	return &UserListEvalRequest{}
+}
+
+// Build returns the request. It is the required terminator for the builder chain.
+func (r *UserListEvalRequest) Build() (*UserListEvalRequest, error) {
+	return r, nil
+}
+
+// ToProto serializes the typed request into a gRPC EvaluateRequest, attaching
+// the supplied JWT token.
+// Implements EvalRequest.
+func (r *UserListEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
+	return &authzv1.EvaluateRequest{
+		Token:  token,
+		Action: "user:list",
+		Resource: &authzv1.Resource{
+			Type: "user",
+		},
+	}
+}
+
+// UserListEvalRequestFromProto converts a gRPC EvaluateRequest into a
+// validated UserListEvalRequest.
+func UserListEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserListEvalRequest, error) {
+	if req == nil {
+		return nil, fmt.Errorf("user:list: EvaluateRequest is nil")
+	}
+	if req.Action != "user:list" {
+		return nil, fmt.Errorf("user:list: action must be \"user:list\", got %q", req.Action)
+	}
+	if req.Resource == nil {
+		return nil, fmt.Errorf("user:list: resource is nil")
+	}
+	if req.Resource.Type != "user" {
+		return nil, fmt.Errorf("user:list: resource type must be \"user\", got %q", req.Resource.Type)
+	}
+	return &UserListEvalRequest{}, nil
+}
+
+// Validate is a no-op for user:list; no fields are required.
+// Implements EvalRequest.
+func (r *UserListEvalRequest) Validate() error { return nil }
 
 const (
 	// ObligationKeySudo is the key the policy engine writes when expressing a
