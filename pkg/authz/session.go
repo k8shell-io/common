@@ -11,7 +11,7 @@ package authz
 //   blueprint      blueprint name            (optional)
 //
 // Context
-//   session_type    shell | tcpip            (required)
+//   session_type    shell | tcpip | exec      (required)
 //   session_source  ssh-proxy | api-server   (required)
 //
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
@@ -50,12 +50,16 @@ const (
 
 	// SessionTypeTCPIP is a TCP/IP port-forwarding session (network traffic recording).
 	SessionTypeTCPIP SessionType = "tcpip"
+
+	// SessionTypeExec is a non-interactive exec session (single command, no PTY).
+	SessionTypeExec SessionType = "exec"
 )
 
 // validSessionTypes is the set of recognized session types for fast lookup.
 var validSessionTypes = map[SessionType]struct{}{
 	SessionTypeShell: {},
 	SessionTypeTCPIP: {},
+	SessionTypeExec:  {},
 }
 
 // SessionSource identifies the component that initiated the session.
@@ -226,8 +230,8 @@ func (r *SessionEvalRequest) Validate() error {
 		return fmt.Errorf("session: resource attribute \"owner\" is required")
 	}
 	if _, ok := validSessionTypes[r.Context.Type]; !ok {
-		return fmt.Errorf("session: context \"session_type\" must be %q or %q, got %q",
-			SessionTypeShell, SessionTypeTCPIP, r.Context.Type)
+		return fmt.Errorf("session: context \"session_type\" must be %q, %q, or %q, got %q",
+			SessionTypeShell, SessionTypeTCPIP, SessionTypeExec, r.Context.Type)
 	}
 	if _, ok := validSessionSources[r.Context.Source]; !ok {
 		return fmt.Errorf("session: context \"session_source\" must be %q or %q, got %q",
