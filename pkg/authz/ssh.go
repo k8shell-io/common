@@ -18,7 +18,7 @@ package authz
 //   socket_path   Unix socket path                                  (required for direct-streamlocal)
 //   as_user       Linux user to run as inside workspace             (optional; shell/exec)
 //
-// Subject   injected by the backend from JWT claims (username, roles, email, ...)
+// Subject   injected by the backend from JWT claims (username, roles, email, …)
 //
 // Obligations
 //   (none)
@@ -74,9 +74,8 @@ type SSHWorkspaceResource struct {
 	// Owner is the username of the workspace owner (resource.attributes["owner"]).
 	Owner string
 
-	// BlueprintName is the blueprint the workspace was launched from
-	// (resource.attributes["blueprint"]).
-	BlueprintName string
+	// Blueprint is the blueprint the workspace was launched from
+	Blueprint string
 }
 
 // SSHContext holds the ambient SSH channel/request attributes supplied by the
@@ -131,9 +130,9 @@ func (r *SSHEvalRequest) WithOwner(owner string) *SSHEvalRequest {
 	return r
 }
 
-// WithBlueprintName sets the blueprint name on the resource.
-func (r *SSHEvalRequest) WithBlueprintName(blueprint string) *SSHEvalRequest {
-	r.Resource.BlueprintName = blueprint
+// WithBlueprint sets the blueprint name on the resource.
+func (r *SSHEvalRequest) WithBlueprint(blueprint string) *SSHEvalRequest {
+	r.Resource.Blueprint = blueprint
 	return r
 }
 
@@ -191,8 +190,8 @@ func (r *SSHEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
 	attrs := map[string]string{
 		"owner": r.Resource.Owner,
 	}
-	if r.Resource.BlueprintName != "" {
-		attrs["blueprint"] = r.Resource.BlueprintName
+	if r.Resource.Blueprint != "" {
+		attrs["blueprint"] = r.Resource.Blueprint
 	}
 
 	ctx := map[string]string{}
@@ -247,9 +246,9 @@ func SSHEvalRequestFromProto(req *authzv1.EvaluateRequest) (*SSHEvalRequest, err
 	r := &SSHEvalRequest{
 		Action: SSHAction(req.Action),
 		Resource: SSHWorkspaceResource{
-			ID:            req.Resource.Id,
-			Owner:         attrs["owner"],
-			BlueprintName: attrs["blueprint"],
+			ID:        req.Resource.Id,
+			Owner:     attrs["owner"],
+			Blueprint: attrs["blueprint"],
 		},
 		Context: SSHContext{
 			PTY:        ctx["pty"] == "true",
