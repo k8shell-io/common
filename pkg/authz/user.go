@@ -29,9 +29,10 @@ package authz
 //   id   username               (required)
 //   idp  identity provider name (required)
 //
-// Context   (none)
+// Context
+//   flow  device | web           (required)
 //
-// Subject   null — user does not yet exist in the system
+// Subject   injected by the backend from ephemeral JWT (only username, source (idp))
 //
 // Obligations  (none) — allow/deny only
 //
@@ -59,6 +60,14 @@ import (
 
 	authzv1 "github.com/k8shell-io/common/pkg/api/gen/go/authz/v1"
 	"github.com/k8shell-io/common/pkg/models"
+)
+
+// UserPreonboardFlow is the typed representation of the onboarding flow kind.
+type UserPreonboardFlow string
+
+const (
+	UserPreonboardFlowDevice UserPreonboardFlow = "device"
+	UserPreonboardFlowWeb    UserPreonboardFlow = "web"
 )
 
 // UserAuthMethod is the typed representation of an SSH authentication method.
@@ -195,11 +204,18 @@ func (r *UserOnboardEvalRequest) Validate() error {
 	return validateUserResource(r.Resource)
 }
 
+// UserPreonboardContext holds the ambient context attributes for user:preonboard.
+type UserPreonboardContext struct {
+	// Flow is the onboarding flow kind ("device" or "web").
+	Flow UserPreonboardFlow
+}
+
 // UserPreonboardEvalRequest is the validated, typed model for user:preonboard
 // policy evaluation. Use NewUserPreonboardEvalRequest to start building, then
-// chain WithIDP and call Build to get a validated instance.
+// chain WithIDP / WithFlow and call Build to get a validated instance.
 type UserPreonboardEvalRequest struct {
 	Resource UserResource
+	Context  UserPreonboardContext
 }
 
 var _ EvalRequest = (*UserPreonboardEvalRequest)(nil)
@@ -215,6 +231,12 @@ func NewUserPreonboardEvalRequest(username string) *UserPreonboardEvalRequest {
 // WithIDP sets the identity provider name on the resource.
 func (r *UserPreonboardEvalRequest) WithIDP(idp string) *UserPreonboardEvalRequest {
 	r.Resource.IDP = idp
+	return r
+}
+
+// WithFlow sets the onboarding flow kind on the context.
+func (r *UserPreonboardEvalRequest) WithFlow(flow UserPreonboardFlow) *UserPreonboardEvalRequest {
+	r.Context.Flow = flow
 	return r
 }
 
@@ -239,6 +261,9 @@ func (r *UserPreonboardEvalRequest) ToProto(token string) *authzv1.EvaluateReque
 			Id:         r.Resource.ID,
 			Attributes: userResourceToAttrs(r.Resource),
 		},
+		Context: map[string]string{
+			"flow": string(r.Context.Flow),
+		},
 	}
 }
 
@@ -260,6 +285,7 @@ func UserPreonboardEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserPreo
 	}
 	r := &UserPreonboardEvalRequest{
 		Resource: userResourceFromAttrs(req.Resource.Id, req.Resource.Attributes),
+		Context:  UserPreonboardContext{Flow: UserPreonboardFlow(req.Context["flow"])},
 	}
 	if err := r.Validate(); err != nil {
 		return nil, err
@@ -270,7 +296,16 @@ func UserPreonboardEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserPreo
 // Validate checks the request against the user:preonboard contract.
 // Implements EvalRequest.
 func (r *UserPreonboardEvalRequest) Validate() error {
-	return validateUserResource(r.Resource)
+	if err := validateUserResource(r.Resource); err != nil {
+		return err
+	}
+	switch r.Context.Flow {
+	case UserPreonboardFlowDevice, UserPreonboardFlowWeb:
+	default:
+		return fmt.Errorf("user:preonboard: context \"flow\" must be %q or %q, got %q",
+			UserPreonboardFlowDevice, UserPreonboardFlowWeb, r.Context.Flow)
+	}
+	return nil
 }
 
 // UserAuthEvalRequest is the validated, typed model for user:auth policy
