@@ -76,6 +76,14 @@ func normalizeByDomain(req *authzv1.EvaluateRequest) (*authzv1.EvaluateRequest, 
 		normalized := sshReq.ToProto("")
 		normalized.Package = req.Package
 		return normalized, nil
+	case action == "user:preonboard":
+		preonboardReq, err := UserPreonboardEvalRequestFromProto(req)
+		if err != nil {
+			return nil, err
+		}
+		normalized := preonboardReq.ToProto("")
+		normalized.Package = req.Package
+		return normalized, nil
 	case action == "user:onboard":
 		onboardReq, err := UserOnboardEvalRequestFromProto(req)
 		if err != nil {
