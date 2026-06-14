@@ -1273,6 +1273,164 @@ func (*TcpipRecordingFrame_Header) isTcpipRecordingFrame_Payload() {}
 
 func (*TcpipRecordingFrame_Chunk) isTcpipRecordingFrame_Payload() {}
 
+// SftpRecordingHeader is the mandatory first frame of an SFTP recording stream.
+type SftpRecordingHeader struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// session_id ties this recording to a SessionService session record.
+	SessionId string `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	// user_token is the token of the user owning the session being recorded.
+	UserToken string `protobuf:"bytes,2,opt,name=user_token,json=userToken,proto3" json:"user_token,omitempty"`
+	// started_at is the channel start time as a Unix timestamp (seconds).
+	StartedAt int64 `protobuf:"varint,3,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	// connection_id is the unique identifier of the SSH connection.
+	ConnectionId  string `protobuf:"bytes,4,opt,name=connection_id,json=connectionId,proto3" json:"connection_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SftpRecordingHeader) Reset() {
+	*x = SftpRecordingHeader{}
+	mi := &file_session_v1_session_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SftpRecordingHeader) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SftpRecordingHeader) ProtoMessage() {}
+
+func (x *SftpRecordingHeader) ProtoReflect() protoreflect.Message {
+	mi := &file_session_v1_session_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SftpRecordingHeader.ProtoReflect.Descriptor instead.
+func (*SftpRecordingHeader) Descriptor() ([]byte, []int) {
+	return file_session_v1_session_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *SftpRecordingHeader) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *SftpRecordingHeader) GetUserToken() string {
+	if x != nil {
+		return x.UserToken
+	}
+	return ""
+}
+
+func (x *SftpRecordingHeader) GetStartedAt() int64 {
+	if x != nil {
+		return x.StartedAt
+	}
+	return 0
+}
+
+func (x *SftpRecordingHeader) GetConnectionId() string {
+	if x != nil {
+		return x.ConnectionId
+	}
+	return ""
+}
+
+// SftpRecordingFrame is a single unit in an SFTP recording stream.
+type SftpRecordingFrame struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Payload:
+	//
+	//	*SftpRecordingFrame_Header
+	//	*SftpRecordingFrame_Chunk
+	Payload       isSftpRecordingFrame_Payload `protobuf_oneof:"payload"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SftpRecordingFrame) Reset() {
+	*x = SftpRecordingFrame{}
+	mi := &file_session_v1_session_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SftpRecordingFrame) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SftpRecordingFrame) ProtoMessage() {}
+
+func (x *SftpRecordingFrame) ProtoReflect() protoreflect.Message {
+	mi := &file_session_v1_session_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SftpRecordingFrame.ProtoReflect.Descriptor instead.
+func (*SftpRecordingFrame) Descriptor() ([]byte, []int) {
+	return file_session_v1_session_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *SftpRecordingFrame) GetPayload() isSftpRecordingFrame_Payload {
+	if x != nil {
+		return x.Payload
+	}
+	return nil
+}
+
+func (x *SftpRecordingFrame) GetHeader() *SftpRecordingHeader {
+	if x != nil {
+		if x, ok := x.Payload.(*SftpRecordingFrame_Header); ok {
+			return x.Header
+		}
+	}
+	return nil
+}
+
+func (x *SftpRecordingFrame) GetChunk() *DataChunk {
+	if x != nil {
+		if x, ok := x.Payload.(*SftpRecordingFrame_Chunk); ok {
+			return x.Chunk
+		}
+	}
+	return nil
+}
+
+type isSftpRecordingFrame_Payload interface {
+	isSftpRecordingFrame_Payload()
+}
+
+type SftpRecordingFrame_Header struct {
+	// header is the first frame and carries SFTP session metadata.
+	Header *SftpRecordingHeader `protobuf:"bytes,1,opt,name=header,proto3,oneof"`
+}
+
+type SftpRecordingFrame_Chunk struct {
+	// chunk carries a block of raw SFTP protocol data.
+	Chunk *DataChunk `protobuf:"bytes,2,opt,name=chunk,proto3,oneof"`
+}
+
+func (*SftpRecordingFrame_Header) isSftpRecordingFrame_Payload() {}
+
+func (*SftpRecordingFrame_Chunk) isSftpRecordingFrame_Payload() {}
+
 var File_session_v1_session_proto protoreflect.FileDescriptor
 
 const file_session_v1_session_proto_rawDesc = "" +
@@ -1371,6 +1529,18 @@ const file_session_v1_session_proto_rawDesc = "" +
 	"\x13TcpipRecordingFrame\x12:\n" +
 	"\x06header\x18\x01 \x01(\v2 .session.v1.TcpipRecordingHeaderH\x00R\x06header\x12-\n" +
 	"\x05chunk\x18\x02 \x01(\v2\x15.session.v1.DataChunkH\x00R\x05chunkB\t\n" +
+	"\apayload\"\x97\x01\n" +
+	"\x13SftpRecordingHeader\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1d\n" +
+	"\n" +
+	"user_token\x18\x02 \x01(\tR\tuserToken\x12\x1d\n" +
+	"\n" +
+	"started_at\x18\x03 \x01(\x03R\tstartedAt\x12#\n" +
+	"\rconnection_id\x18\x04 \x01(\tR\fconnectionId\"\x89\x01\n" +
+	"\x12SftpRecordingFrame\x129\n" +
+	"\x06header\x18\x01 \x01(\v2\x1f.session.v1.SftpRecordingHeaderH\x00R\x06header\x12-\n" +
+	"\x05chunk\x18\x02 \x01(\v2\x15.session.v1.DataChunkH\x00R\x05chunkB\t\n" +
 	"\apayload*6\n" +
 	"\tDirection\x12\x14\n" +
 	"\x10DIRECTION_OUTPUT\x10\x00\x12\x13\n" +
@@ -1379,11 +1549,12 @@ const file_session_v1_session_proto_rawDesc = "" +
 	"\vGetSessions\x12\x1e.session.v1.GetSessionsRequest\x1a\x14.session.v1.Sessions\x12T\n" +
 	"\rUpsertSession\x12 .session.v1.UpsertSessionRequest\x1a!.session.v1.UpsertSessionResponse\x12C\n" +
 	"\n" +
-	"EndSession\x12\x1d.session.v1.EndSessionRequest\x1a\x16.google.protobuf.Empty2\xe0\x02\n" +
+	"EndSession\x12\x1d.session.v1.EndSessionRequest\x1a\x16.google.protobuf.Empty2\xb1\x03\n" +
 	"\x10RecordingService\x12Q\n" +
 	"\x14StreamShellRecording\x12\x1f.session.v1.ShellRecordingFrame\x1a\x16.google.protobuf.Empty(\x01\x12O\n" +
 	"\x13StreamExecRecording\x12\x1e.session.v1.ExecRecordingFrame\x1a\x16.google.protobuf.Empty(\x01\x12Q\n" +
-	"\x14StreamTcpipRecording\x12\x1f.session.v1.TcpipRecordingFrame\x1a\x16.google.protobuf.Empty(\x01\x12U\n" +
+	"\x14StreamTcpipRecording\x12\x1f.session.v1.TcpipRecordingFrame\x1a\x16.google.protobuf.Empty(\x01\x12O\n" +
+	"\x13StreamSftpRecording\x12\x1e.session.v1.SftpRecordingFrame\x1a\x16.google.protobuf.Empty(\x01\x12U\n" +
 	"\x13EndRecordingSession\x12&.session.v1.EndRecordingSessionRequest\x1a\x16.google.protobuf.EmptyBBZ@github.com/k8shell-io/common/pkg/api/gen/go/session/v1;sessionv1b\x06proto3"
 
 var (
@@ -1399,7 +1570,7 @@ func file_session_v1_session_proto_rawDescGZIP() []byte {
 }
 
 var file_session_v1_session_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_session_v1_session_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_session_v1_session_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
 var file_session_v1_session_proto_goTypes = []any{
 	(Direction)(0),                     // 0: session.v1.Direction
 	(*GetSessionsRequest)(nil),         // 1: session.v1.GetSessionsRequest
@@ -1417,7 +1588,9 @@ var file_session_v1_session_proto_goTypes = []any{
 	(*ExecRecordingFrame)(nil),         // 13: session.v1.ExecRecordingFrame
 	(*TcpipRecordingHeader)(nil),       // 14: session.v1.TcpipRecordingHeader
 	(*TcpipRecordingFrame)(nil),        // 15: session.v1.TcpipRecordingFrame
-	(*emptypb.Empty)(nil),              // 16: google.protobuf.Empty
+	(*SftpRecordingHeader)(nil),        // 16: session.v1.SftpRecordingHeader
+	(*SftpRecordingFrame)(nil),         // 17: session.v1.SftpRecordingFrame
+	(*emptypb.Empty)(nil),              // 18: google.protobuf.Empty
 }
 var file_session_v1_session_proto_depIdxs = []int32{
 	2,  // 0: session.v1.Sessions.sessions:type_name -> session.v1.Session
@@ -1431,25 +1604,29 @@ var file_session_v1_session_proto_depIdxs = []int32{
 	8,  // 8: session.v1.ExecRecordingFrame.chunk:type_name -> session.v1.DataChunk
 	14, // 9: session.v1.TcpipRecordingFrame.header:type_name -> session.v1.TcpipRecordingHeader
 	8,  // 10: session.v1.TcpipRecordingFrame.chunk:type_name -> session.v1.DataChunk
-	1,  // 11: session.v1.SessionService.GetSessions:input_type -> session.v1.GetSessionsRequest
-	4,  // 12: session.v1.SessionService.UpsertSession:input_type -> session.v1.UpsertSessionRequest
-	6,  // 13: session.v1.SessionService.EndSession:input_type -> session.v1.EndSessionRequest
-	11, // 14: session.v1.RecordingService.StreamShellRecording:input_type -> session.v1.ShellRecordingFrame
-	13, // 15: session.v1.RecordingService.StreamExecRecording:input_type -> session.v1.ExecRecordingFrame
-	15, // 16: session.v1.RecordingService.StreamTcpipRecording:input_type -> session.v1.TcpipRecordingFrame
-	7,  // 17: session.v1.RecordingService.EndRecordingSession:input_type -> session.v1.EndRecordingSessionRequest
-	3,  // 18: session.v1.SessionService.GetSessions:output_type -> session.v1.Sessions
-	5,  // 19: session.v1.SessionService.UpsertSession:output_type -> session.v1.UpsertSessionResponse
-	16, // 20: session.v1.SessionService.EndSession:output_type -> google.protobuf.Empty
-	16, // 21: session.v1.RecordingService.StreamShellRecording:output_type -> google.protobuf.Empty
-	16, // 22: session.v1.RecordingService.StreamExecRecording:output_type -> google.protobuf.Empty
-	16, // 23: session.v1.RecordingService.StreamTcpipRecording:output_type -> google.protobuf.Empty
-	16, // 24: session.v1.RecordingService.EndRecordingSession:output_type -> google.protobuf.Empty
-	18, // [18:25] is the sub-list for method output_type
-	11, // [11:18] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	16, // 11: session.v1.SftpRecordingFrame.header:type_name -> session.v1.SftpRecordingHeader
+	8,  // 12: session.v1.SftpRecordingFrame.chunk:type_name -> session.v1.DataChunk
+	1,  // 13: session.v1.SessionService.GetSessions:input_type -> session.v1.GetSessionsRequest
+	4,  // 14: session.v1.SessionService.UpsertSession:input_type -> session.v1.UpsertSessionRequest
+	6,  // 15: session.v1.SessionService.EndSession:input_type -> session.v1.EndSessionRequest
+	11, // 16: session.v1.RecordingService.StreamShellRecording:input_type -> session.v1.ShellRecordingFrame
+	13, // 17: session.v1.RecordingService.StreamExecRecording:input_type -> session.v1.ExecRecordingFrame
+	15, // 18: session.v1.RecordingService.StreamTcpipRecording:input_type -> session.v1.TcpipRecordingFrame
+	17, // 19: session.v1.RecordingService.StreamSftpRecording:input_type -> session.v1.SftpRecordingFrame
+	7,  // 20: session.v1.RecordingService.EndRecordingSession:input_type -> session.v1.EndRecordingSessionRequest
+	3,  // 21: session.v1.SessionService.GetSessions:output_type -> session.v1.Sessions
+	5,  // 22: session.v1.SessionService.UpsertSession:output_type -> session.v1.UpsertSessionResponse
+	18, // 23: session.v1.SessionService.EndSession:output_type -> google.protobuf.Empty
+	18, // 24: session.v1.RecordingService.StreamShellRecording:output_type -> google.protobuf.Empty
+	18, // 25: session.v1.RecordingService.StreamExecRecording:output_type -> google.protobuf.Empty
+	18, // 26: session.v1.RecordingService.StreamTcpipRecording:output_type -> google.protobuf.Empty
+	18, // 27: session.v1.RecordingService.StreamSftpRecording:output_type -> google.protobuf.Empty
+	18, // 28: session.v1.RecordingService.EndRecordingSession:output_type -> google.protobuf.Empty
+	21, // [21:29] is the sub-list for method output_type
+	13, // [13:21] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_session_v1_session_proto_init() }
@@ -1470,13 +1647,17 @@ func file_session_v1_session_proto_init() {
 		(*TcpipRecordingFrame_Header)(nil),
 		(*TcpipRecordingFrame_Chunk)(nil),
 	}
+	file_session_v1_session_proto_msgTypes[16].OneofWrappers = []any{
+		(*SftpRecordingFrame_Header)(nil),
+		(*SftpRecordingFrame_Chunk)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_session_v1_session_proto_rawDesc), len(file_session_v1_session_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   15,
+			NumMessages:   17,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

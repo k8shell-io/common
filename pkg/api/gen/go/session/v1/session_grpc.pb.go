@@ -220,6 +220,7 @@ const (
 	RecordingService_StreamShellRecording_FullMethodName = "/session.v1.RecordingService/StreamShellRecording"
 	RecordingService_StreamExecRecording_FullMethodName  = "/session.v1.RecordingService/StreamExecRecording"
 	RecordingService_StreamTcpipRecording_FullMethodName = "/session.v1.RecordingService/StreamTcpipRecording"
+	RecordingService_StreamSftpRecording_FullMethodName  = "/session.v1.RecordingService/StreamSftpRecording"
 	RecordingService_EndRecordingSession_FullMethodName  = "/session.v1.RecordingService/EndRecordingSession"
 )
 
@@ -241,6 +242,9 @@ type RecordingServiceClient interface {
 	// StreamTcpipRecording records a direct-tcpip port-forward channel. The
 	// first frame must be a TcpipRecordingHeader; subsequent frames carry data chunks.
 	StreamTcpipRecording(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[TcpipRecordingFrame, emptypb.Empty], error)
+	// StreamSftpRecording records an SFTP subsystem channel. The first frame
+	// must be a SftpRecordingHeader; subsequent frames carry data chunks.
+	StreamSftpRecording(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[SftpRecordingFrame, emptypb.Empty], error)
 	// EndRecordingSession notifies the recording backend that a session has ended
 	// and all associated recording resources (open streams, buffers, file handles)
 	// should be flushed and released. Must be called once per session_id when the
@@ -295,6 +299,19 @@ func (c *recordingServiceClient) StreamTcpipRecording(ctx context.Context, opts 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type RecordingService_StreamTcpipRecordingClient = grpc.ClientStreamingClient[TcpipRecordingFrame, emptypb.Empty]
 
+func (c *recordingServiceClient) StreamSftpRecording(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[SftpRecordingFrame, emptypb.Empty], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &RecordingService_ServiceDesc.Streams[3], RecordingService_StreamSftpRecording_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[SftpRecordingFrame, emptypb.Empty]{ClientStream: stream}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type RecordingService_StreamSftpRecordingClient = grpc.ClientStreamingClient[SftpRecordingFrame, emptypb.Empty]
+
 func (c *recordingServiceClient) EndRecordingSession(ctx context.Context, in *EndRecordingSessionRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(emptypb.Empty)
@@ -323,6 +340,9 @@ type RecordingServiceServer interface {
 	// StreamTcpipRecording records a direct-tcpip port-forward channel. The
 	// first frame must be a TcpipRecordingHeader; subsequent frames carry data chunks.
 	StreamTcpipRecording(grpc.ClientStreamingServer[TcpipRecordingFrame, emptypb.Empty]) error
+	// StreamSftpRecording records an SFTP subsystem channel. The first frame
+	// must be a SftpRecordingHeader; subsequent frames carry data chunks.
+	StreamSftpRecording(grpc.ClientStreamingServer[SftpRecordingFrame, emptypb.Empty]) error
 	// EndRecordingSession notifies the recording backend that a session has ended
 	// and all associated recording resources (open streams, buffers, file handles)
 	// should be flushed and released. Must be called once per session_id when the
@@ -346,6 +366,9 @@ func (UnimplementedRecordingServiceServer) StreamExecRecording(grpc.ClientStream
 }
 func (UnimplementedRecordingServiceServer) StreamTcpipRecording(grpc.ClientStreamingServer[TcpipRecordingFrame, emptypb.Empty]) error {
 	return status.Error(codes.Unimplemented, "method StreamTcpipRecording not implemented")
+}
+func (UnimplementedRecordingServiceServer) StreamSftpRecording(grpc.ClientStreamingServer[SftpRecordingFrame, emptypb.Empty]) error {
+	return status.Error(codes.Unimplemented, "method StreamSftpRecording not implemented")
 }
 func (UnimplementedRecordingServiceServer) EndRecordingSession(context.Context, *EndRecordingSessionRequest) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method EndRecordingSession not implemented")
@@ -392,6 +415,13 @@ func _RecordingService_StreamTcpipRecording_Handler(srv interface{}, stream grpc
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type RecordingService_StreamTcpipRecordingServer = grpc.ClientStreamingServer[TcpipRecordingFrame, emptypb.Empty]
 
+func _RecordingService_StreamSftpRecording_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(RecordingServiceServer).StreamSftpRecording(&grpc.GenericServerStream[SftpRecordingFrame, emptypb.Empty]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type RecordingService_StreamSftpRecordingServer = grpc.ClientStreamingServer[SftpRecordingFrame, emptypb.Empty]
+
 func _RecordingService_EndRecordingSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(EndRecordingSessionRequest)
 	if err := dec(in); err != nil {
@@ -436,6 +466,11 @@ var RecordingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "StreamTcpipRecording",
 			Handler:       _RecordingService_StreamTcpipRecording_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "StreamSftpRecording",
+			Handler:       _RecordingService_StreamSftpRecording_Handler,
 			ClientStreams: true,
 		},
 	},

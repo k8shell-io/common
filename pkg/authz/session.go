@@ -11,13 +11,13 @@ package authz
 //   blueprint      blueprint name            (optional)
 //
 // Context
-//   session_type    shell | tcpip | exec      (required)
+//   session_type    shell | tcpip | exec | sftp  (required)
 //   session_source  ssh-proxy | api-server   (required)
 //
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
 // Obligations
-//   record  none | shell,exec,direct-tcpip  (comma-separated channel tokens)
+//   record  none | shell,exec,direct-tcpip,sftp  (comma-separated channel tokens)
 
 import (
 	"fmt"
@@ -53,6 +53,9 @@ const (
 
 	// SessionTypeExec is a non-interactive exec session (single command, no PTY).
 	SessionTypeExec SessionType = "exec"
+
+	// SessionTypeSFTP is an SFTP subsystem session (file transfer).
+	SessionTypeSFTP SessionType = "sftp"
 )
 
 // validSessionTypes is the set of recognized session types for fast lookup.
@@ -60,6 +63,7 @@ var validSessionTypes = map[SessionType]struct{}{
 	SessionTypeShell: {},
 	SessionTypeTCPIP: {},
 	SessionTypeExec:  {},
+	SessionTypeSFTP:  {},
 }
 
 // SessionSource identifies the component that initiated the session.
@@ -230,8 +234,8 @@ func (r *SessionEvalRequest) Validate() error {
 		return fmt.Errorf("session: resource attribute \"owner\" is required")
 	}
 	if _, ok := validSessionTypes[r.Context.Type]; !ok {
-		return fmt.Errorf("session: context \"session_type\" must be %q, %q, or %q, got %q",
-			SessionTypeShell, SessionTypeTCPIP, SessionTypeExec, r.Context.Type)
+		return fmt.Errorf("session: context \"session_type\" must be %q, %q, %q, or %q, got %q",
+			SessionTypeShell, SessionTypeTCPIP, SessionTypeExec, SessionTypeSFTP, r.Context.Type)
 	}
 	if _, ok := validSessionSources[r.Context.Source]; !ok {
 		return fmt.Errorf("session: context \"session_source\" must be %q or %q, got %q",
@@ -254,6 +258,7 @@ const (
 	ObligationRecordShell       = "shell"
 	ObligationRecordExec        = "exec"
 	ObligationRecordDirectTCPIP = "direct-tcpip"
+	ObligationRecordSFTP        = "sftp"
 )
 
 // RecordObligation is the typed representation of the "record" obligation key
@@ -263,14 +268,15 @@ type RecordObligation struct {
 	Shell       bool
 	Exec        bool
 	DirectTCPIP bool
+	SFTP        bool
 }
 
 // ParseRecordObligation reads the "record" key from the obligations map.
 // The value is a comma-separated list of channel tokens ("shell", "exec",
-// "direct-tcpip"); "none" or an unrecognised value leaves all fields false.
-// Returns (obligation, true) when the key is present, (zero, false) when the
-// policy did not set a record obligation — the enforcer should then apply its
-// configured default (typically no recording).
+// "direct-tcpip", "sftp"); "none" or an unrecognised value leaves all fields
+// false. Returns (obligation, true) when the key is present, (zero, false)
+// when the policy did not set a record obligation — the enforcer should then
+// apply its configured default (typically no recording).
 func ParseRecordObligation(obligations map[string]string) (RecordObligation, bool) {
 	v, ok := obligations[ObligationKeyRecord]
 	if !ok {
@@ -285,6 +291,8 @@ func ParseRecordObligation(obligations map[string]string) (RecordObligation, boo
 			ob.Exec = true
 		case ObligationRecordDirectTCPIP:
 			ob.DirectTCPIP = true
+		case ObligationRecordSFTP:
+			ob.SFTP = true
 		}
 	}
 	return ob, true

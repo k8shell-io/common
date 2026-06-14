@@ -86,6 +86,28 @@ func NewExecRecorder(
 	return r
 }
 
+// NewSftpRecorder opens an SFTP-channel streaming session to the recording service
+// and starts a background sender goroutine. The SftpRecordingHeader is sent as the
+// first frame. Returns nil when client is nil.
+func NewSftpRecorder(
+	ctx context.Context,
+	client sessionv1.RecordingServiceClient,
+	sessionID, connectionID, userToken string,
+	startedAt time.Time,
+	log *zerolog.Logger,
+) *Recorder {
+	if client == nil {
+		return nil
+	}
+	r := &Recorder{
+		ch:   make(chan recorderFrame, recorderFrameChanSize),
+		done: make(chan struct{}),
+		log:  log,
+	}
+	go r.runSftp(ctx, client, sessionID, connectionID, userToken, startedAt)
+	return r
+}
+
 // NewTcpipRecorder opens a TCP/IP-channel streaming session to the recording service
 // and starts a background sender goroutine. The TcpipRecordingHeader is sent as the
 // first frame. Returns nil when client is nil.
@@ -427,6 +449,103 @@ func (r *Recorder) runExec(
 
 			if batchLen == 0 {
 				batchOffset = frame.offset
+			}
+			batchData = append(batchData, frame.data...)
+			batchLen += len(frame.data)
+			if batchLen >= recorderMaxBatchBytes {
+				flush()
+			}
+
+		case <-ticker.C:
+			flush()
+		}
+	}
+}
+
+func (r *Recorder) runSftp(
+	ctx context.Context,
+	client sessionv1.RecordingServiceClient,
+	sessionID, connectionID, userToken string,
+	startedAt time.Time,
+) {
+	defer close(r.done)
+
+	stream, err := client.StreamSftpRecording(ctx)
+	if err != nil {
+		r.log.Warn().Msgf("Failed to open sftp recording stream for session %s: %v", sessionID, err)
+		for range r.ch {
+		}
+		return
+	}
+
+	if err = stream.Send(&sessionv1.SftpRecordingFrame{
+		Payload: &sessionv1.SftpRecordingFrame_Header{
+			Header: &sessionv1.SftpRecordingHeader{
+				SessionId:    sessionID,
+				ConnectionId: connectionID,
+				UserToken:    userToken,
+				StartedAt:    startedAt.Unix(),
+			},
+		},
+	}); err != nil {
+		r.log.Warn().Msgf("Failed to send sftp recording header for session %s: %v", sessionID, err)
+		for range r.ch {
+		}
+		return
+	}
+
+	ticker := time.NewTicker(recorderFlushInterval)
+	defer ticker.Stop()
+
+	var (
+		batchData   []byte
+		batchOffset int64
+		batchLen    int
+		batchDir    sessionv1.Direction
+	)
+
+	flush := func() {
+		if batchLen == 0 {
+			return
+		}
+		if sendErr := stream.Send(&sessionv1.SftpRecordingFrame{
+			Payload: &sessionv1.SftpRecordingFrame_Chunk{
+				Chunk: &sessionv1.DataChunk{
+					TimeOffsetMs: batchOffset,
+					Data:         batchData,
+					Direction:    batchDir,
+				},
+			},
+		}); sendErr != nil {
+			r.log.Debug().Msgf("Failed to send sftp recording chunk for session %s: %v", sessionID, sendErr)
+		}
+		batchData = nil
+		batchLen = 0
+	}
+
+	for {
+		select {
+		case frame, ok := <-r.ch:
+			if !ok {
+				flush()
+				if _, closeErr := stream.CloseAndRecv(); closeErr != nil {
+					r.log.Debug().Msgf("Sftp recording stream closed for session %s: %v", sessionID, closeErr)
+				}
+				return
+			}
+
+			// SFTP channels don't have resize events; discard
+			if frame.resize != nil {
+				continue
+			}
+
+			// Flush before switching direction so chunks are never mixed.
+			if batchLen > 0 && frame.direction != batchDir {
+				flush()
+			}
+			if batchLen == 0 {
+				batchOffset = frame.offset
+				batchDir = frame.direction
 			}
 			batchData = append(batchData, frame.data...)
 			batchLen += len(frame.data)

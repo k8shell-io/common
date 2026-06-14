@@ -106,9 +106,7 @@ type EvaluateRequest struct {
 	// context carries ambient attributes not present in the JWT or resource,
 	// e.g. "namespace", "environment", "team".
 	Context map[string]string `protobuf:"bytes,4,rep,name=context,proto3" json:"context,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	// package is the OPA policy package to evaluate the request against,
-	// e.g. "authz.ssh", "authz.user", "authz.session". When empty the service
-	// uses its configured default package.
+	// package is the OPA policy package to evaluate the request against
 	Package       string `protobuf:"bytes,5,opt,name=package,proto3" json:"package,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

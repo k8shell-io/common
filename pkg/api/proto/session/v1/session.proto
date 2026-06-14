@@ -141,6 +141,10 @@ service RecordingService {
   // first frame must be a TcpipRecordingHeader; subsequent frames carry data chunks.
   rpc StreamTcpipRecording(stream TcpipRecordingFrame) returns (google.protobuf.Empty);
 
+  // StreamSftpRecording records an SFTP subsystem channel. The first frame
+  // must be a SftpRecordingHeader; subsequent frames carry data chunks.
+  rpc StreamSftpRecording(stream SftpRecordingFrame) returns (google.protobuf.Empty);
+
   // EndRecordingSession notifies the recording backend that a session has ended
   // and all associated recording resources (open streams, buffers, file handles)
   // should be flushed and released. Must be called once per session_id when the
@@ -254,6 +258,30 @@ message TcpipRecordingFrame {
     // header is the first frame and carries port-forward metadata.
     TcpipRecordingHeader header = 1;
     // chunk carries a block of raw forwarded data.
+    DataChunk chunk = 2;
+  }
+}
+
+// *** SFTP recording
+
+// SftpRecordingHeader is the mandatory first frame of an SFTP recording stream.
+message SftpRecordingHeader {
+  // session_id ties this recording to a SessionService session record.
+  string session_id = 1;
+  // user_token is the token of the user owning the session being recorded.
+  string user_token = 2;
+  // started_at is the channel start time as a Unix timestamp (seconds).
+  int64 started_at = 3;
+  // connection_id is the unique identifier of the SSH connection.
+  string connection_id = 4;
+}
+
+// SftpRecordingFrame is a single unit in an SFTP recording stream.
+message SftpRecordingFrame {
+  oneof payload {
+    // header is the first frame and carries SFTP session metadata.
+    SftpRecordingHeader header = 1;
+    // chunk carries a block of raw SFTP protocol data.
     DataChunk chunk = 2;
   }
 }
