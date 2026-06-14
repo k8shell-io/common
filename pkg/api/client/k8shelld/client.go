@@ -154,6 +154,25 @@ func (c *K8shelld) startExecRecording(
 	return
 }
 
+// startSftpRecording creates an SFTP Recorder and returns a (possibly wrapped) BufferedReadWriter.
+// Both traffic directions (client→service and service→client) are captured.
+func (c *K8shelld) startSftpRecording(
+	ctx context.Context,
+	rw BufferedReadWriter,
+	userToken string,
+	sessionID string,
+) (recorder *Recorder, wrappedRW BufferedReadWriter) {
+	start := time.Now()
+	recordCtx := metadata.AppendToOutgoingContext(ctx, "x-connection-affinity", c.connectionID)
+	recorder = NewSftpRecorder(recordCtx, c.sessionClient, sessionID, c.connectionID, userToken, start, c.log)
+	if recorder != nil {
+		wrappedRW = NewBidirectionalRecordingAdapter(rw, start, recorder.Observe, recorder.ObserveInput)
+	} else {
+		wrappedRW = rw
+	}
+	return
+}
+
 // startTcpipRecording creates a TCP/IP Recorder and returns a (possibly wrapped) BufferedReadWriter.
 // Both traffic directions (client→service and service→client) are captured.
 func (c *K8shelld) startTcpipRecording(
@@ -805,6 +824,177 @@ func (c *K8shelld) RunExec(
 
 	c.log.Debug().Msgf("Exit code is %d", exitCode)
 
+	return exitCode, nil
+}
+
+// RunSFTP runs an SFTP subsystem session over gRPC, bridging the channel through
+// upstream. SFTP is executed as a server-side binary (sftp-server) via the exec
+// endpoint, but recorded using the SFTP recording service (pcap format) with both
+// traffic directions captured. Returns the process exit code and any transport error.
+func (c *K8shelld) RunSFTP(
+	ctx context.Context,
+	userToken string,
+	asUser string,
+	upstream BufferedReadWriter,
+	sessionID string,
+	command string,
+	envVars []string,
+	enableRecording bool,
+) (int32, error) {
+	if enableRecording && c.sessionClient == nil {
+		return 1, fmt.Errorf("session recording requested but session client is not set")
+	}
+	_, err := authz.ParseUnverifiedClaims(userToken, true)
+	if err != nil {
+		return 1, fmt.Errorf("invalid user token: %w", err)
+	}
+
+	md := metadata.Pairs("exec-id", sessionID, "token", userToken)
+	ctx = metadata.NewOutgoingContext(ctx, md)
+
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	if enableRecording {
+		var recorder *Recorder
+		recorder, upstream = c.startSftpRecording(ctx, upstream, userToken, sessionID)
+		if recorder != nil {
+			defer recorder.Close()
+		}
+	}
+
+	stream, err := c.sshClient.Exec(ctx)
+	if err != nil {
+		return 1, fmt.Errorf("failed to create sftp exec stream: %w", err)
+	}
+
+	startReq := &k8shelldv1.ExecRequest{
+		Request: &k8shelldv1.ExecRequest_CommandDetails{
+			CommandDetails: &k8shelldv1.CommandDetails{
+				Command: command,
+				EnvVars: envVars,
+				AsUser:  asUser,
+			},
+		},
+	}
+	if err := stream.Send(startReq); err != nil {
+		return 1, fmt.Errorf("failed to send sftp exec command: %w", err)
+	}
+
+	var wg sync.WaitGroup
+	var writerErr, readerErr error
+	exitCodeCh := make(chan int32, 1)
+
+	// writer goroutine (SSH -> gRPC): forwards SFTP client packets upstream
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		defer func() {
+			if err := stream.CloseSend(); err != nil {
+				c.log.Error().Err(err).Msgf("Failed to close sftp exec stream for session %s", sessionID)
+			}
+		}()
+
+		buf := make([]byte, 32*1024)
+		for {
+			size, err := upstream.ReadBufferSize()
+			if err != nil {
+				if isEOFErrorOrCanceled(err) {
+					return
+				}
+				writerErr = fmt.Errorf("buffer check: %w", err)
+				return
+			}
+
+			if size > 0 {
+				n, rerr := upstream.Read(buf)
+				if rerr != nil {
+					if isEOFErrorOrCanceled(rerr) {
+						return
+					}
+					writerErr = fmt.Errorf("upstream read: %w", rerr)
+					return
+				}
+				if n == 0 {
+					continue
+				}
+				if serr := stream.Send(&k8shelldv1.ExecRequest{
+					Request: &k8shelldv1.ExecRequest_Input{
+						Input: buf[:n],
+					},
+				}); serr != nil {
+					writerErr = fmt.Errorf("grpc send: %w", serr)
+					return
+				}
+				c.counters.AddIn(n)
+			} else {
+				select {
+				case <-ctx.Done():
+					return
+				case <-time.After(10 * time.Millisecond):
+				}
+			}
+		}
+	}()
+
+	// reader goroutine (gRPC -> SSH): forwards SFTP server responses downstream
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		defer cancel()
+
+		stderr := upstream.Stderr()
+
+		for {
+			resp, rerr := stream.Recv()
+			if rerr != nil {
+				if rerr == io.EOF {
+					return
+				}
+				readerErr = fmt.Errorf("grpc recv: %w", rerr)
+				return
+			}
+
+			switch r := resp.Response.(type) {
+			case *k8shelldv1.ExecResponse_Stdout:
+				if _, err := upstream.Write(r.Stdout); err != nil {
+					readerErr = fmt.Errorf("upstream write: %w", err)
+					return
+				}
+				c.counters.AddOut(len(r.Stdout))
+			case *k8shelldv1.ExecResponse_Stderr:
+				if _, err := stderr.Write(r.Stderr); err != nil {
+					readerErr = fmt.Errorf("stderr write: %w", err)
+					return
+				}
+				c.counters.AddOut(len(r.Stderr))
+			case *k8shelldv1.ExecResponse_ExitCode:
+				exitCodeCh <- r.ExitCode
+				return
+			default:
+				readerErr = fmt.Errorf("unknown exec response type")
+				return
+			}
+		}
+	}()
+
+	wg.Wait()
+
+	var exitCode int32
+	select {
+	case exitCode = <-exitCodeCh:
+	default:
+		if writerErr != nil || readerErr != nil {
+			exitCode = 1
+		}
+	}
+
+	if writerErr != nil {
+		return exitCode, writerErr
+	}
+	if readerErr != nil {
+		return exitCode, readerErr
+	}
 	return exitCode, nil
 }
 
