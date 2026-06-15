@@ -17,7 +17,7 @@ package authz
 // Obligations
 //   sudo       true | false
 //   roles      JSON array of role name strings  (e.g. ["admin","dev"])
-//   blueprints comma-separated blueprint names or "*" for all
+//   blueprints JSON array of blueprint name strings  (e.g. ["bp1","bp2"])
 //
 // ---
 //
@@ -66,7 +66,6 @@ package authz
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	authzv1 "github.com/k8shell-io/common/pkg/api/gen/go/authz/v1"
 	"github.com/k8shell-io/common/pkg/models"
@@ -572,6 +571,7 @@ type BlueprintsObligation struct {
 }
 
 // ParseBlueprintsObligation reads the "blueprints" key from the obligations map.
+// The value is a JSON-encoded array of blueprint name strings (e.g. ["bp1","bp2"]).
 // Returns (obligation, true) when the key is present, (zero value, false) when
 // the policy did not set a blueprints obligation — in that case the enforcer
 // should preserve its existing default rather than overwriting it.
@@ -580,9 +580,13 @@ func ParseBlueprintsObligation(obligations map[string]string) (BlueprintsObligat
 	if !ok {
 		return BlueprintsObligation{}, false
 	}
-	var blueprints []string
-	for b := range strings.SplitSeq(v, ",") {
-		if b = strings.TrimSpace(b); b != "" {
+	var raw []string
+	if err := json.Unmarshal([]byte(v), &raw); err != nil {
+		return BlueprintsObligation{}, false
+	}
+	blueprints := make([]string, 0, len(raw))
+	for _, b := range raw {
+		if b != "" {
 			blueprints = append(blueprints, b)
 		}
 	}
