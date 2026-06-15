@@ -83,20 +83,6 @@ var validSessionSources = map[SessionSource]struct{}{
 	SessionSourceAPIServer: {},
 }
 
-// SessionWorkspaceResource holds the workspace-scoped attributes of the resource
-// being accessed.
-type SessionWorkspaceResource struct {
-	// ID is the workspace name (resource.id in the EvaluateRequest).
-	ID string
-
-	// Owner is the username of the workspace owner (resource.attributes["owner"]).
-	Owner string
-
-	// Blueprint is the blueprint the workspace was launched from
-	// (resource.attributes["blueprint"]).
-	Blueprint string
-}
-
 // SessionContext holds the ambient session attributes supplied by the caller
 // in the context map of the EvaluateRequest.
 type SessionContext struct {
@@ -113,7 +99,7 @@ type SessionContext struct {
 // directly from a gRPC EvaluateRequest.
 type SessionEvalRequest struct {
 	Action   SessionAction
-	Resource SessionWorkspaceResource
+	Resource WorkspaceResource
 	Context  SessionContext
 }
 
@@ -125,7 +111,7 @@ var _ EvalRequest = (*SessionEvalRequest)(nil)
 func NewSessionEvalRequest(action SessionAction, workspaceID string, sessionType SessionType) *SessionEvalRequest {
 	return &SessionEvalRequest{
 		Action:   action,
-		Resource: SessionWorkspaceResource{ID: workspaceID},
+		Resource: WorkspaceResource{ID: workspaceID},
 		Context:  SessionContext{Type: sessionType},
 	}
 }
@@ -202,7 +188,7 @@ func SessionEvalRequestFromProto(req *authzv1.EvaluateRequest) (*SessionEvalRequ
 
 	r := &SessionEvalRequest{
 		Action: SessionAction(req.Action),
-		Resource: SessionWorkspaceResource{
+		Resource: WorkspaceResource{
 			ID:        req.Resource.Id,
 			Owner:     attrs["owner"],
 			Blueprint: attrs["blueprint"],

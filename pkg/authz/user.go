@@ -19,8 +19,6 @@ package authz
 //   roles      JSON array of role name strings  (e.g. ["admin","dev"])
 //   blueprints comma-separated blueprint names or "*" for all
 //
-// Subject   injected by the backend from JWT claims (username, roles, email, ...)
-//
 // ---
 //
 // Contract: user:auth
@@ -357,9 +355,7 @@ func (r *UserAuthEvalRequest) Validate() error {
 // evaluation. Use NewUserReadEvalRequest to start building, then call Build
 // to get a validated instance.
 type UserReadEvalRequest struct {
-	// Username is the target of the read (resource.id).
-	Username string
-	// DataType identifies which user data is being accessed (context["data_type"]).
+	Resource UserResource
 	DataType UserDataType
 }
 
@@ -368,7 +364,7 @@ var _ EvalRequest = (*UserReadEvalRequest)(nil)
 // NewUserReadEvalRequest begins building a UserReadEvalRequest for the given
 // target username.
 func NewUserReadEvalRequest(username string) *UserReadEvalRequest {
-	return &UserReadEvalRequest{Username: username}
+	return &UserReadEvalRequest{Resource: UserResource{ID: username}}
 }
 
 // WithDataType sets the data type being accessed.
@@ -395,7 +391,7 @@ func (r *UserReadEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
 		Action: "user:read",
 		Resource: &authzv1.Resource{
 			Type: "user",
-			Id:   r.Username,
+			Id:   r.Resource.ID,
 		},
 		Context: map[string]string{"data_type": string(r.DataType)},
 	}
@@ -417,7 +413,7 @@ func UserReadEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserReadEvalRe
 		return nil, fmt.Errorf("user:read: resource type must be \"user\", got %q", req.Resource.Type)
 	}
 	r := &UserReadEvalRequest{
-		Username: req.Resource.Id,
+		Resource: UserResource{ID: req.Resource.Id},
 		DataType: UserDataType(req.Context["data_type"]),
 	}
 	if err := r.Validate(); err != nil {
@@ -429,7 +425,7 @@ func UserReadEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserReadEvalRe
 // Validate checks the request against the user:read contract.
 // Implements EvalRequest.
 func (r *UserReadEvalRequest) Validate() error {
-	if r.Username == "" {
+	if r.Resource.ID == "" {
 		return fmt.Errorf("user:read: resource ID (username) is required")
 	}
 	switch r.DataType {

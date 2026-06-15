@@ -65,19 +65,6 @@ var validSSHActions = map[SSHAction]struct{}{
 	SSHActionAgentForward:      {},
 }
 
-// SSHWorkspaceResource holds the workspace-scoped attributes of the resource
-// being accessed.
-type SSHWorkspaceResource struct {
-	// ID is the workspace name (resource.id in the EvaluateRequest).
-	ID string
-
-	// Owner is the username of the workspace owner (resource.attributes["owner"]).
-	Owner string
-
-	// Blueprint is the blueprint the workspace was launched from
-	Blueprint string
-}
-
 // SSHContext holds the ambient SSH channel/request attributes supplied by the
 // ssh-proxy in the context map of the EvaluateRequest.
 type SSHContext struct {
@@ -108,7 +95,7 @@ type SSHContext struct {
 // directly from a gRPC EvaluateRequest.
 type SSHEvalRequest struct {
 	Action   SSHAction
-	Resource SSHWorkspaceResource
+	Resource WorkspaceResource
 	Context  SSHContext
 }
 
@@ -120,7 +107,7 @@ var _ EvalRequest = (*SSHEvalRequest)(nil)
 func NewSSHEvalRequest(action SSHAction, workspaceID string) *SSHEvalRequest {
 	return &SSHEvalRequest{
 		Action:   action,
-		Resource: SSHWorkspaceResource{ID: workspaceID},
+		Resource: WorkspaceResource{ID: workspaceID},
 	}
 }
 
@@ -245,7 +232,7 @@ func SSHEvalRequestFromProto(req *authzv1.EvaluateRequest) (*SSHEvalRequest, err
 
 	r := &SSHEvalRequest{
 		Action: SSHAction(req.Action),
-		Resource: SSHWorkspaceResource{
+		Resource: WorkspaceResource{
 			ID:        req.Resource.Id,
 			Owner:     attrs["owner"],
 			Blueprint: attrs["blueprint"],

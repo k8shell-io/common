@@ -27,7 +27,8 @@ package authz
 // Contract: workspace:list
 //
 // Resource  type="workspace"
-//   id   owner username (required)
+//   id     (empty — no specific workspace)
+//   owner  owner username  (required)
 //
 // Context   (none)
 //
@@ -40,7 +41,8 @@ package authz
 // Contract: workspace:create
 //
 // Resource  type="workspace"
-//   id   owner username (required)
+//   id     (empty — no specific workspace yet)
+//   owner  owner username  (required)
 //
 // Context   (none)
 //
@@ -152,8 +154,8 @@ const (
 	WorkspaceActionApp     WorkspaceAction = "workspace:app"
 )
 
-// validWorkspaceActions is the set of recognized workspace actions for fast lookup.
-var validWorkspaceActions = map[WorkspaceAction]struct{}{
+// validWorkspaceProvisionActions is the set of recognized workspace:provision actions.
+var validWorkspaceProvisionActions = map[WorkspaceAction]struct{}{
 	WorkspaceActionProvision: {},
 }
 
@@ -356,7 +358,7 @@ func WorkspaceEvalRequestFromProto(req *authzv1.EvaluateRequest) (*WorkspaceEval
 // all required for workspace:provision.
 // Implements EvalRequest.
 func (r *WorkspaceEvalRequest) Validate() error {
-	if _, ok := validWorkspaceActions[r.Action]; !ok {
+	if _, ok := validWorkspaceProvisionActions[r.Action]; !ok {
 		return fmt.Errorf("workspace: unknown action %q", r.Action)
 	}
 	if r.Resource.ID == "" {
@@ -415,11 +417,11 @@ const (
 // --- workspace:list and workspace:create ---
 
 // WorkspaceOwnerEvalRequest is the validated, typed model for workspace:list
-// and workspace:create. The resource id is the owner username — the user whose
-// workspaces are being listed or who is creating a new workspace.
+// and workspace:create. Resource.ID is empty — there is no specific workspace;
+// Resource.Owner identifies whose workspace collection is being accessed or extended.
 type WorkspaceOwnerEvalRequest struct {
-	Action WorkspaceAction
-	Owner  string
+	Action   WorkspaceAction
+	Resource WorkspaceResource
 }
 
 var validWorkspaceOwnerActions = map[WorkspaceAction]struct{}{
@@ -432,7 +434,7 @@ var _ EvalRequest = (*WorkspaceOwnerEvalRequest)(nil)
 // NewWorkspaceOwnerEvalRequest begins building a WorkspaceOwnerEvalRequest for
 // the given action and owner username.
 func NewWorkspaceOwnerEvalRequest(action WorkspaceAction, owner string) *WorkspaceOwnerEvalRequest {
-	return &WorkspaceOwnerEvalRequest{Action: action, Owner: owner}
+	return &WorkspaceOwnerEvalRequest{Action: action, Resource: WorkspaceResource{Owner: owner}}
 }
 
 // Build validates the request and returns it if all constraints are satisfied.
@@ -450,8 +452,9 @@ func (r *WorkspaceOwnerEvalRequest) ToProto(token string) *authzv1.EvaluateReque
 		Token:  token,
 		Action: string(r.Action),
 		Resource: &authzv1.Resource{
-			Type: "workspace",
-			Id:   r.Owner,
+			Type:       "workspace",
+			Id:         r.Resource.ID,
+			Attributes: map[string]string{"owner": r.Resource.Owner},
 		},
 	}
 }
@@ -470,7 +473,10 @@ func WorkspaceOwnerEvalRequestFromProto(req *authzv1.EvaluateRequest) (*Workspac
 	}
 	r := &WorkspaceOwnerEvalRequest{
 		Action: WorkspaceAction(req.Action),
-		Owner:  req.Resource.Id,
+		Resource: WorkspaceResource{
+			ID:    req.Resource.Id,
+			Owner: req.Resource.Attributes["owner"],
+		},
 	}
 	if err := r.Validate(); err != nil {
 		return nil, err
@@ -484,8 +490,8 @@ func (r *WorkspaceOwnerEvalRequest) Validate() error {
 	if _, ok := validWorkspaceOwnerActions[r.Action]; !ok {
 		return fmt.Errorf("workspace: unknown owner action %q", r.Action)
 	}
-	if r.Owner == "" {
-		return fmt.Errorf("workspace: resource ID (owner username) is required")
+	if r.Resource.Owner == "" {
+		return fmt.Errorf("workspace: resource attribute \"owner\" is required")
 	}
 	return nil
 }
