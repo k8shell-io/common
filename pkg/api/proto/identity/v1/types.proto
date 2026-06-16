@@ -8,6 +8,7 @@ package identity.v1;
 option go_package = "github.com/k8shell-io/common/pkg/api/gen/go/identity/v1;identityv1";
 
 import "common/v1/common.proto";
+import "google/protobuf/timestamp.proto";
 
 // Username carries a single username identifier.
 message Username {
@@ -94,4 +95,17 @@ message RepoRefResponse {
 // IdentityProviderInfo carries data about the identity provider
 message IdentityProviderInfo {
   string name = 1;
+}
+
+// AccessTokenInfo carries access token metadata returned in list responses.
+// The raw token and its hash are never included.
+message AccessTokenInfo {
+  int64                     id           = 1;
+  string                    username     = 2;
+  string                    name         = 3;
+  repeated string           scopes       = 4;
+  google.protobuf.Timestamp expires_at   = 5;
+  google.protobuf.Timestamp created_at   = 6;
+  google.protobuf.Timestamp last_used_at = 7;
+  bool                      is_active    = 8;
 }

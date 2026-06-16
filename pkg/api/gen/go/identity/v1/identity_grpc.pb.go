@@ -40,6 +40,10 @@ const (
 	IdentityService_UpdateUserCredential_FullMethodName          = "/identity.v1.IdentityService/UpdateUserCredential"
 	IdentityService_DeleteUserCredential_FullMethodName          = "/identity.v1.IdentityService/DeleteUserCredential"
 	IdentityService_GetAvailableIdentityProviders_FullMethodName = "/identity.v1.IdentityService/GetAvailableIdentityProviders"
+	IdentityService_CreateAccessToken_FullMethodName             = "/identity.v1.IdentityService/CreateAccessToken"
+	IdentityService_ListAccessTokens_FullMethodName              = "/identity.v1.IdentityService/ListAccessTokens"
+	IdentityService_RevokeAccessToken_FullMethodName             = "/identity.v1.IdentityService/RevokeAccessToken"
+	IdentityService_ResolveAccessToken_FullMethodName            = "/identity.v1.IdentityService/ResolveAccessToken"
 )
 
 // IdentityServiceClient is the client API for IdentityService service.
@@ -86,6 +90,17 @@ type IdentityServiceClient interface {
 	DeleteUserCredential(ctx context.Context, in *DeleteUserCredentialRequest, opts ...grpc.CallOption) (*DeleteUserCredentialResponse, error)
 	// GetAvailableIdentityProviders returns a list of available identity providers.
 	GetAvailableIdentityProviders(ctx context.Context, in *GetAvailableIdentityProvidersRequest, opts ...grpc.CallOption) (*GetAvailableIdentityProvidersResponse, error)
+	// CreateAccessToken issues a new Personal Access Token for a user. The raw token is
+	// returned once in the response and is not recoverable after that.
+	CreateAccessToken(ctx context.Context, in *CreateAccessTokenRequest, opts ...grpc.CallOption) (*CreateAccessTokenResponse, error)
+	// ListAccessTokens returns access token metadata (no raw tokens or hashes) for a user.
+	ListAccessTokens(ctx context.Context, in *Username, opts ...grpc.CallOption) (*ListAccessTokensResponse, error)
+	// RevokeAccessToken soft-deletes an access token by ID, enforcing username ownership.
+	RevokeAccessToken(ctx context.Context, in *RevokeAccessTokenRequest, opts ...grpc.CallOption) (*RevokeAccessTokenResponse, error)
+	// ResolveAccessToken looks up an access token by its raw value, updates last_used_at,
+	// and returns the owning user plus the token's scopes. Called by API gateways
+	// on every request that carries a k8sh_ token.
+	ResolveAccessToken(ctx context.Context, in *ResolveAccessTokenRequest, opts ...grpc.CallOption) (*ResolveAccessTokenResponse, error)
 }
 
 type identityServiceClient struct {
@@ -266,6 +281,46 @@ func (c *identityServiceClient) GetAvailableIdentityProviders(ctx context.Contex
 	return out, nil
 }
 
+func (c *identityServiceClient) CreateAccessToken(ctx context.Context, in *CreateAccessTokenRequest, opts ...grpc.CallOption) (*CreateAccessTokenResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateAccessTokenResponse)
+	err := c.cc.Invoke(ctx, IdentityService_CreateAccessToken_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) ListAccessTokens(ctx context.Context, in *Username, opts ...grpc.CallOption) (*ListAccessTokensResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListAccessTokensResponse)
+	err := c.cc.Invoke(ctx, IdentityService_ListAccessTokens_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) RevokeAccessToken(ctx context.Context, in *RevokeAccessTokenRequest, opts ...grpc.CallOption) (*RevokeAccessTokenResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RevokeAccessTokenResponse)
+	err := c.cc.Invoke(ctx, IdentityService_RevokeAccessToken_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) ResolveAccessToken(ctx context.Context, in *ResolveAccessTokenRequest, opts ...grpc.CallOption) (*ResolveAccessTokenResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ResolveAccessTokenResponse)
+	err := c.cc.Invoke(ctx, IdentityService_ResolveAccessToken_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // IdentityServiceServer is the server API for IdentityService service.
 // All implementations must embed UnimplementedIdentityServiceServer
 // for forward compatibility.
@@ -310,6 +365,17 @@ type IdentityServiceServer interface {
 	DeleteUserCredential(context.Context, *DeleteUserCredentialRequest) (*DeleteUserCredentialResponse, error)
 	// GetAvailableIdentityProviders returns a list of available identity providers.
 	GetAvailableIdentityProviders(context.Context, *GetAvailableIdentityProvidersRequest) (*GetAvailableIdentityProvidersResponse, error)
+	// CreateAccessToken issues a new Personal Access Token for a user. The raw token is
+	// returned once in the response and is not recoverable after that.
+	CreateAccessToken(context.Context, *CreateAccessTokenRequest) (*CreateAccessTokenResponse, error)
+	// ListAccessTokens returns access token metadata (no raw tokens or hashes) for a user.
+	ListAccessTokens(context.Context, *Username) (*ListAccessTokensResponse, error)
+	// RevokeAccessToken soft-deletes an access token by ID, enforcing username ownership.
+	RevokeAccessToken(context.Context, *RevokeAccessTokenRequest) (*RevokeAccessTokenResponse, error)
+	// ResolveAccessToken looks up an access token by its raw value, updates last_used_at,
+	// and returns the owning user plus the token's scopes. Called by API gateways
+	// on every request that carries a k8sh_ token.
+	ResolveAccessToken(context.Context, *ResolveAccessTokenRequest) (*ResolveAccessTokenResponse, error)
 	mustEmbedUnimplementedIdentityServiceServer()
 }
 
@@ -370,6 +436,18 @@ func (UnimplementedIdentityServiceServer) DeleteUserCredential(context.Context, 
 }
 func (UnimplementedIdentityServiceServer) GetAvailableIdentityProviders(context.Context, *GetAvailableIdentityProvidersRequest) (*GetAvailableIdentityProvidersResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetAvailableIdentityProviders not implemented")
+}
+func (UnimplementedIdentityServiceServer) CreateAccessToken(context.Context, *CreateAccessTokenRequest) (*CreateAccessTokenResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateAccessToken not implemented")
+}
+func (UnimplementedIdentityServiceServer) ListAccessTokens(context.Context, *Username) (*ListAccessTokensResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListAccessTokens not implemented")
+}
+func (UnimplementedIdentityServiceServer) RevokeAccessToken(context.Context, *RevokeAccessTokenRequest) (*RevokeAccessTokenResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RevokeAccessToken not implemented")
+}
+func (UnimplementedIdentityServiceServer) ResolveAccessToken(context.Context, *ResolveAccessTokenRequest) (*ResolveAccessTokenResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ResolveAccessToken not implemented")
 }
 func (UnimplementedIdentityServiceServer) mustEmbedUnimplementedIdentityServiceServer() {}
 func (UnimplementedIdentityServiceServer) testEmbeddedByValue()                         {}
@@ -698,6 +776,78 @@ func _IdentityService_GetAvailableIdentityProviders_Handler(srv interface{}, ctx
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IdentityService_CreateAccessToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateAccessTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).CreateAccessToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_CreateAccessToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).CreateAccessToken(ctx, req.(*CreateAccessTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_ListAccessTokens_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Username)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).ListAccessTokens(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_ListAccessTokens_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).ListAccessTokens(ctx, req.(*Username))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_RevokeAccessToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RevokeAccessTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).RevokeAccessToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_RevokeAccessToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).RevokeAccessToken(ctx, req.(*RevokeAccessTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_ResolveAccessToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResolveAccessTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).ResolveAccessToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_ResolveAccessToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).ResolveAccessToken(ctx, req.(*ResolveAccessTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // IdentityService_ServiceDesc is the grpc.ServiceDesc for IdentityService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -772,6 +922,22 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAvailableIdentityProviders",
 			Handler:    _IdentityService_GetAvailableIdentityProviders_Handler,
+		},
+		{
+			MethodName: "CreateAccessToken",
+			Handler:    _IdentityService_CreateAccessToken_Handler,
+		},
+		{
+			MethodName: "ListAccessTokens",
+			Handler:    _IdentityService_ListAccessTokens_Handler,
+		},
+		{
+			MethodName: "RevokeAccessToken",
+			Handler:    _IdentityService_RevokeAccessToken_Handler,
+		},
+		{
+			MethodName: "ResolveAccessToken",
+			Handler:    _IdentityService_ResolveAccessToken_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

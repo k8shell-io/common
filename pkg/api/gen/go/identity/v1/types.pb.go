@@ -13,6 +13,7 @@ import (
 	v1 "github.com/k8shell-io/common/pkg/api/gen/go/common/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -782,11 +783,113 @@ func (x *IdentityProviderInfo) GetName() string {
 	return ""
 }
 
+// AccessTokenInfo carries access token metadata returned in list responses.
+// The raw token and its hash are never included.
+type AccessTokenInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	Scopes        []string               `protobuf:"bytes,4,rep,name=scopes,proto3" json:"scopes,omitempty"`
+	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	LastUsedAt    *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=last_used_at,json=lastUsedAt,proto3" json:"last_used_at,omitempty"`
+	IsActive      bool                   `protobuf:"varint,8,opt,name=is_active,json=isActive,proto3" json:"is_active,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AccessTokenInfo) Reset() {
+	*x = AccessTokenInfo{}
+	mi := &file_identity_v1_types_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AccessTokenInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AccessTokenInfo) ProtoMessage() {}
+
+func (x *AccessTokenInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_types_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AccessTokenInfo.ProtoReflect.Descriptor instead.
+func (*AccessTokenInfo) Descriptor() ([]byte, []int) {
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *AccessTokenInfo) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *AccessTokenInfo) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *AccessTokenInfo) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *AccessTokenInfo) GetScopes() []string {
+	if x != nil {
+		return x.Scopes
+	}
+	return nil
+}
+
+func (x *AccessTokenInfo) GetExpiresAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return nil
+}
+
+func (x *AccessTokenInfo) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *AccessTokenInfo) GetLastUsedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.LastUsedAt
+	}
+	return nil
+}
+
+func (x *AccessTokenInfo) GetIsActive() bool {
+	if x != nil {
+		return x.IsActive
+	}
+	return false
+}
+
 var File_identity_v1_types_proto protoreflect.FileDescriptor
 
 const file_identity_v1_types_proto_rawDesc = "" +
 	"\n" +
-	"\x17identity/v1/types.proto\x12\videntity.v1\x1a\x16common/v1/common.proto\"&\n" +
+	"\x17identity/v1/types.proto\x12\videntity.v1\x1a\x16common/v1/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"&\n" +
 	"\bUsername\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\"#\n" +
 	"\aUserStr\x12\x18\n" +
@@ -828,7 +931,19 @@ const file_identity_v1_types_proto_rawDesc = "" +
 	"\x0fRepoRefResponse\x12\x19\n" +
 	"\brepo_ref\x18\x01 \x01(\tR\arepoRef\"*\n" +
 	"\x14IdentityProviderInfo\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04nameBDZBgithub.com/k8shell-io/common/pkg/api/gen/go/identity/v1;identityv1b\x06proto3"
+	"\x04name\x18\x01 \x01(\tR\x04name\"\xba\x02\n" +
+	"\x0fAccessTokenInfo\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1a\n" +
+	"\busername\x18\x02 \x01(\tR\busername\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12\x16\n" +
+	"\x06scopes\x18\x04 \x03(\tR\x06scopes\x129\n" +
+	"\n" +
+	"expires_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x129\n" +
+	"\n" +
+	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12<\n" +
+	"\flast_used_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"lastUsedAt\x12\x1b\n" +
+	"\tis_active\x18\b \x01(\bR\bisActiveBDZBgithub.com/k8shell-io/common/pkg/api/gen/go/identity/v1;identityv1b\x06proto3"
 
 var (
 	file_identity_v1_types_proto_rawDescOnce sync.Once
@@ -842,7 +957,7 @@ func file_identity_v1_types_proto_rawDescGZIP() []byte {
 	return file_identity_v1_types_proto_rawDescData
 }
 
-var file_identity_v1_types_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_identity_v1_types_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_identity_v1_types_proto_goTypes = []any{
 	(*Username)(nil),                     // 0: identity.v1.Username
 	(*UserStr)(nil),                      // 1: identity.v1.UserStr
@@ -859,17 +974,22 @@ var file_identity_v1_types_proto_goTypes = []any{
 	(*RepoPullRequestRequest)(nil),       // 12: identity.v1.RepoPullRequestRequest
 	(*RepoRefResponse)(nil),              // 13: identity.v1.RepoRefResponse
 	(*IdentityProviderInfo)(nil),         // 14: identity.v1.IdentityProviderInfo
-	(*v1.User)(nil),                      // 15: common.v1.User
+	(*AccessTokenInfo)(nil),              // 15: identity.v1.AccessTokenInfo
+	(*v1.User)(nil),                      // 16: common.v1.User
+	(*timestamppb.Timestamp)(nil),        // 17: google.protobuf.Timestamp
 }
 var file_identity_v1_types_proto_depIdxs = []int32{
-	15, // 0: identity.v1.UserList.users:type_name -> common.v1.User
-	15, // 1: identity.v1.GetUsersResponse.users:type_name -> common.v1.User
-	15, // 2: identity.v1.AuthUserResponse.user:type_name -> common.v1.User
-	3,  // [3:3] is the sub-list for method output_type
-	3,  // [3:3] is the sub-list for method input_type
-	3,  // [3:3] is the sub-list for extension type_name
-	3,  // [3:3] is the sub-list for extension extendee
-	0,  // [0:3] is the sub-list for field type_name
+	16, // 0: identity.v1.UserList.users:type_name -> common.v1.User
+	16, // 1: identity.v1.GetUsersResponse.users:type_name -> common.v1.User
+	16, // 2: identity.v1.AuthUserResponse.user:type_name -> common.v1.User
+	17, // 3: identity.v1.AccessTokenInfo.expires_at:type_name -> google.protobuf.Timestamp
+	17, // 4: identity.v1.AccessTokenInfo.created_at:type_name -> google.protobuf.Timestamp
+	17, // 5: identity.v1.AccessTokenInfo.last_used_at:type_name -> google.protobuf.Timestamp
+	6,  // [6:6] is the sub-list for method output_type
+	6,  // [6:6] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_identity_v1_types_proto_init() }
@@ -883,7 +1003,7 @@ func file_identity_v1_types_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_identity_v1_types_proto_rawDesc), len(file_identity_v1_types_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   15,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

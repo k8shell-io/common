@@ -8,6 +8,7 @@ package identity.v1;
 option go_package = "github.com/k8shell-io/common/pkg/api/gen/go/identity/v1;identityv1";
 
 import "common/v1/common.proto";
+import "google/protobuf/timestamp.proto";
 import "identity/v1/types.proto";
 
 // IdentityService provides operations for user management, authentication,
@@ -66,6 +67,21 @@ service IdentityService {
 
   // GetAvailableIdentityProviders returns a list of available identity providers.
   rpc GetAvailableIdentityProviders (GetAvailableIdentityProvidersRequest) returns (GetAvailableIdentityProvidersResponse);
+
+  // CreateAccessToken issues a new Personal Access Token for a user. The raw token is
+  // returned once in the response and is not recoverable after that.
+  rpc CreateAccessToken (CreateAccessTokenRequest) returns (CreateAccessTokenResponse);
+
+  // ListAccessTokens returns access token metadata (no raw tokens or hashes) for a user.
+  rpc ListAccessTokens (Username) returns (ListAccessTokensResponse);
+
+  // RevokeAccessToken soft-deletes an access token by ID, enforcing username ownership.
+  rpc RevokeAccessToken (RevokeAccessTokenRequest) returns (RevokeAccessTokenResponse);
+
+  // ResolveAccessToken looks up an access token by its raw value, updates last_used_at,
+  // and returns the owning user plus the token's scopes. Called by API gateways
+  // on every request that carries a k8sh_ token.
+  rpc ResolveAccessToken (ResolveAccessTokenRequest) returns (ResolveAccessTokenResponse);
 }
 
 // Messages
@@ -136,4 +152,47 @@ message GetAvailableIdentityProvidersRequest {
 // GetAvailableIdentityProvidersResponse carries the list of available identity providers.
 message GetAvailableIdentityProvidersResponse {
   repeated IdentityProviderInfo providers = 1;
+}
+
+// CreateAccessTokenRequest carries the parameters for issuing a new access token.
+message CreateAccessTokenRequest {
+  string                    username   = 1;
+  string                    name       = 2;
+  repeated string           scopes     = 3;
+  google.protobuf.Timestamp expires_at = 4; // omit for non-expiring tokens
+}
+
+// CreateAccessTokenResponse carries the newly issued access token. The raw token
+// is returned exactly once and cannot be retrieved again.
+message CreateAccessTokenResponse {
+  int64  id    = 1;
+  string token = 2;
+}
+
+// ListAccessTokensResponse carries access token metadata for a user (no raw tokens or hashes).
+message ListAccessTokensResponse {
+  repeated AccessTokenInfo tokens = 1;
+}
+
+// RevokeAccessTokenRequest identifies the access token to revoke and asserts ownership.
+message RevokeAccessTokenRequest {
+  int64  id       = 1;
+  string username = 2;
+}
+
+// RevokeAccessTokenResponse indicates whether the revocation was successful.
+message RevokeAccessTokenResponse {
+  bool success = 1;
+}
+
+// ResolveAccessTokenRequest carries the raw access token value presented by a client.
+message ResolveAccessTokenRequest {
+  string token = 1;
+}
+
+// ResolveAccessTokenResponse carries the owning user and the token's scopes.
+// This is everything an API gateway needs to authenticate and cap the request.
+message ResolveAccessTokenResponse {
+  common.v1.User  user   = 1;
+  repeated string scopes = 2;
 }
