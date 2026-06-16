@@ -13,6 +13,7 @@ import (
 	v1 "github.com/k8shell-io/common/pkg/api/gen/go/common/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	durationpb "google.golang.org/protobuf/types/known/durationpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
@@ -899,6 +900,7 @@ func (x *RevokeAccessTokenResponse) GetSuccess() bool {
 type ResolveAccessTokenRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	Expiry        *durationpb.Duration   `protobuf:"bytes,2,opt,name=expiry,proto3" json:"expiry,omitempty"` // JWT lifetime to issue; omit to use the server default
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -940,12 +942,22 @@ func (x *ResolveAccessTokenRequest) GetToken() string {
 	return ""
 }
 
-// ResolveAccessTokenResponse carries the owning user and the token's scopes.
-// This is everything an API gateway needs to authenticate and cap the request.
+func (x *ResolveAccessTokenRequest) GetExpiry() *durationpb.Duration {
+	if x != nil {
+		return x.Expiry
+	}
+	return nil
+}
+
+// ResolveAccessTokenResponse carries the owning user, the token's scopes, and a
+// freshly issued JWT. The JWT is scoped to the same identity as the PAT and is
+// what the API gateway uses for subsequent authz calls — the gateway does not
+// need to hold the raw PAT beyond this point.
 type ResolveAccessTokenResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	User          *v1.User               `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
 	Scopes        []string               `protobuf:"bytes,2,rep,name=scopes,proto3" json:"scopes,omitempty"`
+	UserToken     string                 `protobuf:"bytes,3,opt,name=user_token,json=userToken,proto3" json:"user_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -994,11 +1006,18 @@ func (x *ResolveAccessTokenResponse) GetScopes() []string {
 	return nil
 }
 
+func (x *ResolveAccessTokenResponse) GetUserToken() string {
+	if x != nil {
+		return x.UserToken
+	}
+	return ""
+}
+
 var File_identity_v1_identity_proto protoreflect.FileDescriptor
 
 const file_identity_v1_identity_proto_rawDesc = "" +
 	"\n" +
-	"\x1aidentity/v1/identity.proto\x12\videntity.v1\x1a\x16common/v1/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17identity/v1/types.proto\"K\n" +
+	"\x1aidentity/v1/identity.proto\x12\videntity.v1\x1a\x16common/v1/common.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17identity/v1/types.proto\"K\n" +
 	"\x15IssueUserTokenRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\x16\n" +
 	"\x06source\x18\x02 \x01(\tR\x06source\"7\n" +
@@ -1048,12 +1067,15 @@ const file_identity_v1_identity_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\"5\n" +
 	"\x19RevokeAccessTokenResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"1\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"d\n" +
 	"\x19ResolveAccessTokenRequest\x12\x14\n" +
-	"\x05token\x18\x01 \x01(\tR\x05token\"Y\n" +
+	"\x05token\x18\x01 \x01(\tR\x05token\x121\n" +
+	"\x06expiry\x18\x02 \x01(\v2\x19.google.protobuf.DurationR\x06expiry\"x\n" +
 	"\x1aResolveAccessTokenResponse\x12#\n" +
 	"\x04user\x18\x01 \x01(\v2\x0f.common.v1.UserR\x04user\x12\x16\n" +
-	"\x06scopes\x18\x02 \x03(\tR\x06scopes2\xb9\x0f\n" +
+	"\x06scopes\x18\x02 \x03(\tR\x06scopes\x12\x1d\n" +
+	"\n" +
+	"user_token\x18\x03 \x01(\tR\tuserToken2\xb9\x0f\n" +
 	"\x0fIdentityService\x129\n" +
 	"\bFindUser\x12\x1c.identity.v1.FindUserRequest\x1a\x0f.common.v1.User\x12?\n" +
 	"\bGetUsers\x12\x1c.identity.v1.GetUsersRequest\x1a\x15.identity.v1.UserList\x12Y\n" +
@@ -1115,23 +1137,24 @@ var file_identity_v1_identity_proto_goTypes = []any{
 	(*IdentityProviderInfo)(nil),                  // 21: identity.v1.IdentityProviderInfo
 	(*timestamppb.Timestamp)(nil),                 // 22: google.protobuf.Timestamp
 	(*AccessTokenInfo)(nil),                       // 23: identity.v1.AccessTokenInfo
-	(*v1.User)(nil),                               // 24: common.v1.User
-	(*FindUserRequest)(nil),                       // 25: identity.v1.FindUserRequest
-	(*GetUsersRequest)(nil),                       // 26: identity.v1.GetUsersRequest
-	(*Username)(nil),                              // 27: identity.v1.Username
-	(*OnboardUserDeviceFlowRequest)(nil),          // 28: identity.v1.OnboardUserDeviceFlowRequest
-	(*OnboardUserWebFlowRequest)(nil),             // 29: identity.v1.OnboardUserWebFlowRequest
-	(*CompleteUserWebFlowRequest)(nil),            // 30: identity.v1.CompleteUserWebFlowRequest
-	(*AuthUserPublicKeyRequest)(nil),              // 31: identity.v1.AuthUserPublicKeyRequest
-	(*UserStr)(nil),                               // 32: identity.v1.UserStr
-	(*RepoPullRequestRequest)(nil),                // 33: identity.v1.RepoPullRequestRequest
-	(*UserList)(nil),                              // 34: identity.v1.UserList
-	(*v1.UserOnboardCapability)(nil),              // 35: common.v1.UserOnboardCapability
-	(*v1.OnboardUserDeviceFlow)(nil),              // 36: common.v1.OnboardUserDeviceFlow
-	(*v1.OnboardUserWebFlow)(nil),                 // 37: common.v1.OnboardUserWebFlow
-	(*AuthUserResponse)(nil),                      // 38: identity.v1.AuthUserResponse
-	(*Blueprint)(nil),                             // 39: identity.v1.Blueprint
-	(*RepoRefResponse)(nil),                       // 40: identity.v1.RepoRefResponse
+	(*durationpb.Duration)(nil),                   // 24: google.protobuf.Duration
+	(*v1.User)(nil),                               // 25: common.v1.User
+	(*FindUserRequest)(nil),                       // 26: identity.v1.FindUserRequest
+	(*GetUsersRequest)(nil),                       // 27: identity.v1.GetUsersRequest
+	(*Username)(nil),                              // 28: identity.v1.Username
+	(*OnboardUserDeviceFlowRequest)(nil),          // 29: identity.v1.OnboardUserDeviceFlowRequest
+	(*OnboardUserWebFlowRequest)(nil),             // 30: identity.v1.OnboardUserWebFlowRequest
+	(*CompleteUserWebFlowRequest)(nil),            // 31: identity.v1.CompleteUserWebFlowRequest
+	(*AuthUserPublicKeyRequest)(nil),              // 32: identity.v1.AuthUserPublicKeyRequest
+	(*UserStr)(nil),                               // 33: identity.v1.UserStr
+	(*RepoPullRequestRequest)(nil),                // 34: identity.v1.RepoPullRequestRequest
+	(*UserList)(nil),                              // 35: identity.v1.UserList
+	(*v1.UserOnboardCapability)(nil),              // 36: common.v1.UserOnboardCapability
+	(*v1.OnboardUserDeviceFlow)(nil),              // 37: common.v1.OnboardUserDeviceFlow
+	(*v1.OnboardUserWebFlow)(nil),                 // 38: common.v1.OnboardUserWebFlow
+	(*AuthUserResponse)(nil),                      // 39: identity.v1.AuthUserResponse
+	(*Blueprint)(nil),                             // 40: identity.v1.Blueprint
+	(*RepoRefResponse)(nil),                       // 41: identity.v1.RepoRefResponse
 }
 var file_identity_v1_identity_proto_depIdxs = []int32{
 	20, // 0: identity.v1.ListUserCredentialsResponse.credentials:type_name -> common.v1.UserCredential
@@ -1140,54 +1163,55 @@ var file_identity_v1_identity_proto_depIdxs = []int32{
 	21, // 3: identity.v1.GetAvailableIdentityProvidersResponse.providers:type_name -> identity.v1.IdentityProviderInfo
 	22, // 4: identity.v1.CreateAccessTokenRequest.expires_at:type_name -> google.protobuf.Timestamp
 	23, // 5: identity.v1.ListAccessTokensResponse.tokens:type_name -> identity.v1.AccessTokenInfo
-	24, // 6: identity.v1.ResolveAccessTokenResponse.user:type_name -> common.v1.User
-	25, // 7: identity.v1.IdentityService.FindUser:input_type -> identity.v1.FindUserRequest
-	26, // 8: identity.v1.IdentityService.GetUsers:input_type -> identity.v1.GetUsersRequest
-	0,  // 9: identity.v1.IdentityService.IssueUserToken:input_type -> identity.v1.IssueUserTokenRequest
-	27, // 10: identity.v1.IdentityService.GetUserOnboardCapability:input_type -> identity.v1.Username
-	28, // 11: identity.v1.IdentityService.OnboardUserDeviceFlow:input_type -> identity.v1.OnboardUserDeviceFlowRequest
-	29, // 12: identity.v1.IdentityService.OnboardUserWebFlow:input_type -> identity.v1.OnboardUserWebFlowRequest
-	30, // 13: identity.v1.IdentityService.CompleteUserWebFlow:input_type -> identity.v1.CompleteUserWebFlowRequest
-	31, // 14: identity.v1.IdentityService.AuthUserPublicKey:input_type -> identity.v1.AuthUserPublicKeyRequest
-	2,  // 15: identity.v1.IdentityService.CompleteUserDeviceFlow:input_type -> identity.v1.CompleteUserDeviceFlowRequest
-	32, // 16: identity.v1.IdentityService.GetBlueprintByUserStr:input_type -> identity.v1.UserStr
-	33, // 17: identity.v1.IdentityService.ResolvePullRequestToRef:input_type -> identity.v1.RepoPullRequestRequest
-	27, // 18: identity.v1.IdentityService.ListUserCredentials:input_type -> identity.v1.Username
-	6,  // 19: identity.v1.IdentityService.GetUserCredential:input_type -> identity.v1.GetUserCredentialRequest
-	20, // 20: identity.v1.IdentityService.AddUserCredential:input_type -> common.v1.UserCredential
-	20, // 21: identity.v1.IdentityService.UpdateUserCredential:input_type -> common.v1.UserCredential
-	9,  // 22: identity.v1.IdentityService.DeleteUserCredential:input_type -> identity.v1.DeleteUserCredentialRequest
-	11, // 23: identity.v1.IdentityService.GetAvailableIdentityProviders:input_type -> identity.v1.GetAvailableIdentityProvidersRequest
-	13, // 24: identity.v1.IdentityService.CreateAccessToken:input_type -> identity.v1.CreateAccessTokenRequest
-	27, // 25: identity.v1.IdentityService.ListAccessTokens:input_type -> identity.v1.Username
-	16, // 26: identity.v1.IdentityService.RevokeAccessToken:input_type -> identity.v1.RevokeAccessTokenRequest
-	18, // 27: identity.v1.IdentityService.ResolveAccessToken:input_type -> identity.v1.ResolveAccessTokenRequest
-	24, // 28: identity.v1.IdentityService.FindUser:output_type -> common.v1.User
-	34, // 29: identity.v1.IdentityService.GetUsers:output_type -> identity.v1.UserList
-	1,  // 30: identity.v1.IdentityService.IssueUserToken:output_type -> identity.v1.IssueUserTokenResponse
-	35, // 31: identity.v1.IdentityService.GetUserOnboardCapability:output_type -> common.v1.UserOnboardCapability
-	36, // 32: identity.v1.IdentityService.OnboardUserDeviceFlow:output_type -> common.v1.OnboardUserDeviceFlow
-	37, // 33: identity.v1.IdentityService.OnboardUserWebFlow:output_type -> common.v1.OnboardUserWebFlow
-	4,  // 34: identity.v1.IdentityService.CompleteUserWebFlow:output_type -> identity.v1.CompleteUserWebFlowResponse
-	38, // 35: identity.v1.IdentityService.AuthUserPublicKey:output_type -> identity.v1.AuthUserResponse
-	3,  // 36: identity.v1.IdentityService.CompleteUserDeviceFlow:output_type -> identity.v1.CompleteUserDeviceFlowResponse
-	39, // 37: identity.v1.IdentityService.GetBlueprintByUserStr:output_type -> identity.v1.Blueprint
-	40, // 38: identity.v1.IdentityService.ResolvePullRequestToRef:output_type -> identity.v1.RepoRefResponse
-	5,  // 39: identity.v1.IdentityService.ListUserCredentials:output_type -> identity.v1.ListUserCredentialsResponse
-	20, // 40: identity.v1.IdentityService.GetUserCredential:output_type -> common.v1.UserCredential
-	7,  // 41: identity.v1.IdentityService.AddUserCredential:output_type -> identity.v1.AddUserCredentialResponse
-	8,  // 42: identity.v1.IdentityService.UpdateUserCredential:output_type -> identity.v1.UpdateUserCredentialResponse
-	10, // 43: identity.v1.IdentityService.DeleteUserCredential:output_type -> identity.v1.DeleteUserCredentialResponse
-	12, // 44: identity.v1.IdentityService.GetAvailableIdentityProviders:output_type -> identity.v1.GetAvailableIdentityProvidersResponse
-	14, // 45: identity.v1.IdentityService.CreateAccessToken:output_type -> identity.v1.CreateAccessTokenResponse
-	15, // 46: identity.v1.IdentityService.ListAccessTokens:output_type -> identity.v1.ListAccessTokensResponse
-	17, // 47: identity.v1.IdentityService.RevokeAccessToken:output_type -> identity.v1.RevokeAccessTokenResponse
-	19, // 48: identity.v1.IdentityService.ResolveAccessToken:output_type -> identity.v1.ResolveAccessTokenResponse
-	28, // [28:49] is the sub-list for method output_type
-	7,  // [7:28] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	24, // 6: identity.v1.ResolveAccessTokenRequest.expiry:type_name -> google.protobuf.Duration
+	25, // 7: identity.v1.ResolveAccessTokenResponse.user:type_name -> common.v1.User
+	26, // 8: identity.v1.IdentityService.FindUser:input_type -> identity.v1.FindUserRequest
+	27, // 9: identity.v1.IdentityService.GetUsers:input_type -> identity.v1.GetUsersRequest
+	0,  // 10: identity.v1.IdentityService.IssueUserToken:input_type -> identity.v1.IssueUserTokenRequest
+	28, // 11: identity.v1.IdentityService.GetUserOnboardCapability:input_type -> identity.v1.Username
+	29, // 12: identity.v1.IdentityService.OnboardUserDeviceFlow:input_type -> identity.v1.OnboardUserDeviceFlowRequest
+	30, // 13: identity.v1.IdentityService.OnboardUserWebFlow:input_type -> identity.v1.OnboardUserWebFlowRequest
+	31, // 14: identity.v1.IdentityService.CompleteUserWebFlow:input_type -> identity.v1.CompleteUserWebFlowRequest
+	32, // 15: identity.v1.IdentityService.AuthUserPublicKey:input_type -> identity.v1.AuthUserPublicKeyRequest
+	2,  // 16: identity.v1.IdentityService.CompleteUserDeviceFlow:input_type -> identity.v1.CompleteUserDeviceFlowRequest
+	33, // 17: identity.v1.IdentityService.GetBlueprintByUserStr:input_type -> identity.v1.UserStr
+	34, // 18: identity.v1.IdentityService.ResolvePullRequestToRef:input_type -> identity.v1.RepoPullRequestRequest
+	28, // 19: identity.v1.IdentityService.ListUserCredentials:input_type -> identity.v1.Username
+	6,  // 20: identity.v1.IdentityService.GetUserCredential:input_type -> identity.v1.GetUserCredentialRequest
+	20, // 21: identity.v1.IdentityService.AddUserCredential:input_type -> common.v1.UserCredential
+	20, // 22: identity.v1.IdentityService.UpdateUserCredential:input_type -> common.v1.UserCredential
+	9,  // 23: identity.v1.IdentityService.DeleteUserCredential:input_type -> identity.v1.DeleteUserCredentialRequest
+	11, // 24: identity.v1.IdentityService.GetAvailableIdentityProviders:input_type -> identity.v1.GetAvailableIdentityProvidersRequest
+	13, // 25: identity.v1.IdentityService.CreateAccessToken:input_type -> identity.v1.CreateAccessTokenRequest
+	28, // 26: identity.v1.IdentityService.ListAccessTokens:input_type -> identity.v1.Username
+	16, // 27: identity.v1.IdentityService.RevokeAccessToken:input_type -> identity.v1.RevokeAccessTokenRequest
+	18, // 28: identity.v1.IdentityService.ResolveAccessToken:input_type -> identity.v1.ResolveAccessTokenRequest
+	25, // 29: identity.v1.IdentityService.FindUser:output_type -> common.v1.User
+	35, // 30: identity.v1.IdentityService.GetUsers:output_type -> identity.v1.UserList
+	1,  // 31: identity.v1.IdentityService.IssueUserToken:output_type -> identity.v1.IssueUserTokenResponse
+	36, // 32: identity.v1.IdentityService.GetUserOnboardCapability:output_type -> common.v1.UserOnboardCapability
+	37, // 33: identity.v1.IdentityService.OnboardUserDeviceFlow:output_type -> common.v1.OnboardUserDeviceFlow
+	38, // 34: identity.v1.IdentityService.OnboardUserWebFlow:output_type -> common.v1.OnboardUserWebFlow
+	4,  // 35: identity.v1.IdentityService.CompleteUserWebFlow:output_type -> identity.v1.CompleteUserWebFlowResponse
+	39, // 36: identity.v1.IdentityService.AuthUserPublicKey:output_type -> identity.v1.AuthUserResponse
+	3,  // 37: identity.v1.IdentityService.CompleteUserDeviceFlow:output_type -> identity.v1.CompleteUserDeviceFlowResponse
+	40, // 38: identity.v1.IdentityService.GetBlueprintByUserStr:output_type -> identity.v1.Blueprint
+	41, // 39: identity.v1.IdentityService.ResolvePullRequestToRef:output_type -> identity.v1.RepoRefResponse
+	5,  // 40: identity.v1.IdentityService.ListUserCredentials:output_type -> identity.v1.ListUserCredentialsResponse
+	20, // 41: identity.v1.IdentityService.GetUserCredential:output_type -> common.v1.UserCredential
+	7,  // 42: identity.v1.IdentityService.AddUserCredential:output_type -> identity.v1.AddUserCredentialResponse
+	8,  // 43: identity.v1.IdentityService.UpdateUserCredential:output_type -> identity.v1.UpdateUserCredentialResponse
+	10, // 44: identity.v1.IdentityService.DeleteUserCredential:output_type -> identity.v1.DeleteUserCredentialResponse
+	12, // 45: identity.v1.IdentityService.GetAvailableIdentityProviders:output_type -> identity.v1.GetAvailableIdentityProvidersResponse
+	14, // 46: identity.v1.IdentityService.CreateAccessToken:output_type -> identity.v1.CreateAccessTokenResponse
+	15, // 47: identity.v1.IdentityService.ListAccessTokens:output_type -> identity.v1.ListAccessTokensResponse
+	17, // 48: identity.v1.IdentityService.RevokeAccessToken:output_type -> identity.v1.RevokeAccessTokenResponse
+	19, // 49: identity.v1.IdentityService.ResolveAccessToken:output_type -> identity.v1.ResolveAccessTokenResponse
+	29, // [29:50] is the sub-list for method output_type
+	8,  // [8:29] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_identity_v1_identity_proto_init() }

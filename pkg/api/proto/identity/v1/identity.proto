@@ -8,6 +8,7 @@ package identity.v1;
 option go_package = "github.com/k8shell-io/common/pkg/api/gen/go/identity/v1;identityv1";
 
 import "common/v1/common.proto";
+import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 import "identity/v1/types.proto";
 
@@ -187,12 +188,16 @@ message RevokeAccessTokenResponse {
 
 // ResolveAccessTokenRequest carries the raw access token value presented by a client.
 message ResolveAccessTokenRequest {
-  string token = 1;
+  string                   token  = 1;
+  google.protobuf.Duration expiry = 2; // JWT lifetime to issue; omit to use the server default
 }
 
-// ResolveAccessTokenResponse carries the owning user and the token's scopes.
-// This is everything an API gateway needs to authenticate and cap the request.
+// ResolveAccessTokenResponse carries the owning user, the token's scopes, and a
+// freshly issued JWT. The JWT is scoped to the same identity as the PAT and is
+// what the API gateway uses for subsequent authz calls — the gateway does not
+// need to hold the raw PAT beyond this point.
 message ResolveAccessTokenResponse {
-  common.v1.User  user   = 1;
-  repeated string scopes = 2;
+  common.v1.User  user       = 1;
+  repeated string scopes     = 2;
+  string          user_token = 3;
 }
