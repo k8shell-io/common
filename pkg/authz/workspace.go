@@ -119,7 +119,7 @@ package authz
 //   app    app name       (required)
 //
 // Context
-//   op  install | start | stop  (required)
+//   op  read | install | start | stop  (required)
 //
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
@@ -409,6 +409,7 @@ const (
 type WorkspaceAppOp string
 
 const (
+	WorkspaceAppOpRead    WorkspaceAppOp = "read"
 	WorkspaceAppOpInstall WorkspaceAppOp = "install"
 	WorkspaceAppOpStart   WorkspaceAppOp = "start"
 	WorkspaceAppOpStop    WorkspaceAppOp = "stop"

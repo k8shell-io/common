@@ -49,31 +49,19 @@ var validExactScopes = map[string]struct{}{
 	string(WorkspaceActionConnect) + ":" + string(WorkspaceConnectTypePortForward): {},
 
 	// workspace:app — one entry per app op
+	string(WorkspaceActionApp) + ":" + string(WorkspaceAppOpRead):    {},
 	string(WorkspaceActionApp) + ":" + string(WorkspaceAppOpInstall): {},
 	string(WorkspaceActionApp) + ":" + string(WorkspaceAppOpStart):   {},
 	string(WorkspaceActionApp) + ":" + string(WorkspaceAppOpStop):    {},
 
 	// user — flat
-	"user:list":    {},
-	"user:onboard": {},
-	"user:auth":    {},
+	"user:list": {},
 
 	// user:read — one entry per data type
 	"user:read:" + string(UserDataTypeProfile):     {},
 	"user:read:" + string(UserDataTypeSessions):    {},
 	"user:read:" + string(UserDataTypeCredentials): {},
 	"user:read:" + string(UserDataTypeBlueprints):  {},
-
-	// session
-	string(SessionActionStart): {},
-
-	// ssh — one entry per SSH action
-	string(SSHActionShell):             {},
-	string(SSHActionExec):              {},
-	string(SSHActionSFTP):              {},
-	string(SSHActionDirectTCPIP):       {},
-	string(SSHActionDirectStreamlocal): {},
-	string(SSHActionAgentForward):      {},
 }
 
 // validWildcardPrefixes is the set of prefixes that may appear before ":*".
@@ -85,8 +73,6 @@ var validWildcardPrefixes = map[string]struct{}{
 	"workspace:app":     {}, // install | start | stop
 	"user":              {}, // all user actions
 	"user:read":         {}, // profile | sessions | credentials | blueprints
-	"session":           {}, // all session actions
-	"ssh":               {}, // all ssh actions
 }
 
 // ValidateScope reports whether s is a well-formed, recognized scope string.
