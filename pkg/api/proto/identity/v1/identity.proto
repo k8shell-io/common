@@ -110,8 +110,11 @@ message CompleteUserDeviceFlowRequest {
 message CompleteUserDeviceFlowResponse {}
 
 // CompleteUserWebFlowResponse carries the user token issued upon successful completion of the web flow onboarding process.
+// pat and cli_state are only populated when create_pat=true was set in the originating OnboardUserWebFlowRequest.
 message CompleteUserWebFlowResponse {
   string user_token = 1;
+  string pat        = 2;
+  string cli_state  = 3;
 }
 
 // ListUserCredentialsResponse carries all credentials associated with a user.

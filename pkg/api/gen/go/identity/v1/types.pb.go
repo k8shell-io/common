@@ -523,6 +523,8 @@ type OnboardUserWebFlowRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Provider      string                 `protobuf:"bytes,1,opt,name=provider,proto3" json:"provider,omitempty"`
 	RedirectUri   string                 `protobuf:"bytes,2,opt,name=redirect_uri,json=redirectUri,proto3" json:"redirect_uri,omitempty"`
+	CliState      string                 `protobuf:"bytes,3,opt,name=cli_state,json=cliState,proto3" json:"cli_state,omitempty"`
+	CreatePat     bool                   `protobuf:"varint,4,opt,name=create_pat,json=createPat,proto3" json:"create_pat,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -569,6 +571,20 @@ func (x *OnboardUserWebFlowRequest) GetRedirectUri() string {
 		return x.RedirectUri
 	}
 	return ""
+}
+
+func (x *OnboardUserWebFlowRequest) GetCliState() string {
+	if x != nil {
+		return x.CliState
+	}
+	return ""
+}
+
+func (x *OnboardUserWebFlowRequest) GetCreatePat() bool {
+	if x != nil {
+		return x.CreatePat
+	}
+	return false
 }
 
 // CompleteUserWebFlowRequest carries the OAuth state and authorization code to finalize web-flow onboarding.
@@ -915,10 +931,13 @@ const file_identity_v1_types_proto_rawDesc = "" +
 	"\x04user\x18\x02 \x01(\v2\x0f.common.v1.UserR\x04user\"V\n" +
 	"\x1cOnboardUserDeviceFlowRequest\x12\x1a\n" +
 	"\bprovider\x18\x01 \x01(\tR\bprovider\x12\x1a\n" +
-	"\busername\x18\x02 \x01(\tR\busername\"Z\n" +
+	"\busername\x18\x02 \x01(\tR\busername\"\x96\x01\n" +
 	"\x19OnboardUserWebFlowRequest\x12\x1a\n" +
 	"\bprovider\x18\x01 \x01(\tR\bprovider\x12!\n" +
-	"\fredirect_uri\x18\x02 \x01(\tR\vredirectUri\"F\n" +
+	"\fredirect_uri\x18\x02 \x01(\tR\vredirectUri\x12\x1b\n" +
+	"\tcli_state\x18\x03 \x01(\tR\bcliState\x12\x1d\n" +
+	"\n" +
+	"create_pat\x18\x04 \x01(\bR\tcreatePat\"F\n" +
 	"\x1aCompleteUserWebFlowRequest\x12\x14\n" +
 	"\x05state\x18\x01 \x01(\tR\x05state\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\tR\x04code\"\xa0\x01\n" +

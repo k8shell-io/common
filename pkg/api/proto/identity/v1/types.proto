@@ -71,6 +71,8 @@ message OnboardUserDeviceFlowRequest {
 message OnboardUserWebFlowRequest {
   string provider     = 1;
   string redirect_uri = 2;
+  string cli_state    = 3;
+  bool   create_pat   = 4;
 }
 
 // CompleteUserWebFlowRequest carries the OAuth state and authorization code to finalize web-flow onboarding.
