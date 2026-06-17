@@ -18,6 +18,21 @@ package authz
 //
 // Obligations
 //   record  none | shell,exec,direct-tcpip,sftp  (comma-separated channel tokens)
+//
+// ---
+//
+// Contract: session:read
+//
+// Resource  type="session"
+//   id     session ID                      (required)
+//   owner  username of the session owner   (required)
+//
+// Context
+//   data_type  log | recording  (required)
+//
+// Subject   injected by the backend from JWT claims (username, roles, email, ...)
+//
+// Obligations  (none) — allow/deny only
 
 import (
 	"fmt"
@@ -34,11 +49,35 @@ const (
 	// established. The policy result may carry a "record" obligation that
 	// instructs the enforcer what kind of recording to apply to the session.
 	SessionActionStart SessionAction = "session:start"
+
+	// SessionActionRead is the action evaluated when a caller requests access
+	// to a session's log or recording.
+	SessionActionRead SessionAction = "session:read"
 )
 
 // validSessionActions is the set of recognized session actions for fast lookup.
 var validSessionActions = map[SessionAction]struct{}{
 	SessionActionStart: {},
+	SessionActionRead:  {},
+}
+
+// SessionReadDataType identifies which slice of session data is being read in
+// session:read. It maps directly to the scope qualifier (session:read:log,
+// session:read:recording).
+type SessionReadDataType string
+
+const (
+	// SessionReadDataTypeLog grants access to the text audit log for a session.
+	SessionReadDataTypeLog SessionReadDataType = "log"
+
+	// SessionReadDataTypeRecording grants access to the session recording
+	// (terminal or network capture depending on session type).
+	SessionReadDataTypeRecording SessionReadDataType = "recording"
+)
+
+var validSessionReadDataTypes = map[SessionReadDataType]struct{}{
+	SessionReadDataTypeLog:       {},
+	SessionReadDataTypeRecording: {},
 }
 
 // SessionType describes the kind of session being established.
@@ -226,6 +265,111 @@ func (r *SessionEvalRequest) Validate() error {
 	if _, ok := validSessionSources[r.Context.Source]; !ok {
 		return fmt.Errorf("session: context \"session_source\" must be %q or %q, got %q",
 			SessionSourceSSHProxy, SessionSourceAPIServer, r.Context.Source)
+	}
+	return nil
+}
+
+// --- session:read ---
+
+// SessionReadEvalRequest is the validated, typed model for session:read policy
+// evaluation. Use NewSessionReadEvalRequest to start building, then chain
+// WithOwner and WithDataType and call Build to get a validated instance.
+type SessionReadEvalRequest struct {
+	// SessionID is the ID of the session being accessed (resource.id).
+	SessionID string
+
+	// Owner is the username of the user who owns the session
+	// (resource.attributes["owner"]).
+	Owner string
+
+	// DataType is the kind of session data being requested (context["data_type"]).
+	DataType SessionReadDataType
+}
+
+var _ EvalRequest = (*SessionReadEvalRequest)(nil)
+
+// NewSessionReadEvalRequest begins building a SessionReadEvalRequest for the
+// given session ID. Chain WithOwner and WithDataType, then call Build.
+func NewSessionReadEvalRequest(sessionID string) *SessionReadEvalRequest {
+	return &SessionReadEvalRequest{SessionID: sessionID}
+}
+
+// WithOwner sets the username of the session owner.
+func (r *SessionReadEvalRequest) WithOwner(owner string) *SessionReadEvalRequest {
+	r.Owner = owner
+	return r
+}
+
+// WithDataType sets the data type being accessed.
+func (r *SessionReadEvalRequest) WithDataType(dt SessionReadDataType) *SessionReadEvalRequest {
+	r.DataType = dt
+	return r
+}
+
+// Build validates the request and returns it if all constraints are satisfied.
+// It is the required terminator for the builder chain.
+func (r *SessionReadEvalRequest) Build() (*SessionReadEvalRequest, error) {
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// ToProto serializes the typed request into a gRPC EvaluateRequest, attaching
+// the supplied JWT token.
+// Implements EvalRequest.
+func (r *SessionReadEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
+	return &authzv1.EvaluateRequest{
+		Token:  token,
+		Action: string(SessionActionRead),
+		Resource: &authzv1.Resource{
+			Type:       "session",
+			Id:         r.SessionID,
+			Attributes: map[string]string{"owner": r.Owner},
+		},
+		Context: map[string]string{"data_type": string(r.DataType)},
+	}
+}
+
+// SessionReadEvalRequestFromProto converts a gRPC EvaluateRequest into a
+// validated SessionReadEvalRequest. Returns an error if the request does not
+// conform to the session:read contract.
+func SessionReadEvalRequestFromProto(req *authzv1.EvaluateRequest) (*SessionReadEvalRequest, error) {
+	if req == nil {
+		return nil, fmt.Errorf("session:read: EvaluateRequest is nil")
+	}
+	if req.Action != string(SessionActionRead) {
+		return nil, fmt.Errorf("session:read: action must be %q, got %q", SessionActionRead, req.Action)
+	}
+	if req.Resource == nil {
+		return nil, fmt.Errorf("session:read: resource is nil")
+	}
+	if req.Resource.Type != "session" {
+		return nil, fmt.Errorf("session:read: resource type must be \"session\", got %q", req.Resource.Type)
+	}
+	r := &SessionReadEvalRequest{
+		SessionID: req.Resource.Id,
+		Owner:     req.Resource.Attributes["owner"],
+		DataType:  SessionReadDataType(req.Context["data_type"]),
+	}
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// Validate checks the request against the session:read contract.
+// Implements EvalRequest.
+func (r *SessionReadEvalRequest) Validate() error {
+	if r.SessionID == "" {
+		return fmt.Errorf("session:read: resource ID (session ID) is required")
+	}
+	if r.Owner == "" {
+		return fmt.Errorf("session:read: resource attribute \"owner\" is required")
+	}
+	if _, ok := validSessionReadDataTypes[r.DataType]; !ok {
+		return fmt.Errorf("session:read: context \"data_type\" must be %q or %q, got %q",
+			SessionReadDataTypeLog, SessionReadDataTypeRecording, r.DataType)
 	}
 	return nil
 }

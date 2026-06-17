@@ -62,6 +62,10 @@ var validExactScopes = map[string]struct{}{
 	"user:read:" + string(UserDataTypeSessions):    {},
 	"user:read:" + string(UserDataTypeCredentials): {},
 	"user:read:" + string(UserDataTypeBlueprints):  {},
+
+	// session:read — one entry per data type
+	string(SessionActionRead) + ":" + string(SessionReadDataTypeLog):       {},
+	string(SessionActionRead) + ":" + string(SessionReadDataTypeRecording): {},
 }
 
 // validWildcardPrefixes is the set of prefixes that may appear before ":*".
@@ -73,6 +77,8 @@ var validWildcardPrefixes = map[string]struct{}{
 	"workspace:app":     {}, // install | start | stop
 	"user":              {}, // all user actions
 	"user:read":         {}, // profile | sessions | credentials | blueprints
+	"session":           {}, // all session actions
+	"session:read":      {}, // log | recording
 }
 
 // ValidateScope reports whether s is a well-formed, recognized scope string.
