@@ -44,7 +44,7 @@ package authz
 //   id   username (required)
 //
 // Context
-//   data_type  profile | sessions | credentials | blueprints  (required)
+//   data_type  profile | credentials | blueprints  (required)
 //
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
@@ -76,7 +76,6 @@ type UserDataType string
 
 const (
 	UserDataTypeProfile     UserDataType = "profile"
-	UserDataTypeSessions    UserDataType = "sessions"
 	UserDataTypeCredentials UserDataType = "credentials"
 	UserDataTypeBlueprints  UserDataType = "blueprints"
 )
@@ -428,10 +427,10 @@ func (r *UserReadEvalRequest) Validate() error {
 		return fmt.Errorf("user:read: resource ID (username) is required")
 	}
 	switch r.DataType {
-	case UserDataTypeProfile, UserDataTypeSessions, UserDataTypeCredentials, UserDataTypeBlueprints:
+	case UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints:
 	default:
-		return fmt.Errorf("user:read: context \"data_type\" must be %q, %q, %q, or %q, got %q",
-			UserDataTypeProfile, UserDataTypeSessions, UserDataTypeCredentials, UserDataTypeBlueprints, r.DataType)
+		return fmt.Errorf("user:read: context \"data_type\" must be %q, %q, or %q, got %q",
+			UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, r.DataType)
 	}
 	return nil
 }

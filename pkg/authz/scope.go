@@ -59,7 +59,6 @@ var validExactScopes = map[string]struct{}{
 
 	// user:read — one entry per data type
 	"user:read:" + string(UserDataTypeProfile):     {},
-	"user:read:" + string(UserDataTypeSessions):    {},
 	"user:read:" + string(UserDataTypeCredentials): {},
 	"user:read:" + string(UserDataTypeBlueprints):  {},
 }
