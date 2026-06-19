@@ -28,7 +28,7 @@ package authz
 //
 // Resource  type="workspace"
 //   id     (empty — no specific workspace)
-//   owner  owner username  (required)
+//   owner  owner username  (optional — omit to list all workspaces)
 //
 // Context   (none)
 //
@@ -491,7 +491,7 @@ func (r *WorkspaceOwnerEvalRequest) Validate() error {
 	if _, ok := validWorkspaceOwnerActions[r.Action]; !ok {
 		return fmt.Errorf("workspace: unknown owner action %q", r.Action)
 	}
-	if r.Resource.Owner == "" {
+	if r.Action == WorkspaceActionCreate && r.Resource.Owner == "" {
 		return fmt.Errorf("workspace: resource attribute \"owner\" is required")
 	}
 	return nil
