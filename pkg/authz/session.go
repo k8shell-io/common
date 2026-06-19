@@ -119,23 +119,23 @@ type SessionContext struct {
 	Source SessionSource
 }
 
-// SessionEvalRequest is the validated, typed model for session policy evaluation.
-// Use NewSessionEvalRequest to start building, then chain With* methods and call
-// Build to get a validated instance. Use SessionEvalRequestFromProto to convert
+// SessionStartEvalRequest is the validated, typed model for session policy evaluation.
+// Use NewSessionStartEvalRequest to start building, then chain With* methods and call
+// Build to get a validated instance. Use SessionStartEvalRequestFromProto to convert
 // directly from a gRPC EvaluateRequest.
-type SessionEvalRequest struct {
+type SessionStartEvalRequest struct {
 	Action   SessionAction
 	Resource WorkspaceResource
 	Context  SessionContext
 }
 
-var _ EvalRequest = (*SessionEvalRequest)(nil)
+var _ EvalRequest = (*SessionStartEvalRequest)(nil)
 
-// NewSessionEvalRequest begins building a SessionEvalRequest for the given
+// NewSessionStartEvalRequest begins building a SessionStartEvalRequest for the given
 // action, workspace ID, and session type. Chain With* methods to supply
 // additional fields, then call Build to validate and obtain the final struct.
-func NewSessionEvalRequest(action SessionAction, workspaceID string, sessionType SessionType) *SessionEvalRequest {
-	return &SessionEvalRequest{
+func NewSessionStartEvalRequest(action SessionAction, workspaceID string, sessionType SessionType) *SessionStartEvalRequest {
+	return &SessionStartEvalRequest{
 		Action:   action,
 		Resource: WorkspaceResource{ID: workspaceID},
 		Context:  SessionContext{Type: sessionType},
@@ -143,26 +143,26 @@ func NewSessionEvalRequest(action SessionAction, workspaceID string, sessionType
 }
 
 // WithSource sets the session source on the context.
-func (r *SessionEvalRequest) WithSource(source SessionSource) *SessionEvalRequest {
+func (r *SessionStartEvalRequest) WithSource(source SessionSource) *SessionStartEvalRequest {
 	r.Context.Source = source
 	return r
 }
 
 // WithOwner sets the workspace owner on the resource.
-func (r *SessionEvalRequest) WithOwner(owner string) *SessionEvalRequest {
+func (r *SessionStartEvalRequest) WithOwner(owner string) *SessionStartEvalRequest {
 	r.Resource.Owner = owner
 	return r
 }
 
 // WithBlueprint sets the blueprint name on the resource.
-func (r *SessionEvalRequest) WithBlueprint(blueprint string) *SessionEvalRequest {
+func (r *SessionStartEvalRequest) WithBlueprint(blueprint string) *SessionStartEvalRequest {
 	r.Resource.Blueprint = blueprint
 	return r
 }
 
 // Build validates the request and returns it if all constraints are satisfied.
 // It is the required terminator for the builder chain.
-func (r *SessionEvalRequest) Build() (*SessionEvalRequest, error) {
+func (r *SessionStartEvalRequest) Build() (*SessionStartEvalRequest, error) {
 	if err := r.Validate(); err != nil {
 		return nil, err
 	}
@@ -172,7 +172,7 @@ func (r *SessionEvalRequest) Build() (*SessionEvalRequest, error) {
 // ToProto serializes the typed request into a gRPC EvaluateRequest, attaching
 // the supplied JWT token. Only non-empty resource attributes are included.
 // Implements EvalRequest.
-func (r *SessionEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
+func (r *SessionStartEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
 	attrs := map[string]string{
 		"owner": r.Resource.Owner,
 	}
@@ -195,10 +195,10 @@ func (r *SessionEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
 	}
 }
 
-// SessionEvalRequestFromProto converts a gRPC EvaluateRequest into a validated
-// SessionEvalRequest. Returns an error if the request does not conform to the
+// SessionStartEvalRequestFromProto converts a gRPC EvaluateRequest into a validated
+// SessionStartEvalRequest. Returns an error if the request does not conform to the
 // session policy contract.
-func SessionEvalRequestFromProto(req *authzv1.EvaluateRequest) (*SessionEvalRequest, error) {
+func SessionStartEvalRequestFromProto(req *authzv1.EvaluateRequest) (*SessionStartEvalRequest, error) {
 	if req == nil {
 		return nil, fmt.Errorf("session: EvaluateRequest is nil")
 	}
@@ -212,7 +212,7 @@ func SessionEvalRequestFromProto(req *authzv1.EvaluateRequest) (*SessionEvalRequ
 	attrs := req.Resource.Attributes
 	ctx := req.Context
 
-	r := &SessionEvalRequest{
+	r := &SessionStartEvalRequest{
 		Action: SessionAction(req.Action),
 		Resource: WorkspaceResource{
 			ID:        req.Resource.Id,
@@ -235,7 +235,7 @@ func SessionEvalRequestFromProto(req *authzv1.EvaluateRequest) (*SessionEvalRequ
 // must be recognized, core resource fields must be present, and the session
 // type must be a known value.
 // Implements EvalRequest.
-func (r *SessionEvalRequest) Validate() error {
+func (r *SessionStartEvalRequest) Validate() error {
 	if _, ok := validSessionActions[r.Action]; !ok {
 		return fmt.Errorf("session: unknown action %q", r.Action)
 	}

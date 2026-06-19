@@ -108,8 +108,16 @@ func normalizeByDomain(req *authzv1.EvaluateRequest) (*authzv1.EvaluateRequest, 
 		normalized := listReq.ToProto("")
 		normalized.Package = req.Package
 		return normalized, nil
-	case strings.HasPrefix(action, "session:"):
-		sessionReq, err := SessionEvalRequestFromProto(req)
+	case action == "session:list":
+		sessionListReq, err := SessionListEvalRequestFromProto(req)
+		if err != nil {
+			return nil, err
+		}
+		normalized := sessionListReq.ToProto("")
+		normalized.Package = req.Package
+		return normalized, nil
+	case action == "session:start":
+		sessionReq, err := SessionStartEvalRequestFromProto(req)
 		if err != nil {
 			return nil, err
 		}
