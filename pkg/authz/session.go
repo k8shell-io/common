@@ -18,6 +18,26 @@ package authz
 //
 // Obligations
 //   record  none | shell,exec,direct-tcpip,sftp  (comma-separated channel tokens)
+//
+// ---
+//
+// Contract: session:list
+//
+// Resource  type="workspace"
+//   id     workspace name           (optional — omit to list across workspaces)
+//   owner  workspace owner username (optional — omit to list all sessions;
+//                                    required when id is set)
+//
+// Context   (none)
+//
+// Subject   injected by the backend from JWT claims (username, roles, email, ...)
+//
+// Obligations  (none) — allow/deny only
+//
+// Scope matrix:
+//   id set,    owner set   → sessions for one workspace
+//   id empty,  owner set   → sessions for all workspaces owned by that user
+//   id empty,  owner empty → all sessions (admin)
 
 import (
 	"fmt"
@@ -34,11 +54,17 @@ const (
 	// established. The policy result may carry a "record" obligation that
 	// instructs the enforcer what kind of recording to apply to the session.
 	SessionActionStart SessionAction = "session:start"
+
+	// SessionActionList is the action evaluated when listing sessions. The
+	// scope is controlled by the resource fields: both id and owner set scopes
+	// to one workspace; owner only scopes to a user; neither means all sessions.
+	SessionActionList SessionAction = "session:list"
 )
 
 // validSessionActions is the set of recognized session actions for fast lookup.
 var validSessionActions = map[SessionAction]struct{}{
 	SessionActionStart: {},
+	SessionActionList:  {},
 }
 
 // SessionType describes the kind of session being established.
@@ -226,6 +252,97 @@ func (r *SessionEvalRequest) Validate() error {
 	if _, ok := validSessionSources[r.Context.Source]; !ok {
 		return fmt.Errorf("session: context \"session_source\" must be %q or %q, got %q",
 			SessionSourceSSHProxy, SessionSourceAPIServer, r.Context.Source)
+	}
+	return nil
+}
+
+// --- session:list ---
+
+// SessionListEvalRequest is the validated, typed model for session:list policy
+// evaluation. Both resource fields are optional; their combination controls the
+// listing scope (see the contract comment at the top of this file).
+type SessionListEvalRequest struct {
+	Resource WorkspaceResource
+}
+
+var _ EvalRequest = (*SessionListEvalRequest)(nil)
+
+// NewSessionListEvalRequest returns a SessionListEvalRequest ready to be built.
+// Chain WithWorkspace and/or WithOwner to narrow the scope, then call Build.
+func NewSessionListEvalRequest() *SessionListEvalRequest {
+	return &SessionListEvalRequest{}
+}
+
+// WithWorkspace sets the workspace name; requires WithOwner to also be called.
+func (r *SessionListEvalRequest) WithWorkspace(workspaceID string) *SessionListEvalRequest {
+	r.Resource.ID = workspaceID
+	return r
+}
+
+// WithOwner sets the owner username.
+func (r *SessionListEvalRequest) WithOwner(owner string) *SessionListEvalRequest {
+	r.Resource.Owner = owner
+	return r
+}
+
+// Build validates the request and returns it if all constraints are satisfied.
+func (r *SessionListEvalRequest) Build() (*SessionListEvalRequest, error) {
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// ToProto serializes the typed request into a gRPC EvaluateRequest.
+// Implements EvalRequest.
+func (r *SessionListEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
+	attrs := map[string]string{}
+	if r.Resource.Owner != "" {
+		attrs["owner"] = r.Resource.Owner
+	}
+	return &authzv1.EvaluateRequest{
+		Token:  token,
+		Action: "session:list",
+		Resource: &authzv1.Resource{
+			Type:       "workspace",
+			Id:         r.Resource.ID,
+			Attributes: attrs,
+		},
+	}
+}
+
+// SessionListEvalRequestFromProto converts a gRPC EvaluateRequest into a
+// validated SessionListEvalRequest.
+func SessionListEvalRequestFromProto(req *authzv1.EvaluateRequest) (*SessionListEvalRequest, error) {
+	if req == nil {
+		return nil, fmt.Errorf("session:list: EvaluateRequest is nil")
+	}
+	if req.Action != "session:list" {
+		return nil, fmt.Errorf("session:list: action must be \"session:list\", got %q", req.Action)
+	}
+	if req.Resource == nil {
+		return nil, fmt.Errorf("session:list: resource is nil")
+	}
+	if req.Resource.Type != "workspace" {
+		return nil, fmt.Errorf("session:list: resource type must be \"workspace\", got %q", req.Resource.Type)
+	}
+	r := &SessionListEvalRequest{
+		Resource: WorkspaceResource{
+			ID:    req.Resource.Id,
+			Owner: req.Resource.Attributes["owner"],
+		},
+	}
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// Validate checks the request: if a workspace id is set, owner must also be set.
+// Implements EvalRequest.
+func (r *SessionListEvalRequest) Validate() error {
+	if r.Resource.ID != "" && r.Resource.Owner == "" {
+		return fmt.Errorf("session:list: resource attribute \"owner\" is required when workspace id is set")
 	}
 	return nil
 }
