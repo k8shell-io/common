@@ -758,6 +758,7 @@ func (x *RepoRefResponse) GetRepoRef() string {
 type IdentityProviderInfo struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Capabilities  []string               `protobuf:"bytes,2,rep,name=capabilities,proto3" json:"capabilities,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -797,6 +798,13 @@ func (x *IdentityProviderInfo) GetName() string {
 		return x.Name
 	}
 	return ""
+}
+
+func (x *IdentityProviderInfo) GetCapabilities() []string {
+	if x != nil {
+		return x.Capabilities
+	}
+	return nil
 }
 
 // AccessTokenInfo carries access token metadata returned in list responses.
@@ -948,9 +956,10 @@ const file_identity_v1_types_proto_rawDesc = "" +
 	"\trepo_name\x18\x03 \x01(\tR\brepoName\x12.\n" +
 	"\x13pull_request_number\x18\x04 \x01(\x05R\x11pullRequestNumber\",\n" +
 	"\x0fRepoRefResponse\x12\x19\n" +
-	"\brepo_ref\x18\x01 \x01(\tR\arepoRef\"*\n" +
+	"\brepo_ref\x18\x01 \x01(\tR\arepoRef\"N\n" +
 	"\x14IdentityProviderInfo\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\"\xba\x02\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\"\n" +
+	"\fcapabilities\x18\x02 \x03(\tR\fcapabilities\"\xba\x02\n" +
 	"\x0fAccessTokenInfo\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x12\n" +

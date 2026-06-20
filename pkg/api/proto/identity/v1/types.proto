@@ -96,7 +96,8 @@ message RepoRefResponse {
 
 // IdentityProviderInfo carries data about the identity provider
 message IdentityProviderInfo {
-  string name = 1;
+  string          name         = 1;
+  repeated string capabilities = 2;
 }
 
 // AccessTokenInfo carries access token metadata returned in list responses.
