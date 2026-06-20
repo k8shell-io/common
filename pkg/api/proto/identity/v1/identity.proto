@@ -115,6 +115,7 @@ message CompleteUserWebFlowResponse {
   string user_token = 1;
   string pat        = 2;
   string cli_state  = 3;
+  string pat_error  = 4; 
 }
 
 // ListUserCredentialsResponse carries all credentials associated with a user.

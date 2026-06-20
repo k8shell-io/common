@@ -224,6 +224,7 @@ type CompleteUserWebFlowResponse struct {
 	UserToken     string                 `protobuf:"bytes,1,opt,name=user_token,json=userToken,proto3" json:"user_token,omitempty"`
 	Pat           string                 `protobuf:"bytes,2,opt,name=pat,proto3" json:"pat,omitempty"`
 	CliState      string                 `protobuf:"bytes,3,opt,name=cli_state,json=cliState,proto3" json:"cli_state,omitempty"`
+	PatError      string                 `protobuf:"bytes,4,opt,name=pat_error,json=patError,proto3" json:"pat_error,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -275,6 +276,13 @@ func (x *CompleteUserWebFlowResponse) GetPat() string {
 func (x *CompleteUserWebFlowResponse) GetCliState() string {
 	if x != nil {
 		return x.CliState
+	}
+	return ""
+}
+
+func (x *CompleteUserWebFlowResponse) GetPatError() string {
+	if x != nil {
+		return x.PatError
 	}
 	return ""
 }
@@ -1044,12 +1052,13 @@ const file_identity_v1_identity_proto_rawDesc = "" +
 	"\x1dCompleteUserDeviceFlowRequest\x12\x1a\n" +
 	"\bprovider\x18\x01 \x01(\tR\bprovider\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\" \n" +
-	"\x1eCompleteUserDeviceFlowResponse\"k\n" +
+	"\x1eCompleteUserDeviceFlowResponse\"\x88\x01\n" +
 	"\x1bCompleteUserWebFlowResponse\x12\x1d\n" +
 	"\n" +
 	"user_token\x18\x01 \x01(\tR\tuserToken\x12\x10\n" +
 	"\x03pat\x18\x02 \x01(\tR\x03pat\x12\x1b\n" +
-	"\tcli_state\x18\x03 \x01(\tR\bcliState\"Z\n" +
+	"\tcli_state\x18\x03 \x01(\tR\bcliState\x12\x1b\n" +
+	"\tpat_error\x18\x04 \x01(\tR\bpatError\"Z\n" +
 	"\x1bListUserCredentialsResponse\x12;\n" +
 	"\vcredentials\x18\x01 \x03(\v2\x19.common.v1.UserCredentialR\vcredentials\"~\n" +
 	"\x18GetUserCredentialRequest\x12\x1a\n" +
