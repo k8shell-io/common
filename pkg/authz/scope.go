@@ -54,6 +54,9 @@ var validExactScopes = map[string]struct{}{
 	string(WorkspaceActionApp) + ":" + string(WorkspaceAppOpStart):   {},
 	string(WorkspaceActionApp) + ":" + string(WorkspaceAppOpStop):    {},
 
+	// session — flat
+	string(SessionActionList): {},
+
 	// user — flat
 	"user:list": {},
 
@@ -70,6 +73,7 @@ var validWildcardPrefixes = map[string]struct{}{
 	"workspace":         {}, // all workspace actions
 	"workspace:connect": {}, // webshell | webfiles | portforward
 	"workspace:app":     {}, // install | start | stop
+	"session":           {}, // all session actions
 	"user":              {}, // all user actions
 	"user:read":         {}, // profile | sessions | credentials | blueprints
 }
