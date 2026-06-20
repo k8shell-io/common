@@ -62,10 +62,42 @@ package authz
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
 // Obligations  (none) — allow/deny only
+//
+// ---
+//
+// Contract: token:create
+//
+// Resource  type="user"
+//   id   username (required) — the user who will own the new token
+//
+// Context
+//   source  web-flow | api  (required)
+//           web-flow — token issued at the end of an OAuth initiated by the CLI
+//           api      — token created via a direct API request
+//
+// Subject   injected by the backend from JWT claims (username, roles, email, ...)
+//
+// Obligations
+//   scopes      JSON array of scope strings  (e.g. ["token:read","workspace:create"])
+//   expires_in  Go duration string (e.g. "720h") | "never" for no expiry
+//
+// ---
+//
+// Contract: token:read
+//
+// Resource  type="user"
+//   id   username (required) — the user whose tokens are being read
+//
+// Context   (none)
+//
+// Subject   injected by the backend from JWT claims (username, roles, email, ...)
+//
+// Obligations  (none) — allow/deny only
 
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	authzv1 "github.com/k8shell-io/common/pkg/api/gen/go/authz/v1"
 	"github.com/k8shell-io/common/pkg/models"
@@ -485,6 +517,253 @@ func UserListEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserListEvalRe
 // Validate is a no-op for user:list; no fields are required.
 // Implements EvalRequest.
 func (r *UserListEvalRequest) Validate() error { return nil }
+
+// TokenCreateSource identifies how the token creation was initiated.
+type TokenCreateSource string
+
+const (
+	// TokenCreateSourceWebFlow is set when the token is issued at the end of an
+	// OAuth/device login flow initiated by the CLI.
+	TokenCreateSourceWebFlow TokenCreateSource = "web-flow"
+
+	// TokenCreateSourceAPI is set when the token is created via a direct API request.
+	TokenCreateSourceAPI TokenCreateSource = "api"
+)
+
+var validTokenCreateSources = map[TokenCreateSource]struct{}{
+	TokenCreateSourceWebFlow: {},
+	TokenCreateSourceAPI:     {},
+}
+
+// TokenCreateContext holds the ambient attributes for a token:create request.
+type TokenCreateContext struct {
+	// Source is how the token creation was initiated (context["source"]).
+	Source TokenCreateSource
+}
+
+// UserTokenCreateEvalRequest is the validated, typed model for token:create
+// policy evaluation. The resource ID is the username of the token owner.
+type UserTokenCreateEvalRequest struct {
+	Resource UserResource
+	Context  TokenCreateContext
+}
+
+var _ EvalRequest = (*UserTokenCreateEvalRequest)(nil)
+
+// NewUserTokenCreateEvalRequest begins building a UserTokenCreateEvalRequest
+// for the given username (the token owner). Call WithSource then Build.
+func NewUserTokenCreateEvalRequest(username string) *UserTokenCreateEvalRequest {
+	return &UserTokenCreateEvalRequest{Resource: UserResource{ID: username}}
+}
+
+// WithSource sets the token creation source on the context.
+func (r *UserTokenCreateEvalRequest) WithSource(source TokenCreateSource) *UserTokenCreateEvalRequest {
+	r.Context.Source = source
+	return r
+}
+
+// Build validates the request and returns it if all constraints are satisfied.
+// It is the required terminator for the builder chain.
+func (r *UserTokenCreateEvalRequest) Build() (*UserTokenCreateEvalRequest, error) {
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// ToProto serializes the typed request into a gRPC EvaluateRequest, attaching
+// the supplied JWT token.
+// Implements EvalRequest.
+func (r *UserTokenCreateEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
+	return &authzv1.EvaluateRequest{
+		Token:  token,
+		Action: "token:create",
+		Resource: &authzv1.Resource{
+			Type: "user",
+			Id:   r.Resource.ID,
+		},
+		Context: map[string]string{"source": string(r.Context.Source)},
+	}
+}
+
+// UserTokenCreateEvalRequestFromProto converts a gRPC EvaluateRequest into a
+// validated UserTokenCreateEvalRequest.
+func UserTokenCreateEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserTokenCreateEvalRequest, error) {
+	if req == nil {
+		return nil, fmt.Errorf("token:create: EvaluateRequest is nil")
+	}
+	if req.Action != "token:create" {
+		return nil, fmt.Errorf("token:create: action must be \"token:create\", got %q", req.Action)
+	}
+	if req.Resource == nil {
+		return nil, fmt.Errorf("token:create: resource is nil")
+	}
+	if req.Resource.Type != "user" {
+		return nil, fmt.Errorf("token:create: resource type must be \"user\", got %q", req.Resource.Type)
+	}
+	r := &UserTokenCreateEvalRequest{
+		Resource: UserResource{ID: req.Resource.Id},
+		Context:  TokenCreateContext{Source: TokenCreateSource(req.Context["source"])},
+	}
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// Validate checks the request against the token:create contract.
+// Implements EvalRequest.
+func (r *UserTokenCreateEvalRequest) Validate() error {
+	if r.Resource.ID == "" {
+		return fmt.Errorf("token:create: resource ID (username) is required")
+	}
+	if _, ok := validTokenCreateSources[r.Context.Source]; !ok {
+		return fmt.Errorf("token:create: context \"source\" must be %q or %q, got %q",
+			TokenCreateSourceWebFlow, TokenCreateSourceAPI, r.Context.Source)
+	}
+	return nil
+}
+
+// UserTokenReadEvalRequest is the validated, typed model for token:read policy
+// evaluation. The resource ID is the username whose tokens are being read.
+type UserTokenReadEvalRequest struct {
+	Resource UserResource
+}
+
+var _ EvalRequest = (*UserTokenReadEvalRequest)(nil)
+
+// NewUserTokenReadEvalRequest begins building a UserTokenReadEvalRequest for
+// the given username (the token owner). Call Build to validate.
+func NewUserTokenReadEvalRequest(username string) *UserTokenReadEvalRequest {
+	return &UserTokenReadEvalRequest{Resource: UserResource{ID: username}}
+}
+
+// Build validates the request and returns it if all constraints are satisfied.
+// It is the required terminator for the builder chain.
+func (r *UserTokenReadEvalRequest) Build() (*UserTokenReadEvalRequest, error) {
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// ToProto serializes the typed request into a gRPC EvaluateRequest, attaching
+// the supplied JWT token.
+// Implements EvalRequest.
+func (r *UserTokenReadEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
+	return &authzv1.EvaluateRequest{
+		Token:  token,
+		Action: "token:read",
+		Resource: &authzv1.Resource{
+			Type: "user",
+			Id:   r.Resource.ID,
+		},
+	}
+}
+
+// UserTokenReadEvalRequestFromProto converts a gRPC EvaluateRequest into a
+// validated UserTokenReadEvalRequest.
+func UserTokenReadEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserTokenReadEvalRequest, error) {
+	if req == nil {
+		return nil, fmt.Errorf("token:read: EvaluateRequest is nil")
+	}
+	if req.Action != "token:read" {
+		return nil, fmt.Errorf("token:read: action must be \"token:read\", got %q", req.Action)
+	}
+	if req.Resource == nil {
+		return nil, fmt.Errorf("token:read: resource is nil")
+	}
+	if req.Resource.Type != "user" {
+		return nil, fmt.Errorf("token:read: resource type must be \"user\", got %q", req.Resource.Type)
+	}
+	r := &UserTokenReadEvalRequest{
+		Resource: UserResource{ID: req.Resource.Id},
+	}
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// Validate checks the request against the token:read contract.
+// Implements EvalRequest.
+func (r *UserTokenReadEvalRequest) Validate() error {
+	if r.Resource.ID == "" {
+		return fmt.Errorf("token:read: resource ID (username) is required")
+	}
+	return nil
+}
+
+const (
+	// ObligationKeyScopes is the key the policy engine writes to restrict the
+	// scopes a newly created token may carry. The value is a JSON-encoded array
+	// of scope strings (e.g. ["token:read","workspace:start"]).
+	ObligationKeyScopes = "scopes"
+
+	// ObligationKeyExpiresIn is the key the policy engine writes to cap a
+	// token's lifetime. The value is a Go duration string (e.g. "720h") or the
+	// literal "never" to permit a non-expiring token.
+	ObligationKeyExpiresIn = "expires_in"
+
+	// ObligationExpiresInNever is the sentinel value meaning no expiry.
+	ObligationExpiresInNever = "never"
+)
+
+// ScopesObligation is the typed representation of the "scopes" obligation key
+// returned by the policy engine in a PolicyResult for token:create.
+type ScopesObligation struct {
+	// Scopes is the list of scopes the policy permits on the new token.
+	Scopes []string
+}
+
+// ParseScopesObligation reads the "scopes" key from the obligations map.
+// Returns (obligation, true) when the key is present, (zero value, false) when
+// the policy did not set a scopes obligation.
+func ParseScopesObligation(obligations map[string]string) (ScopesObligation, bool) {
+	v, ok := obligations[ObligationKeyScopes]
+	if !ok {
+		return ScopesObligation{}, false
+	}
+	var raw []string
+	if err := json.Unmarshal([]byte(v), &raw); err != nil {
+		return ScopesObligation{}, false
+	}
+	scopes := make([]string, 0, len(raw))
+	for _, s := range raw {
+		if s != "" {
+			scopes = append(scopes, s)
+		}
+	}
+	return ScopesObligation{Scopes: scopes}, true
+}
+
+// ExpiresInObligation is the typed representation of the "expires_in"
+// obligation key returned by the policy engine in a PolicyResult for
+// token:create.
+type ExpiresInObligation struct {
+	// Duration is the maximum lifetime of the token. A nil value means the
+	// policy permits a non-expiring token (ObligationExpiresInNever).
+	Duration *time.Duration
+}
+
+// ParseExpiresInObligation reads the "expires_in" key from the obligations map.
+// Returns (obligation, true) when the key is present, (zero value, false) when
+// the policy did not set an expires_in obligation. The sentinel "never" yields
+// an obligation with a nil Duration.
+func ParseExpiresInObligation(obligations map[string]string) (ExpiresInObligation, bool) {
+	v, ok := obligations[ObligationKeyExpiresIn]
+	if !ok {
+		return ExpiresInObligation{}, false
+	}
+	if v == ObligationExpiresInNever {
+		return ExpiresInObligation{Duration: nil}, true
+	}
+	d, err := time.ParseDuration(v)
+	if err != nil {
+		return ExpiresInObligation{}, false
+	}
+	return ExpiresInObligation{Duration: &d}, true
+}
 
 const (
 	// ObligationKeySudo is the key the policy engine writes when expressing a
