@@ -45,6 +45,9 @@ package authz
 //
 // Context
 //   data_type  profile | credentials | blueprints | roles  (required)
+//              profile returns the full profile view, including the sudo and
+//              locked flags — those are not broken out into their own
+//              data_type for reads, only for writes (see user:write below).
 //
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
@@ -89,7 +92,22 @@ package authz
 //   id   username (required) — the user record being mutated
 //
 // Context
-//   data_type  profile | credentials | blueprints | roles  (required)
+//   data_type  profile | credentials | blueprints | roles | sudo | locked  (required)
+//              profile     — self-editable identity fields (e.g. fullname);
+//                            subject may write its own record.
+//              credentials — auth credentials.
+//              blueprints  — blueprint access grants.
+//              roles       — role assignments.
+//              sudo        — sudo flag; admin-managed only, never self, even
+//                            for an admin editing their own record.
+//              locked      — account lock/suspension flag; admin-managed
+//                            only, never self.
+//
+//              A single mutating RPC that touches fields from more than one
+//              group (e.g. UpdateUser, which carries fullname alongside sudo
+//              and locked) must issue one user:write check per group actually
+//              present in the request, and apply none of the changes unless
+//              every required check passes.
 //
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
@@ -118,7 +136,10 @@ import (
 )
 
 // UserDataType identifies which slice of user data is being accessed in
-// user:read and user:write.
+// user:read and user:write. UserDataTypeSudo and UserDataTypeLocked are
+// write-only values: user:read never selects them individually, since
+// UserDataTypeProfile already returns the full profile view including sudo
+// and locked.
 type UserDataType string
 
 const (
@@ -126,8 +147,11 @@ const (
 	UserDataTypeCredentials UserDataType = "credentials"
 	UserDataTypeBlueprints  UserDataType = "blueprints"
 	UserDataTypeRoles       UserDataType = "roles"
+	UserDataTypeSudo        UserDataType = "sudo"
+	UserDataTypeLocked      UserDataType = "locked"
 )
 
+// validateUserDataType checks the data types valid for user:read.
 func validateUserDataType(dt UserDataType) error {
 	switch dt {
 	case UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles:
@@ -135,6 +159,19 @@ func validateUserDataType(dt UserDataType) error {
 	default:
 		return fmt.Errorf("context \"data_type\" must be %q, %q, %q, or %q, got %q",
 			UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, dt)
+	}
+}
+
+// validateUserWriteDataType checks the data types valid for user:write, which
+// additionally includes the admin-managed sudo and locked groups.
+func validateUserWriteDataType(dt UserDataType) error {
+	switch dt {
+	case UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeSudo, UserDataTypeLocked:
+		return nil
+	default:
+		return fmt.Errorf("context \"data_type\" must be %q, %q, %q, %q, %q, or %q, got %q",
+			UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles,
+			UserDataTypeSudo, UserDataTypeLocked, dt)
 	}
 }
 
@@ -795,7 +832,7 @@ func (r *UserWriteEvalRequest) Validate() error {
 	if r.Resource.ID == "" {
 		return fmt.Errorf("user:write: resource ID (username) is required")
 	}
-	if err := validateUserDataType(r.DataType); err != nil {
+	if err := validateUserWriteDataType(r.DataType); err != nil {
 		return fmt.Errorf("user:write: %w", err)
 	}
 	return nil
