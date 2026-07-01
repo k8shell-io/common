@@ -912,10 +912,10 @@ func (r *WorkspaceAppEvalRequest) Validate() error {
 		return fmt.Errorf("workspace:app: resource attribute \"app\" is required")
 	}
 	switch r.Op {
-	case WorkspaceAppOpInstall, WorkspaceAppOpStart, WorkspaceAppOpStop:
+	case WorkspaceAppOpRead, WorkspaceAppOpInstall, WorkspaceAppOpStart, WorkspaceAppOpStop:
 	default:
-		return fmt.Errorf("workspace:app: context \"op\" must be %q, %q, or %q, got %q",
-			WorkspaceAppOpInstall, WorkspaceAppOpStart, WorkspaceAppOpStop, r.Op)
+		return fmt.Errorf("workspace:app: context \"op\" must be %q, %q, %q, or %q, got %q",
+			WorkspaceAppOpRead, WorkspaceAppOpInstall, WorkspaceAppOpStart, WorkspaceAppOpStop, r.Op)
 	}
 	return nil
 }

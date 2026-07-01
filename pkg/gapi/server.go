@@ -103,10 +103,6 @@ func NewServer(cfg *ServerConfig, stopGracefully bool) (*Server, error) {
 		return nil, fmt.Errorf("listen: %w", err)
 	}
 
-	if err := s.initGRPCServer(); err != nil {
-		return nil, fmt.Errorf("init grpc server: %w", err)
-	}
-
 	if cfg.EnableTLS {
 		if err := s.setupCertWatcher(); err != nil {
 			return nil, fmt.Errorf("setup cert watcher: %w", err)
@@ -341,6 +337,10 @@ func (s *Server) validateCertificates() error {
 
 func (s *Server) Start() error {
 	s.reloadMu.Lock()
+	if err := s.initGRPCServer(); err != nil {
+		s.reloadMu.Unlock()
+		return fmt.Errorf("init grpc server: %w", err)
+	}
 	s.isRunning = true
 	s.reloadMu.Unlock()
 
