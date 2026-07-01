@@ -106,6 +106,19 @@ package authz
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
 // Obligations  (none) — allow/deny only
+//
+// ---
+//
+// Contract: user:write
+//
+// Resource  type="user"
+//   id   username (required) — the user record being mutated
+//
+// Context   (none)
+//
+// Subject   injected by the backend from JWT claims (username, roles, email, ...)
+//
+// Obligations  (none) — allow/deny only
 
 import (
 	"encoding/json"
