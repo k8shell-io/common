@@ -83,6 +83,19 @@ package authz
 //
 // ---
 //
+// Contract: user:write
+//
+// Resource  type="user"
+//   id   username (required) — the user record being mutated
+//
+// Context   (none)
+//
+// Subject   injected by the backend from JWT claims (username, roles, email, ...)
+//
+// Obligations  (none) — allow/deny only
+//
+// ---
+//
 // Contract: token:read
 //
 // Resource  type="user"
@@ -690,6 +703,77 @@ func UserTokenReadEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserToken
 func (r *UserTokenReadEvalRequest) Validate() error {
 	if r.Resource.ID == "" {
 		return fmt.Errorf("token:read: resource ID (username) is required")
+	}
+	return nil
+}
+
+// UserWriteEvalRequest is the validated, typed model for user:write policy
+// evaluation. It covers all mutations to a user record: profile fields, roles,
+// blueprints, and auth keys. Use NewUserWriteEvalRequest to build it.
+type UserWriteEvalRequest struct {
+	Resource UserResource
+}
+
+var _ EvalRequest = (*UserWriteEvalRequest)(nil)
+
+// NewUserWriteEvalRequest begins building a UserWriteEvalRequest for the given
+// target username. Call Build to validate and obtain the final struct.
+func NewUserWriteEvalRequest(username string) *UserWriteEvalRequest {
+	return &UserWriteEvalRequest{Resource: UserResource{ID: username}}
+}
+
+// Build validates the request and returns it if all constraints are satisfied.
+// It is the required terminator for the builder chain.
+func (r *UserWriteEvalRequest) Build() (*UserWriteEvalRequest, error) {
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// ToProto serializes the typed request into a gRPC EvaluateRequest, attaching
+// the supplied JWT token.
+// Implements EvalRequest.
+func (r *UserWriteEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
+	return &authzv1.EvaluateRequest{
+		Token:  token,
+		Action: "user:write",
+		Resource: &authzv1.Resource{
+			Type: "user",
+			Id:   r.Resource.ID,
+		},
+	}
+}
+
+// UserWriteEvalRequestFromProto converts a gRPC EvaluateRequest into a
+// validated UserWriteEvalRequest.
+func UserWriteEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserWriteEvalRequest, error) {
+	if req == nil {
+		return nil, fmt.Errorf("user:write: EvaluateRequest is nil")
+	}
+	if req.Action != "user:write" {
+		return nil, fmt.Errorf("user:write: action must be \"user:write\", got %q", req.Action)
+	}
+	if req.Resource == nil {
+		return nil, fmt.Errorf("user:write: resource is nil")
+	}
+	if req.Resource.Type != "user" {
+		return nil, fmt.Errorf("user:write: resource type must be \"user\", got %q", req.Resource.Type)
+	}
+	r := &UserWriteEvalRequest{
+		Resource: UserResource{ID: req.Resource.Id},
+	}
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// Validate checks the request against the user:write contract.
+// Implements EvalRequest.
+func (r *UserWriteEvalRequest) Validate() error {
+	if r.Resource.ID == "" {
+		return fmt.Errorf("user:write: resource ID (username) is required")
 	}
 	return nil
 }
