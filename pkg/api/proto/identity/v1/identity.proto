@@ -121,6 +121,7 @@ message UpdateUserRequest {
   repeated string             blueprints = 5;
   google.protobuf.BoolValue   locked     = 6;
   repeated string             auth_keys  = 7;
+  google.protobuf.StringValue org        = 8;
 }
 
 // IssueUserTokenRequest carries the username for a token issuance request.

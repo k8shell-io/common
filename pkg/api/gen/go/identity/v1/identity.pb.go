@@ -40,6 +40,7 @@ type UpdateUserRequest struct {
 	Blueprints    []string               `protobuf:"bytes,5,rep,name=blueprints,proto3" json:"blueprints,omitempty"`
 	Locked        *wrappers.BoolValue    `protobuf:"bytes,6,opt,name=locked,proto3" json:"locked,omitempty"`
 	AuthKeys      []string               `protobuf:"bytes,7,rep,name=auth_keys,json=authKeys,proto3" json:"auth_keys,omitempty"`
+	Org           *wrappers.StringValue  `protobuf:"bytes,8,opt,name=org,proto3" json:"org,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -119,6 +120,13 @@ func (x *UpdateUserRequest) GetLocked() *wrappers.BoolValue {
 func (x *UpdateUserRequest) GetAuthKeys() []string {
 	if x != nil {
 		return x.AuthKeys
+	}
+	return nil
+}
+
+func (x *UpdateUserRequest) GetOrg() *wrappers.StringValue {
+	if x != nil {
+		return x.Org
 	}
 	return nil
 }
@@ -1138,7 +1146,7 @@ var File_identity_v1_identity_proto protoreflect.FileDescriptor
 
 const file_identity_v1_identity_proto_rawDesc = "" +
 	"\n" +
-	"\x1aidentity/v1/identity.proto\x12\videntity.v1\x1a\x16common/v1/common.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1egoogle/protobuf/wrappers.proto\x1a\x17identity/v1/types.proto\"\xa0\x02\n" +
+	"\x1aidentity/v1/identity.proto\x12\videntity.v1\x1a\x16common/v1/common.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1egoogle/protobuf/wrappers.proto\x1a\x17identity/v1/types.proto\"\xd0\x02\n" +
 	"\x11UpdateUserRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x128\n" +
 	"\bfullname\x18\x02 \x01(\v2\x1c.google.protobuf.StringValueR\bfullname\x12\x14\n" +
@@ -1148,7 +1156,8 @@ const file_identity_v1_identity_proto_rawDesc = "" +
 	"blueprints\x18\x05 \x03(\tR\n" +
 	"blueprints\x122\n" +
 	"\x06locked\x18\x06 \x01(\v2\x1a.google.protobuf.BoolValueR\x06locked\x12\x1b\n" +
-	"\tauth_keys\x18\a \x03(\tR\bauthKeys\"K\n" +
+	"\tauth_keys\x18\a \x03(\tR\bauthKeys\x12.\n" +
+	"\x03org\x18\b \x01(\v2\x1c.google.protobuf.StringValueR\x03org\"K\n" +
 	"\x15IssueUserTokenRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\x16\n" +
 	"\x06source\x18\x02 \x01(\tR\x06source\"7\n" +
@@ -1308,75 +1317,76 @@ var file_identity_v1_identity_proto_depIdxs = []int32{
 	21, // 0: identity.v1.UpdateUserRequest.fullname:type_name -> google.protobuf.StringValue
 	22, // 1: identity.v1.UpdateUserRequest.sudo:type_name -> google.protobuf.BoolValue
 	22, // 2: identity.v1.UpdateUserRequest.locked:type_name -> google.protobuf.BoolValue
-	23, // 3: identity.v1.ListUserCredentialsResponse.credentials:type_name -> common.v1.UserCredential
-	23, // 4: identity.v1.AddUserCredentialResponse.credential:type_name -> common.v1.UserCredential
-	23, // 5: identity.v1.UpdateUserCredentialResponse.credential:type_name -> common.v1.UserCredential
-	24, // 6: identity.v1.GetAvailableIdentityProvidersResponse.providers:type_name -> identity.v1.IdentityProviderInfo
-	25, // 7: identity.v1.CreateAccessTokenRequest.expires_at:type_name -> google.protobuf.Timestamp
-	26, // 8: identity.v1.ListAccessTokensResponse.tokens:type_name -> identity.v1.AccessTokenInfo
-	27, // 9: identity.v1.ResolveAccessTokenRequest.expiry:type_name -> google.protobuf.Duration
-	28, // 10: identity.v1.ResolveAccessTokenResponse.user:type_name -> common.v1.User
-	29, // 11: identity.v1.IdentityService.FindUser:input_type -> identity.v1.FindUserRequest
-	30, // 12: identity.v1.IdentityService.GetUsers:input_type -> identity.v1.GetUsersRequest
-	1,  // 13: identity.v1.IdentityService.IssueUserToken:input_type -> identity.v1.IssueUserTokenRequest
-	31, // 14: identity.v1.IdentityService.GetUserOnboardCapability:input_type -> identity.v1.Username
-	32, // 15: identity.v1.IdentityService.OnboardUserDeviceFlow:input_type -> identity.v1.OnboardUserDeviceFlowRequest
-	33, // 16: identity.v1.IdentityService.OnboardUserWebFlow:input_type -> identity.v1.OnboardUserWebFlowRequest
-	34, // 17: identity.v1.IdentityService.CompleteUserWebFlow:input_type -> identity.v1.CompleteUserWebFlowRequest
-	35, // 18: identity.v1.IdentityService.AuthUserPublicKey:input_type -> identity.v1.AuthUserPublicKeyRequest
-	3,  // 19: identity.v1.IdentityService.CompleteUserDeviceFlow:input_type -> identity.v1.CompleteUserDeviceFlowRequest
-	36, // 20: identity.v1.IdentityService.GetBlueprintByUserStr:input_type -> identity.v1.UserStr
-	37, // 21: identity.v1.IdentityService.ResolvePullRequestToRef:input_type -> identity.v1.RepoPullRequestRequest
-	31, // 22: identity.v1.IdentityService.ListUserCredentials:input_type -> identity.v1.Username
-	7,  // 23: identity.v1.IdentityService.GetUserCredential:input_type -> identity.v1.GetUserCredentialRequest
-	23, // 24: identity.v1.IdentityService.AddUserCredential:input_type -> common.v1.UserCredential
-	0,  // 25: identity.v1.IdentityService.UpdateUser:input_type -> identity.v1.UpdateUserRequest
-	38, // 26: identity.v1.IdentityService.AddUserRoles:input_type -> identity.v1.UserRolesRequest
-	38, // 27: identity.v1.IdentityService.RemoveUserRoles:input_type -> identity.v1.UserRolesRequest
-	39, // 28: identity.v1.IdentityService.AddUserBlueprints:input_type -> identity.v1.UserBlueprintsRequest
-	39, // 29: identity.v1.IdentityService.RemoveUserBlueprints:input_type -> identity.v1.UserBlueprintsRequest
-	40, // 30: identity.v1.IdentityService.AddUserAuthKeys:input_type -> identity.v1.UserAuthKeysRequest
-	40, // 31: identity.v1.IdentityService.RemoveUserAuthKeys:input_type -> identity.v1.UserAuthKeysRequest
-	23, // 32: identity.v1.IdentityService.UpdateUserCredential:input_type -> common.v1.UserCredential
-	10, // 33: identity.v1.IdentityService.DeleteUserCredential:input_type -> identity.v1.DeleteUserCredentialRequest
-	12, // 34: identity.v1.IdentityService.GetAvailableIdentityProviders:input_type -> identity.v1.GetAvailableIdentityProvidersRequest
-	14, // 35: identity.v1.IdentityService.CreateAccessToken:input_type -> identity.v1.CreateAccessTokenRequest
-	31, // 36: identity.v1.IdentityService.ListAccessTokens:input_type -> identity.v1.Username
-	17, // 37: identity.v1.IdentityService.RevokeAccessToken:input_type -> identity.v1.RevokeAccessTokenRequest
-	19, // 38: identity.v1.IdentityService.ResolveAccessToken:input_type -> identity.v1.ResolveAccessTokenRequest
-	28, // 39: identity.v1.IdentityService.FindUser:output_type -> common.v1.User
-	41, // 40: identity.v1.IdentityService.GetUsers:output_type -> identity.v1.UserList
-	2,  // 41: identity.v1.IdentityService.IssueUserToken:output_type -> identity.v1.IssueUserTokenResponse
-	42, // 42: identity.v1.IdentityService.GetUserOnboardCapability:output_type -> common.v1.UserOnboardCapability
-	43, // 43: identity.v1.IdentityService.OnboardUserDeviceFlow:output_type -> common.v1.OnboardUserDeviceFlow
-	44, // 44: identity.v1.IdentityService.OnboardUserWebFlow:output_type -> common.v1.OnboardUserWebFlow
-	5,  // 45: identity.v1.IdentityService.CompleteUserWebFlow:output_type -> identity.v1.CompleteUserWebFlowResponse
-	45, // 46: identity.v1.IdentityService.AuthUserPublicKey:output_type -> identity.v1.AuthUserResponse
-	4,  // 47: identity.v1.IdentityService.CompleteUserDeviceFlow:output_type -> identity.v1.CompleteUserDeviceFlowResponse
-	46, // 48: identity.v1.IdentityService.GetBlueprintByUserStr:output_type -> identity.v1.Blueprint
-	47, // 49: identity.v1.IdentityService.ResolvePullRequestToRef:output_type -> identity.v1.RepoRefResponse
-	6,  // 50: identity.v1.IdentityService.ListUserCredentials:output_type -> identity.v1.ListUserCredentialsResponse
-	23, // 51: identity.v1.IdentityService.GetUserCredential:output_type -> common.v1.UserCredential
-	8,  // 52: identity.v1.IdentityService.AddUserCredential:output_type -> identity.v1.AddUserCredentialResponse
-	28, // 53: identity.v1.IdentityService.UpdateUser:output_type -> common.v1.User
-	28, // 54: identity.v1.IdentityService.AddUserRoles:output_type -> common.v1.User
-	28, // 55: identity.v1.IdentityService.RemoveUserRoles:output_type -> common.v1.User
-	28, // 56: identity.v1.IdentityService.AddUserBlueprints:output_type -> common.v1.User
-	28, // 57: identity.v1.IdentityService.RemoveUserBlueprints:output_type -> common.v1.User
-	28, // 58: identity.v1.IdentityService.AddUserAuthKeys:output_type -> common.v1.User
-	28, // 59: identity.v1.IdentityService.RemoveUserAuthKeys:output_type -> common.v1.User
-	9,  // 60: identity.v1.IdentityService.UpdateUserCredential:output_type -> identity.v1.UpdateUserCredentialResponse
-	11, // 61: identity.v1.IdentityService.DeleteUserCredential:output_type -> identity.v1.DeleteUserCredentialResponse
-	13, // 62: identity.v1.IdentityService.GetAvailableIdentityProviders:output_type -> identity.v1.GetAvailableIdentityProvidersResponse
-	15, // 63: identity.v1.IdentityService.CreateAccessToken:output_type -> identity.v1.CreateAccessTokenResponse
-	16, // 64: identity.v1.IdentityService.ListAccessTokens:output_type -> identity.v1.ListAccessTokensResponse
-	18, // 65: identity.v1.IdentityService.RevokeAccessToken:output_type -> identity.v1.RevokeAccessTokenResponse
-	20, // 66: identity.v1.IdentityService.ResolveAccessToken:output_type -> identity.v1.ResolveAccessTokenResponse
-	39, // [39:67] is the sub-list for method output_type
-	11, // [11:39] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	21, // 3: identity.v1.UpdateUserRequest.org:type_name -> google.protobuf.StringValue
+	23, // 4: identity.v1.ListUserCredentialsResponse.credentials:type_name -> common.v1.UserCredential
+	23, // 5: identity.v1.AddUserCredentialResponse.credential:type_name -> common.v1.UserCredential
+	23, // 6: identity.v1.UpdateUserCredentialResponse.credential:type_name -> common.v1.UserCredential
+	24, // 7: identity.v1.GetAvailableIdentityProvidersResponse.providers:type_name -> identity.v1.IdentityProviderInfo
+	25, // 8: identity.v1.CreateAccessTokenRequest.expires_at:type_name -> google.protobuf.Timestamp
+	26, // 9: identity.v1.ListAccessTokensResponse.tokens:type_name -> identity.v1.AccessTokenInfo
+	27, // 10: identity.v1.ResolveAccessTokenRequest.expiry:type_name -> google.protobuf.Duration
+	28, // 11: identity.v1.ResolveAccessTokenResponse.user:type_name -> common.v1.User
+	29, // 12: identity.v1.IdentityService.FindUser:input_type -> identity.v1.FindUserRequest
+	30, // 13: identity.v1.IdentityService.GetUsers:input_type -> identity.v1.GetUsersRequest
+	1,  // 14: identity.v1.IdentityService.IssueUserToken:input_type -> identity.v1.IssueUserTokenRequest
+	31, // 15: identity.v1.IdentityService.GetUserOnboardCapability:input_type -> identity.v1.Username
+	32, // 16: identity.v1.IdentityService.OnboardUserDeviceFlow:input_type -> identity.v1.OnboardUserDeviceFlowRequest
+	33, // 17: identity.v1.IdentityService.OnboardUserWebFlow:input_type -> identity.v1.OnboardUserWebFlowRequest
+	34, // 18: identity.v1.IdentityService.CompleteUserWebFlow:input_type -> identity.v1.CompleteUserWebFlowRequest
+	35, // 19: identity.v1.IdentityService.AuthUserPublicKey:input_type -> identity.v1.AuthUserPublicKeyRequest
+	3,  // 20: identity.v1.IdentityService.CompleteUserDeviceFlow:input_type -> identity.v1.CompleteUserDeviceFlowRequest
+	36, // 21: identity.v1.IdentityService.GetBlueprintByUserStr:input_type -> identity.v1.UserStr
+	37, // 22: identity.v1.IdentityService.ResolvePullRequestToRef:input_type -> identity.v1.RepoPullRequestRequest
+	31, // 23: identity.v1.IdentityService.ListUserCredentials:input_type -> identity.v1.Username
+	7,  // 24: identity.v1.IdentityService.GetUserCredential:input_type -> identity.v1.GetUserCredentialRequest
+	23, // 25: identity.v1.IdentityService.AddUserCredential:input_type -> common.v1.UserCredential
+	0,  // 26: identity.v1.IdentityService.UpdateUser:input_type -> identity.v1.UpdateUserRequest
+	38, // 27: identity.v1.IdentityService.AddUserRoles:input_type -> identity.v1.UserRolesRequest
+	38, // 28: identity.v1.IdentityService.RemoveUserRoles:input_type -> identity.v1.UserRolesRequest
+	39, // 29: identity.v1.IdentityService.AddUserBlueprints:input_type -> identity.v1.UserBlueprintsRequest
+	39, // 30: identity.v1.IdentityService.RemoveUserBlueprints:input_type -> identity.v1.UserBlueprintsRequest
+	40, // 31: identity.v1.IdentityService.AddUserAuthKeys:input_type -> identity.v1.UserAuthKeysRequest
+	40, // 32: identity.v1.IdentityService.RemoveUserAuthKeys:input_type -> identity.v1.UserAuthKeysRequest
+	23, // 33: identity.v1.IdentityService.UpdateUserCredential:input_type -> common.v1.UserCredential
+	10, // 34: identity.v1.IdentityService.DeleteUserCredential:input_type -> identity.v1.DeleteUserCredentialRequest
+	12, // 35: identity.v1.IdentityService.GetAvailableIdentityProviders:input_type -> identity.v1.GetAvailableIdentityProvidersRequest
+	14, // 36: identity.v1.IdentityService.CreateAccessToken:input_type -> identity.v1.CreateAccessTokenRequest
+	31, // 37: identity.v1.IdentityService.ListAccessTokens:input_type -> identity.v1.Username
+	17, // 38: identity.v1.IdentityService.RevokeAccessToken:input_type -> identity.v1.RevokeAccessTokenRequest
+	19, // 39: identity.v1.IdentityService.ResolveAccessToken:input_type -> identity.v1.ResolveAccessTokenRequest
+	28, // 40: identity.v1.IdentityService.FindUser:output_type -> common.v1.User
+	41, // 41: identity.v1.IdentityService.GetUsers:output_type -> identity.v1.UserList
+	2,  // 42: identity.v1.IdentityService.IssueUserToken:output_type -> identity.v1.IssueUserTokenResponse
+	42, // 43: identity.v1.IdentityService.GetUserOnboardCapability:output_type -> common.v1.UserOnboardCapability
+	43, // 44: identity.v1.IdentityService.OnboardUserDeviceFlow:output_type -> common.v1.OnboardUserDeviceFlow
+	44, // 45: identity.v1.IdentityService.OnboardUserWebFlow:output_type -> common.v1.OnboardUserWebFlow
+	5,  // 46: identity.v1.IdentityService.CompleteUserWebFlow:output_type -> identity.v1.CompleteUserWebFlowResponse
+	45, // 47: identity.v1.IdentityService.AuthUserPublicKey:output_type -> identity.v1.AuthUserResponse
+	4,  // 48: identity.v1.IdentityService.CompleteUserDeviceFlow:output_type -> identity.v1.CompleteUserDeviceFlowResponse
+	46, // 49: identity.v1.IdentityService.GetBlueprintByUserStr:output_type -> identity.v1.Blueprint
+	47, // 50: identity.v1.IdentityService.ResolvePullRequestToRef:output_type -> identity.v1.RepoRefResponse
+	6,  // 51: identity.v1.IdentityService.ListUserCredentials:output_type -> identity.v1.ListUserCredentialsResponse
+	23, // 52: identity.v1.IdentityService.GetUserCredential:output_type -> common.v1.UserCredential
+	8,  // 53: identity.v1.IdentityService.AddUserCredential:output_type -> identity.v1.AddUserCredentialResponse
+	28, // 54: identity.v1.IdentityService.UpdateUser:output_type -> common.v1.User
+	28, // 55: identity.v1.IdentityService.AddUserRoles:output_type -> common.v1.User
+	28, // 56: identity.v1.IdentityService.RemoveUserRoles:output_type -> common.v1.User
+	28, // 57: identity.v1.IdentityService.AddUserBlueprints:output_type -> common.v1.User
+	28, // 58: identity.v1.IdentityService.RemoveUserBlueprints:output_type -> common.v1.User
+	28, // 59: identity.v1.IdentityService.AddUserAuthKeys:output_type -> common.v1.User
+	28, // 60: identity.v1.IdentityService.RemoveUserAuthKeys:output_type -> common.v1.User
+	9,  // 61: identity.v1.IdentityService.UpdateUserCredential:output_type -> identity.v1.UpdateUserCredentialResponse
+	11, // 62: identity.v1.IdentityService.DeleteUserCredential:output_type -> identity.v1.DeleteUserCredentialResponse
+	13, // 63: identity.v1.IdentityService.GetAvailableIdentityProviders:output_type -> identity.v1.GetAvailableIdentityProvidersResponse
+	15, // 64: identity.v1.IdentityService.CreateAccessToken:output_type -> identity.v1.CreateAccessTokenResponse
+	16, // 65: identity.v1.IdentityService.ListAccessTokens:output_type -> identity.v1.ListAccessTokensResponse
+	18, // 66: identity.v1.IdentityService.RevokeAccessToken:output_type -> identity.v1.RevokeAccessTokenResponse
+	20, // 67: identity.v1.IdentityService.ResolveAccessToken:output_type -> identity.v1.ResolveAccessTokenResponse
+	40, // [40:68] is the sub-list for method output_type
+	12, // [12:40] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_identity_v1_identity_proto_init() }
