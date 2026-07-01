@@ -4,11 +4,13 @@ package models
 // Only non-nil pointer fields and non-empty slices are applied (PATCH semantics).
 // Note: proto counterpart is identityv1.UpdateUserRequest (different wire format, no json tags).
 type UserUpdateRequest struct {
-	Fullname   *string `json:"fullname,omitempty"`
-	Roles      []Role  `json:"roles,omitempty"`
-	Sudo       *bool   `json:"sudo,omitempty"`
+	Fullname   *string  `json:"fullname,omitempty"`
+	Shell      *string  `json:"shell,omitempty"`
+	Org        *string  `json:"org,omitempty"`
+	Roles      []Role   `json:"roles,omitempty"`
+	Sudo       *bool    `json:"sudo,omitempty"`
 	Blueprints []string `json:"blueprints,omitempty"`
-	Locked     *bool   `json:"locked,omitempty"`
+	Locked     *bool    `json:"locked,omitempty"`
 	Keys       []string `json:"keys,omitempty"`
 }
 
