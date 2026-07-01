@@ -10,6 +10,7 @@ option go_package = "github.com/k8shell-io/common/pkg/api/gen/go/identity/v1;ide
 import "common/v1/common.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
 import "identity/v1/types.proto";
 
 // IdentityService provides operations for user management, authentication,
@@ -60,6 +61,28 @@ service IdentityService {
   // AddUserCredential adds a new credential for a user.
   rpc AddUserCredential (common.v1.UserCredential) returns (AddUserCredentialResponse);
 
+  // UpdateUser applies a partial update to a user record. Only fields wrapped
+  // in a value type (or repeated fields that are non-empty) are applied.
+  rpc UpdateUser (UpdateUserRequest) returns (common.v1.User);
+
+  // AddUserRoles adds one or more roles to a user without affecting existing roles.
+  rpc AddUserRoles (UserRolesRequest) returns (common.v1.User);
+
+  // RemoveUserRoles removes one or more roles from a user.
+  rpc RemoveUserRoles (UserRolesRequest) returns (common.v1.User);
+
+  // AddUserBlueprints grants a user access to one or more blueprints.
+  rpc AddUserBlueprints (UserBlueprintsRequest) returns (common.v1.User);
+
+  // RemoveUserBlueprints revokes access to one or more blueprints from a user.
+  rpc RemoveUserBlueprints (UserBlueprintsRequest) returns (common.v1.User);
+
+  // AddUserAuthKeys registers one or more SSH public keys for a user.
+  rpc AddUserAuthKeys (UserAuthKeysRequest) returns (common.v1.User);
+
+  // RemoveUserAuthKeys removes one or more SSH public keys from a user.
+  rpc RemoveUserAuthKeys (UserAuthKeysRequest) returns (common.v1.User);
+
   // UpdateUserCredential updates an existing credential for a user.
   rpc UpdateUserCredential (common.v1.UserCredential) returns (UpdateUserCredentialResponse);
 
@@ -86,6 +109,19 @@ service IdentityService {
 }
 
 // Messages
+
+// UpdateUserRequest carries a partial update for a user record.
+// Only wrapper-typed fields that are set (non-nil) and repeated fields that
+// are non-empty will be applied; unset fields leave the existing value intact.
+message UpdateUserRequest {
+  string                      username   = 1;
+  google.protobuf.StringValue fullname   = 2;
+  repeated string             roles      = 3;
+  google.protobuf.BoolValue   sudo       = 4;
+  repeated string             blueprints = 5;
+  google.protobuf.BoolValue   locked     = 6;
+  repeated string             auth_keys  = 7;
+}
 
 // IssueUserTokenRequest carries the username for a token issuance request.
 message IssueUserTokenRequest {

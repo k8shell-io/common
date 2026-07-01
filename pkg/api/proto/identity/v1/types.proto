@@ -100,6 +100,24 @@ message IdentityProviderInfo {
   repeated string capabilities = 2;
 }
 
+// UserRolesRequest carries a username and one or more roles to add or remove.
+message UserRolesRequest {
+  string          username = 1;
+  repeated string roles    = 2;
+}
+
+// UserBlueprintsRequest carries a username and one or more blueprints to grant or revoke.
+message UserBlueprintsRequest {
+  string          username   = 1;
+  repeated string blueprints = 2;
+}
+
+// UserAuthKeysRequest carries a username and one or more SSH public keys to register or remove.
+message UserAuthKeysRequest {
+  string          username  = 1;
+  repeated string auth_keys = 2;
+}
+
 // AccessTokenInfo carries access token metadata returned in list responses.
 // The raw token and its hash are never included.
 message AccessTokenInfo {
