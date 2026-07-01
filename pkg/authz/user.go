@@ -44,7 +44,7 @@ package authz
 //   id   username (required)
 //
 // Context
-//   data_type  profile | credentials | blueprints  (required)
+//   data_type  profile | credentials | blueprints | roles  (required)
 //
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
@@ -88,7 +88,8 @@ package authz
 // Resource  type="user"
 //   id   username (required) — the user record being mutated
 //
-// Context   (none)
+// Context
+//   data_type  profile | credentials | blueprints | roles  (required)
 //
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
@@ -106,19 +107,6 @@ package authz
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
 // Obligations  (none) — allow/deny only
-//
-// ---
-//
-// Contract: user:write
-//
-// Resource  type="user"
-//   id   username (required) — the user record being mutated
-//
-// Context   (none)
-//
-// Subject   injected by the backend from JWT claims (username, roles, email, ...)
-//
-// Obligations  (none) — allow/deny only
 
 import (
 	"encoding/json"
@@ -129,14 +117,26 @@ import (
 	"github.com/k8shell-io/common/pkg/models"
 )
 
-// UserDataType identifies which slice of user data is being read in user:read.
+// UserDataType identifies which slice of user data is being accessed in
+// user:read and user:write.
 type UserDataType string
 
 const (
 	UserDataTypeProfile     UserDataType = "profile"
 	UserDataTypeCredentials UserDataType = "credentials"
 	UserDataTypeBlueprints  UserDataType = "blueprints"
+	UserDataTypeRoles       UserDataType = "roles"
 )
+
+func validateUserDataType(dt UserDataType) error {
+	switch dt {
+	case UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles:
+		return nil
+	default:
+		return fmt.Errorf("context \"data_type\" must be %q, %q, %q, or %q, got %q",
+			UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, dt)
+	}
+}
 
 // UserAuthMethod is the typed representation of an SSH authentication method.
 type UserAuthMethod string
@@ -484,11 +484,8 @@ func (r *UserReadEvalRequest) Validate() error {
 	if r.Resource.ID == "" {
 		return fmt.Errorf("user:read: resource ID (username) is required")
 	}
-	switch r.DataType {
-	case UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints:
-	default:
-		return fmt.Errorf("user:read: context \"data_type\" must be %q, %q, or %q, got %q",
-			UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, r.DataType)
+	if err := validateUserDataType(r.DataType); err != nil {
+		return fmt.Errorf("user:read: %w", err)
 	}
 	return nil
 }
@@ -725,14 +722,22 @@ func (r *UserTokenReadEvalRequest) Validate() error {
 // blueprints, and auth keys. Use NewUserWriteEvalRequest to build it.
 type UserWriteEvalRequest struct {
 	Resource UserResource
+	DataType UserDataType
 }
 
 var _ EvalRequest = (*UserWriteEvalRequest)(nil)
 
 // NewUserWriteEvalRequest begins building a UserWriteEvalRequest for the given
-// target username. Call Build to validate and obtain the final struct.
+// target username. Call WithDataType then Build to validate and obtain the
+// final struct.
 func NewUserWriteEvalRequest(username string) *UserWriteEvalRequest {
 	return &UserWriteEvalRequest{Resource: UserResource{ID: username}}
+}
+
+// WithDataType sets the data type being mutated.
+func (r *UserWriteEvalRequest) WithDataType(dt UserDataType) *UserWriteEvalRequest {
+	r.DataType = dt
+	return r
 }
 
 // Build validates the request and returns it if all constraints are satisfied.
@@ -755,6 +760,7 @@ func (r *UserWriteEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
 			Type: "user",
 			Id:   r.Resource.ID,
 		},
+		Context: map[string]string{"data_type": string(r.DataType)},
 	}
 }
 
@@ -775,6 +781,7 @@ func UserWriteEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserWriteEval
 	}
 	r := &UserWriteEvalRequest{
 		Resource: UserResource{ID: req.Resource.Id},
+		DataType: UserDataType(req.Context["data_type"]),
 	}
 	if err := r.Validate(); err != nil {
 		return nil, err
@@ -787,6 +794,9 @@ func UserWriteEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserWriteEval
 func (r *UserWriteEvalRequest) Validate() error {
 	if r.Resource.ID == "" {
 		return fmt.Errorf("user:write: resource ID (username) is required")
+	}
+	if err := validateUserDataType(r.DataType); err != nil {
+		return fmt.Errorf("user:write: %w", err)
 	}
 	return nil
 }
