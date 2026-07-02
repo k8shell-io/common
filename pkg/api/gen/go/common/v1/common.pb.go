@@ -50,8 +50,6 @@ type User struct {
 	Email string `protobuf:"bytes,9,opt,name=email,proto3" json:"email,omitempty"`
 	// password is the hashed password. Never populated in read responses.
 	Password string `protobuf:"bytes,10,opt,name=password,proto3" json:"password,omitempty"`
-	// auths lists the authentication providers linked to this account.
-	Auths []string `protobuf:"bytes,11,rep,name=auths,proto3" json:"auths,omitempty"`
 	// auth_keys lists the public SSH or API keys registered for this user.
 	AuthKeys []string `protobuf:"bytes,12,rep,name=auth_keys,json=authKeys,proto3" json:"auth_keys,omitempty"`
 	// locked indicates whether the account has been administratively locked.
@@ -161,13 +159,6 @@ func (x *User) GetPassword() string {
 		return x.Password
 	}
 	return ""
-}
-
-func (x *User) GetAuths() []string {
-	if x != nil {
-		return x.Auths
-	}
-	return nil
 }
 
 func (x *User) GetAuthKeys() []string {
@@ -987,7 +978,7 @@ var File_common_v1_common_proto protoreflect.FileDescriptor
 
 const file_common_v1_common_proto_rawDesc = "" +
 	"\n" +
-	"\x16common/v1/common.proto\x12\tcommon.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd1\x03\n" +
+	"\x16common/v1/common.proto\x12\tcommon.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc8\x03\n" +
 	"\x04User\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\"\n" +
 	"\forganization\x18\x02 \x01(\tR\forganization\x12\x19\n" +
@@ -999,8 +990,7 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"\bfullname\x18\a \x01(\tR\bfullname\x12\x14\n" +
 	"\x05email\x18\t \x01(\tR\x05email\x12\x1a\n" +
 	"\bpassword\x18\n" +
-	" \x01(\tR\bpassword\x12\x14\n" +
-	"\x05auths\x18\v \x03(\tR\x05auths\x12\x1b\n" +
+	" \x01(\tR\bpassword\x12\x1b\n" +
 	"\tauth_keys\x18\f \x03(\tR\bauthKeys\x12\x16\n" +
 	"\x06locked\x18\r \x01(\bR\x06locked\x12\x14\n" +
 	"\x05roles\x18\x11 \x03(\tR\x05roles\x12\x1e\n" +
@@ -1009,7 +999,7 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"blueprints\x12\x16\n" +
 	"\x06source\x18\x13 \x01(\tR\x06source\x12\x14\n" +
 	"\x05shell\x18\x14 \x01(\tR\x05shell\x12\x12\n" +
-	"\x04sudo\x18\x15 \x01(\bR\x04sudo\"\xb1\x03\n" +
+	"\x04sudo\x18\x15 \x01(\bR\x04sudoJ\x04\b\v\x10\fR\x05auths\"\xb1\x03\n" +
 	"\x0eUserCredential\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\rR\x02id\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12!\n" +
