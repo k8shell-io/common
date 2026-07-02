@@ -28,13 +28,14 @@ package authz
 //   idp  identity provider name (required)
 //   org  organization name      (optional)
 //
-// Context
-//   method       publickey | password          (required)
-//   fingerprint  SHA256 public key fingerprint (required for publickey)
+// Context   (none)
 //
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
-// Obligations  (none)
+// Obligations
+//   auth_methods  JSON array of allowed auth method strings — "publickey",
+//                 "password", or both (e.g. ["publickey","password"]). The
+//                 enforcer offers only the methods present in this list.
 //
 // ---
 //
@@ -329,17 +330,6 @@ func (r *UserOnboardEvalRequest) Validate() error {
 // methods and call Build to get a validated instance.
 type UserAuthEvalRequest struct {
 	Resource UserResource
-	Context  UserAuthContext
-}
-
-// UserAuthContext holds the ambient authentication attributes for user:auth.
-type UserAuthContext struct {
-	// Method is the SSH authentication method ("publickey" or "password").
-	Method UserAuthMethod
-
-	// Fingerprint is the SHA256 public key fingerprint; set only when
-	// Method is UserAuthMethodPublicKey (context["fingerprint"]).
-	Fingerprint string
 }
 
 var _ EvalRequest = (*UserAuthEvalRequest)(nil)
@@ -365,18 +355,6 @@ func (r *UserAuthEvalRequest) WithOrg(org string) *UserAuthEvalRequest {
 	return r
 }
 
-// WithAuthMethod sets the authentication method.
-func (r *UserAuthEvalRequest) WithAuthMethod(method UserAuthMethod) *UserAuthEvalRequest {
-	r.Context.Method = method
-	return r
-}
-
-// WithFingerprint sets the public key fingerprint; required for publickey auth.
-func (r *UserAuthEvalRequest) WithFingerprint(fp string) *UserAuthEvalRequest {
-	r.Context.Fingerprint = fp
-	return r
-}
-
 // Build validates the request and returns it if all constraints are satisfied.
 // It is the required terminator for the builder chain.
 func (r *UserAuthEvalRequest) Build() (*UserAuthEvalRequest, error) {
@@ -390,12 +368,6 @@ func (r *UserAuthEvalRequest) Build() (*UserAuthEvalRequest, error) {
 // the supplied JWT token.
 // Implements EvalRequest.
 func (r *UserAuthEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
-	ctx := map[string]string{
-		"method": string(r.Context.Method),
-	}
-	if r.Context.Fingerprint != "" {
-		ctx["fingerprint"] = r.Context.Fingerprint
-	}
 	return &authzv1.EvaluateRequest{
 		Token:  token,
 		Action: "user:auth",
@@ -404,7 +376,6 @@ func (r *UserAuthEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
 			Id:         r.Resource.ID,
 			Attributes: userResourceToAttrs(r.Resource),
 		},
-		Context: ctx,
 	}
 }
 
@@ -424,13 +395,8 @@ func UserAuthEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserAuthEvalRe
 	if req.Resource.Type != "user" {
 		return nil, fmt.Errorf("user:auth: resource type must be \"user\", got %q", req.Resource.Type)
 	}
-	ctx := req.Context
 	r := &UserAuthEvalRequest{
 		Resource: userResourceFromAttrs(req.Resource.Id, req.Resource.Attributes),
-		Context: UserAuthContext{
-			Method:      UserAuthMethod(ctx["method"]),
-			Fingerprint: ctx["fingerprint"],
-		},
 	}
 	if err := r.Validate(); err != nil {
 		return nil, err
@@ -439,24 +405,10 @@ func UserAuthEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserAuthEvalRe
 }
 
 // Validate checks the request against the user:auth contract: ID and IDP are
-// required, method must be set, and publickey auth requires a fingerprint.
+// required.
 // Implements EvalRequest.
 func (r *UserAuthEvalRequest) Validate() error {
-	if err := validateUserResource(r.Resource); err != nil {
-		return err
-	}
-	switch r.Context.Method {
-	case UserAuthMethodPublicKey:
-		if r.Context.Fingerprint == "" {
-			return fmt.Errorf("user:auth: context \"fingerprint\" is required for publickey auth")
-		}
-	case UserAuthMethodPassword:
-		// no additional fields required
-	default:
-		return fmt.Errorf("user:auth: context \"method\" must be %q or %q, got %q",
-			UserAuthMethodPublicKey, UserAuthMethodPassword, r.Context.Method)
-	}
-	return nil
+	return validateUserResource(r.Resource)
 }
 
 // UserReadEvalRequest is the validated, typed model for user:read policy
@@ -851,6 +803,44 @@ func (r *UserWriteEvalRequest) Validate() error {
 		return fmt.Errorf("user:write: %w", err)
 	}
 	return nil
+}
+
+const (
+	// ObligationKeyAuthMethods is the key the policy engine writes to indicate
+	// which SSH authentication methods are available to the user. The value is
+	// a JSON-encoded array of method strings (e.g. ["publickey","password"]).
+	ObligationKeyAuthMethods = "auth_methods"
+)
+
+// AuthMethodsObligation is the typed representation of the "auth_methods"
+// obligation key returned by the policy engine in a PolicyResult for
+// user:auth.
+type AuthMethodsObligation struct {
+	// Methods is the list of authentication methods the policy permits for
+	// the user (any of UserAuthMethodPublicKey, UserAuthMethodPassword).
+	Methods []UserAuthMethod
+}
+
+// ParseAuthMethodsObligation reads the "auth_methods" key from the
+// obligations map. Returns (obligation, true) when the key is present, (zero
+// value, false) when the policy did not set an auth_methods obligation — in
+// that case the enforcer should offer no authentication methods.
+func ParseAuthMethodsObligation(obligations map[string]string) (AuthMethodsObligation, bool) {
+	v, ok := obligations[ObligationKeyAuthMethods]
+	if !ok {
+		return AuthMethodsObligation{}, false
+	}
+	var raw []string
+	if err := json.Unmarshal([]byte(v), &raw); err != nil {
+		return AuthMethodsObligation{}, false
+	}
+	methods := make([]UserAuthMethod, 0, len(raw))
+	for _, m := range raw {
+		if m != "" {
+			methods = append(methods, UserAuthMethod(m))
+		}
+	}
+	return AuthMethodsObligation{Methods: methods}, true
 }
 
 const (
