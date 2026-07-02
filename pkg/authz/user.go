@@ -41,7 +41,16 @@ package authz
 // Contract: user:read
 //
 // Resource  type="user"
-//   id   username (required)
+//   id         username               (required) — the user whose data is being read
+//   idp        identity provider name (required)
+//   org        organization name      (optional)
+//   email      user's email address   (required)
+//   fullname   user's full name       (required)
+//   uid        POSIX uid              (required)
+//   gid        POSIX gid              (required)
+//   roles      JSON array of role name strings currently assigned  (required, non-empty)
+//   sudo       true | false — whether the user currently has sudo (required)
+//   blueprints JSON array of blueprint names currently granted     (required, non-empty)
 //
 // Context
 //   data_type  profile | credentials | blueprints | roles  (required)
@@ -89,7 +98,16 @@ package authz
 // Contract: user:write
 //
 // Resource  type="user"
-//   id   username (required) — the user record being mutated
+//   id         username               (required) — the user record being mutated
+//   idp        identity provider name (required)
+//   org        organization name      (optional)
+//   email      user's email address   (required)
+//   fullname   user's full name       (required)
+//   uid        POSIX uid              (required)
+//   gid        POSIX gid              (required)
+//   roles      JSON array of role name strings currently assigned  (required, non-empty)
+//   sudo       true | false — whether the user currently has sudo (required)
+//   blueprints JSON array of blueprint names currently granted     (required, non-empty)
 //
 // Context
 //   data_type  profile | credentials | blueprints | roles | sudo | locked | org | posix  (required)
@@ -132,6 +150,7 @@ package authz
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	authzv1 "github.com/k8shell-io/common/pkg/api/gen/go/authz/v1"
@@ -225,6 +244,114 @@ func validateUserResource(r UserResource) error {
 	}
 	if r.IDP == "" {
 		return fmt.Errorf("user: resource attribute \"idp\" is required")
+	}
+	return nil
+}
+
+// UserIdentityResource extends UserResource with the rest of the target
+// user's identity snapshot — the fields a policy needs to condition on who
+// the target user is (email, fullname, uid/gid) and their current standing
+// (roles, sudo, blueprints), not just their username/idp/org. Used by
+// user:read and user:write, where the acting subject and the user record
+// being read or mutated are two different people.
+type UserIdentityResource struct {
+	UserResource
+
+	// Email is the user's email address (resource.attributes["email"]).
+	Email string
+
+	// Fullname is the user's full name (resource.attributes["fullname"]).
+	Fullname string
+
+	// UID is the POSIX user-id (resource.attributes["uid"]).
+	UID uint32
+
+	// GID is the POSIX primary group-id (resource.attributes["gid"]).
+	GID uint32
+
+	// Roles lists the roles currently assigned to the user
+	// (resource.attributes["roles"], JSON-encoded array).
+	Roles []models.Role
+
+	// Sudo indicates whether the user currently has sudo privileges
+	// (resource.attributes["sudo"]).
+	Sudo bool
+
+	// Blueprints lists the blueprint names the user currently has access to
+	// (resource.attributes["blueprints"], JSON-encoded array).
+	Blueprints []string
+}
+
+func userIdentityResourceToAttrs(r UserIdentityResource) map[string]string {
+	attrs := userResourceToAttrs(r.UserResource)
+	attrs["email"] = r.Email
+	attrs["fullname"] = r.Fullname
+	attrs["uid"] = strconv.FormatUint(uint64(r.UID), 10)
+	attrs["gid"] = strconv.FormatUint(uint64(r.GID), 10)
+	if b, err := json.Marshal(r.Roles); err == nil {
+		attrs["roles"] = string(b)
+	}
+	attrs["sudo"] = strconv.FormatBool(r.Sudo)
+	if b, err := json.Marshal(r.Blueprints); err == nil {
+		attrs["blueprints"] = string(b)
+	}
+	return attrs
+}
+
+func userIdentityResourceFromAttrs(id string, attrs map[string]string) UserIdentityResource {
+	r := UserIdentityResource{
+		UserResource: userResourceFromAttrs(id, attrs),
+		Email:        attrs["email"],
+		Fullname:     attrs["fullname"],
+		Sudo:         attrs["sudo"] == "true",
+	}
+	if v, err := strconv.ParseUint(attrs["uid"], 10, 32); err == nil {
+		r.UID = uint32(v)
+	}
+	if v, err := strconv.ParseUint(attrs["gid"], 10, 32); err == nil {
+		r.GID = uint32(v)
+	}
+	if v, ok := attrs["roles"]; ok {
+		var roles []models.Role
+		if err := json.Unmarshal([]byte(v), &roles); err == nil {
+			r.Roles = roles
+		}
+	}
+	if v, ok := attrs["blueprints"]; ok {
+		var bps []string
+		if err := json.Unmarshal([]byte(v), &bps); err == nil {
+			r.Blueprints = bps
+		}
+	}
+	return r
+}
+
+// validateUserIdentityResource checks the request against the user:read and
+// user:write contracts: id and idp (via validateUserResource) plus the full
+// identity snapshot — email, fullname, uid, gid, roles, and blueprints — are
+// all required. Sudo has no missing-value check since both true and false
+// are valid, meaningful states.
+func validateUserIdentityResource(r UserIdentityResource) error {
+	if err := validateUserResource(r.UserResource); err != nil {
+		return err
+	}
+	if r.Email == "" {
+		return fmt.Errorf("user: resource attribute \"email\" is required")
+	}
+	if r.Fullname == "" {
+		return fmt.Errorf("user: resource attribute \"fullname\" is required")
+	}
+	if r.UID == 0 {
+		return fmt.Errorf("user: resource attribute \"uid\" is required")
+	}
+	if r.GID == 0 {
+		return fmt.Errorf("user: resource attribute \"gid\" is required")
+	}
+	if len(r.Roles) == 0 {
+		return fmt.Errorf("user: resource attribute \"roles\" is required")
+	}
+	if len(r.Blueprints) == 0 {
+		return fmt.Errorf("user: resource attribute \"blueprints\" is required")
 	}
 	return nil
 }
@@ -453,7 +580,7 @@ func (r *UserAuthEvalRequest) Validate() error {
 // evaluation. Use NewUserReadEvalRequest to start building, then call Build
 // to get a validated instance.
 type UserReadEvalRequest struct {
-	Resource UserResource
+	Resource UserIdentityResource
 	DataType UserDataType
 }
 
@@ -462,12 +589,66 @@ var _ EvalRequest = (*UserReadEvalRequest)(nil)
 // NewUserReadEvalRequest begins building a UserReadEvalRequest for the given
 // target username.
 func NewUserReadEvalRequest(username string) *UserReadEvalRequest {
-	return &UserReadEvalRequest{Resource: UserResource{ID: username}}
+	return &UserReadEvalRequest{Resource: UserIdentityResource{UserResource: UserResource{ID: username}}}
 }
 
 // WithDataType sets the data type being accessed.
 func (r *UserReadEvalRequest) WithDataType(dt UserDataType) *UserReadEvalRequest {
 	r.DataType = dt
+	return r
+}
+
+// WithIDP sets the identity provider name on the resource.
+func (r *UserReadEvalRequest) WithIDP(idp string) *UserReadEvalRequest {
+	r.Resource.IDP = idp
+	return r
+}
+
+// WithOrg sets the organization on the resource.
+func (r *UserReadEvalRequest) WithOrg(org string) *UserReadEvalRequest {
+	r.Resource.Org = org
+	return r
+}
+
+// WithEmail sets the target user's email address on the resource.
+func (r *UserReadEvalRequest) WithEmail(email string) *UserReadEvalRequest {
+	r.Resource.Email = email
+	return r
+}
+
+// WithFullname sets the target user's full name on the resource.
+func (r *UserReadEvalRequest) WithFullname(fullname string) *UserReadEvalRequest {
+	r.Resource.Fullname = fullname
+	return r
+}
+
+// WithUID sets the target user's POSIX uid on the resource.
+func (r *UserReadEvalRequest) WithUID(uid uint32) *UserReadEvalRequest {
+	r.Resource.UID = uid
+	return r
+}
+
+// WithGID sets the target user's POSIX gid on the resource.
+func (r *UserReadEvalRequest) WithGID(gid uint32) *UserReadEvalRequest {
+	r.Resource.GID = gid
+	return r
+}
+
+// WithRoles sets the target user's currently assigned roles on the resource.
+func (r *UserReadEvalRequest) WithRoles(roles []models.Role) *UserReadEvalRequest {
+	r.Resource.Roles = roles
+	return r
+}
+
+// WithSudo sets whether the target user currently has sudo privileges.
+func (r *UserReadEvalRequest) WithSudo(sudo bool) *UserReadEvalRequest {
+	r.Resource.Sudo = sudo
+	return r
+}
+
+// WithBlueprints sets the target user's currently granted blueprints on the resource.
+func (r *UserReadEvalRequest) WithBlueprints(blueprints []string) *UserReadEvalRequest {
+	r.Resource.Blueprints = blueprints
 	return r
 }
 
@@ -488,8 +669,9 @@ func (r *UserReadEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
 		Token:  token,
 		Action: "user:read",
 		Resource: &authzv1.Resource{
-			Type: "user",
-			Id:   r.Resource.ID,
+			Type:       "user",
+			Id:         r.Resource.ID,
+			Attributes: userIdentityResourceToAttrs(r.Resource),
 		},
 		Context: map[string]string{"data_type": string(r.DataType)},
 	}
@@ -511,7 +693,7 @@ func UserReadEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserReadEvalRe
 		return nil, fmt.Errorf("user:read: resource type must be \"user\", got %q", req.Resource.Type)
 	}
 	r := &UserReadEvalRequest{
-		Resource: UserResource{ID: req.Resource.Id},
+		Resource: userIdentityResourceFromAttrs(req.Resource.Id, req.Resource.Attributes),
 		DataType: UserDataType(req.Context["data_type"]),
 	}
 	if err := r.Validate(); err != nil {
@@ -523,8 +705,8 @@ func UserReadEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserReadEvalRe
 // Validate checks the request against the user:read contract.
 // Implements EvalRequest.
 func (r *UserReadEvalRequest) Validate() error {
-	if r.Resource.ID == "" {
-		return fmt.Errorf("user:read: resource ID (username) is required")
+	if err := validateUserIdentityResource(r.Resource); err != nil {
+		return err
 	}
 	if err := validateUserDataType(r.DataType); err != nil {
 		return fmt.Errorf("user:read: %w", err)
@@ -763,7 +945,7 @@ func (r *UserTokenReadEvalRequest) Validate() error {
 // evaluation. It covers all mutations to a user record: profile fields, roles,
 // blueprints, and auth keys. Use NewUserWriteEvalRequest to build it.
 type UserWriteEvalRequest struct {
-	Resource UserResource
+	Resource UserIdentityResource
 	DataType UserDataType
 }
 
@@ -773,12 +955,66 @@ var _ EvalRequest = (*UserWriteEvalRequest)(nil)
 // target username. Call WithDataType then Build to validate and obtain the
 // final struct.
 func NewUserWriteEvalRequest(username string) *UserWriteEvalRequest {
-	return &UserWriteEvalRequest{Resource: UserResource{ID: username}}
+	return &UserWriteEvalRequest{Resource: UserIdentityResource{UserResource: UserResource{ID: username}}}
 }
 
 // WithDataType sets the data type being mutated.
 func (r *UserWriteEvalRequest) WithDataType(dt UserDataType) *UserWriteEvalRequest {
 	r.DataType = dt
+	return r
+}
+
+// WithIDP sets the identity provider name on the resource.
+func (r *UserWriteEvalRequest) WithIDP(idp string) *UserWriteEvalRequest {
+	r.Resource.IDP = idp
+	return r
+}
+
+// WithOrg sets the organization on the resource.
+func (r *UserWriteEvalRequest) WithOrg(org string) *UserWriteEvalRequest {
+	r.Resource.Org = org
+	return r
+}
+
+// WithEmail sets the target user's email address on the resource.
+func (r *UserWriteEvalRequest) WithEmail(email string) *UserWriteEvalRequest {
+	r.Resource.Email = email
+	return r
+}
+
+// WithFullname sets the target user's full name on the resource.
+func (r *UserWriteEvalRequest) WithFullname(fullname string) *UserWriteEvalRequest {
+	r.Resource.Fullname = fullname
+	return r
+}
+
+// WithUID sets the target user's POSIX uid on the resource.
+func (r *UserWriteEvalRequest) WithUID(uid uint32) *UserWriteEvalRequest {
+	r.Resource.UID = uid
+	return r
+}
+
+// WithGID sets the target user's POSIX gid on the resource.
+func (r *UserWriteEvalRequest) WithGID(gid uint32) *UserWriteEvalRequest {
+	r.Resource.GID = gid
+	return r
+}
+
+// WithRoles sets the target user's currently assigned roles on the resource.
+func (r *UserWriteEvalRequest) WithRoles(roles []models.Role) *UserWriteEvalRequest {
+	r.Resource.Roles = roles
+	return r
+}
+
+// WithSudo sets whether the target user currently has sudo privileges.
+func (r *UserWriteEvalRequest) WithSudo(sudo bool) *UserWriteEvalRequest {
+	r.Resource.Sudo = sudo
+	return r
+}
+
+// WithBlueprints sets the target user's currently granted blueprints on the resource.
+func (r *UserWriteEvalRequest) WithBlueprints(blueprints []string) *UserWriteEvalRequest {
+	r.Resource.Blueprints = blueprints
 	return r
 }
 
@@ -799,8 +1035,9 @@ func (r *UserWriteEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
 		Token:  token,
 		Action: "user:write",
 		Resource: &authzv1.Resource{
-			Type: "user",
-			Id:   r.Resource.ID,
+			Type:       "user",
+			Id:         r.Resource.ID,
+			Attributes: userIdentityResourceToAttrs(r.Resource),
 		},
 		Context: map[string]string{"data_type": string(r.DataType)},
 	}
@@ -822,7 +1059,7 @@ func UserWriteEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserWriteEval
 		return nil, fmt.Errorf("user:write: resource type must be \"user\", got %q", req.Resource.Type)
 	}
 	r := &UserWriteEvalRequest{
-		Resource: UserResource{ID: req.Resource.Id},
+		Resource: userIdentityResourceFromAttrs(req.Resource.Id, req.Resource.Attributes),
 		DataType: UserDataType(req.Context["data_type"]),
 	}
 	if err := r.Validate(); err != nil {
@@ -834,8 +1071,8 @@ func UserWriteEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserWriteEval
 // Validate checks the request against the user:write contract.
 // Implements EvalRequest.
 func (r *UserWriteEvalRequest) Validate() error {
-	if r.Resource.ID == "" {
-		return fmt.Errorf("user:write: resource ID (username) is required")
+	if err := validateUserIdentityResource(r.Resource); err != nil {
+		return err
 	}
 	if err := validateUserWriteDataType(r.DataType); err != nil {
 		return fmt.Errorf("user:write: %w", err)
