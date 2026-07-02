@@ -338,8 +338,16 @@ func (c *K8shelld) RunShell(
 
 // ResizeTerminal sends a terminal resize event to the running shell session and, if
 // session recording is active, records the resize with the correct time offset.
-func (c *K8shelld) ResizeTerminal(ctx context.Context, sessionId string, width, height uint32) error {
-	md := metadata.Pairs("session-id", sessionId)
+func (c *K8shelld) ResizeTerminal(ctx context.Context, userToken string, sessionId string, width, height uint32) error {
+	_, err := authz.ParseUnverifiedClaims(userToken, true)
+	if err != nil {
+		return fmt.Errorf("invalid user token: %w", err)
+	}
+
+	md := metadata.Pairs(
+		"session-id", sessionId,
+		"token", userToken,
+	)
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
 	req := &k8shelldv1.ResizeTerminalRequest{
@@ -347,7 +355,7 @@ func (c *K8shelld) ResizeTerminal(ctx context.Context, sessionId string, width, 
 		Height: height,
 	}
 
-	_, err := c.sshClient.ResizeTerminal(ctx, req)
+	_, err = c.sshClient.ResizeTerminal(ctx, req)
 	if err == nil && c.shellRecorder != nil {
 		c.shellRecorder.ObserveResize(width, height, time.Since(c.shellRecorderStart))
 	}
