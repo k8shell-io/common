@@ -49,7 +49,7 @@ func ToProtobufSession(session *models.SSHSession) *sessionv1.Session {
 		Workspace:   session.Workspace,
 		BytesIn:     session.BytesIn,
 		BytesOut:    session.BytesOut,
-		Channels:    session.Channels,
+		Operations:  session.Operations,
 		Blueprint:   session.Blueprint,
 		UpdatedAt:   updatedAt,
 	}
@@ -66,7 +66,7 @@ func FromProtobufSession(pbSession *sessionv1.Session) *models.SSHSession {
 		Workspace:   pbSession.Workspace,
 		BytesIn:     pbSession.BytesIn,
 		BytesOut:    pbSession.BytesOut,
-		Channels:    pbSession.Channels,
+		Operations:  pbSession.Operations,
 		Blueprint:   pbSession.Blueprint,
 	}
 

@@ -64,8 +64,9 @@ message Session {
   int64 bytes_in = 9;
   // bytes_out is the total number of bytes sent to the client.
   int64 bytes_out = 10;
-  // channels lists the SSH channels opened during this session.
-  repeated string channels = 11;
+  // operations lists the short operation codes (see models.OperationCode)
+  // performed during this session, e.g. shell, pty, port-forward, sftp.
+  repeated string operations = 11;
   // blueprint is the blueprint used by the session's workspace.
   string blueprint = 12;
   // updated_at is the time the record was last updated, as a Unix timestamp (seconds).

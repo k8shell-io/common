@@ -192,8 +192,9 @@ type Session struct {
 	BytesIn int64 `protobuf:"varint,9,opt,name=bytes_in,json=bytesIn,proto3" json:"bytes_in,omitempty"`
 	// bytes_out is the total number of bytes sent to the client.
 	BytesOut int64 `protobuf:"varint,10,opt,name=bytes_out,json=bytesOut,proto3" json:"bytes_out,omitempty"`
-	// channels lists the SSH channels opened during this session.
-	Channels []string `protobuf:"bytes,11,rep,name=channels,proto3" json:"channels,omitempty"`
+	// operations lists the short operation codes (see models.OperationCode)
+	// performed during this session, e.g. shell, pty, port-forward, sftp.
+	Operations []string `protobuf:"bytes,11,rep,name=operations,proto3" json:"operations,omitempty"`
 	// blueprint is the blueprint used by the session's workspace.
 	Blueprint string `protobuf:"bytes,12,opt,name=blueprint,proto3" json:"blueprint,omitempty"`
 	// updated_at is the time the record was last updated, as a Unix timestamp (seconds).
@@ -302,9 +303,9 @@ func (x *Session) GetBytesOut() int64 {
 	return 0
 }
 
-func (x *Session) GetChannels() []string {
+func (x *Session) GetOperations() []string {
 	if x != nil {
-		return x.Channels
+		return x.Operations
 	}
 	return nil
 }
@@ -1444,7 +1445,7 @@ const file_session_v1_session_proto_rawDesc = "" +
 	"\tworkspace\x18\x03 \x01(\tR\tworkspace\x12\x14\n" +
 	"\x05limit\x18\x04 \x01(\x05R\x05limit\x12\x16\n" +
 	"\x06offset\x18\x05 \x01(\x05R\x06offset\x12\x18\n" +
-	"\areverse\x18\x06 \x01(\bR\areverse\"\x85\x03\n" +
+	"\areverse\x18\x06 \x01(\bR\areverse\"\x89\x03\n" +
 	"\aSession\x12\x1d\n" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1a\n" +
@@ -1458,8 +1459,10 @@ const file_session_v1_session_proto_rawDesc = "" +
 	"\tworkspace\x18\b \x01(\tR\tworkspace\x12\x19\n" +
 	"\bbytes_in\x18\t \x01(\x03R\abytesIn\x12\x1b\n" +
 	"\tbytes_out\x18\n" +
-	" \x01(\x03R\bbytesOut\x12\x1a\n" +
-	"\bchannels\x18\v \x03(\tR\bchannels\x12\x1c\n" +
+	" \x01(\x03R\bbytesOut\x12\x1e\n" +
+	"\n" +
+	"operations\x18\v \x03(\tR\n" +
+	"operations\x12\x1c\n" +
 	"\tblueprint\x18\f \x01(\tR\tblueprint\x12\x1d\n" +
 	"\n" +
 	"updated_at\x18\r \x01(\x03R\tupdatedAt\";\n" +

@@ -81,7 +81,7 @@ type SSHSession struct {
 	Workspace   string     `yaml:"workspace" json:"workspace"`
 	BytesIn     int64      `yaml:"bytesIn" json:"bytesIn"`
 	BytesOut    int64      `yaml:"bytesOut" json:"bytesOut"`
-	Channels    []string   `yaml:"channels" json:"channels"`
+	Operations  []string   `yaml:"operations" json:"operations"`
 	Blueprint   string     `yaml:"blueprint" json:"blueprint"`
 	UpdatedAt   *time.Time `yaml:"updatedAt" json:"updatedAt"`
 	PtyName     string     `yaml:"ptyName" json:"ptyName"`
