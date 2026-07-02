@@ -6,6 +6,21 @@ import (
 	"time"
 )
 
+// OperationCode is a short code identifying the kind of SSH session activity
+// (shell, pty, port-forward, sftp, scp, exec, agent-forward, system-exec).
+type OperationCode string
+
+const (
+	OpShell        OperationCode = "sh"
+	OpPty          OperationCode = "pt"
+	OpPortForward  OperationCode = "pf"
+	OpSFTP         OperationCode = "sf"
+	OpSCP          OperationCode = "sc"
+	OpExec         OperationCode = "ex"
+	OpForwardAgent OperationCode = "af"
+	OpSystemExec   OperationCode = "se"
+)
+
 // User roles
 type Role string
 
