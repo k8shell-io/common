@@ -122,6 +122,9 @@ message UpdateUserRequest {
   google.protobuf.BoolValue   locked     = 6;
   repeated string             auth_keys  = 7;
   google.protobuf.StringValue org        = 8;
+  google.protobuf.StringValue email      = 9;
+  google.protobuf.UInt32Value uid        = 10;
+  google.protobuf.UInt32Value gid        = 11;
 }
 
 // IssueUserTokenRequest carries the username for a token issuance request.

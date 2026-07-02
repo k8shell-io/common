@@ -6,12 +6,15 @@ package models
 type UserUpdateRequest struct {
 	Fullname   *string  `json:"fullname,omitempty"`
 	Shell      *string  `json:"shell,omitempty"`
+	Email      *string  `json:"email,omitempty"`
 	Org        *string  `json:"org,omitempty"`
 	Roles      []Role   `json:"roles,omitempty"`
 	Sudo       *bool    `json:"sudo,omitempty"`
 	Blueprints []string `json:"blueprints,omitempty"`
 	Locked     *bool    `json:"locked,omitempty"`
 	Keys       []string `json:"keys,omitempty"`
+	UID        *uint32  `json:"uid,omitempty"`
+	GID        *uint32  `json:"gid,omitempty"`
 }
 
 // UserRolesRequest is the HTTP request body for adding or removing roles on a user.
