@@ -6,34 +6,6 @@ import (
 	"time"
 )
 
-const (
-	ChannelSession      string = "session"
-	ChannelShell        string = "shell"
-	ChannelPty          string = "pty"
-	ChannelPortForward  string = "port-forward"
-	ChannelSFTP         string = "sftp"
-	ChannelSCP          string = "scp"
-	ChannelExec         string = "exec"
-	ChannelForwardAgent string = "forward-agent"
-	ChannelSystemExec   string = "system-exec"
-)
-
-const (
-	ChannelShortSh string = "sh"
-	ChannelShortPt string = "pt"
-	ChannelShortPf string = "pf"
-	ChannelShortSf string = "sf"
-	ChannelShortSc string = "sc"
-	ChannelShortEx string = "ex"
-	ChannelShortAf string = "af"
-	ChannelShortSe string = "se"
-)
-
-const (
-	AuthMethodPublicKey string = "publickey"
-	AuthMethodPassword  string = "password"
-)
-
 // User roles
 type Role string
 
@@ -66,7 +38,6 @@ type User struct {
 	Fullname     string    `yaml:"fullname" json:"fullname"`
 	Email        string    `yaml:"email" json:"email"`
 	Password     string    `yaml:"password,omitempty" json:"password,omitempty"`
-	Auths        []string  `yaml:"auths" json:"auths"`
 	AuthKeys     []string  `yaml:"authKeys" json:"authKeys"`
 	Locked       bool      `yaml:"locked" json:"locked"`
 	Roles        []Role    `yaml:"roles" json:"roles"`

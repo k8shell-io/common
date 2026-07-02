@@ -14,6 +14,9 @@ import "google/protobuf/timestamp.proto";
 
 // User represents an authenticated k8Shell user account.
 message User {
+  reserved 11;
+  reserved "auths";
+
   // username is the unique login name of the user.
   string username = 1;
   // organization is the tenant the user belongs to.
@@ -32,8 +35,6 @@ message User {
   string email = 9;
   // password is the hashed password. Never populated in read responses.
   string password = 10;
-  // auths lists the authentication providers linked to this account.
-  repeated string auths = 11;
   // auth_keys lists the public SSH or API keys registered for this user.
   repeated string auth_keys = 12;
   // locked indicates whether the account has been administratively locked.

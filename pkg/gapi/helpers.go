@@ -34,7 +34,6 @@ func UserToProto(u *models.User) *commonv1.User {
 		Fullname:     u.Fullname,
 		Email:        u.Email,
 		Password:     u.Password,
-		Auths:        u.Auths,
 		AuthKeys:     u.AuthKeys,
 		Locked:       u.Locked,
 		Roles:        roles,
@@ -71,7 +70,6 @@ func ProtoToUser(pb *commonv1.User) *models.User {
 		Email:    pb.GetEmail(),
 		Password: pb.GetPassword(),
 
-		Auths:      pb.GetAuths(),
 		AuthKeys:   pb.GetAuthKeys(),
 		Locked:     pb.GetLocked(),
 		Roles:      roles,
