@@ -125,6 +125,7 @@ message UpdateUserRequest {
   google.protobuf.StringValue email      = 9;
   google.protobuf.UInt32Value uid        = 10;
   google.protobuf.UInt32Value gid        = 11;
+  google.protobuf.StringValue shell      = 12;
 }
 
 // IssueUserTokenRequest carries the username for a token issuance request.
