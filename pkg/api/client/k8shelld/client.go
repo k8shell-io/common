@@ -99,6 +99,14 @@ func NewClient(
 // The caller's identity JWT (user.UserToken) is sent so the server can verify it
 // matches the workspace identity token.
 func (c *K8shelld) Handshake(ctx context.Context, userToken string) (*k8shelldv1.HandshakeResponse, error) {
+	_, err := authz.ParseUnverifiedClaims(userToken, true)
+	if err != nil {
+		return nil, fmt.Errorf("invalid user token: %w", err)
+	}
+
+	md := metadata.Pairs("token", userToken)
+	ctx = metadata.NewOutgoingContext(ctx, md)
+
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
