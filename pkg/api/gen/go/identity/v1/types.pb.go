@@ -261,11 +261,20 @@ func (x *FindUserRequest) GetUsername() string {
 	return ""
 }
 
-// GetUsersRequest carries pagination parameters for listing users.
+// GetUsersRequest carries pagination parameters, plus optional filters
+// sourced from the user:list authz obligations (see pkg/authz/user.go),
+// for listing users.
 type GetUsersRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Limit         int32                  `protobuf:"varint,1,opt,name=limit,proto3" json:"limit,omitempty"`
-	Offset        int32                  `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	Limit  int32                  `protobuf:"varint,1,opt,name=limit,proto3" json:"limit,omitempty"`
+	Offset int32                  `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
+	// Optional filters applied before limit/offset, as an AND-of-ORs: a user
+	// must match every filter field that is set, and a repeated field matches
+	// when the user has at least one of the listed values. An unset/empty
+	// field imposes no restriction on that dimension.
+	Roles         []string `protobuf:"bytes,3,rep,name=roles,proto3" json:"roles,omitempty"`           // user must have at least one of these roles
+	Blueprints    []string `protobuf:"bytes,4,rep,name=blueprints,proto3" json:"blueprints,omitempty"` // user must have at least one of these blueprints
+	Org           string   `protobuf:"bytes,5,opt,name=org,proto3" json:"org,omitempty"`               // user must belong to this organization
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -312,6 +321,27 @@ func (x *GetUsersRequest) GetOffset() int32 {
 		return x.Offset
 	}
 	return 0
+}
+
+func (x *GetUsersRequest) GetRoles() []string {
+	if x != nil {
+		return x.Roles
+	}
+	return nil
+}
+
+func (x *GetUsersRequest) GetBlueprints() []string {
+	if x != nil {
+		return x.Blueprints
+	}
+	return nil
+}
+
+func (x *GetUsersRequest) GetOrg() string {
+	if x != nil {
+		return x.Org
+	}
+	return ""
 }
 
 // GetUsersResponse carries the paginated list of users.
@@ -1083,10 +1113,15 @@ const file_identity_v1_types_proto_rawDesc = "" +
 	"\bUserList\x12%\n" +
 	"\x05users\x18\x01 \x03(\v2\x0f.common.v1.UserR\x05users\"-\n" +
 	"\x0fFindUserRequest\x12\x1a\n" +
-	"\busername\x18\x01 \x01(\tR\busername\"?\n" +
+	"\busername\x18\x01 \x01(\tR\busername\"\x87\x01\n" +
 	"\x0fGetUsersRequest\x12\x14\n" +
 	"\x05limit\x18\x01 \x01(\x05R\x05limit\x12\x16\n" +
-	"\x06offset\x18\x02 \x01(\x05R\x06offset\"9\n" +
+	"\x06offset\x18\x02 \x01(\x05R\x06offset\x12\x14\n" +
+	"\x05roles\x18\x03 \x03(\tR\x05roles\x12\x1e\n" +
+	"\n" +
+	"blueprints\x18\x04 \x03(\tR\n" +
+	"blueprints\x12\x10\n" +
+	"\x03org\x18\x05 \x01(\tR\x03org\"9\n" +
 	"\x10GetUsersResponse\x12%\n" +
 	"\x05users\x18\x01 \x03(\v2\x0f.common.v1.UserR\x05users\"U\n" +
 	"\x18AuthUserPublicKeyRequest\x12\x1a\n" +
