@@ -64,7 +64,17 @@ package authz
 //
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
-// Obligations  (none) — allow/deny only
+// Obligations
+//   roles      JSON array of role name strings — the enforcer lists only
+//              users who have at least one of these roles (e.g. ["admin","dev"])
+//   blueprints JSON array of blueprint name strings — the enforcer lists only
+//              users granted at least one of these blueprints
+//   org        organization name — the enforcer lists only users in this org
+//
+//              Each key is independent and optional; when absent, that
+//              dimension is unrestricted. When present, dimensions combine
+//              with AND (e.g. roles + org means "has one of these roles AND
+//              is in this org").
 //
 // ---
 //
@@ -1018,4 +1028,29 @@ func ParseBlueprintsObligation(obligations map[string]string) (BlueprintsObligat
 		}
 	}
 	return BlueprintsObligation{Blueprints: blueprints}, true
+}
+
+const (
+	// ObligationKeyOrg is the key the policy engine writes to scope a user:list
+	// result to a single organization. The value is an organization name.
+	ObligationKeyOrg = "org"
+)
+
+// OrgObligation is the typed representation of the "org" obligation key
+// returned by the policy engine in a PolicyResult for user:list.
+type OrgObligation struct {
+	// Org is the organization the enforcer should restrict the listing to.
+	Org string
+}
+
+// ParseOrgObligation reads the "org" key from the obligations map.
+// Returns (obligation, true) when the key is present, (zero value, false) when
+// the policy did not set an org obligation — in that case the enforcer should
+// not scope the listing by organization.
+func ParseOrgObligation(obligations map[string]string) (OrgObligation, bool) {
+	v, ok := obligations[ObligationKeyOrg]
+	if !ok || v == "" {
+		return OrgObligation{}, false
+	}
+	return OrgObligation{Org: v}, true
 }
