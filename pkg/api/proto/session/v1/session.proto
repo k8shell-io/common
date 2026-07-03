@@ -39,6 +39,12 @@ message GetSessionsRequest {
   int32 offset = 5;
   // reverse returns results in reverse chronological order when true.
   bool reverse = 6;
+  // roles filters to sessions owned by a user with at least one of these
+  // roles. Empty means unrestricted.
+  repeated string roles = 7;
+  // org filters to sessions owned by a user in this organization. Empty
+  // means unrestricted.
+  string org = 8;
 }
 
 // Session represents a single SSH session record.

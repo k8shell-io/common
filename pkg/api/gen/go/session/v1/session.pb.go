@@ -91,7 +91,13 @@ type GetSessionsRequest struct {
 	// offset skips the first N results for pagination.
 	Offset int32 `protobuf:"varint,5,opt,name=offset,proto3" json:"offset,omitempty"`
 	// reverse returns results in reverse chronological order when true.
-	Reverse       bool `protobuf:"varint,6,opt,name=reverse,proto3" json:"reverse,omitempty"`
+	Reverse bool `protobuf:"varint,6,opt,name=reverse,proto3" json:"reverse,omitempty"`
+	// roles filters to sessions owned by a user with at least one of these
+	// roles. Empty means unrestricted.
+	Roles []string `protobuf:"bytes,7,rep,name=roles,proto3" json:"roles,omitempty"`
+	// org filters to sessions owned by a user in this organization. Empty
+	// means unrestricted.
+	Org           string `protobuf:"bytes,8,opt,name=org,proto3" json:"org,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -166,6 +172,20 @@ func (x *GetSessionsRequest) GetReverse() bool {
 		return x.Reverse
 	}
 	return false
+}
+
+func (x *GetSessionsRequest) GetRoles() []string {
+	if x != nil {
+		return x.Roles
+	}
+	return nil
+}
+
+func (x *GetSessionsRequest) GetOrg() string {
+	if x != nil {
+		return x.Org
+	}
+	return ""
 }
 
 // Session represents a single SSH session record.
@@ -1437,7 +1457,7 @@ var File_session_v1_session_proto protoreflect.FileDescriptor
 const file_session_v1_session_proto_rawDesc = "" +
 	"\n" +
 	"\x18session/v1/session.proto\x12\n" +
-	"session.v1\x1a\x1bgoogle/protobuf/empty.proto\"\xb5\x01\n" +
+	"session.v1\x1a\x1bgoogle/protobuf/empty.proto\"\xdd\x01\n" +
 	"\x12GetSessionsRequest\x12\x1d\n" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1a\n" +
@@ -1445,7 +1465,9 @@ const file_session_v1_session_proto_rawDesc = "" +
 	"\tworkspace\x18\x03 \x01(\tR\tworkspace\x12\x14\n" +
 	"\x05limit\x18\x04 \x01(\x05R\x05limit\x12\x16\n" +
 	"\x06offset\x18\x05 \x01(\x05R\x06offset\x12\x18\n" +
-	"\areverse\x18\x06 \x01(\bR\areverse\"\x89\x03\n" +
+	"\areverse\x18\x06 \x01(\bR\areverse\x12\x14\n" +
+	"\x05roles\x18\a \x03(\tR\x05roles\x12\x10\n" +
+	"\x03org\x18\b \x01(\tR\x03org\"\x89\x03\n" +
 	"\aSession\x12\x1d\n" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1a\n" +
