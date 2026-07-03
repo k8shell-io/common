@@ -14,6 +14,7 @@ import (
 
 var ErrWorkspaceExists = errors.New("workspace already exists")
 var ErrInvalidArgument = errors.New("invalid argument")
+var ErrPermissionDenied = errors.New("permission denied")
 
 type Client struct {
 	provisionerv1.ProvisionerServiceClient
@@ -72,6 +73,9 @@ func (c *Client) waitForHandshakeMessage(
 		}
 		if code == "FailedPrecondition" {
 			return "", "", nil, fmt.Errorf("%w: handshake failed: %w", ErrWorkspaceExists, errors.New(desc))
+		}
+		if code == "PermissionDenied" {
+			return "", "", nil, fmt.Errorf("%w: handshake failed: %w", ErrPermissionDenied, errors.New(desc))
 		}
 		return "", "", nil, fmt.Errorf("handshake failed: %w", errors.New(desc))
 	}
