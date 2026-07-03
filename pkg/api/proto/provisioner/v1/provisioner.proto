@@ -54,8 +54,8 @@ message FindWorkspaceRequest {
 message GetWorkspacesRequest {
   // workspace filters by workspace name (partial match allowed).
   string workspace = 1;
-  // username filters by the owning user.
-  string username = 2;
+  // usernames filters by the owning user(s); pods matching any listed username are returned.
+  repeated string usernames = 2;
   // organization filters by the owning organization.
   string organization = 3;
   // blueprint filters by the blueprint used to create the workspace.

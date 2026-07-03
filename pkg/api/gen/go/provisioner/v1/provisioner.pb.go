@@ -81,8 +81,8 @@ type GetWorkspacesRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// workspace filters by workspace name (partial match allowed).
 	Workspace string `protobuf:"bytes,1,opt,name=workspace,proto3" json:"workspace,omitempty"`
-	// username filters by the owning user.
-	Username string `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	// usernames filters by the owning user(s); pods matching any listed username are returned.
+	Usernames []string `protobuf:"bytes,2,rep,name=usernames,proto3" json:"usernames,omitempty"`
 	// organization filters by the owning organization.
 	Organization string `protobuf:"bytes,3,opt,name=organization,proto3" json:"organization,omitempty"`
 	// blueprint filters by the blueprint used to create the workspace.
@@ -134,11 +134,11 @@ func (x *GetWorkspacesRequest) GetWorkspace() string {
 	return ""
 }
 
-func (x *GetWorkspacesRequest) GetUsername() string {
+func (x *GetWorkspacesRequest) GetUsernames() []string {
 	if x != nil {
-		return x.Username
+		return x.Usernames
 	}
-	return ""
+	return nil
 }
 
 func (x *GetWorkspacesRequest) GetOrganization() string {
@@ -1006,10 +1006,10 @@ const file_provisioner_v1_provisioner_proto_rawDesc = "" +
 	"\n" +
 	" provisioner/v1/provisioner.proto\x12\x0eprovisioner.v1\x1a\x16common/v1/common.proto\"4\n" +
 	"\x14FindWorkspaceRequest\x12\x1c\n" +
-	"\tworkspace\x18\x01 \x01(\tR\tworkspace\"\xe9\x01\n" +
+	"\tworkspace\x18\x01 \x01(\tR\tworkspace\"\xeb\x01\n" +
 	"\x14GetWorkspacesRequest\x12\x1c\n" +
-	"\tworkspace\x18\x01 \x01(\tR\tworkspace\x12\x1a\n" +
-	"\busername\x18\x02 \x01(\tR\busername\x12\"\n" +
+	"\tworkspace\x18\x01 \x01(\tR\tworkspace\x12\x1c\n" +
+	"\tusernames\x18\x02 \x03(\tR\tusernames\x12\"\n" +
 	"\forganization\x18\x03 \x01(\tR\forganization\x12\x1c\n" +
 	"\tblueprint\x18\x04 \x01(\tR\tblueprint\x12\x1b\n" +
 	"\trepo_name\x18\x05 \x01(\tR\brepoName\x12\x1d\n" +
