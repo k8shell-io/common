@@ -68,7 +68,7 @@ func (c *Client) waitForHandshakeMessage(
 		if code == "AlreadyExists" || code == "PreconditionFailed" {
 			return "", "", nil, fmt.Errorf("%w: handshake failed: %w", ErrWorkspaceExists, errors.New(desc))
 		}
-		if code == "InvalidArgument" {
+		if code == "InvalidArgument" || code == "Internal" {
 			return "", "", nil, fmt.Errorf("%w: handshake failed: %w", ErrInvalidArgument, errors.New(desc))
 		}
 		if code == "FailedPrecondition" {
