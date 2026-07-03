@@ -97,7 +97,10 @@ type GetSessionsRequest struct {
 	Roles []string `protobuf:"bytes,7,rep,name=roles,proto3" json:"roles,omitempty"`
 	// org filters to sessions owned by a user in this organization. Empty
 	// means unrestricted.
-	Org           string `protobuf:"bytes,8,opt,name=org,proto3" json:"org,omitempty"`
+	Org string `protobuf:"bytes,8,opt,name=org,proto3" json:"org,omitempty"`
+	// last_n restricts the result to the N most recently created sessions.
+	// 0 means no restriction.
+	LastN         int32 `protobuf:"varint,9,opt,name=last_n,json=lastN,proto3" json:"last_n,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -186,6 +189,13 @@ func (x *GetSessionsRequest) GetOrg() string {
 		return x.Org
 	}
 	return ""
+}
+
+func (x *GetSessionsRequest) GetLastN() int32 {
+	if x != nil {
+		return x.LastN
+	}
+	return 0
 }
 
 // Session represents a single SSH session record.
@@ -1457,7 +1467,7 @@ var File_session_v1_session_proto protoreflect.FileDescriptor
 const file_session_v1_session_proto_rawDesc = "" +
 	"\n" +
 	"\x18session/v1/session.proto\x12\n" +
-	"session.v1\x1a\x1bgoogle/protobuf/empty.proto\"\xdd\x01\n" +
+	"session.v1\x1a\x1bgoogle/protobuf/empty.proto\"\xf4\x01\n" +
 	"\x12GetSessionsRequest\x12\x1d\n" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1a\n" +
@@ -1467,7 +1477,8 @@ const file_session_v1_session_proto_rawDesc = "" +
 	"\x06offset\x18\x05 \x01(\x05R\x06offset\x12\x18\n" +
 	"\areverse\x18\x06 \x01(\bR\areverse\x12\x14\n" +
 	"\x05roles\x18\a \x03(\tR\x05roles\x12\x10\n" +
-	"\x03org\x18\b \x01(\tR\x03org\"\x89\x03\n" +
+	"\x03org\x18\b \x01(\tR\x03org\x12\x15\n" +
+	"\x06last_n\x18\t \x01(\x05R\x05lastN\"\x89\x03\n" +
 	"\aSession\x12\x1d\n" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1a\n" +

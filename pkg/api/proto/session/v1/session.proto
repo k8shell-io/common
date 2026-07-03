@@ -45,6 +45,9 @@ message GetSessionsRequest {
   // org filters to sessions owned by a user in this organization. Empty
   // means unrestricted.
   string org = 8;
+  // last_n restricts the result to the N most recently created sessions.
+  // 0 means no restriction.
+  int32 last_n = 9;
 }
 
 // Session represents a single SSH session record.
