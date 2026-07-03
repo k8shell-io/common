@@ -32,7 +32,22 @@ package authz
 //
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
-// Obligations  (none) — allow/deny only
+// Obligations — exactly these three keys; no other obligation is defined for
+// session:list.
+//   roles     JSON array of role name strings — the enforcer lists only
+//             sessions belonging to users who have at least one of these
+//             roles (e.g. ["admin","dev"]). Same key/type as user:list's
+//             roles obligation — parse with ParseRolesObligation.
+//   org       organization name — the enforcer lists only sessions belonging
+//             to users in this org. Same key/type as user:list's org
+//             obligation — parse with ParseOrgObligation.
+//   username  a single username — the enforcer lists only sessions owned by
+//             this user. Parse with ParseUsernameObligation.
+//
+//             Each key is independent and optional; when absent, that
+//             dimension is unrestricted. When present, dimensions combine
+//             with AND (e.g. roles + org means "has one of these roles AND
+//             is in this org").
 //
 // Scope matrix:
 //   id set,    owner set   → sessions for one workspace
@@ -399,4 +414,29 @@ func ParseRecordObligation(obligations map[string]string) (RecordObligation, boo
 		}
 	}
 	return ob, true
+}
+
+const (
+	// ObligationKeyUsername is the key the policy engine writes to scope a
+	// session:list result to a single session owner. The value is a username.
+	ObligationKeyUsername = "username"
+)
+
+// UsernameObligation is the typed representation of the "username" obligation
+// key returned by the policy engine in a PolicyResult for session:list.
+type UsernameObligation struct {
+	// Username is the single user the enforcer should restrict the listing to.
+	Username string
+}
+
+// ParseUsernameObligation reads the "username" key from the obligations map.
+// Returns (obligation, true) when the key is present, (zero value, false) when
+// the policy did not set a username obligation — in that case the enforcer
+// should not scope the listing to a single user.
+func ParseUsernameObligation(obligations map[string]string) (UsernameObligation, bool) {
+	v, ok := obligations[ObligationKeyUsername]
+	if !ok || v == "" {
+		return UsernameObligation{}, false
+	}
+	return UsernameObligation{Username: v}, true
 }
