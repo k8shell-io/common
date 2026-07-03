@@ -34,7 +34,23 @@ package authz
 //
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
-// Obligations  (none) — allow/deny only
+// Obligations — exactly these three keys; no other obligation is defined for
+// workspace:list.
+//   roles     JSON array of role name strings — the enforcer lists only
+//             workspaces belonging to users who have at least one of these
+//             roles (e.g. ["admin","dev"]). Same key/type as user:list's
+//             roles obligation — parse with ParseRolesObligation.
+//   org       organization name — the enforcer lists only workspaces
+//             belonging to users in this org. Same key/type as user:list's
+//             org obligation — parse with ParseOrgObligation.
+//   username  a single username — the enforcer lists only workspaces owned
+//             by this user. Same key/type as session:list's username
+//             obligation — parse with ParseUsernameObligation.
+//
+//             Each key is independent and optional; when absent, that
+//             dimension is unrestricted. When present, dimensions combine
+//             with AND (e.g. roles + org means "has one of these roles AND
+//             is in this org").
 //
 // ---
 //
