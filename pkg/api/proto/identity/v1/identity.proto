@@ -41,6 +41,10 @@ service IdentityService {
   // along with user details if valid.
   rpc AuthUserPublicKey (AuthUserPublicKeyRequest) returns (AuthUserResponse);
 
+  // AuthUserPassword authenticates a user using a password stored locally (bcrypt-hashed)
+  // and returns the authentication result along with user details if valid.
+  rpc AuthUserPassword (AuthUserPasswordRequest) returns (AuthUserResponse);
+
   // CompleteUserDeviceFlow is called by the client after the user has completed
   // device-flow authorization on the provider side. It provisions the git
   // credential and returns the user's access token.
@@ -82,6 +86,12 @@ service IdentityService {
 
   // RemoveUserAuthKeys removes one or more SSH public keys from a user.
   rpc RemoveUserAuthKeys (UserAuthKeysRequest) returns (common.v1.User);
+
+  // SetUserPassword sets or replaces a user's local password, used by AuthUserPassword.
+  // The supplied password is bcrypt-hashed server-side before being persisted; it is
+  // never stored or returned in plaintext. Pass an empty password to clear it, which
+  // disables password auth for the user.
+  rpc SetUserPassword (SetUserPasswordRequest) returns (common.v1.User);
 
   // UpdateUserCredential updates an existing credential for a user.
   rpc UpdateUserCredential (common.v1.UserCredential) returns (UpdateUserCredentialResponse);
@@ -126,6 +136,14 @@ message UpdateUserRequest {
   google.protobuf.UInt32Value uid        = 10;
   google.protobuf.UInt32Value gid        = 11;
   google.protobuf.StringValue shell      = 12;
+}
+
+// SetUserPasswordRequest carries a new plaintext password to set for a user.
+// The server hashes the password with bcrypt before persisting it; the raw
+// value is never stored or returned.
+message SetUserPasswordRequest {
+  string username = 1;
+  string password = 2;
 }
 
 // IssueUserTokenRequest carries the username for a token issuance request.

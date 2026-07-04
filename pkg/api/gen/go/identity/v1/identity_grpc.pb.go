@@ -31,6 +31,7 @@ const (
 	IdentityService_OnboardUserWebFlow_FullMethodName            = "/identity.v1.IdentityService/OnboardUserWebFlow"
 	IdentityService_CompleteUserWebFlow_FullMethodName           = "/identity.v1.IdentityService/CompleteUserWebFlow"
 	IdentityService_AuthUserPublicKey_FullMethodName             = "/identity.v1.IdentityService/AuthUserPublicKey"
+	IdentityService_AuthUserPassword_FullMethodName              = "/identity.v1.IdentityService/AuthUserPassword"
 	IdentityService_CompleteUserDeviceFlow_FullMethodName        = "/identity.v1.IdentityService/CompleteUserDeviceFlow"
 	IdentityService_GetBlueprintByUserStr_FullMethodName         = "/identity.v1.IdentityService/GetBlueprintByUserStr"
 	IdentityService_ResolvePullRequestToRef_FullMethodName       = "/identity.v1.IdentityService/ResolvePullRequestToRef"
@@ -44,6 +45,7 @@ const (
 	IdentityService_RemoveUserBlueprints_FullMethodName          = "/identity.v1.IdentityService/RemoveUserBlueprints"
 	IdentityService_AddUserAuthKeys_FullMethodName               = "/identity.v1.IdentityService/AddUserAuthKeys"
 	IdentityService_RemoveUserAuthKeys_FullMethodName            = "/identity.v1.IdentityService/RemoveUserAuthKeys"
+	IdentityService_SetUserPassword_FullMethodName               = "/identity.v1.IdentityService/SetUserPassword"
 	IdentityService_UpdateUserCredential_FullMethodName          = "/identity.v1.IdentityService/UpdateUserCredential"
 	IdentityService_DeleteUserCredential_FullMethodName          = "/identity.v1.IdentityService/DeleteUserCredential"
 	IdentityService_GetAvailableIdentityProviders_FullMethodName = "/identity.v1.IdentityService/GetAvailableIdentityProviders"
@@ -77,6 +79,9 @@ type IdentityServiceClient interface {
 	// AuthUserPublicKey authenticates a user using a public key and returns the authentication result
 	// along with user details if valid.
 	AuthUserPublicKey(ctx context.Context, in *AuthUserPublicKeyRequest, opts ...grpc.CallOption) (*AuthUserResponse, error)
+	// AuthUserPassword authenticates a user using a password stored locally (bcrypt-hashed)
+	// and returns the authentication result along with user details if valid.
+	AuthUserPassword(ctx context.Context, in *AuthUserPasswordRequest, opts ...grpc.CallOption) (*AuthUserResponse, error)
 	// CompleteUserDeviceFlow is called by the client after the user has completed
 	// device-flow authorization on the provider side. It provisions the git
 	// credential and returns the user's access token.
@@ -106,6 +111,11 @@ type IdentityServiceClient interface {
 	AddUserAuthKeys(ctx context.Context, in *UserAuthKeysRequest, opts ...grpc.CallOption) (*v1.User, error)
 	// RemoveUserAuthKeys removes one or more SSH public keys from a user.
 	RemoveUserAuthKeys(ctx context.Context, in *UserAuthKeysRequest, opts ...grpc.CallOption) (*v1.User, error)
+	// SetUserPassword sets or replaces a user's local password, used by AuthUserPassword.
+	// The supplied password is bcrypt-hashed server-side before being persisted; it is
+	// never stored or returned in plaintext. Pass an empty password to clear it, which
+	// disables password auth for the user.
+	SetUserPassword(ctx context.Context, in *SetUserPasswordRequest, opts ...grpc.CallOption) (*v1.User, error)
 	// UpdateUserCredential updates an existing credential for a user.
 	UpdateUserCredential(ctx context.Context, in *v1.UserCredential, opts ...grpc.CallOption) (*UpdateUserCredentialResponse, error)
 	// DeleteUserCredential deletes an external credential by its ID.
@@ -207,6 +217,16 @@ func (c *identityServiceClient) AuthUserPublicKey(ctx context.Context, in *AuthU
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AuthUserResponse)
 	err := c.cc.Invoke(ctx, IdentityService_AuthUserPublicKey_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) AuthUserPassword(ctx context.Context, in *AuthUserPasswordRequest, opts ...grpc.CallOption) (*AuthUserResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AuthUserResponse)
+	err := c.cc.Invoke(ctx, IdentityService_AuthUserPassword_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -343,6 +363,16 @@ func (c *identityServiceClient) RemoveUserAuthKeys(ctx context.Context, in *User
 	return out, nil
 }
 
+func (c *identityServiceClient) SetUserPassword(ctx context.Context, in *SetUserPasswordRequest, opts ...grpc.CallOption) (*v1.User, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(v1.User)
+	err := c.cc.Invoke(ctx, IdentityService_SetUserPassword_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *identityServiceClient) UpdateUserCredential(ctx context.Context, in *v1.UserCredential, opts ...grpc.CallOption) (*UpdateUserCredentialResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UpdateUserCredentialResponse)
@@ -437,6 +467,9 @@ type IdentityServiceServer interface {
 	// AuthUserPublicKey authenticates a user using a public key and returns the authentication result
 	// along with user details if valid.
 	AuthUserPublicKey(context.Context, *AuthUserPublicKeyRequest) (*AuthUserResponse, error)
+	// AuthUserPassword authenticates a user using a password stored locally (bcrypt-hashed)
+	// and returns the authentication result along with user details if valid.
+	AuthUserPassword(context.Context, *AuthUserPasswordRequest) (*AuthUserResponse, error)
 	// CompleteUserDeviceFlow is called by the client after the user has completed
 	// device-flow authorization on the provider side. It provisions the git
 	// credential and returns the user's access token.
@@ -466,6 +499,11 @@ type IdentityServiceServer interface {
 	AddUserAuthKeys(context.Context, *UserAuthKeysRequest) (*v1.User, error)
 	// RemoveUserAuthKeys removes one or more SSH public keys from a user.
 	RemoveUserAuthKeys(context.Context, *UserAuthKeysRequest) (*v1.User, error)
+	// SetUserPassword sets or replaces a user's local password, used by AuthUserPassword.
+	// The supplied password is bcrypt-hashed server-side before being persisted; it is
+	// never stored or returned in plaintext. Pass an empty password to clear it, which
+	// disables password auth for the user.
+	SetUserPassword(context.Context, *SetUserPasswordRequest) (*v1.User, error)
 	// UpdateUserCredential updates an existing credential for a user.
 	UpdateUserCredential(context.Context, *v1.UserCredential) (*UpdateUserCredentialResponse, error)
 	// DeleteUserCredential deletes an external credential by its ID.
@@ -517,6 +555,9 @@ func (UnimplementedIdentityServiceServer) CompleteUserWebFlow(context.Context, *
 func (UnimplementedIdentityServiceServer) AuthUserPublicKey(context.Context, *AuthUserPublicKeyRequest) (*AuthUserResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method AuthUserPublicKey not implemented")
 }
+func (UnimplementedIdentityServiceServer) AuthUserPassword(context.Context, *AuthUserPasswordRequest) (*AuthUserResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AuthUserPassword not implemented")
+}
 func (UnimplementedIdentityServiceServer) CompleteUserDeviceFlow(context.Context, *CompleteUserDeviceFlowRequest) (*CompleteUserDeviceFlowResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CompleteUserDeviceFlow not implemented")
 }
@@ -555,6 +596,9 @@ func (UnimplementedIdentityServiceServer) AddUserAuthKeys(context.Context, *User
 }
 func (UnimplementedIdentityServiceServer) RemoveUserAuthKeys(context.Context, *UserAuthKeysRequest) (*v1.User, error) {
 	return nil, status.Error(codes.Unimplemented, "method RemoveUserAuthKeys not implemented")
+}
+func (UnimplementedIdentityServiceServer) SetUserPassword(context.Context, *SetUserPasswordRequest) (*v1.User, error) {
+	return nil, status.Error(codes.Unimplemented, "method SetUserPassword not implemented")
 }
 func (UnimplementedIdentityServiceServer) UpdateUserCredential(context.Context, *v1.UserCredential) (*UpdateUserCredentialResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateUserCredential not implemented")
@@ -738,6 +782,24 @@ func _IdentityService_AuthUserPublicKey_Handler(srv interface{}, ctx context.Con
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(IdentityServiceServer).AuthUserPublicKey(ctx, req.(*AuthUserPublicKeyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_AuthUserPassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AuthUserPasswordRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).AuthUserPassword(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_AuthUserPassword_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).AuthUserPassword(ctx, req.(*AuthUserPasswordRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -976,6 +1038,24 @@ func _IdentityService_RemoveUserAuthKeys_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IdentityService_SetUserPassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetUserPasswordRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).SetUserPassword(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_SetUserPassword_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).SetUserPassword(ctx, req.(*SetUserPasswordRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _IdentityService_UpdateUserCredential_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(v1.UserCredential)
 	if err := dec(in); err != nil {
@@ -1142,6 +1222,10 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _IdentityService_AuthUserPublicKey_Handler,
 		},
 		{
+			MethodName: "AuthUserPassword",
+			Handler:    _IdentityService_AuthUserPassword_Handler,
+		},
+		{
 			MethodName: "CompleteUserDeviceFlow",
 			Handler:    _IdentityService_CompleteUserDeviceFlow_Handler,
 		},
@@ -1192,6 +1276,10 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemoveUserAuthKeys",
 			Handler:    _IdentityService_RemoveUserAuthKeys_Handler,
+		},
+		{
+			MethodName: "SetUserPassword",
+			Handler:    _IdentityService_SetUserPassword_Handler,
 		},
 		{
 			MethodName: "UpdateUserCredential",

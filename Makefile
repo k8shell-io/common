@@ -15,12 +15,14 @@ proto:
 		protoc \
 			--proto_path=$(PROTO_DIR) \
 			--proto_path=/usr/include \
+			--experimental_allow_proto3_optional \
 			--go_out=$(GEN_DIR) \
 			--go_opt=paths=source_relative \
 			$(PROTO_FILES); \
 		protoc \
 			--proto_path=$(PROTO_DIR) \
 			--proto_path=/usr/include \
+			--experimental_allow_proto3_optional \
 			--go_out=$(GEN_DIR) \
 			--go_opt=paths=source_relative \
 			--go-grpc_out=$(GEN_DIR) \

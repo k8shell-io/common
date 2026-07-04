@@ -33,14 +33,14 @@ func UserToProto(u *models.User) *commonv1.User {
 		Gid:          u.GID,
 		Fullname:     u.Fullname,
 		Email:        u.Email,
-		Password:     u.Password,
-		AuthKeys:     u.AuthKeys,
-		Locked:       u.Locked,
-		Roles:        roles,
-		Blueprints:   u.Blueprints,
-		Source:       u.Source,
-		Shell:        u.Shell,
-		Sudo:         u.Sudo,
+		// Password is intentionally omitted: it is never populated in read responses.
+		AuthKeys:   u.AuthKeys,
+		Locked:     u.Locked,
+		Roles:      roles,
+		Blueprints: u.Blueprints,
+		Source:     u.Source,
+		Shell:      u.Shell,
+		Sudo:       u.Sudo,
 	}
 }
 

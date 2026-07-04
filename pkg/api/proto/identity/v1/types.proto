@@ -65,6 +65,14 @@ message AuthUserPublicKeyRequest {
   string public_key = 2;
 }
 
+// AuthUserPasswordRequest carries the credentials for password authentication.
+// The password is transmitted in plaintext over the (TLS-secured) gRPC channel
+// and compared against the bcrypt hash stored for the user; it is never persisted.
+message AuthUserPasswordRequest {
+  string username = 1;
+  string password = 2;
+}
+
 // AuthUserResponse carries the result of an authentication attempt.
 message AuthUserResponse {
   bool            valid = 1;
