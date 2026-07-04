@@ -34,3 +34,11 @@ type UserBlueprintsRequest struct {
 type UserKeysRequest struct {
 	Keys []string `json:"keys"`
 }
+
+// UserPasswordRequest is the HTTP request body for setting or clearing a user's
+// local password. Password is a pointer so an explicit empty string (clear the
+// password) can be distinguished from an absent field.
+// Note: proto counterpart is identityv1.SetUserPasswordRequest.
+type UserPasswordRequest struct {
+	Password *string `json:"password"`
+}

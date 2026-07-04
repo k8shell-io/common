@@ -151,9 +151,10 @@ import (
 
 // UserDataType identifies which slice of user data is being accessed in
 // user:read and user:write. UserDataTypeSudo, UserDataTypeLocked,
-// UserDataTypeOrg, and UserDataTypePosix are write-only values: user:read
-// never selects them individually, since UserDataTypeProfile already returns
-// the full profile view including sudo, locked, org, and uid/gid.
+// UserDataTypeOrg, UserDataTypePosix, and UserDataTypePassword are write-only
+// values: user:read never selects them individually, since UserDataTypeProfile
+// already returns the full profile view including sudo, locked, org, and uid/gid,
+// and a password is never readable at all.
 type UserDataType string
 
 const (
@@ -165,6 +166,7 @@ const (
 	UserDataTypeLocked      UserDataType = "locked"
 	UserDataTypeOrg         UserDataType = "org"
 	UserDataTypePosix       UserDataType = "posix"
+	UserDataTypePassword    UserDataType = "password"
 )
 
 // validateUserDataType checks the data types valid for user:read.
@@ -182,12 +184,12 @@ func validateUserDataType(dt UserDataType) error {
 // additionally includes the admin-managed sudo, locked, org, and posix groups.
 func validateUserWriteDataType(dt UserDataType) error {
 	switch dt {
-	case UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeSudo, UserDataTypeLocked, UserDataTypeOrg, UserDataTypePosix:
+	case UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeSudo, UserDataTypeLocked, UserDataTypeOrg, UserDataTypePosix, UserDataTypePassword:
 		return nil
 	default:
-		return fmt.Errorf("context \"data_type\" must be %q, %q, %q, %q, %q, %q, %q, or %q, got %q",
+		return fmt.Errorf("context \"data_type\" must be %q, %q, %q, %q, %q, %q, %q, %q, or %q, got %q",
 			UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles,
-			UserDataTypeSudo, UserDataTypeLocked, UserDataTypeOrg, UserDataTypePosix, dt)
+			UserDataTypeSudo, UserDataTypeLocked, UserDataTypeOrg, UserDataTypePosix, UserDataTypePassword, dt)
 	}
 }
 
