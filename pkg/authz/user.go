@@ -45,10 +45,11 @@ package authz
 //   id   username (required)
 //
 // Context
-//   data_type  profile | credentials | blueprints | roles  (required)
+//   data_type  profile | credentials | blueprints | roles | keys  (required)
 //              profile returns the full profile view, including the sudo and
 //              locked flags — those are not broken out into their own
 //              data_type for reads, only for writes (see user:write below).
+//              keys covers SSH public key listing, distinct from credentials.
 //
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
@@ -103,12 +104,13 @@ package authz
 //   id   username (required) — the user record being mutated
 //
 // Context
-//   data_type  profile | credentials | blueprints | roles | sudo | locked | org | posix  (required)
+//   data_type  profile | credentials | blueprints | roles | keys | sudo | locked | org | posix  (required)
 //              profile     — self-editable identity fields (e.g. fullname,
 //                            shell, email); subject may write its own record.
 //              credentials — auth credentials.
 //              blueprints  — blueprint access grants.
 //              roles       — role assignments.
+//              keys        — SSH public keys, distinct from credentials.
 //              sudo        — sudo flag; admin-managed only, never self, even
 //                            for an admin editing their own record.
 //              locked      — account lock/suspension flag; admin-managed
@@ -162,6 +164,7 @@ const (
 	UserDataTypeCredentials UserDataType = "credentials"
 	UserDataTypeBlueprints  UserDataType = "blueprints"
 	UserDataTypeRoles       UserDataType = "roles"
+	UserDataTypeKeys        UserDataType = "keys"
 	UserDataTypeSudo        UserDataType = "sudo"
 	UserDataTypeLocked      UserDataType = "locked"
 	UserDataTypeOrg         UserDataType = "org"
@@ -172,11 +175,11 @@ const (
 // validateUserDataType checks the data types valid for user:read.
 func validateUserDataType(dt UserDataType) error {
 	switch dt {
-	case UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles:
+	case UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys:
 		return nil
 	default:
-		return fmt.Errorf("context \"data_type\" must be %q, %q, %q, or %q, got %q",
-			UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, dt)
+		return fmt.Errorf("context \"data_type\" must be %q, %q, %q, %q, or %q, got %q",
+			UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys, dt)
 	}
 }
 
@@ -184,11 +187,11 @@ func validateUserDataType(dt UserDataType) error {
 // additionally includes the admin-managed sudo, locked, org, and posix groups.
 func validateUserWriteDataType(dt UserDataType) error {
 	switch dt {
-	case UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeSudo, UserDataTypeLocked, UserDataTypeOrg, UserDataTypePosix, UserDataTypePassword:
+	case UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys, UserDataTypeSudo, UserDataTypeLocked, UserDataTypeOrg, UserDataTypePosix, UserDataTypePassword:
 		return nil
 	default:
-		return fmt.Errorf("context \"data_type\" must be %q, %q, %q, %q, %q, %q, %q, %q, or %q, got %q",
-			UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles,
+		return fmt.Errorf("context \"data_type\" must be %q, %q, %q, %q, %q, %q, %q, %q, %q, or %q, got %q",
+			UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys,
 			UserDataTypeSudo, UserDataTypeLocked, UserDataTypeOrg, UserDataTypePosix, UserDataTypePassword, dt)
 	}
 }

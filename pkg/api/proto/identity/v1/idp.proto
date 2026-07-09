@@ -40,6 +40,9 @@ service IdentityProviderService {
   // GetBlueprintByUserStr retrieves a blueprint associated with a user string identifier.
   rpc GetBlueprintByUserStr(UserStr) returns (Blueprint);
 
+  // ListUserAuthKeys retrieves all SSH public keys registered for a user.
+  rpc ListUserAuthKeys(Username) returns (ListUserAuthKeysResponse);
+
   // ResolvePullRequestToRef resolves a pull request to a repository reference (e.g., branch or commit).
   rpc ResolvePullRequestToRef(RepoPullRequestRequest) returns (RepoRefResponse);
 }

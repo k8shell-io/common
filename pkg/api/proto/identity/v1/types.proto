@@ -130,10 +130,23 @@ message UserBlueprintsRequest {
   repeated string blueprints = 2;
 }
 
-// UserAuthKeysRequest carries a username and one or more SSH public keys to register or remove.
+// UserAuthKeysRequest carries a username and one or more SSH public keys to register.
 message UserAuthKeysRequest {
   string          username  = 1;
   repeated string auth_keys = 2;
+}
+
+// UserAuthKey represents a single SSH public key registered for a user.
+message UserAuthKey {
+  // key is the SSH public key material.
+  string key = 1;
+  // source identifies how the key was registered (e.g. "manual", "github").
+  string source = 2;
+}
+
+// ListUserAuthKeysResponse carries all SSH public keys registered for a user.
+message ListUserAuthKeysResponse {
+  repeated UserAuthKey auth_keys = 1;
 }
 
 // AccessTokenInfo carries access token metadata returned in list responses.

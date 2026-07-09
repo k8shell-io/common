@@ -24,13 +24,6 @@ const (
 // User roles
 type Role string
 
-const (
-	RoleAdmin          Role = "admin"
-	RoleOrgAdmin       Role = "org-admin"
-	RoleWorkspaceAdmin Role = "workspace-admin"
-	RoleWorkspaceUser  Role = "workspace-user"
-)
-
 var ErrMethodNotSupported = errors.New("method not supported")
 var ErrUserNotFound = errors.New("user not found")
 var ErrActiveSessionNotFound = errors.New("active session not found")
@@ -53,7 +46,6 @@ type User struct {
 	Fullname     string    `yaml:"fullname" json:"fullname"`
 	Email        string    `yaml:"email" json:"email"`
 	Password     string    `yaml:"password,omitempty" json:"password,omitempty"`
-	AuthKeys     []string  `yaml:"authKeys" json:"authKeys"`
 	Locked       bool      `yaml:"locked" json:"locked"`
 	Roles        []Role    `yaml:"roles" json:"roles"`
 	Blueprints   []string  `yaml:"blueprints" json:"blueprints"`
@@ -144,6 +136,15 @@ type UserToken struct {
 	Address  string `json:"address"`
 	Username string `json:"username"`
 	Token    string `json:"token"`
+}
+
+// UserAuthKey represents a single SSH public key registered for a user.
+// Index is the key's position in the list, used to identify it for removal
+// via RemoveUserAuthKey.
+type UserAuthKey struct {
+	Index  int    `json:"index"`
+	Key    string `json:"key"`
+	Source string `json:"source"`
 }
 
 // UserCredential represents external service credentials for a user

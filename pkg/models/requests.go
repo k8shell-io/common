@@ -12,7 +12,6 @@ type UserUpdateRequest struct {
 	Sudo       *bool    `json:"sudo,omitempty"`
 	Blueprints []string `json:"blueprints,omitempty"`
 	Locked     *bool    `json:"locked,omitempty"`
-	Keys       []string `json:"keys,omitempty"`
 	UID        *uint32  `json:"uid,omitempty"`
 	GID        *uint32  `json:"gid,omitempty"`
 }
@@ -29,7 +28,7 @@ type UserBlueprintsRequest struct {
 	Blueprints []string `json:"blueprints"`
 }
 
-// UserKeysRequest is the HTTP request body for adding or removing SSH public keys on a user.
+// UserKeysRequest is the HTTP request body for adding SSH public keys on a user.
 // Note: proto counterpart is identityv1.UserAuthKeysRequest.
 type UserKeysRequest struct {
 	Keys []string `json:"keys"`

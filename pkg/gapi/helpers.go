@@ -34,7 +34,6 @@ func UserToProto(u *models.User) *commonv1.User {
 		Fullname:     u.Fullname,
 		Email:        u.Email,
 		// Password is intentionally omitted: it is never populated in read responses.
-		AuthKeys:   u.AuthKeys,
 		Locked:     u.Locked,
 		Roles:      roles,
 		Blueprints: u.Blueprints,
@@ -70,7 +69,6 @@ func ProtoToUser(pb *commonv1.User) *models.User {
 		Email:    pb.GetEmail(),
 		Password: pb.GetPassword(),
 
-		AuthKeys:   pb.GetAuthKeys(),
 		Locked:     pb.GetLocked(),
 		Roles:      roles,
 		Blueprints: pb.GetBlueprints(),

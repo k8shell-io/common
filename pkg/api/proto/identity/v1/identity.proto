@@ -53,9 +53,6 @@ service IdentityService {
   // GetBlueprintByUserStr retrieves a blueprint associated with a user string identifier.
   rpc GetBlueprintByUserStr (UserStr) returns (Blueprint);
 
-  // ResolvePullRequestToRef resolves a pull request to a repository reference (e.g., branch or commit).
-  rpc ResolvePullRequestToRef (RepoPullRequestRequest) returns (RepoRefResponse);
-
   // ListUserCredentials retrieves all credentials associated with a user.
   rpc ListUserCredentials (Username) returns (ListUserCredentialsResponse);
 
@@ -81,11 +78,16 @@ service IdentityService {
   // RemoveUserBlueprints revokes access to one or more blueprints from a user.
   rpc RemoveUserBlueprints (UserBlueprintsRequest) returns (common.v1.User);
 
+  // ListUserAuthKeys retrieves all SSH public keys registered for a user, in
+  // either normal or digest-only form depending on the request's format field.
+  rpc ListUserAuthKeys (ListUserAuthKeysRequest) returns (ListUserAuthKeysResponse);
+
   // AddUserAuthKeys registers one or more SSH public keys for a user.
   rpc AddUserAuthKeys (UserAuthKeysRequest) returns (common.v1.User);
 
-  // RemoveUserAuthKeys removes one or more SSH public keys from a user.
-  rpc RemoveUserAuthKeys (UserAuthKeysRequest) returns (common.v1.User);
+  // RemoveUserAuthKey removes a single SSH public key from a user, identified
+  // by its index in the list returned by ListUserAuthKeys.
+  rpc RemoveUserAuthKey (RemoveUserAuthKeyRequest) returns (common.v1.User);
 
   // SetUserPassword sets or replaces a user's local password, used by AuthUserPassword.
   // The supplied password is bcrypt-hashed server-side before being persisted; it is
@@ -120,6 +122,28 @@ service IdentityService {
 
 // Messages
 
+// AuthKeyFormat selects how SSH public key material is returned by ListUserAuthKeys.
+enum AuthKeyFormat {
+  AUTH_KEY_FORMAT_UNSPECIFIED = 0;
+  // AUTH_KEY_FORMAT_NORMAL returns the full public key material.
+  AUTH_KEY_FORMAT_NORMAL = 1;
+  // AUTH_KEY_FORMAT_DIGEST returns only a digest (fingerprint) of the key.
+  AUTH_KEY_FORMAT_DIGEST = 2;
+}
+
+// ListUserAuthKeysRequest carries the username and desired key format for ListUserAuthKeys.
+message ListUserAuthKeysRequest {
+  string        username = 1;
+  AuthKeyFormat format   = 2;
+}
+
+// RemoveUserAuthKeyRequest identifies a single SSH public key to remove from a
+// user by its index in the list returned by ListUserAuthKeys.
+message RemoveUserAuthKeyRequest {
+  string username = 1;
+  uint32 index    = 2;
+}
+
 // UpdateUserRequest carries a partial update for a user record.
 // Only wrapper-typed fields that are set (non-nil) and repeated fields that
 // are non-empty will be applied; unset fields leave the existing value intact.
@@ -130,7 +154,6 @@ message UpdateUserRequest {
   google.protobuf.BoolValue   sudo       = 4;
   repeated string             blueprints = 5;
   google.protobuf.BoolValue   locked     = 6;
-  repeated string             auth_keys  = 7;
   google.protobuf.StringValue org        = 8;
   google.protobuf.StringValue email      = 9;
   google.protobuf.UInt32Value uid        = 10;

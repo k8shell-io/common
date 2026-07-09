@@ -35,8 +35,6 @@ message User {
   string email = 9;
   // password is the hashed password. Never populated in read responses.
   string password = 10;
-  // auth_keys lists the public SSH or API keys registered for this user.
-  repeated string auth_keys = 12;
   // locked indicates whether the account has been administratively locked.
   bool locked = 13;
   // roles lists the RBAC roles assigned to this user.
