@@ -62,6 +62,10 @@ service IdentityService {
   // AddUserCredential adds a new credential for a user.
   rpc AddUserCredential (common.v1.UserCredential) returns (AddUserCredentialResponse);
 
+  // CreateUser creates a new local user record. The supplied password, if any,
+  // is bcrypt-hashed server-side before being persisted, the same as SetUserPassword.
+  rpc CreateUser (CreateUserRequest) returns (common.v1.User);
+
   // UpdateUser applies a partial update to a user record. Only fields wrapped
   // in a value type (or repeated fields that are non-empty) are applied.
   rpc UpdateUser (UpdateUserRequest) returns (common.v1.User);
@@ -142,6 +146,24 @@ message ListUserAuthKeysRequest {
 message RemoveUserAuthKeyRequest {
   string username = 1;
   uint32 index    = 2;
+}
+
+// CreateUserRequest carries the fields for creating a new local user record.
+// The supplied password, if any, is bcrypt-hashed server-side before being
+// persisted; the raw value is never stored or returned.
+message CreateUserRequest {
+  string          username     = 1;
+  string          organization = 2;
+  string          fullname     = 3;
+  string          email        = 4;
+  string          password     = 5;
+  repeated string roles        = 6;
+  repeated string blueprints   = 7;
+  string          shell        = 8;
+  bool            sudo         = 9;
+  bool            locked       = 10;
+  uint32          uid          = 11;
+  uint32          gid          = 12;
 }
 
 // UpdateUserRequest carries a partial update for a user record.

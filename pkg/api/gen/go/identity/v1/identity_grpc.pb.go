@@ -37,6 +37,7 @@ const (
 	IdentityService_ListUserCredentials_FullMethodName           = "/identity.v1.IdentityService/ListUserCredentials"
 	IdentityService_GetUserCredential_FullMethodName             = "/identity.v1.IdentityService/GetUserCredential"
 	IdentityService_AddUserCredential_FullMethodName             = "/identity.v1.IdentityService/AddUserCredential"
+	IdentityService_CreateUser_FullMethodName                    = "/identity.v1.IdentityService/CreateUser"
 	IdentityService_UpdateUser_FullMethodName                    = "/identity.v1.IdentityService/UpdateUser"
 	IdentityService_AddUserRoles_FullMethodName                  = "/identity.v1.IdentityService/AddUserRoles"
 	IdentityService_RemoveUserRoles_FullMethodName               = "/identity.v1.IdentityService/RemoveUserRoles"
@@ -94,6 +95,9 @@ type IdentityServiceClient interface {
 	GetUserCredential(ctx context.Context, in *GetUserCredentialRequest, opts ...grpc.CallOption) (*v1.UserCredential, error)
 	// AddUserCredential adds a new credential for a user.
 	AddUserCredential(ctx context.Context, in *v1.UserCredential, opts ...grpc.CallOption) (*AddUserCredentialResponse, error)
+	// CreateUser creates a new local user record. The supplied password, if any,
+	// is bcrypt-hashed server-side before being persisted, the same as SetUserPassword.
+	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*v1.User, error)
 	// UpdateUser applies a partial update to a user record. Only fields wrapped
 	// in a value type (or repeated fields that are non-empty) are applied.
 	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*v1.User, error)
@@ -279,6 +283,16 @@ func (c *identityServiceClient) AddUserCredential(ctx context.Context, in *v1.Us
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AddUserCredentialResponse)
 	err := c.cc.Invoke(ctx, IdentityService_AddUserCredential_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*v1.User, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(v1.User)
+	err := c.cc.Invoke(ctx, IdentityService_CreateUser_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -484,6 +498,9 @@ type IdentityServiceServer interface {
 	GetUserCredential(context.Context, *GetUserCredentialRequest) (*v1.UserCredential, error)
 	// AddUserCredential adds a new credential for a user.
 	AddUserCredential(context.Context, *v1.UserCredential) (*AddUserCredentialResponse, error)
+	// CreateUser creates a new local user record. The supplied password, if any,
+	// is bcrypt-hashed server-side before being persisted, the same as SetUserPassword.
+	CreateUser(context.Context, *CreateUserRequest) (*v1.User, error)
 	// UpdateUser applies a partial update to a user record. Only fields wrapped
 	// in a value type (or repeated fields that are non-empty) are applied.
 	UpdateUser(context.Context, *UpdateUserRequest) (*v1.User, error)
@@ -576,6 +593,9 @@ func (UnimplementedIdentityServiceServer) GetUserCredential(context.Context, *Ge
 }
 func (UnimplementedIdentityServiceServer) AddUserCredential(context.Context, *v1.UserCredential) (*AddUserCredentialResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method AddUserCredential not implemented")
+}
+func (UnimplementedIdentityServiceServer) CreateUser(context.Context, *CreateUserRequest) (*v1.User, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateUser not implemented")
 }
 func (UnimplementedIdentityServiceServer) UpdateUser(context.Context, *UpdateUserRequest) (*v1.User, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateUser not implemented")
@@ -894,6 +914,24 @@ func _IdentityService_AddUserCredential_Handler(srv interface{}, ctx context.Con
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(IdentityServiceServer).AddUserCredential(ctx, req.(*v1.UserCredential))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_CreateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).CreateUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_CreateUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).CreateUser(ctx, req.(*CreateUserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1248,6 +1286,10 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddUserCredential",
 			Handler:    _IdentityService_AddUserCredential_Handler,
+		},
+		{
+			MethodName: "CreateUser",
+			Handler:    _IdentityService_CreateUser_Handler,
 		},
 		{
 			MethodName: "UpdateUser",

@@ -21,6 +21,29 @@ package authz
 //
 // ---
 //
+// Contract: user:create
+//
+// Resource  type="user"
+//   id   username          (required) — the username of the new user
+//   org  organization name (required) — the organization the new user will
+//                                        belong to
+//
+// Context   (none)
+//
+// Subject   the ADMIN performing the creation, injected by the backend from
+//           JWT claims (username, roles, email, ...) — NOT the new user being
+//           created, who has no token yet. This differs from user:onboard,
+//           where subject and resource are the same person (a user onboarding
+//           themselves), and from user:onboard's idp attribute, which doesn't
+//           apply here since the new user has no backing identity provider.
+//
+// Obligations
+//   sudo       true | false
+//   roles      JSON array of role name strings  (e.g. ["admin","dev"])
+//   blueprints JSON array of blueprint name strings  (e.g. ["bp1","bp2"])
+//
+// ---
+//
 // Contract: user:auth
 //
 // Resource  type="user"
@@ -328,6 +351,102 @@ func UserOnboardEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserOnboard
 // Implements EvalRequest.
 func (r *UserOnboardEvalRequest) Validate() error {
 	return validateUserResource(r.Resource)
+}
+
+// UserCreateEvalRequest is the validated, typed model for user:create policy
+// evaluation. Use NewUserCreateEvalRequest to start building, then chain
+// With* methods and call Build to get a validated instance.
+//
+// user:create authorizes an admin to create a brand-new local user record --
+// one with no backing identity provider, unlike user:onboard. The acting
+// principal is the admin performing the creation, not the new user, so
+// callers evaluate this with the admin's own token rather than one issued
+// for the user being created.
+type UserCreateEvalRequest struct {
+	Resource UserResource
+}
+
+var _ EvalRequest = (*UserCreateEvalRequest)(nil)
+
+// NewUserCreateEvalRequest begins building a UserCreateEvalRequest for the
+// given username. Chain With* methods to supply additional fields, then call
+// Build to validate and obtain the final struct.
+func NewUserCreateEvalRequest(username string) *UserCreateEvalRequest {
+	return &UserCreateEvalRequest{
+		Resource: UserResource{ID: username},
+	}
+}
+
+// WithOrg sets the organization the new user will belong to.
+func (r *UserCreateEvalRequest) WithOrg(org string) *UserCreateEvalRequest {
+	r.Resource.Org = org
+	return r
+}
+
+// Build validates the request and returns it if all constraints are satisfied.
+// It is the required terminator for the builder chain.
+func (r *UserCreateEvalRequest) Build() (*UserCreateEvalRequest, error) {
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// ToProto serializes the typed request into a gRPC EvaluateRequest, attaching
+// the supplied JWT token.
+// Implements EvalRequest.
+func (r *UserCreateEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
+	return &authzv1.EvaluateRequest{
+		Token:  token,
+		Action: "user:create",
+		Resource: &authzv1.Resource{
+			Type: "user",
+			Id:   r.Resource.ID,
+			Attributes: map[string]string{
+				"org": r.Resource.Org,
+			},
+		},
+	}
+}
+
+// UserCreateEvalRequestFromProto converts a gRPC EvaluateRequest into a
+// validated UserCreateEvalRequest. Returns an error if the request does not
+// conform to the user:create contract.
+func UserCreateEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserCreateEvalRequest, error) {
+	if req == nil {
+		return nil, fmt.Errorf("user:create: EvaluateRequest is nil")
+	}
+	if req.Action != "user:create" {
+		return nil, fmt.Errorf("user:create: action must be \"user:create\", got %q", req.Action)
+	}
+	if req.Resource == nil {
+		return nil, fmt.Errorf("user:create: resource is nil")
+	}
+	if req.Resource.Type != "user" {
+		return nil, fmt.Errorf("user:create: resource type must be \"user\", got %q", req.Resource.Type)
+	}
+	r := &UserCreateEvalRequest{
+		Resource: UserResource{
+			ID:  req.Resource.Id,
+			Org: req.Resource.Attributes["org"],
+		},
+	}
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// Validate checks the request against the user:create contract.
+// Implements EvalRequest.
+func (r *UserCreateEvalRequest) Validate() error {
+	if r.Resource.ID == "" {
+		return fmt.Errorf("user:create: resource ID (username) is required")
+	}
+	if r.Resource.Org == "" {
+		return fmt.Errorf("user:create: resource attribute \"org\" is required")
+	}
+	return nil
 }
 
 // UserAuthEvalRequest is the validated, typed model for user:auth policy
@@ -922,7 +1041,7 @@ func ParseExpiresInObligation(obligations map[string]string) (ExpiresInObligatio
 const (
 	// ObligationKeySudo is the key the policy engine writes when expressing a
 	// sudo obligation. The enforcer reads this key and applies the value to the
-	// user record before completing onboarding.
+	// user record before completing onboarding or admin-driven creation.
 	ObligationKeySudo = "sudo"
 
 	// ObligationSudoTrue is the obligation value that grants sudo access.
@@ -933,7 +1052,8 @@ const (
 )
 
 // SudoObligation is the typed representation of the "sudo" obligation key
-// returned by the policy engine in a PolicyResult for user:onboard.
+// returned by the policy engine in a PolicyResult for user:onboard or
+// user:create.
 type SudoObligation struct {
 	// Granted is true when the policy grants sudo access, false when it denies it.
 	Granted bool
@@ -953,12 +1073,14 @@ func ParseSudoObligation(obligations map[string]string) (SudoObligation, bool) {
 
 const (
 	// ObligationKeyRoles is the key the policy engine writes to assign roles
-	// during onboarding. The value is a JSON-encoded array of role name strings.
+	// during onboarding or admin-driven creation. The value is a JSON-encoded
+	// array of role name strings.
 	ObligationKeyRoles = "roles"
 )
 
 // RolesObligation is the typed representation of the "roles" obligation key
-// returned by the policy engine in a PolicyResult for user:onboard.
+// returned by the policy engine in a PolicyResult for user:onboard or
+// user:create.
 type RolesObligation struct {
 	// Roles is the list of roles the policy assigns to the user.
 	Roles []models.Role
@@ -988,14 +1110,15 @@ func ParseRolesObligation(obligations map[string]string) (RolesObligation, bool)
 
 const (
 	// ObligationKeyBlueprints is the key the policy engine writes to assign
-	// allowed blueprints during onboarding. The value is a comma-separated
-	// list of blueprint names; "*" grants access to all blueprints.
+	// allowed blueprints during onboarding or admin-driven creation. The value
+	// is a comma-separated list of blueprint names; "*" grants access to all
+	// blueprints.
 	ObligationKeyBlueprints = "blueprints"
 )
 
 // BlueprintsObligation is the typed representation of the "blueprints"
 // obligation key returned by the policy engine in a PolicyResult for
-// user:onboard.
+// user:onboard or user:create.
 type BlueprintsObligation struct {
 	// Blueprints is the list of blueprint names the policy assigns to the user.
 	// An entry of "*" grants access to all blueprints.

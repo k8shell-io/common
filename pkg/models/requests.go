@@ -1,5 +1,23 @@
 package models
 
+// UserCreateRequest is the HTTP request body for POST /users, which creates a
+// new local user record with no backing identity provider (unlike onboarding).
+// Note: proto counterpart is identityv1.CreateUserRequest (different wire format, no json tags).
+type UserCreateRequest struct {
+	Username   string   `json:"username"`
+	Org        string   `json:"org"`
+	Fullname   string   `json:"fullname,omitempty"`
+	Email      string   `json:"email,omitempty"`
+	Password   string   `json:"password,omitempty"`
+	Roles      []Role   `json:"roles,omitempty"`
+	Blueprints []string `json:"blueprints,omitempty"`
+	Shell      string   `json:"shell,omitempty"`
+	Sudo       bool     `json:"sudo,omitempty"`
+	Locked     bool     `json:"locked,omitempty"`
+	UID        uint32   `json:"uid,omitempty"`
+	GID        uint32   `json:"gid,omitempty"`
+}
+
 // UserUpdateRequest is the HTTP request body for PATCH /users/{username}.
 // Only non-nil pointer fields and non-empty slices are applied (PATCH semantics).
 // Note: proto counterpart is identityv1.UpdateUserRequest (different wire format, no json tags).
