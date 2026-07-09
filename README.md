@@ -61,6 +61,7 @@ Shared message types used across services are defined in `common/v1/common.proto
 | `user:list` | Identity service | Controls whether a caller may enumerate users |
 | `token:create` | Identity service | Can restrict PAT scopes or cap maximum expiry |
 | `token:read` | Identity service | Controls access to PAT metadata |
+| `user:delete` | Identity service | Authorizes an admin to permanently remove a user record |
 
 Obligations returned by the policy engine (additional scopes, expiry caps, role assignments) are parsed by helpers in this package into strongly typed Go structs.
 

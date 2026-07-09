@@ -70,6 +70,10 @@ service IdentityService {
   // in a value type (or repeated fields that are non-empty) are applied.
   rpc UpdateUser (UpdateUserRequest) returns (common.v1.User);
 
+  // DeleteUser permanently removes a user record by username. Credentials and
+  // access tokens owned by the user are removed along with it (ON DELETE CASCADE).
+  rpc DeleteUser (DeleteUserRequest) returns (DeleteUserResponse);
+
   // AddUserRoles adds one or more roles to a user without affecting existing roles.
   rpc AddUserRoles (UserRolesRequest) returns (common.v1.User);
 
@@ -181,6 +185,16 @@ message UpdateUserRequest {
   google.protobuf.UInt32Value uid        = 10;
   google.protobuf.UInt32Value gid        = 11;
   google.protobuf.StringValue shell      = 12;
+}
+
+// DeleteUserRequest identifies the user record to delete by username.
+message DeleteUserRequest {
+  string username = 1;
+}
+
+// DeleteUserResponse indicates whether the deletion was successful.
+message DeleteUserResponse {
+  bool success = 1;
 }
 
 // SetUserPasswordRequest carries a new plaintext password to set for a user.

@@ -39,6 +39,7 @@ const (
 	IdentityService_AddUserCredential_FullMethodName             = "/identity.v1.IdentityService/AddUserCredential"
 	IdentityService_CreateUser_FullMethodName                    = "/identity.v1.IdentityService/CreateUser"
 	IdentityService_UpdateUser_FullMethodName                    = "/identity.v1.IdentityService/UpdateUser"
+	IdentityService_DeleteUser_FullMethodName                    = "/identity.v1.IdentityService/DeleteUser"
 	IdentityService_AddUserRoles_FullMethodName                  = "/identity.v1.IdentityService/AddUserRoles"
 	IdentityService_RemoveUserRoles_FullMethodName               = "/identity.v1.IdentityService/RemoveUserRoles"
 	IdentityService_AddUserBlueprints_FullMethodName             = "/identity.v1.IdentityService/AddUserBlueprints"
@@ -101,6 +102,9 @@ type IdentityServiceClient interface {
 	// UpdateUser applies a partial update to a user record. Only fields wrapped
 	// in a value type (or repeated fields that are non-empty) are applied.
 	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*v1.User, error)
+	// DeleteUser permanently removes a user record by username. Credentials and
+	// access tokens owned by the user are removed along with it (ON DELETE CASCADE).
+	DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error)
 	// AddUserRoles adds one or more roles to a user without affecting existing roles.
 	AddUserRoles(ctx context.Context, in *UserRolesRequest, opts ...grpc.CallOption) (*v1.User, error)
 	// RemoveUserRoles removes one or more roles from a user.
@@ -309,6 +313,16 @@ func (c *identityServiceClient) UpdateUser(ctx context.Context, in *UpdateUserRe
 	return out, nil
 }
 
+func (c *identityServiceClient) DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteUserResponse)
+	err := c.cc.Invoke(ctx, IdentityService_DeleteUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *identityServiceClient) AddUserRoles(ctx context.Context, in *UserRolesRequest, opts ...grpc.CallOption) (*v1.User, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(v1.User)
@@ -504,6 +518,9 @@ type IdentityServiceServer interface {
 	// UpdateUser applies a partial update to a user record. Only fields wrapped
 	// in a value type (or repeated fields that are non-empty) are applied.
 	UpdateUser(context.Context, *UpdateUserRequest) (*v1.User, error)
+	// DeleteUser permanently removes a user record by username. Credentials and
+	// access tokens owned by the user are removed along with it (ON DELETE CASCADE).
+	DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error)
 	// AddUserRoles adds one or more roles to a user without affecting existing roles.
 	AddUserRoles(context.Context, *UserRolesRequest) (*v1.User, error)
 	// RemoveUserRoles removes one or more roles from a user.
@@ -599,6 +616,9 @@ func (UnimplementedIdentityServiceServer) CreateUser(context.Context, *CreateUse
 }
 func (UnimplementedIdentityServiceServer) UpdateUser(context.Context, *UpdateUserRequest) (*v1.User, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateUser not implemented")
+}
+func (UnimplementedIdentityServiceServer) DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteUser not implemented")
 }
 func (UnimplementedIdentityServiceServer) AddUserRoles(context.Context, *UserRolesRequest) (*v1.User, error) {
 	return nil, status.Error(codes.Unimplemented, "method AddUserRoles not implemented")
@@ -954,6 +974,24 @@ func _IdentityService_UpdateUser_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IdentityService_DeleteUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).DeleteUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_DeleteUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).DeleteUser(ctx, req.(*DeleteUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _IdentityService_AddUserRoles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UserRolesRequest)
 	if err := dec(in); err != nil {
@@ -1294,6 +1332,10 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateUser",
 			Handler:    _IdentityService_UpdateUser_Handler,
+		},
+		{
+			MethodName: "DeleteUser",
+			Handler:    _IdentityService_DeleteUser_Handler,
 		},
 		{
 			MethodName: "AddUserRoles",

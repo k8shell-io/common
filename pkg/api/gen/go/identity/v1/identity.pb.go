@@ -449,6 +449,96 @@ func (x *UpdateUserRequest) GetShell() *wrapperspb.StringValue {
 	return nil
 }
 
+// DeleteUserRequest identifies the user record to delete by username.
+type DeleteUserRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Username      string                 `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteUserRequest) Reset() {
+	*x = DeleteUserRequest{}
+	mi := &file_identity_v1_identity_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteUserRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteUserRequest) ProtoMessage() {}
+
+func (x *DeleteUserRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteUserRequest.ProtoReflect.Descriptor instead.
+func (*DeleteUserRequest) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *DeleteUserRequest) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+// DeleteUserResponse indicates whether the deletion was successful.
+type DeleteUserResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteUserResponse) Reset() {
+	*x = DeleteUserResponse{}
+	mi := &file_identity_v1_identity_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteUserResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteUserResponse) ProtoMessage() {}
+
+func (x *DeleteUserResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteUserResponse.ProtoReflect.Descriptor instead.
+func (*DeleteUserResponse) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *DeleteUserResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
 // SetUserPasswordRequest carries a new plaintext password to set for a user.
 // The server hashes the password with bcrypt before persisting it; the raw
 // value is never stored or returned.
@@ -462,7 +552,7 @@ type SetUserPasswordRequest struct {
 
 func (x *SetUserPasswordRequest) Reset() {
 	*x = SetUserPasswordRequest{}
-	mi := &file_identity_v1_identity_proto_msgTypes[4]
+	mi := &file_identity_v1_identity_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -474,7 +564,7 @@ func (x *SetUserPasswordRequest) String() string {
 func (*SetUserPasswordRequest) ProtoMessage() {}
 
 func (x *SetUserPasswordRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[4]
+	mi := &file_identity_v1_identity_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -487,7 +577,7 @@ func (x *SetUserPasswordRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetUserPasswordRequest.ProtoReflect.Descriptor instead.
 func (*SetUserPasswordRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{4}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *SetUserPasswordRequest) GetUsername() string {
@@ -515,7 +605,7 @@ type IssueUserTokenRequest struct {
 
 func (x *IssueUserTokenRequest) Reset() {
 	*x = IssueUserTokenRequest{}
-	mi := &file_identity_v1_identity_proto_msgTypes[5]
+	mi := &file_identity_v1_identity_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -527,7 +617,7 @@ func (x *IssueUserTokenRequest) String() string {
 func (*IssueUserTokenRequest) ProtoMessage() {}
 
 func (x *IssueUserTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[5]
+	mi := &file_identity_v1_identity_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -540,7 +630,7 @@ func (x *IssueUserTokenRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IssueUserTokenRequest.ProtoReflect.Descriptor instead.
 func (*IssueUserTokenRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{5}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *IssueUserTokenRequest) GetUsername() string {
@@ -567,7 +657,7 @@ type IssueUserTokenResponse struct {
 
 func (x *IssueUserTokenResponse) Reset() {
 	*x = IssueUserTokenResponse{}
-	mi := &file_identity_v1_identity_proto_msgTypes[6]
+	mi := &file_identity_v1_identity_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -579,7 +669,7 @@ func (x *IssueUserTokenResponse) String() string {
 func (*IssueUserTokenResponse) ProtoMessage() {}
 
 func (x *IssueUserTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[6]
+	mi := &file_identity_v1_identity_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -592,7 +682,7 @@ func (x *IssueUserTokenResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IssueUserTokenResponse.ProtoReflect.Descriptor instead.
 func (*IssueUserTokenResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{6}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *IssueUserTokenResponse) GetUserToken() string {
@@ -614,7 +704,7 @@ type CompleteUserDeviceFlowRequest struct {
 
 func (x *CompleteUserDeviceFlowRequest) Reset() {
 	*x = CompleteUserDeviceFlowRequest{}
-	mi := &file_identity_v1_identity_proto_msgTypes[7]
+	mi := &file_identity_v1_identity_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -626,7 +716,7 @@ func (x *CompleteUserDeviceFlowRequest) String() string {
 func (*CompleteUserDeviceFlowRequest) ProtoMessage() {}
 
 func (x *CompleteUserDeviceFlowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[7]
+	mi := &file_identity_v1_identity_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -639,7 +729,7 @@ func (x *CompleteUserDeviceFlowRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CompleteUserDeviceFlowRequest.ProtoReflect.Descriptor instead.
 func (*CompleteUserDeviceFlowRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{7}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *CompleteUserDeviceFlowRequest) GetProvider() string {
@@ -666,7 +756,7 @@ type CompleteUserDeviceFlowResponse struct {
 
 func (x *CompleteUserDeviceFlowResponse) Reset() {
 	*x = CompleteUserDeviceFlowResponse{}
-	mi := &file_identity_v1_identity_proto_msgTypes[8]
+	mi := &file_identity_v1_identity_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -678,7 +768,7 @@ func (x *CompleteUserDeviceFlowResponse) String() string {
 func (*CompleteUserDeviceFlowResponse) ProtoMessage() {}
 
 func (x *CompleteUserDeviceFlowResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[8]
+	mi := &file_identity_v1_identity_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -691,7 +781,7 @@ func (x *CompleteUserDeviceFlowResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CompleteUserDeviceFlowResponse.ProtoReflect.Descriptor instead.
 func (*CompleteUserDeviceFlowResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{8}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{10}
 }
 
 // CompleteUserWebFlowResponse carries the user token issued upon successful completion of the web flow onboarding process.
@@ -708,7 +798,7 @@ type CompleteUserWebFlowResponse struct {
 
 func (x *CompleteUserWebFlowResponse) Reset() {
 	*x = CompleteUserWebFlowResponse{}
-	mi := &file_identity_v1_identity_proto_msgTypes[9]
+	mi := &file_identity_v1_identity_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -720,7 +810,7 @@ func (x *CompleteUserWebFlowResponse) String() string {
 func (*CompleteUserWebFlowResponse) ProtoMessage() {}
 
 func (x *CompleteUserWebFlowResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[9]
+	mi := &file_identity_v1_identity_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -733,7 +823,7 @@ func (x *CompleteUserWebFlowResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CompleteUserWebFlowResponse.ProtoReflect.Descriptor instead.
 func (*CompleteUserWebFlowResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{9}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *CompleteUserWebFlowResponse) GetUserToken() string {
@@ -774,7 +864,7 @@ type ListUserCredentialsResponse struct {
 
 func (x *ListUserCredentialsResponse) Reset() {
 	*x = ListUserCredentialsResponse{}
-	mi := &file_identity_v1_identity_proto_msgTypes[10]
+	mi := &file_identity_v1_identity_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -786,7 +876,7 @@ func (x *ListUserCredentialsResponse) String() string {
 func (*ListUserCredentialsResponse) ProtoMessage() {}
 
 func (x *ListUserCredentialsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[10]
+	mi := &file_identity_v1_identity_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -799,7 +889,7 @@ func (x *ListUserCredentialsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListUserCredentialsResponse.ProtoReflect.Descriptor instead.
 func (*ListUserCredentialsResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{10}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ListUserCredentialsResponse) GetCredentials() []*v1.UserCredential {
@@ -821,7 +911,7 @@ type GetUserCredentialRequest struct {
 
 func (x *GetUserCredentialRequest) Reset() {
 	*x = GetUserCredentialRequest{}
-	mi := &file_identity_v1_identity_proto_msgTypes[11]
+	mi := &file_identity_v1_identity_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -833,7 +923,7 @@ func (x *GetUserCredentialRequest) String() string {
 func (*GetUserCredentialRequest) ProtoMessage() {}
 
 func (x *GetUserCredentialRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[11]
+	mi := &file_identity_v1_identity_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -846,7 +936,7 @@ func (x *GetUserCredentialRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserCredentialRequest.ProtoReflect.Descriptor instead.
 func (*GetUserCredentialRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{11}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *GetUserCredentialRequest) GetUsername() string {
@@ -880,7 +970,7 @@ type AddUserCredentialResponse struct {
 
 func (x *AddUserCredentialResponse) Reset() {
 	*x = AddUserCredentialResponse{}
-	mi := &file_identity_v1_identity_proto_msgTypes[12]
+	mi := &file_identity_v1_identity_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -892,7 +982,7 @@ func (x *AddUserCredentialResponse) String() string {
 func (*AddUserCredentialResponse) ProtoMessage() {}
 
 func (x *AddUserCredentialResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[12]
+	mi := &file_identity_v1_identity_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -905,7 +995,7 @@ func (x *AddUserCredentialResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddUserCredentialResponse.ProtoReflect.Descriptor instead.
 func (*AddUserCredentialResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{12}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *AddUserCredentialResponse) GetCredential() *v1.UserCredential {
@@ -925,7 +1015,7 @@ type UpdateUserCredentialResponse struct {
 
 func (x *UpdateUserCredentialResponse) Reset() {
 	*x = UpdateUserCredentialResponse{}
-	mi := &file_identity_v1_identity_proto_msgTypes[13]
+	mi := &file_identity_v1_identity_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -937,7 +1027,7 @@ func (x *UpdateUserCredentialResponse) String() string {
 func (*UpdateUserCredentialResponse) ProtoMessage() {}
 
 func (x *UpdateUserCredentialResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[13]
+	mi := &file_identity_v1_identity_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -950,7 +1040,7 @@ func (x *UpdateUserCredentialResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateUserCredentialResponse.ProtoReflect.Descriptor instead.
 func (*UpdateUserCredentialResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{13}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *UpdateUserCredentialResponse) GetCredential() *v1.UserCredential {
@@ -970,7 +1060,7 @@ type DeleteUserCredentialRequest struct {
 
 func (x *DeleteUserCredentialRequest) Reset() {
 	*x = DeleteUserCredentialRequest{}
-	mi := &file_identity_v1_identity_proto_msgTypes[14]
+	mi := &file_identity_v1_identity_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -982,7 +1072,7 @@ func (x *DeleteUserCredentialRequest) String() string {
 func (*DeleteUserCredentialRequest) ProtoMessage() {}
 
 func (x *DeleteUserCredentialRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[14]
+	mi := &file_identity_v1_identity_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -995,7 +1085,7 @@ func (x *DeleteUserCredentialRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteUserCredentialRequest.ProtoReflect.Descriptor instead.
 func (*DeleteUserCredentialRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{14}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *DeleteUserCredentialRequest) GetId() uint32 {
@@ -1015,7 +1105,7 @@ type DeleteUserCredentialResponse struct {
 
 func (x *DeleteUserCredentialResponse) Reset() {
 	*x = DeleteUserCredentialResponse{}
-	mi := &file_identity_v1_identity_proto_msgTypes[15]
+	mi := &file_identity_v1_identity_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1027,7 +1117,7 @@ func (x *DeleteUserCredentialResponse) String() string {
 func (*DeleteUserCredentialResponse) ProtoMessage() {}
 
 func (x *DeleteUserCredentialResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[15]
+	mi := &file_identity_v1_identity_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1040,7 +1130,7 @@ func (x *DeleteUserCredentialResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteUserCredentialResponse.ProtoReflect.Descriptor instead.
 func (*DeleteUserCredentialResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{15}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *DeleteUserCredentialResponse) GetSuccess() bool {
@@ -1059,7 +1149,7 @@ type GetAvailableIdentityProvidersRequest struct {
 
 func (x *GetAvailableIdentityProvidersRequest) Reset() {
 	*x = GetAvailableIdentityProvidersRequest{}
-	mi := &file_identity_v1_identity_proto_msgTypes[16]
+	mi := &file_identity_v1_identity_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1071,7 +1161,7 @@ func (x *GetAvailableIdentityProvidersRequest) String() string {
 func (*GetAvailableIdentityProvidersRequest) ProtoMessage() {}
 
 func (x *GetAvailableIdentityProvidersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[16]
+	mi := &file_identity_v1_identity_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1084,7 +1174,7 @@ func (x *GetAvailableIdentityProvidersRequest) ProtoReflect() protoreflect.Messa
 
 // Deprecated: Use GetAvailableIdentityProvidersRequest.ProtoReflect.Descriptor instead.
 func (*GetAvailableIdentityProvidersRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{16}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{18}
 }
 
 // GetAvailableIdentityProvidersResponse carries the list of available identity providers.
@@ -1097,7 +1187,7 @@ type GetAvailableIdentityProvidersResponse struct {
 
 func (x *GetAvailableIdentityProvidersResponse) Reset() {
 	*x = GetAvailableIdentityProvidersResponse{}
-	mi := &file_identity_v1_identity_proto_msgTypes[17]
+	mi := &file_identity_v1_identity_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1109,7 +1199,7 @@ func (x *GetAvailableIdentityProvidersResponse) String() string {
 func (*GetAvailableIdentityProvidersResponse) ProtoMessage() {}
 
 func (x *GetAvailableIdentityProvidersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[17]
+	mi := &file_identity_v1_identity_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1122,7 +1212,7 @@ func (x *GetAvailableIdentityProvidersResponse) ProtoReflect() protoreflect.Mess
 
 // Deprecated: Use GetAvailableIdentityProvidersResponse.ProtoReflect.Descriptor instead.
 func (*GetAvailableIdentityProvidersResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{17}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *GetAvailableIdentityProvidersResponse) GetProviders() []*IdentityProviderInfo {
@@ -1145,7 +1235,7 @@ type CreateAccessTokenRequest struct {
 
 func (x *CreateAccessTokenRequest) Reset() {
 	*x = CreateAccessTokenRequest{}
-	mi := &file_identity_v1_identity_proto_msgTypes[18]
+	mi := &file_identity_v1_identity_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1157,7 +1247,7 @@ func (x *CreateAccessTokenRequest) String() string {
 func (*CreateAccessTokenRequest) ProtoMessage() {}
 
 func (x *CreateAccessTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[18]
+	mi := &file_identity_v1_identity_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1170,7 +1260,7 @@ func (x *CreateAccessTokenRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateAccessTokenRequest.ProtoReflect.Descriptor instead.
 func (*CreateAccessTokenRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{18}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *CreateAccessTokenRequest) GetUsername() string {
@@ -1213,7 +1303,7 @@ type CreateAccessTokenResponse struct {
 
 func (x *CreateAccessTokenResponse) Reset() {
 	*x = CreateAccessTokenResponse{}
-	mi := &file_identity_v1_identity_proto_msgTypes[19]
+	mi := &file_identity_v1_identity_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1225,7 +1315,7 @@ func (x *CreateAccessTokenResponse) String() string {
 func (*CreateAccessTokenResponse) ProtoMessage() {}
 
 func (x *CreateAccessTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[19]
+	mi := &file_identity_v1_identity_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1238,7 +1328,7 @@ func (x *CreateAccessTokenResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateAccessTokenResponse.ProtoReflect.Descriptor instead.
 func (*CreateAccessTokenResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{19}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *CreateAccessTokenResponse) GetId() int64 {
@@ -1265,7 +1355,7 @@ type ListAccessTokensResponse struct {
 
 func (x *ListAccessTokensResponse) Reset() {
 	*x = ListAccessTokensResponse{}
-	mi := &file_identity_v1_identity_proto_msgTypes[20]
+	mi := &file_identity_v1_identity_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1277,7 +1367,7 @@ func (x *ListAccessTokensResponse) String() string {
 func (*ListAccessTokensResponse) ProtoMessage() {}
 
 func (x *ListAccessTokensResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[20]
+	mi := &file_identity_v1_identity_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1290,7 +1380,7 @@ func (x *ListAccessTokensResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAccessTokensResponse.ProtoReflect.Descriptor instead.
 func (*ListAccessTokensResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{20}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *ListAccessTokensResponse) GetTokens() []*AccessTokenInfo {
@@ -1311,7 +1401,7 @@ type RevokeAccessTokenRequest struct {
 
 func (x *RevokeAccessTokenRequest) Reset() {
 	*x = RevokeAccessTokenRequest{}
-	mi := &file_identity_v1_identity_proto_msgTypes[21]
+	mi := &file_identity_v1_identity_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1323,7 +1413,7 @@ func (x *RevokeAccessTokenRequest) String() string {
 func (*RevokeAccessTokenRequest) ProtoMessage() {}
 
 func (x *RevokeAccessTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[21]
+	mi := &file_identity_v1_identity_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1336,7 +1426,7 @@ func (x *RevokeAccessTokenRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RevokeAccessTokenRequest.ProtoReflect.Descriptor instead.
 func (*RevokeAccessTokenRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{21}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *RevokeAccessTokenRequest) GetId() int64 {
@@ -1363,7 +1453,7 @@ type RevokeAccessTokenResponse struct {
 
 func (x *RevokeAccessTokenResponse) Reset() {
 	*x = RevokeAccessTokenResponse{}
-	mi := &file_identity_v1_identity_proto_msgTypes[22]
+	mi := &file_identity_v1_identity_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1375,7 +1465,7 @@ func (x *RevokeAccessTokenResponse) String() string {
 func (*RevokeAccessTokenResponse) ProtoMessage() {}
 
 func (x *RevokeAccessTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[22]
+	mi := &file_identity_v1_identity_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1388,7 +1478,7 @@ func (x *RevokeAccessTokenResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RevokeAccessTokenResponse.ProtoReflect.Descriptor instead.
 func (*RevokeAccessTokenResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{22}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *RevokeAccessTokenResponse) GetSuccess() bool {
@@ -1409,7 +1499,7 @@ type ResolveAccessTokenRequest struct {
 
 func (x *ResolveAccessTokenRequest) Reset() {
 	*x = ResolveAccessTokenRequest{}
-	mi := &file_identity_v1_identity_proto_msgTypes[23]
+	mi := &file_identity_v1_identity_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1421,7 +1511,7 @@ func (x *ResolveAccessTokenRequest) String() string {
 func (*ResolveAccessTokenRequest) ProtoMessage() {}
 
 func (x *ResolveAccessTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[23]
+	mi := &file_identity_v1_identity_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1434,7 +1524,7 @@ func (x *ResolveAccessTokenRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolveAccessTokenRequest.ProtoReflect.Descriptor instead.
 func (*ResolveAccessTokenRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{23}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *ResolveAccessTokenRequest) GetToken() string {
@@ -1466,7 +1556,7 @@ type ResolveAccessTokenResponse struct {
 
 func (x *ResolveAccessTokenResponse) Reset() {
 	*x = ResolveAccessTokenResponse{}
-	mi := &file_identity_v1_identity_proto_msgTypes[24]
+	mi := &file_identity_v1_identity_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1478,7 +1568,7 @@ func (x *ResolveAccessTokenResponse) String() string {
 func (*ResolveAccessTokenResponse) ProtoMessage() {}
 
 func (x *ResolveAccessTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[24]
+	mi := &file_identity_v1_identity_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1491,7 +1581,7 @@ func (x *ResolveAccessTokenResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolveAccessTokenResponse.ProtoReflect.Descriptor instead.
 func (*ResolveAccessTokenResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{24}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *ResolveAccessTokenResponse) GetUser() *v1.User {
@@ -1556,7 +1646,11 @@ const file_identity_v1_identity_proto_rawDesc = "" +
 	"\x03uid\x18\n" +
 	" \x01(\v2\x1c.google.protobuf.UInt32ValueR\x03uid\x12.\n" +
 	"\x03gid\x18\v \x01(\v2\x1c.google.protobuf.UInt32ValueR\x03gid\x122\n" +
-	"\x05shell\x18\f \x01(\v2\x1c.google.protobuf.StringValueR\x05shell\"P\n" +
+	"\x05shell\x18\f \x01(\v2\x1c.google.protobuf.StringValueR\x05shell\"/\n" +
+	"\x11DeleteUserRequest\x12\x1a\n" +
+	"\busername\x18\x01 \x01(\tR\busername\".\n" +
+	"\x12DeleteUserResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"P\n" +
 	"\x16SetUserPasswordRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\"K\n" +
@@ -1624,7 +1718,7 @@ const file_identity_v1_identity_proto_rawDesc = "" +
 	"\rAuthKeyFormat\x12\x1f\n" +
 	"\x1bAUTH_KEY_FORMAT_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16AUTH_KEY_FORMAT_NORMAL\x10\x01\x12\x1a\n" +
-	"\x16AUTH_KEY_FORMAT_DIGEST\x10\x022\x89\x15\n" +
+	"\x16AUTH_KEY_FORMAT_DIGEST\x10\x022\xd8\x15\n" +
 	"\x0fIdentityService\x129\n" +
 	"\bFindUser\x12\x1c.identity.v1.FindUserRequest\x1a\x0f.common.v1.User\x12?\n" +
 	"\bGetUsers\x12\x1c.identity.v1.GetUsersRequest\x1a\x15.identity.v1.UserList\x12Y\n" +
@@ -1643,7 +1737,9 @@ const file_identity_v1_identity_proto_rawDesc = "" +
 	"\n" +
 	"CreateUser\x12\x1e.identity.v1.CreateUserRequest\x1a\x0f.common.v1.User\x12=\n" +
 	"\n" +
-	"UpdateUser\x12\x1e.identity.v1.UpdateUserRequest\x1a\x0f.common.v1.User\x12>\n" +
+	"UpdateUser\x12\x1e.identity.v1.UpdateUserRequest\x1a\x0f.common.v1.User\x12M\n" +
+	"\n" +
+	"DeleteUser\x12\x1e.identity.v1.DeleteUserRequest\x1a\x1f.identity.v1.DeleteUserResponse\x12>\n" +
 	"\fAddUserRoles\x12\x1d.identity.v1.UserRolesRequest\x1a\x0f.common.v1.User\x12A\n" +
 	"\x0fRemoveUserRoles\x12\x1d.identity.v1.UserRolesRequest\x1a\x0f.common.v1.User\x12H\n" +
 	"\x11AddUserBlueprints\x12\".identity.v1.UserBlueprintsRequest\x1a\x0f.common.v1.User\x12K\n" +
@@ -1673,145 +1769,149 @@ func file_identity_v1_identity_proto_rawDescGZIP() []byte {
 }
 
 var file_identity_v1_identity_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_identity_v1_identity_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
+var file_identity_v1_identity_proto_msgTypes = make([]protoimpl.MessageInfo, 27)
 var file_identity_v1_identity_proto_goTypes = []any{
 	(AuthKeyFormat)(0),                            // 0: identity.v1.AuthKeyFormat
 	(*ListUserAuthKeysRequest)(nil),               // 1: identity.v1.ListUserAuthKeysRequest
 	(*RemoveUserAuthKeyRequest)(nil),              // 2: identity.v1.RemoveUserAuthKeyRequest
 	(*CreateUserRequest)(nil),                     // 3: identity.v1.CreateUserRequest
 	(*UpdateUserRequest)(nil),                     // 4: identity.v1.UpdateUserRequest
-	(*SetUserPasswordRequest)(nil),                // 5: identity.v1.SetUserPasswordRequest
-	(*IssueUserTokenRequest)(nil),                 // 6: identity.v1.IssueUserTokenRequest
-	(*IssueUserTokenResponse)(nil),                // 7: identity.v1.IssueUserTokenResponse
-	(*CompleteUserDeviceFlowRequest)(nil),         // 8: identity.v1.CompleteUserDeviceFlowRequest
-	(*CompleteUserDeviceFlowResponse)(nil),        // 9: identity.v1.CompleteUserDeviceFlowResponse
-	(*CompleteUserWebFlowResponse)(nil),           // 10: identity.v1.CompleteUserWebFlowResponse
-	(*ListUserCredentialsResponse)(nil),           // 11: identity.v1.ListUserCredentialsResponse
-	(*GetUserCredentialRequest)(nil),              // 12: identity.v1.GetUserCredentialRequest
-	(*AddUserCredentialResponse)(nil),             // 13: identity.v1.AddUserCredentialResponse
-	(*UpdateUserCredentialResponse)(nil),          // 14: identity.v1.UpdateUserCredentialResponse
-	(*DeleteUserCredentialRequest)(nil),           // 15: identity.v1.DeleteUserCredentialRequest
-	(*DeleteUserCredentialResponse)(nil),          // 16: identity.v1.DeleteUserCredentialResponse
-	(*GetAvailableIdentityProvidersRequest)(nil),  // 17: identity.v1.GetAvailableIdentityProvidersRequest
-	(*GetAvailableIdentityProvidersResponse)(nil), // 18: identity.v1.GetAvailableIdentityProvidersResponse
-	(*CreateAccessTokenRequest)(nil),              // 19: identity.v1.CreateAccessTokenRequest
-	(*CreateAccessTokenResponse)(nil),             // 20: identity.v1.CreateAccessTokenResponse
-	(*ListAccessTokensResponse)(nil),              // 21: identity.v1.ListAccessTokensResponse
-	(*RevokeAccessTokenRequest)(nil),              // 22: identity.v1.RevokeAccessTokenRequest
-	(*RevokeAccessTokenResponse)(nil),             // 23: identity.v1.RevokeAccessTokenResponse
-	(*ResolveAccessTokenRequest)(nil),             // 24: identity.v1.ResolveAccessTokenRequest
-	(*ResolveAccessTokenResponse)(nil),            // 25: identity.v1.ResolveAccessTokenResponse
-	(*wrapperspb.StringValue)(nil),                // 26: google.protobuf.StringValue
-	(*wrapperspb.BoolValue)(nil),                  // 27: google.protobuf.BoolValue
-	(*wrapperspb.UInt32Value)(nil),                // 28: google.protobuf.UInt32Value
-	(*v1.UserCredential)(nil),                     // 29: common.v1.UserCredential
-	(*IdentityProviderInfo)(nil),                  // 30: identity.v1.IdentityProviderInfo
-	(*timestamppb.Timestamp)(nil),                 // 31: google.protobuf.Timestamp
-	(*AccessTokenInfo)(nil),                       // 32: identity.v1.AccessTokenInfo
-	(*durationpb.Duration)(nil),                   // 33: google.protobuf.Duration
-	(*v1.User)(nil),                               // 34: common.v1.User
-	(*FindUserRequest)(nil),                       // 35: identity.v1.FindUserRequest
-	(*GetUsersRequest)(nil),                       // 36: identity.v1.GetUsersRequest
-	(*Username)(nil),                              // 37: identity.v1.Username
-	(*OnboardUserDeviceFlowRequest)(nil),          // 38: identity.v1.OnboardUserDeviceFlowRequest
-	(*OnboardUserWebFlowRequest)(nil),             // 39: identity.v1.OnboardUserWebFlowRequest
-	(*CompleteUserWebFlowRequest)(nil),            // 40: identity.v1.CompleteUserWebFlowRequest
-	(*AuthUserPublicKeyRequest)(nil),              // 41: identity.v1.AuthUserPublicKeyRequest
-	(*AuthUserPasswordRequest)(nil),               // 42: identity.v1.AuthUserPasswordRequest
-	(*UserStr)(nil),                               // 43: identity.v1.UserStr
-	(*UserRolesRequest)(nil),                      // 44: identity.v1.UserRolesRequest
-	(*UserBlueprintsRequest)(nil),                 // 45: identity.v1.UserBlueprintsRequest
-	(*UserAuthKeysRequest)(nil),                   // 46: identity.v1.UserAuthKeysRequest
-	(*UserList)(nil),                              // 47: identity.v1.UserList
-	(*v1.UserOnboardCapability)(nil),              // 48: common.v1.UserOnboardCapability
-	(*v1.OnboardUserDeviceFlow)(nil),              // 49: common.v1.OnboardUserDeviceFlow
-	(*v1.OnboardUserWebFlow)(nil),                 // 50: common.v1.OnboardUserWebFlow
-	(*AuthUserResponse)(nil),                      // 51: identity.v1.AuthUserResponse
-	(*Blueprint)(nil),                             // 52: identity.v1.Blueprint
-	(*ListUserAuthKeysResponse)(nil),              // 53: identity.v1.ListUserAuthKeysResponse
+	(*DeleteUserRequest)(nil),                     // 5: identity.v1.DeleteUserRequest
+	(*DeleteUserResponse)(nil),                    // 6: identity.v1.DeleteUserResponse
+	(*SetUserPasswordRequest)(nil),                // 7: identity.v1.SetUserPasswordRequest
+	(*IssueUserTokenRequest)(nil),                 // 8: identity.v1.IssueUserTokenRequest
+	(*IssueUserTokenResponse)(nil),                // 9: identity.v1.IssueUserTokenResponse
+	(*CompleteUserDeviceFlowRequest)(nil),         // 10: identity.v1.CompleteUserDeviceFlowRequest
+	(*CompleteUserDeviceFlowResponse)(nil),        // 11: identity.v1.CompleteUserDeviceFlowResponse
+	(*CompleteUserWebFlowResponse)(nil),           // 12: identity.v1.CompleteUserWebFlowResponse
+	(*ListUserCredentialsResponse)(nil),           // 13: identity.v1.ListUserCredentialsResponse
+	(*GetUserCredentialRequest)(nil),              // 14: identity.v1.GetUserCredentialRequest
+	(*AddUserCredentialResponse)(nil),             // 15: identity.v1.AddUserCredentialResponse
+	(*UpdateUserCredentialResponse)(nil),          // 16: identity.v1.UpdateUserCredentialResponse
+	(*DeleteUserCredentialRequest)(nil),           // 17: identity.v1.DeleteUserCredentialRequest
+	(*DeleteUserCredentialResponse)(nil),          // 18: identity.v1.DeleteUserCredentialResponse
+	(*GetAvailableIdentityProvidersRequest)(nil),  // 19: identity.v1.GetAvailableIdentityProvidersRequest
+	(*GetAvailableIdentityProvidersResponse)(nil), // 20: identity.v1.GetAvailableIdentityProvidersResponse
+	(*CreateAccessTokenRequest)(nil),              // 21: identity.v1.CreateAccessTokenRequest
+	(*CreateAccessTokenResponse)(nil),             // 22: identity.v1.CreateAccessTokenResponse
+	(*ListAccessTokensResponse)(nil),              // 23: identity.v1.ListAccessTokensResponse
+	(*RevokeAccessTokenRequest)(nil),              // 24: identity.v1.RevokeAccessTokenRequest
+	(*RevokeAccessTokenResponse)(nil),             // 25: identity.v1.RevokeAccessTokenResponse
+	(*ResolveAccessTokenRequest)(nil),             // 26: identity.v1.ResolveAccessTokenRequest
+	(*ResolveAccessTokenResponse)(nil),            // 27: identity.v1.ResolveAccessTokenResponse
+	(*wrapperspb.StringValue)(nil),                // 28: google.protobuf.StringValue
+	(*wrapperspb.BoolValue)(nil),                  // 29: google.protobuf.BoolValue
+	(*wrapperspb.UInt32Value)(nil),                // 30: google.protobuf.UInt32Value
+	(*v1.UserCredential)(nil),                     // 31: common.v1.UserCredential
+	(*IdentityProviderInfo)(nil),                  // 32: identity.v1.IdentityProviderInfo
+	(*timestamppb.Timestamp)(nil),                 // 33: google.protobuf.Timestamp
+	(*AccessTokenInfo)(nil),                       // 34: identity.v1.AccessTokenInfo
+	(*durationpb.Duration)(nil),                   // 35: google.protobuf.Duration
+	(*v1.User)(nil),                               // 36: common.v1.User
+	(*FindUserRequest)(nil),                       // 37: identity.v1.FindUserRequest
+	(*GetUsersRequest)(nil),                       // 38: identity.v1.GetUsersRequest
+	(*Username)(nil),                              // 39: identity.v1.Username
+	(*OnboardUserDeviceFlowRequest)(nil),          // 40: identity.v1.OnboardUserDeviceFlowRequest
+	(*OnboardUserWebFlowRequest)(nil),             // 41: identity.v1.OnboardUserWebFlowRequest
+	(*CompleteUserWebFlowRequest)(nil),            // 42: identity.v1.CompleteUserWebFlowRequest
+	(*AuthUserPublicKeyRequest)(nil),              // 43: identity.v1.AuthUserPublicKeyRequest
+	(*AuthUserPasswordRequest)(nil),               // 44: identity.v1.AuthUserPasswordRequest
+	(*UserStr)(nil),                               // 45: identity.v1.UserStr
+	(*UserRolesRequest)(nil),                      // 46: identity.v1.UserRolesRequest
+	(*UserBlueprintsRequest)(nil),                 // 47: identity.v1.UserBlueprintsRequest
+	(*UserAuthKeysRequest)(nil),                   // 48: identity.v1.UserAuthKeysRequest
+	(*UserList)(nil),                              // 49: identity.v1.UserList
+	(*v1.UserOnboardCapability)(nil),              // 50: common.v1.UserOnboardCapability
+	(*v1.OnboardUserDeviceFlow)(nil),              // 51: common.v1.OnboardUserDeviceFlow
+	(*v1.OnboardUserWebFlow)(nil),                 // 52: common.v1.OnboardUserWebFlow
+	(*AuthUserResponse)(nil),                      // 53: identity.v1.AuthUserResponse
+	(*Blueprint)(nil),                             // 54: identity.v1.Blueprint
+	(*ListUserAuthKeysResponse)(nil),              // 55: identity.v1.ListUserAuthKeysResponse
 }
 var file_identity_v1_identity_proto_depIdxs = []int32{
 	0,  // 0: identity.v1.ListUserAuthKeysRequest.format:type_name -> identity.v1.AuthKeyFormat
-	26, // 1: identity.v1.UpdateUserRequest.fullname:type_name -> google.protobuf.StringValue
-	27, // 2: identity.v1.UpdateUserRequest.sudo:type_name -> google.protobuf.BoolValue
-	27, // 3: identity.v1.UpdateUserRequest.locked:type_name -> google.protobuf.BoolValue
-	26, // 4: identity.v1.UpdateUserRequest.org:type_name -> google.protobuf.StringValue
-	26, // 5: identity.v1.UpdateUserRequest.email:type_name -> google.protobuf.StringValue
-	28, // 6: identity.v1.UpdateUserRequest.uid:type_name -> google.protobuf.UInt32Value
-	28, // 7: identity.v1.UpdateUserRequest.gid:type_name -> google.protobuf.UInt32Value
-	26, // 8: identity.v1.UpdateUserRequest.shell:type_name -> google.protobuf.StringValue
-	29, // 9: identity.v1.ListUserCredentialsResponse.credentials:type_name -> common.v1.UserCredential
-	29, // 10: identity.v1.AddUserCredentialResponse.credential:type_name -> common.v1.UserCredential
-	29, // 11: identity.v1.UpdateUserCredentialResponse.credential:type_name -> common.v1.UserCredential
-	30, // 12: identity.v1.GetAvailableIdentityProvidersResponse.providers:type_name -> identity.v1.IdentityProviderInfo
-	31, // 13: identity.v1.CreateAccessTokenRequest.expires_at:type_name -> google.protobuf.Timestamp
-	32, // 14: identity.v1.ListAccessTokensResponse.tokens:type_name -> identity.v1.AccessTokenInfo
-	33, // 15: identity.v1.ResolveAccessTokenRequest.expiry:type_name -> google.protobuf.Duration
-	34, // 16: identity.v1.ResolveAccessTokenResponse.user:type_name -> common.v1.User
-	35, // 17: identity.v1.IdentityService.FindUser:input_type -> identity.v1.FindUserRequest
-	36, // 18: identity.v1.IdentityService.GetUsers:input_type -> identity.v1.GetUsersRequest
-	6,  // 19: identity.v1.IdentityService.IssueUserToken:input_type -> identity.v1.IssueUserTokenRequest
-	37, // 20: identity.v1.IdentityService.GetUserOnboardCapability:input_type -> identity.v1.Username
-	38, // 21: identity.v1.IdentityService.OnboardUserDeviceFlow:input_type -> identity.v1.OnboardUserDeviceFlowRequest
-	39, // 22: identity.v1.IdentityService.OnboardUserWebFlow:input_type -> identity.v1.OnboardUserWebFlowRequest
-	40, // 23: identity.v1.IdentityService.CompleteUserWebFlow:input_type -> identity.v1.CompleteUserWebFlowRequest
-	41, // 24: identity.v1.IdentityService.AuthUserPublicKey:input_type -> identity.v1.AuthUserPublicKeyRequest
-	42, // 25: identity.v1.IdentityService.AuthUserPassword:input_type -> identity.v1.AuthUserPasswordRequest
-	8,  // 26: identity.v1.IdentityService.CompleteUserDeviceFlow:input_type -> identity.v1.CompleteUserDeviceFlowRequest
-	43, // 27: identity.v1.IdentityService.GetBlueprintByUserStr:input_type -> identity.v1.UserStr
-	37, // 28: identity.v1.IdentityService.ListUserCredentials:input_type -> identity.v1.Username
-	12, // 29: identity.v1.IdentityService.GetUserCredential:input_type -> identity.v1.GetUserCredentialRequest
-	29, // 30: identity.v1.IdentityService.AddUserCredential:input_type -> common.v1.UserCredential
+	28, // 1: identity.v1.UpdateUserRequest.fullname:type_name -> google.protobuf.StringValue
+	29, // 2: identity.v1.UpdateUserRequest.sudo:type_name -> google.protobuf.BoolValue
+	29, // 3: identity.v1.UpdateUserRequest.locked:type_name -> google.protobuf.BoolValue
+	28, // 4: identity.v1.UpdateUserRequest.org:type_name -> google.protobuf.StringValue
+	28, // 5: identity.v1.UpdateUserRequest.email:type_name -> google.protobuf.StringValue
+	30, // 6: identity.v1.UpdateUserRequest.uid:type_name -> google.protobuf.UInt32Value
+	30, // 7: identity.v1.UpdateUserRequest.gid:type_name -> google.protobuf.UInt32Value
+	28, // 8: identity.v1.UpdateUserRequest.shell:type_name -> google.protobuf.StringValue
+	31, // 9: identity.v1.ListUserCredentialsResponse.credentials:type_name -> common.v1.UserCredential
+	31, // 10: identity.v1.AddUserCredentialResponse.credential:type_name -> common.v1.UserCredential
+	31, // 11: identity.v1.UpdateUserCredentialResponse.credential:type_name -> common.v1.UserCredential
+	32, // 12: identity.v1.GetAvailableIdentityProvidersResponse.providers:type_name -> identity.v1.IdentityProviderInfo
+	33, // 13: identity.v1.CreateAccessTokenRequest.expires_at:type_name -> google.protobuf.Timestamp
+	34, // 14: identity.v1.ListAccessTokensResponse.tokens:type_name -> identity.v1.AccessTokenInfo
+	35, // 15: identity.v1.ResolveAccessTokenRequest.expiry:type_name -> google.protobuf.Duration
+	36, // 16: identity.v1.ResolveAccessTokenResponse.user:type_name -> common.v1.User
+	37, // 17: identity.v1.IdentityService.FindUser:input_type -> identity.v1.FindUserRequest
+	38, // 18: identity.v1.IdentityService.GetUsers:input_type -> identity.v1.GetUsersRequest
+	8,  // 19: identity.v1.IdentityService.IssueUserToken:input_type -> identity.v1.IssueUserTokenRequest
+	39, // 20: identity.v1.IdentityService.GetUserOnboardCapability:input_type -> identity.v1.Username
+	40, // 21: identity.v1.IdentityService.OnboardUserDeviceFlow:input_type -> identity.v1.OnboardUserDeviceFlowRequest
+	41, // 22: identity.v1.IdentityService.OnboardUserWebFlow:input_type -> identity.v1.OnboardUserWebFlowRequest
+	42, // 23: identity.v1.IdentityService.CompleteUserWebFlow:input_type -> identity.v1.CompleteUserWebFlowRequest
+	43, // 24: identity.v1.IdentityService.AuthUserPublicKey:input_type -> identity.v1.AuthUserPublicKeyRequest
+	44, // 25: identity.v1.IdentityService.AuthUserPassword:input_type -> identity.v1.AuthUserPasswordRequest
+	10, // 26: identity.v1.IdentityService.CompleteUserDeviceFlow:input_type -> identity.v1.CompleteUserDeviceFlowRequest
+	45, // 27: identity.v1.IdentityService.GetBlueprintByUserStr:input_type -> identity.v1.UserStr
+	39, // 28: identity.v1.IdentityService.ListUserCredentials:input_type -> identity.v1.Username
+	14, // 29: identity.v1.IdentityService.GetUserCredential:input_type -> identity.v1.GetUserCredentialRequest
+	31, // 30: identity.v1.IdentityService.AddUserCredential:input_type -> common.v1.UserCredential
 	3,  // 31: identity.v1.IdentityService.CreateUser:input_type -> identity.v1.CreateUserRequest
 	4,  // 32: identity.v1.IdentityService.UpdateUser:input_type -> identity.v1.UpdateUserRequest
-	44, // 33: identity.v1.IdentityService.AddUserRoles:input_type -> identity.v1.UserRolesRequest
-	44, // 34: identity.v1.IdentityService.RemoveUserRoles:input_type -> identity.v1.UserRolesRequest
-	45, // 35: identity.v1.IdentityService.AddUserBlueprints:input_type -> identity.v1.UserBlueprintsRequest
-	45, // 36: identity.v1.IdentityService.RemoveUserBlueprints:input_type -> identity.v1.UserBlueprintsRequest
-	1,  // 37: identity.v1.IdentityService.ListUserAuthKeys:input_type -> identity.v1.ListUserAuthKeysRequest
-	46, // 38: identity.v1.IdentityService.AddUserAuthKeys:input_type -> identity.v1.UserAuthKeysRequest
-	2,  // 39: identity.v1.IdentityService.RemoveUserAuthKey:input_type -> identity.v1.RemoveUserAuthKeyRequest
-	5,  // 40: identity.v1.IdentityService.SetUserPassword:input_type -> identity.v1.SetUserPasswordRequest
-	29, // 41: identity.v1.IdentityService.UpdateUserCredential:input_type -> common.v1.UserCredential
-	15, // 42: identity.v1.IdentityService.DeleteUserCredential:input_type -> identity.v1.DeleteUserCredentialRequest
-	17, // 43: identity.v1.IdentityService.GetAvailableIdentityProviders:input_type -> identity.v1.GetAvailableIdentityProvidersRequest
-	19, // 44: identity.v1.IdentityService.CreateAccessToken:input_type -> identity.v1.CreateAccessTokenRequest
-	37, // 45: identity.v1.IdentityService.ListAccessTokens:input_type -> identity.v1.Username
-	22, // 46: identity.v1.IdentityService.RevokeAccessToken:input_type -> identity.v1.RevokeAccessTokenRequest
-	24, // 47: identity.v1.IdentityService.ResolveAccessToken:input_type -> identity.v1.ResolveAccessTokenRequest
-	34, // 48: identity.v1.IdentityService.FindUser:output_type -> common.v1.User
-	47, // 49: identity.v1.IdentityService.GetUsers:output_type -> identity.v1.UserList
-	7,  // 50: identity.v1.IdentityService.IssueUserToken:output_type -> identity.v1.IssueUserTokenResponse
-	48, // 51: identity.v1.IdentityService.GetUserOnboardCapability:output_type -> common.v1.UserOnboardCapability
-	49, // 52: identity.v1.IdentityService.OnboardUserDeviceFlow:output_type -> common.v1.OnboardUserDeviceFlow
-	50, // 53: identity.v1.IdentityService.OnboardUserWebFlow:output_type -> common.v1.OnboardUserWebFlow
-	10, // 54: identity.v1.IdentityService.CompleteUserWebFlow:output_type -> identity.v1.CompleteUserWebFlowResponse
-	51, // 55: identity.v1.IdentityService.AuthUserPublicKey:output_type -> identity.v1.AuthUserResponse
-	51, // 56: identity.v1.IdentityService.AuthUserPassword:output_type -> identity.v1.AuthUserResponse
-	9,  // 57: identity.v1.IdentityService.CompleteUserDeviceFlow:output_type -> identity.v1.CompleteUserDeviceFlowResponse
-	52, // 58: identity.v1.IdentityService.GetBlueprintByUserStr:output_type -> identity.v1.Blueprint
-	11, // 59: identity.v1.IdentityService.ListUserCredentials:output_type -> identity.v1.ListUserCredentialsResponse
-	29, // 60: identity.v1.IdentityService.GetUserCredential:output_type -> common.v1.UserCredential
-	13, // 61: identity.v1.IdentityService.AddUserCredential:output_type -> identity.v1.AddUserCredentialResponse
-	34, // 62: identity.v1.IdentityService.CreateUser:output_type -> common.v1.User
-	34, // 63: identity.v1.IdentityService.UpdateUser:output_type -> common.v1.User
-	34, // 64: identity.v1.IdentityService.AddUserRoles:output_type -> common.v1.User
-	34, // 65: identity.v1.IdentityService.RemoveUserRoles:output_type -> common.v1.User
-	34, // 66: identity.v1.IdentityService.AddUserBlueprints:output_type -> common.v1.User
-	34, // 67: identity.v1.IdentityService.RemoveUserBlueprints:output_type -> common.v1.User
-	53, // 68: identity.v1.IdentityService.ListUserAuthKeys:output_type -> identity.v1.ListUserAuthKeysResponse
-	34, // 69: identity.v1.IdentityService.AddUserAuthKeys:output_type -> common.v1.User
-	34, // 70: identity.v1.IdentityService.RemoveUserAuthKey:output_type -> common.v1.User
-	34, // 71: identity.v1.IdentityService.SetUserPassword:output_type -> common.v1.User
-	14, // 72: identity.v1.IdentityService.UpdateUserCredential:output_type -> identity.v1.UpdateUserCredentialResponse
-	16, // 73: identity.v1.IdentityService.DeleteUserCredential:output_type -> identity.v1.DeleteUserCredentialResponse
-	18, // 74: identity.v1.IdentityService.GetAvailableIdentityProviders:output_type -> identity.v1.GetAvailableIdentityProvidersResponse
-	20, // 75: identity.v1.IdentityService.CreateAccessToken:output_type -> identity.v1.CreateAccessTokenResponse
-	21, // 76: identity.v1.IdentityService.ListAccessTokens:output_type -> identity.v1.ListAccessTokensResponse
-	23, // 77: identity.v1.IdentityService.RevokeAccessToken:output_type -> identity.v1.RevokeAccessTokenResponse
-	25, // 78: identity.v1.IdentityService.ResolveAccessToken:output_type -> identity.v1.ResolveAccessTokenResponse
-	48, // [48:79] is the sub-list for method output_type
-	17, // [17:48] is the sub-list for method input_type
+	5,  // 33: identity.v1.IdentityService.DeleteUser:input_type -> identity.v1.DeleteUserRequest
+	46, // 34: identity.v1.IdentityService.AddUserRoles:input_type -> identity.v1.UserRolesRequest
+	46, // 35: identity.v1.IdentityService.RemoveUserRoles:input_type -> identity.v1.UserRolesRequest
+	47, // 36: identity.v1.IdentityService.AddUserBlueprints:input_type -> identity.v1.UserBlueprintsRequest
+	47, // 37: identity.v1.IdentityService.RemoveUserBlueprints:input_type -> identity.v1.UserBlueprintsRequest
+	1,  // 38: identity.v1.IdentityService.ListUserAuthKeys:input_type -> identity.v1.ListUserAuthKeysRequest
+	48, // 39: identity.v1.IdentityService.AddUserAuthKeys:input_type -> identity.v1.UserAuthKeysRequest
+	2,  // 40: identity.v1.IdentityService.RemoveUserAuthKey:input_type -> identity.v1.RemoveUserAuthKeyRequest
+	7,  // 41: identity.v1.IdentityService.SetUserPassword:input_type -> identity.v1.SetUserPasswordRequest
+	31, // 42: identity.v1.IdentityService.UpdateUserCredential:input_type -> common.v1.UserCredential
+	17, // 43: identity.v1.IdentityService.DeleteUserCredential:input_type -> identity.v1.DeleteUserCredentialRequest
+	19, // 44: identity.v1.IdentityService.GetAvailableIdentityProviders:input_type -> identity.v1.GetAvailableIdentityProvidersRequest
+	21, // 45: identity.v1.IdentityService.CreateAccessToken:input_type -> identity.v1.CreateAccessTokenRequest
+	39, // 46: identity.v1.IdentityService.ListAccessTokens:input_type -> identity.v1.Username
+	24, // 47: identity.v1.IdentityService.RevokeAccessToken:input_type -> identity.v1.RevokeAccessTokenRequest
+	26, // 48: identity.v1.IdentityService.ResolveAccessToken:input_type -> identity.v1.ResolveAccessTokenRequest
+	36, // 49: identity.v1.IdentityService.FindUser:output_type -> common.v1.User
+	49, // 50: identity.v1.IdentityService.GetUsers:output_type -> identity.v1.UserList
+	9,  // 51: identity.v1.IdentityService.IssueUserToken:output_type -> identity.v1.IssueUserTokenResponse
+	50, // 52: identity.v1.IdentityService.GetUserOnboardCapability:output_type -> common.v1.UserOnboardCapability
+	51, // 53: identity.v1.IdentityService.OnboardUserDeviceFlow:output_type -> common.v1.OnboardUserDeviceFlow
+	52, // 54: identity.v1.IdentityService.OnboardUserWebFlow:output_type -> common.v1.OnboardUserWebFlow
+	12, // 55: identity.v1.IdentityService.CompleteUserWebFlow:output_type -> identity.v1.CompleteUserWebFlowResponse
+	53, // 56: identity.v1.IdentityService.AuthUserPublicKey:output_type -> identity.v1.AuthUserResponse
+	53, // 57: identity.v1.IdentityService.AuthUserPassword:output_type -> identity.v1.AuthUserResponse
+	11, // 58: identity.v1.IdentityService.CompleteUserDeviceFlow:output_type -> identity.v1.CompleteUserDeviceFlowResponse
+	54, // 59: identity.v1.IdentityService.GetBlueprintByUserStr:output_type -> identity.v1.Blueprint
+	13, // 60: identity.v1.IdentityService.ListUserCredentials:output_type -> identity.v1.ListUserCredentialsResponse
+	31, // 61: identity.v1.IdentityService.GetUserCredential:output_type -> common.v1.UserCredential
+	15, // 62: identity.v1.IdentityService.AddUserCredential:output_type -> identity.v1.AddUserCredentialResponse
+	36, // 63: identity.v1.IdentityService.CreateUser:output_type -> common.v1.User
+	36, // 64: identity.v1.IdentityService.UpdateUser:output_type -> common.v1.User
+	6,  // 65: identity.v1.IdentityService.DeleteUser:output_type -> identity.v1.DeleteUserResponse
+	36, // 66: identity.v1.IdentityService.AddUserRoles:output_type -> common.v1.User
+	36, // 67: identity.v1.IdentityService.RemoveUserRoles:output_type -> common.v1.User
+	36, // 68: identity.v1.IdentityService.AddUserBlueprints:output_type -> common.v1.User
+	36, // 69: identity.v1.IdentityService.RemoveUserBlueprints:output_type -> common.v1.User
+	55, // 70: identity.v1.IdentityService.ListUserAuthKeys:output_type -> identity.v1.ListUserAuthKeysResponse
+	36, // 71: identity.v1.IdentityService.AddUserAuthKeys:output_type -> common.v1.User
+	36, // 72: identity.v1.IdentityService.RemoveUserAuthKey:output_type -> common.v1.User
+	36, // 73: identity.v1.IdentityService.SetUserPassword:output_type -> common.v1.User
+	16, // 74: identity.v1.IdentityService.UpdateUserCredential:output_type -> identity.v1.UpdateUserCredentialResponse
+	18, // 75: identity.v1.IdentityService.DeleteUserCredential:output_type -> identity.v1.DeleteUserCredentialResponse
+	20, // 76: identity.v1.IdentityService.GetAvailableIdentityProviders:output_type -> identity.v1.GetAvailableIdentityProvidersResponse
+	22, // 77: identity.v1.IdentityService.CreateAccessToken:output_type -> identity.v1.CreateAccessTokenResponse
+	23, // 78: identity.v1.IdentityService.ListAccessTokens:output_type -> identity.v1.ListAccessTokensResponse
+	25, // 79: identity.v1.IdentityService.RevokeAccessToken:output_type -> identity.v1.RevokeAccessTokenResponse
+	27, // 80: identity.v1.IdentityService.ResolveAccessToken:output_type -> identity.v1.ResolveAccessTokenResponse
+	49, // [49:81] is the sub-list for method output_type
+	17, // [17:49] is the sub-list for method input_type
 	17, // [17:17] is the sub-list for extension type_name
 	17, // [17:17] is the sub-list for extension extendee
 	0,  // [0:17] is the sub-list for field type_name
@@ -1829,7 +1929,7 @@ func file_identity_v1_identity_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_identity_v1_identity_proto_rawDesc), len(file_identity_v1_identity_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   25,
+			NumMessages:   27,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

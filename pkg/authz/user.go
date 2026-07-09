@@ -62,6 +62,23 @@ package authz
 //
 // ---
 //
+// Contract: user:delete
+//
+// Resource  type="user"
+//   id   username          (required) — the username of the user to delete
+//   org  organization name (optional) — the user's organization, when known
+//
+// Context   (none)
+//
+// Subject   the ADMIN performing the deletion, injected by the backend from
+//           JWT claims (username, roles, email, ...) — NOT the user being
+//           deleted, mirroring user:create's admin-on-behalf-of-someone-else
+//           subject model.
+//
+// Obligations  (none) — allow/deny only
+//
+// ---
+//
 // Contract: user:read
 //
 // Resource  type="user"
@@ -445,6 +462,99 @@ func (r *UserCreateEvalRequest) Validate() error {
 	}
 	if r.Resource.Org == "" {
 		return fmt.Errorf("user:create: resource attribute \"org\" is required")
+	}
+	return nil
+}
+
+// UserDeleteEvalRequest is the validated, typed model for user:delete policy
+// evaluation. Use NewUserDeleteEvalRequest to start building, then chain
+// With* methods and call Build to get a validated instance.
+//
+// Like user:create, the acting principal is the admin performing the
+// deletion, not the user being deleted, so callers evaluate this with the
+// admin's own token.
+type UserDeleteEvalRequest struct {
+	Resource UserResource
+}
+
+var _ EvalRequest = (*UserDeleteEvalRequest)(nil)
+
+// NewUserDeleteEvalRequest begins building a UserDeleteEvalRequest for the
+// given username. Chain With* methods to supply additional fields, then call
+// Build to validate and obtain the final struct.
+func NewUserDeleteEvalRequest(username string) *UserDeleteEvalRequest {
+	return &UserDeleteEvalRequest{
+		Resource: UserResource{ID: username},
+	}
+}
+
+// WithOrg sets the user's organization on the resource.
+func (r *UserDeleteEvalRequest) WithOrg(org string) *UserDeleteEvalRequest {
+	r.Resource.Org = org
+	return r
+}
+
+// Build validates the request and returns it if all constraints are satisfied.
+// It is the required terminator for the builder chain.
+func (r *UserDeleteEvalRequest) Build() (*UserDeleteEvalRequest, error) {
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// ToProto serializes the typed request into a gRPC EvaluateRequest, attaching
+// the supplied JWT token.
+// Implements EvalRequest.
+func (r *UserDeleteEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
+	attrs := map[string]string{}
+	if r.Resource.Org != "" {
+		attrs["org"] = r.Resource.Org
+	}
+	return &authzv1.EvaluateRequest{
+		Token:  token,
+		Action: "user:delete",
+		Resource: &authzv1.Resource{
+			Type:       "user",
+			Id:         r.Resource.ID,
+			Attributes: attrs,
+		},
+	}
+}
+
+// UserDeleteEvalRequestFromProto converts a gRPC EvaluateRequest into a
+// validated UserDeleteEvalRequest. Returns an error if the request does not
+// conform to the user:delete contract.
+func UserDeleteEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserDeleteEvalRequest, error) {
+	if req == nil {
+		return nil, fmt.Errorf("user:delete: EvaluateRequest is nil")
+	}
+	if req.Action != "user:delete" {
+		return nil, fmt.Errorf("user:delete: action must be \"user:delete\", got %q", req.Action)
+	}
+	if req.Resource == nil {
+		return nil, fmt.Errorf("user:delete: resource is nil")
+	}
+	if req.Resource.Type != "user" {
+		return nil, fmt.Errorf("user:delete: resource type must be \"user\", got %q", req.Resource.Type)
+	}
+	r := &UserDeleteEvalRequest{
+		Resource: UserResource{
+			ID:  req.Resource.Id,
+			Org: req.Resource.Attributes["org"],
+		},
+	}
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// Validate checks the request against the user:delete contract.
+// Implements EvalRequest.
+func (r *UserDeleteEvalRequest) Validate() error {
+	if r.Resource.ID == "" {
+		return fmt.Errorf("user:delete: resource ID (username) is required")
 	}
 	return nil
 }
