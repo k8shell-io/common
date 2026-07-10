@@ -36,7 +36,7 @@ const (
 	IdentityService_GetBlueprintByUserStr_FullMethodName         = "/identity.v1.IdentityService/GetBlueprintByUserStr"
 	IdentityService_ListUserCredentials_FullMethodName           = "/identity.v1.IdentityService/ListUserCredentials"
 	IdentityService_GetUserCredential_FullMethodName             = "/identity.v1.IdentityService/GetUserCredential"
-	IdentityService_AddUserCredential_FullMethodName             = "/identity.v1.IdentityService/AddUserCredential"
+	IdentityService_AddKubernetesUserCredential_FullMethodName   = "/identity.v1.IdentityService/AddKubernetesUserCredential"
 	IdentityService_CreateUser_FullMethodName                    = "/identity.v1.IdentityService/CreateUser"
 	IdentityService_UpdateUser_FullMethodName                    = "/identity.v1.IdentityService/UpdateUser"
 	IdentityService_DeleteUser_FullMethodName                    = "/identity.v1.IdentityService/DeleteUser"
@@ -50,6 +50,7 @@ const (
 	IdentityService_SetUserPassword_FullMethodName               = "/identity.v1.IdentityService/SetUserPassword"
 	IdentityService_UpdateUserCredential_FullMethodName          = "/identity.v1.IdentityService/UpdateUserCredential"
 	IdentityService_DeleteUserCredential_FullMethodName          = "/identity.v1.IdentityService/DeleteUserCredential"
+	IdentityService_RemoveUserCredential_FullMethodName          = "/identity.v1.IdentityService/RemoveUserCredential"
 	IdentityService_GetAvailableIdentityProviders_FullMethodName = "/identity.v1.IdentityService/GetAvailableIdentityProviders"
 	IdentityService_CreateAccessToken_FullMethodName             = "/identity.v1.IdentityService/CreateAccessToken"
 	IdentityService_ListAccessTokens_FullMethodName              = "/identity.v1.IdentityService/ListAccessTokens"
@@ -90,12 +91,15 @@ type IdentityServiceClient interface {
 	CompleteUserDeviceFlow(ctx context.Context, in *CompleteUserDeviceFlowRequest, opts ...grpc.CallOption) (*CompleteUserDeviceFlowResponse, error)
 	// GetBlueprintByUserStr retrieves a blueprint associated with a user string identifier.
 	GetBlueprintByUserStr(ctx context.Context, in *UserStr, opts ...grpc.CallOption) (*Blueprint, error)
-	// ListUserCredentials retrieves all credentials associated with a user.
-	ListUserCredentials(ctx context.Context, in *Username, opts ...grpc.CallOption) (*ListUserCredentialsResponse, error)
+	// ListUserCredentials retrieves all credentials associated with a user, or a single
+	// credential when id is set.
+	ListUserCredentials(ctx context.Context, in *ListUserCredentialsRequest, opts ...grpc.CallOption) (*ListUserCredentialsResponse, error)
 	// GetUserCredential retrieves a specific credential for a user by service name and scope.
 	GetUserCredential(ctx context.Context, in *GetUserCredentialRequest, opts ...grpc.CallOption) (*v1.UserCredential, error)
-	// AddUserCredential adds a new credential for a user.
-	AddUserCredential(ctx context.Context, in *v1.UserCredential, opts ...grpc.CallOption) (*AddUserCredentialResponse, error)
+	// AddKubernetesUserCredential provisions a Kubernetes service-account credential for a user.
+	// The secret is left unset — kubernetes credentials are resolved on demand via the
+	// TokenRequest API when the credential is fetched.
+	AddKubernetesUserCredential(ctx context.Context, in *AddKubernetesUserCredentialRequest, opts ...grpc.CallOption) (*AddKubernetesUserCredentialResponse, error)
 	// CreateUser creates a new local user record. The supplied password, if any,
 	// is bcrypt-hashed server-side before being persisted, the same as SetUserPassword.
 	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*v1.User, error)
@@ -130,6 +134,11 @@ type IdentityServiceClient interface {
 	UpdateUserCredential(ctx context.Context, in *v1.UserCredential, opts ...grpc.CallOption) (*UpdateUserCredentialResponse, error)
 	// DeleteUserCredential deletes an external credential by its ID.
 	DeleteUserCredential(ctx context.Context, in *DeleteUserCredentialRequest, opts ...grpc.CallOption) (*DeleteUserCredentialResponse, error)
+	// RemoveUserCredential removes a specific credential owned by a user, identified by ID.
+	// Credentials whose credential_source matches "idp.k8shell.io/*" — provisioned by the
+	// onboarding flow (CompleteUserWebFlow / CompleteUserDeviceFlow) to link the user's git
+	// identity — cannot be removed through this RPC.
+	RemoveUserCredential(ctx context.Context, in *RemoveUserCredentialRequest, opts ...grpc.CallOption) (*RemoveUserCredentialResponse, error)
 	// GetAvailableIdentityProviders returns a list of available identity providers.
 	GetAvailableIdentityProviders(ctx context.Context, in *GetAvailableIdentityProvidersRequest, opts ...grpc.CallOption) (*GetAvailableIdentityProvidersResponse, error)
 	// CreateAccessToken issues a new Personal Access Token for a user. The raw token is
@@ -263,7 +272,7 @@ func (c *identityServiceClient) GetBlueprintByUserStr(ctx context.Context, in *U
 	return out, nil
 }
 
-func (c *identityServiceClient) ListUserCredentials(ctx context.Context, in *Username, opts ...grpc.CallOption) (*ListUserCredentialsResponse, error) {
+func (c *identityServiceClient) ListUserCredentials(ctx context.Context, in *ListUserCredentialsRequest, opts ...grpc.CallOption) (*ListUserCredentialsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListUserCredentialsResponse)
 	err := c.cc.Invoke(ctx, IdentityService_ListUserCredentials_FullMethodName, in, out, cOpts...)
@@ -283,10 +292,10 @@ func (c *identityServiceClient) GetUserCredential(ctx context.Context, in *GetUs
 	return out, nil
 }
 
-func (c *identityServiceClient) AddUserCredential(ctx context.Context, in *v1.UserCredential, opts ...grpc.CallOption) (*AddUserCredentialResponse, error) {
+func (c *identityServiceClient) AddKubernetesUserCredential(ctx context.Context, in *AddKubernetesUserCredentialRequest, opts ...grpc.CallOption) (*AddKubernetesUserCredentialResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(AddUserCredentialResponse)
-	err := c.cc.Invoke(ctx, IdentityService_AddUserCredential_FullMethodName, in, out, cOpts...)
+	out := new(AddKubernetesUserCredentialResponse)
+	err := c.cc.Invoke(ctx, IdentityService_AddKubernetesUserCredential_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -423,6 +432,16 @@ func (c *identityServiceClient) DeleteUserCredential(ctx context.Context, in *De
 	return out, nil
 }
 
+func (c *identityServiceClient) RemoveUserCredential(ctx context.Context, in *RemoveUserCredentialRequest, opts ...grpc.CallOption) (*RemoveUserCredentialResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RemoveUserCredentialResponse)
+	err := c.cc.Invoke(ctx, IdentityService_RemoveUserCredential_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *identityServiceClient) GetAvailableIdentityProviders(ctx context.Context, in *GetAvailableIdentityProvidersRequest, opts ...grpc.CallOption) (*GetAvailableIdentityProvidersResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetAvailableIdentityProvidersResponse)
@@ -506,12 +525,15 @@ type IdentityServiceServer interface {
 	CompleteUserDeviceFlow(context.Context, *CompleteUserDeviceFlowRequest) (*CompleteUserDeviceFlowResponse, error)
 	// GetBlueprintByUserStr retrieves a blueprint associated with a user string identifier.
 	GetBlueprintByUserStr(context.Context, *UserStr) (*Blueprint, error)
-	// ListUserCredentials retrieves all credentials associated with a user.
-	ListUserCredentials(context.Context, *Username) (*ListUserCredentialsResponse, error)
+	// ListUserCredentials retrieves all credentials associated with a user, or a single
+	// credential when id is set.
+	ListUserCredentials(context.Context, *ListUserCredentialsRequest) (*ListUserCredentialsResponse, error)
 	// GetUserCredential retrieves a specific credential for a user by service name and scope.
 	GetUserCredential(context.Context, *GetUserCredentialRequest) (*v1.UserCredential, error)
-	// AddUserCredential adds a new credential for a user.
-	AddUserCredential(context.Context, *v1.UserCredential) (*AddUserCredentialResponse, error)
+	// AddKubernetesUserCredential provisions a Kubernetes service-account credential for a user.
+	// The secret is left unset — kubernetes credentials are resolved on demand via the
+	// TokenRequest API when the credential is fetched.
+	AddKubernetesUserCredential(context.Context, *AddKubernetesUserCredentialRequest) (*AddKubernetesUserCredentialResponse, error)
 	// CreateUser creates a new local user record. The supplied password, if any,
 	// is bcrypt-hashed server-side before being persisted, the same as SetUserPassword.
 	CreateUser(context.Context, *CreateUserRequest) (*v1.User, error)
@@ -546,6 +568,11 @@ type IdentityServiceServer interface {
 	UpdateUserCredential(context.Context, *v1.UserCredential) (*UpdateUserCredentialResponse, error)
 	// DeleteUserCredential deletes an external credential by its ID.
 	DeleteUserCredential(context.Context, *DeleteUserCredentialRequest) (*DeleteUserCredentialResponse, error)
+	// RemoveUserCredential removes a specific credential owned by a user, identified by ID.
+	// Credentials whose credential_source matches "idp.k8shell.io/*" — provisioned by the
+	// onboarding flow (CompleteUserWebFlow / CompleteUserDeviceFlow) to link the user's git
+	// identity — cannot be removed through this RPC.
+	RemoveUserCredential(context.Context, *RemoveUserCredentialRequest) (*RemoveUserCredentialResponse, error)
 	// GetAvailableIdentityProviders returns a list of available identity providers.
 	GetAvailableIdentityProviders(context.Context, *GetAvailableIdentityProvidersRequest) (*GetAvailableIdentityProvidersResponse, error)
 	// CreateAccessToken issues a new Personal Access Token for a user. The raw token is
@@ -602,14 +629,14 @@ func (UnimplementedIdentityServiceServer) CompleteUserDeviceFlow(context.Context
 func (UnimplementedIdentityServiceServer) GetBlueprintByUserStr(context.Context, *UserStr) (*Blueprint, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetBlueprintByUserStr not implemented")
 }
-func (UnimplementedIdentityServiceServer) ListUserCredentials(context.Context, *Username) (*ListUserCredentialsResponse, error) {
+func (UnimplementedIdentityServiceServer) ListUserCredentials(context.Context, *ListUserCredentialsRequest) (*ListUserCredentialsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListUserCredentials not implemented")
 }
 func (UnimplementedIdentityServiceServer) GetUserCredential(context.Context, *GetUserCredentialRequest) (*v1.UserCredential, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetUserCredential not implemented")
 }
-func (UnimplementedIdentityServiceServer) AddUserCredential(context.Context, *v1.UserCredential) (*AddUserCredentialResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method AddUserCredential not implemented")
+func (UnimplementedIdentityServiceServer) AddKubernetesUserCredential(context.Context, *AddKubernetesUserCredentialRequest) (*AddKubernetesUserCredentialResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AddKubernetesUserCredential not implemented")
 }
 func (UnimplementedIdentityServiceServer) CreateUser(context.Context, *CreateUserRequest) (*v1.User, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateUser not implemented")
@@ -649,6 +676,9 @@ func (UnimplementedIdentityServiceServer) UpdateUserCredential(context.Context, 
 }
 func (UnimplementedIdentityServiceServer) DeleteUserCredential(context.Context, *DeleteUserCredentialRequest) (*DeleteUserCredentialResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteUserCredential not implemented")
+}
+func (UnimplementedIdentityServiceServer) RemoveUserCredential(context.Context, *RemoveUserCredentialRequest) (*RemoveUserCredentialResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RemoveUserCredential not implemented")
 }
 func (UnimplementedIdentityServiceServer) GetAvailableIdentityProviders(context.Context, *GetAvailableIdentityProvidersRequest) (*GetAvailableIdentityProvidersResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetAvailableIdentityProviders not implemented")
@@ -885,7 +915,7 @@ func _IdentityService_GetBlueprintByUserStr_Handler(srv interface{}, ctx context
 }
 
 func _IdentityService_ListUserCredentials_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Username)
+	in := new(ListUserCredentialsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -897,7 +927,7 @@ func _IdentityService_ListUserCredentials_Handler(srv interface{}, ctx context.C
 		FullMethod: IdentityService_ListUserCredentials_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IdentityServiceServer).ListUserCredentials(ctx, req.(*Username))
+		return srv.(IdentityServiceServer).ListUserCredentials(ctx, req.(*ListUserCredentialsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -920,20 +950,20 @@ func _IdentityService_GetUserCredential_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IdentityService_AddUserCredential_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(v1.UserCredential)
+func _IdentityService_AddKubernetesUserCredential_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddKubernetesUserCredentialRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IdentityServiceServer).AddUserCredential(ctx, in)
+		return srv.(IdentityServiceServer).AddKubernetesUserCredential(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IdentityService_AddUserCredential_FullMethodName,
+		FullMethod: IdentityService_AddKubernetesUserCredential_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IdentityServiceServer).AddUserCredential(ctx, req.(*v1.UserCredential))
+		return srv.(IdentityServiceServer).AddKubernetesUserCredential(ctx, req.(*AddKubernetesUserCredentialRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1172,6 +1202,24 @@ func _IdentityService_DeleteUserCredential_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IdentityService_RemoveUserCredential_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveUserCredentialRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).RemoveUserCredential(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_RemoveUserCredential_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).RemoveUserCredential(ctx, req.(*RemoveUserCredentialRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _IdentityService_GetAvailableIdentityProviders_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetAvailableIdentityProvidersRequest)
 	if err := dec(in); err != nil {
@@ -1322,8 +1370,8 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _IdentityService_GetUserCredential_Handler,
 		},
 		{
-			MethodName: "AddUserCredential",
-			Handler:    _IdentityService_AddUserCredential_Handler,
+			MethodName: "AddKubernetesUserCredential",
+			Handler:    _IdentityService_AddKubernetesUserCredential_Handler,
 		},
 		{
 			MethodName: "CreateUser",
@@ -1376,6 +1424,10 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteUserCredential",
 			Handler:    _IdentityService_DeleteUserCredential_Handler,
+		},
+		{
+			MethodName: "RemoveUserCredential",
+			Handler:    _IdentityService_RemoveUserCredential_Handler,
 		},
 		{
 			MethodName: "GetAvailableIdentityProviders",

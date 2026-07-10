@@ -53,14 +53,17 @@ service IdentityService {
   // GetBlueprintByUserStr retrieves a blueprint associated with a user string identifier.
   rpc GetBlueprintByUserStr (UserStr) returns (Blueprint);
 
-  // ListUserCredentials retrieves all credentials associated with a user.
-  rpc ListUserCredentials (Username) returns (ListUserCredentialsResponse);
+  // ListUserCredentials retrieves all credentials associated with a user, or a single
+  // credential when id is set.
+  rpc ListUserCredentials (ListUserCredentialsRequest) returns (ListUserCredentialsResponse);
 
   // GetUserCredential retrieves a specific credential for a user by service name and scope.
   rpc GetUserCredential (GetUserCredentialRequest) returns (common.v1.UserCredential);
 
-  // AddUserCredential adds a new credential for a user.
-  rpc AddUserCredential (common.v1.UserCredential) returns (AddUserCredentialResponse);
+  // AddKubernetesUserCredential provisions a Kubernetes service-account credential for a user.
+  // The secret is left unset — kubernetes credentials are resolved on demand via the
+  // TokenRequest API when the credential is fetched.
+  rpc AddKubernetesUserCredential (AddKubernetesUserCredentialRequest) returns (AddKubernetesUserCredentialResponse);
 
   // CreateUser creates a new local user record. The supplied password, if any,
   // is bcrypt-hashed server-side before being persisted, the same as SetUserPassword.
@@ -108,6 +111,12 @@ service IdentityService {
 
   // DeleteUserCredential deletes an external credential by its ID.
   rpc DeleteUserCredential (DeleteUserCredentialRequest) returns (DeleteUserCredentialResponse);
+
+  // RemoveUserCredential removes a specific credential owned by a user, identified by ID.
+  // Credentials whose credential_source matches "idp.k8shell.io/*" — provisioned by the
+  // onboarding flow (CompleteUserWebFlow / CompleteUserDeviceFlow) to link the user's git
+  // identity — cannot be removed through this RPC.
+  rpc RemoveUserCredential (RemoveUserCredentialRequest) returns (RemoveUserCredentialResponse);
 
   // GetAvailableIdentityProviders returns a list of available identity providers.
   rpc GetAvailableIdentityProviders (GetAvailableIdentityProvidersRequest) returns (GetAvailableIdentityProvidersResponse);
@@ -236,6 +245,13 @@ message CompleteUserWebFlowResponse {
   string pat_error  = 4; 
 }
 
+// ListUserCredentialsRequest lists credentials for a user, optionally
+// filtered to a single credential by ID.
+message ListUserCredentialsRequest {
+  string username = 1;
+  uint32 id = 2;
+}
+
 // ListUserCredentialsResponse carries all credentials associated with a user.
 message ListUserCredentialsResponse {
   repeated common.v1.UserCredential credentials = 1;
@@ -248,8 +264,17 @@ message GetUserCredentialRequest {
   string service_scope = 3;
 }
 
-// AddUserCredentialResponse carries the newly added credential.
-message AddUserCredentialResponse {
+// AddKubernetesUserCredentialRequest identifies a Kubernetes service-account credential to
+// provision for a user. scope maps to the credential's service_scope (the namespace) and
+// subject maps to its subject (the service account name).
+message AddKubernetesUserCredentialRequest {
+  string username = 1;
+  string scope    = 2;
+  string subject  = 3;
+}
+
+// AddKubernetesUserCredentialResponse carries the newly added credential.
+message AddKubernetesUserCredentialResponse {
   common.v1.UserCredential credential = 1;
 }
 
@@ -265,6 +290,17 @@ message DeleteUserCredentialRequest {
 
 // DeleteUserCredentialResponse indicates whether the deletion was successful.
 message DeleteUserCredentialResponse {
+  bool success = 1;
+}
+
+// RemoveUserCredentialRequest identifies a credential to remove for a user, by ID.
+message RemoveUserCredentialRequest {
+  string username = 1;
+  uint32 id       = 2;
+}
+
+// RemoveUserCredentialResponse indicates whether the removal was successful.
+message RemoveUserCredentialResponse {
   bool success = 1;
 }
 

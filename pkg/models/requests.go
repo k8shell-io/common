@@ -59,3 +59,12 @@ type UserKeysRequest struct {
 type UserPasswordRequest struct {
 	Password *string `json:"password"`
 }
+
+// UserKubernetesCredentialRequest is the HTTP request body for POST
+// /users/{username}/credentials/kubernetes, which provisions a Kubernetes
+// service-account credential for a user.
+// Note: proto counterpart is identityv1.AddKubernetesUserCredentialRequest.
+type UserKubernetesCredentialRequest struct {
+	Scope   string `json:"scope"`
+	Subject string `json:"subject"`
+}
