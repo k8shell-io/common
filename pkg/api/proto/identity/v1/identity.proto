@@ -115,8 +115,11 @@ service IdentityService {
   // disables password auth for the user.
   rpc SetUserPassword (SetUserPasswordRequest) returns (common.v1.User);
 
-  // UpdateUserCredential updates an existing credential for a user.
-  rpc UpdateUserCredential (common.v1.UserCredential) returns (UpdateUserCredentialResponse);
+  // UpdateUserCredential partially updates a credential by ID. Only fields wrapped in a value
+  // type that are set (non-nil) are applied. Credentials whose credential_source matches
+  // "idp.k8shell.io/*" — provisioned by the onboarding flow — may only have active updated;
+  // attempts to change scope, subject, or secret are rejected.
+  rpc UpdateUserCredential (UpdateUserCredentialRequest) returns (UpdateUserCredentialResponse);
 
   // DeleteUserCredential deletes an external credential by its ID.
   rpc DeleteUserCredential (DeleteUserCredentialRequest) returns (DeleteUserCredentialResponse);
@@ -316,6 +319,17 @@ message AddRegistryUserCredentialRequest {
 // AddRegistryUserCredentialResponse carries the newly added credential.
 message AddRegistryUserCredentialResponse {
   common.v1.UserCredential credential = 1;
+}
+
+// UpdateUserCredentialRequest partially updates a credential identified by id. Only fields
+// wrapped in a value type that are set (non-nil) are applied; unset fields leave the existing
+// value intact.
+message UpdateUserCredentialRequest {
+  uint32                      id      = 1;
+  google.protobuf.StringValue scope   = 2;
+  google.protobuf.StringValue subject = 3;
+  google.protobuf.StringValue secret  = 4;
+  google.protobuf.BoolValue   active  = 5;
 }
 
 // UpdateUserCredentialResponse carries the updated credential.

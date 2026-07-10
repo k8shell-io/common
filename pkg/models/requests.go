@@ -87,3 +87,14 @@ type UserRegistryCredentialRequest struct {
 	Subject string `json:"subject"`
 	Secret  string `json:"secret"`
 }
+
+// UserCredentialUpdateRequest is the HTTP request body for PATCH
+// /users/{username}/credentials/{id}, which partially updates a credential.
+// Only non-nil pointer fields are applied (PATCH semantics).
+// Note: proto counterpart is identityv1.UpdateUserCredentialRequest.
+type UserCredentialUpdateRequest struct {
+	Scope   *string `json:"scope,omitempty"`
+	Subject *string `json:"subject,omitempty"`
+	Secret  *string `json:"secret,omitempty"`
+	Active  *bool   `json:"active,omitempty"`
+}

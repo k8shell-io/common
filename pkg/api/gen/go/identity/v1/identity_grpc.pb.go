@@ -139,8 +139,11 @@ type IdentityServiceClient interface {
 	// never stored or returned in plaintext. Pass an empty password to clear it, which
 	// disables password auth for the user.
 	SetUserPassword(ctx context.Context, in *SetUserPasswordRequest, opts ...grpc.CallOption) (*v1.User, error)
-	// UpdateUserCredential updates an existing credential for a user.
-	UpdateUserCredential(ctx context.Context, in *v1.UserCredential, opts ...grpc.CallOption) (*UpdateUserCredentialResponse, error)
+	// UpdateUserCredential partially updates a credential by ID. Only fields wrapped in a value
+	// type that are set (non-nil) are applied. Credentials whose credential_source matches
+	// "idp.k8shell.io/*" — provisioned by the onboarding flow — may only have active updated;
+	// attempts to change scope, subject, or secret are rejected.
+	UpdateUserCredential(ctx context.Context, in *UpdateUserCredentialRequest, opts ...grpc.CallOption) (*UpdateUserCredentialResponse, error)
 	// DeleteUserCredential deletes an external credential by its ID.
 	DeleteUserCredential(ctx context.Context, in *DeleteUserCredentialRequest, opts ...grpc.CallOption) (*DeleteUserCredentialResponse, error)
 	// RemoveUserCredential removes a specific credential owned by a user, identified by ID.
@@ -441,7 +444,7 @@ func (c *identityServiceClient) SetUserPassword(ctx context.Context, in *SetUser
 	return out, nil
 }
 
-func (c *identityServiceClient) UpdateUserCredential(ctx context.Context, in *v1.UserCredential, opts ...grpc.CallOption) (*UpdateUserCredentialResponse, error) {
+func (c *identityServiceClient) UpdateUserCredential(ctx context.Context, in *UpdateUserCredentialRequest, opts ...grpc.CallOption) (*UpdateUserCredentialResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UpdateUserCredentialResponse)
 	err := c.cc.Invoke(ctx, IdentityService_UpdateUserCredential_FullMethodName, in, out, cOpts...)
@@ -600,8 +603,11 @@ type IdentityServiceServer interface {
 	// never stored or returned in plaintext. Pass an empty password to clear it, which
 	// disables password auth for the user.
 	SetUserPassword(context.Context, *SetUserPasswordRequest) (*v1.User, error)
-	// UpdateUserCredential updates an existing credential for a user.
-	UpdateUserCredential(context.Context, *v1.UserCredential) (*UpdateUserCredentialResponse, error)
+	// UpdateUserCredential partially updates a credential by ID. Only fields wrapped in a value
+	// type that are set (non-nil) are applied. Credentials whose credential_source matches
+	// "idp.k8shell.io/*" — provisioned by the onboarding flow — may only have active updated;
+	// attempts to change scope, subject, or secret are rejected.
+	UpdateUserCredential(context.Context, *UpdateUserCredentialRequest) (*UpdateUserCredentialResponse, error)
 	// DeleteUserCredential deletes an external credential by its ID.
 	DeleteUserCredential(context.Context, *DeleteUserCredentialRequest) (*DeleteUserCredentialResponse, error)
 	// RemoveUserCredential removes a specific credential owned by a user, identified by ID.
@@ -713,7 +719,7 @@ func (UnimplementedIdentityServiceServer) RemoveUserAuthKey(context.Context, *Re
 func (UnimplementedIdentityServiceServer) SetUserPassword(context.Context, *SetUserPasswordRequest) (*v1.User, error) {
 	return nil, status.Error(codes.Unimplemented, "method SetUserPassword not implemented")
 }
-func (UnimplementedIdentityServiceServer) UpdateUserCredential(context.Context, *v1.UserCredential) (*UpdateUserCredentialResponse, error) {
+func (UnimplementedIdentityServiceServer) UpdateUserCredential(context.Context, *UpdateUserCredentialRequest) (*UpdateUserCredentialResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateUserCredential not implemented")
 }
 func (UnimplementedIdentityServiceServer) DeleteUserCredential(context.Context, *DeleteUserCredentialRequest) (*DeleteUserCredentialResponse, error) {
@@ -1245,7 +1251,7 @@ func _IdentityService_SetUserPassword_Handler(srv interface{}, ctx context.Conte
 }
 
 func _IdentityService_UpdateUserCredential_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(v1.UserCredential)
+	in := new(UpdateUserCredentialRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -1257,7 +1263,7 @@ func _IdentityService_UpdateUserCredential_Handler(srv interface{}, ctx context.
 		FullMethod: IdentityService_UpdateUserCredential_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IdentityServiceServer).UpdateUserCredential(ctx, req.(*v1.UserCredential))
+		return srv.(IdentityServiceServer).UpdateUserCredential(ctx, req.(*UpdateUserCredentialRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
