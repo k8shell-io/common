@@ -68,3 +68,22 @@ type UserKubernetesCredentialRequest struct {
 	Scope   string `json:"scope"`
 	Subject string `json:"subject"`
 }
+
+// UserGitCredentialRequest is the HTTP request body for POST
+// /users/{username}/credentials/git, which stores a Git credential for a user.
+// Note: proto counterpart is identityv1.AddGitUserCredentialRequest.
+type UserGitCredentialRequest struct {
+	Scope   string `json:"scope"`
+	Subject string `json:"subject"`
+	Secret  string `json:"secret"`
+}
+
+// UserRegistryCredentialRequest is the HTTP request body for POST
+// /users/{username}/credentials/registry, which stores a container registry
+// credential for a user.
+// Note: proto counterpart is identityv1.AddRegistryUserCredentialRequest.
+type UserRegistryCredentialRequest struct {
+	Scope   string `json:"scope"`
+	Subject string `json:"subject"`
+	Secret  string `json:"secret"`
+}

@@ -37,6 +37,8 @@ const (
 	IdentityService_ListUserCredentials_FullMethodName           = "/identity.v1.IdentityService/ListUserCredentials"
 	IdentityService_GetUserCredential_FullMethodName             = "/identity.v1.IdentityService/GetUserCredential"
 	IdentityService_AddKubernetesUserCredential_FullMethodName   = "/identity.v1.IdentityService/AddKubernetesUserCredential"
+	IdentityService_AddGitUserCredential_FullMethodName          = "/identity.v1.IdentityService/AddGitUserCredential"
+	IdentityService_AddRegistryUserCredential_FullMethodName     = "/identity.v1.IdentityService/AddRegistryUserCredential"
 	IdentityService_CreateUser_FullMethodName                    = "/identity.v1.IdentityService/CreateUser"
 	IdentityService_UpdateUser_FullMethodName                    = "/identity.v1.IdentityService/UpdateUser"
 	IdentityService_DeleteUser_FullMethodName                    = "/identity.v1.IdentityService/DeleteUser"
@@ -100,6 +102,13 @@ type IdentityServiceClient interface {
 	// The secret is left unset — kubernetes credentials are resolved on demand via the
 	// TokenRequest API when the credential is fetched.
 	AddKubernetesUserCredential(ctx context.Context, in *AddKubernetesUserCredentialRequest, opts ...grpc.CallOption) (*AddKubernetesUserCredentialResponse, error)
+	// AddGitUserCredential stores a Git credential for a user. credential_source is always
+	// "stored" — the secret is persisted as given and returned as-is on resolution.
+	AddGitUserCredential(ctx context.Context, in *AddGitUserCredentialRequest, opts ...grpc.CallOption) (*AddGitUserCredentialResponse, error)
+	// AddRegistryUserCredential stores a container registry credential for a user.
+	// credential_source is always "stored" — the secret is persisted as given and returned
+	// as-is on resolution.
+	AddRegistryUserCredential(ctx context.Context, in *AddRegistryUserCredentialRequest, opts ...grpc.CallOption) (*AddRegistryUserCredentialResponse, error)
 	// CreateUser creates a new local user record. The supplied password, if any,
 	// is bcrypt-hashed server-side before being persisted, the same as SetUserPassword.
 	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*v1.User, error)
@@ -296,6 +305,26 @@ func (c *identityServiceClient) AddKubernetesUserCredential(ctx context.Context,
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AddKubernetesUserCredentialResponse)
 	err := c.cc.Invoke(ctx, IdentityService_AddKubernetesUserCredential_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) AddGitUserCredential(ctx context.Context, in *AddGitUserCredentialRequest, opts ...grpc.CallOption) (*AddGitUserCredentialResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AddGitUserCredentialResponse)
+	err := c.cc.Invoke(ctx, IdentityService_AddGitUserCredential_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) AddRegistryUserCredential(ctx context.Context, in *AddRegistryUserCredentialRequest, opts ...grpc.CallOption) (*AddRegistryUserCredentialResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AddRegistryUserCredentialResponse)
+	err := c.cc.Invoke(ctx, IdentityService_AddRegistryUserCredential_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -534,6 +563,13 @@ type IdentityServiceServer interface {
 	// The secret is left unset — kubernetes credentials are resolved on demand via the
 	// TokenRequest API when the credential is fetched.
 	AddKubernetesUserCredential(context.Context, *AddKubernetesUserCredentialRequest) (*AddKubernetesUserCredentialResponse, error)
+	// AddGitUserCredential stores a Git credential for a user. credential_source is always
+	// "stored" — the secret is persisted as given and returned as-is on resolution.
+	AddGitUserCredential(context.Context, *AddGitUserCredentialRequest) (*AddGitUserCredentialResponse, error)
+	// AddRegistryUserCredential stores a container registry credential for a user.
+	// credential_source is always "stored" — the secret is persisted as given and returned
+	// as-is on resolution.
+	AddRegistryUserCredential(context.Context, *AddRegistryUserCredentialRequest) (*AddRegistryUserCredentialResponse, error)
 	// CreateUser creates a new local user record. The supplied password, if any,
 	// is bcrypt-hashed server-side before being persisted, the same as SetUserPassword.
 	CreateUser(context.Context, *CreateUserRequest) (*v1.User, error)
@@ -637,6 +673,12 @@ func (UnimplementedIdentityServiceServer) GetUserCredential(context.Context, *Ge
 }
 func (UnimplementedIdentityServiceServer) AddKubernetesUserCredential(context.Context, *AddKubernetesUserCredentialRequest) (*AddKubernetesUserCredentialResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method AddKubernetesUserCredential not implemented")
+}
+func (UnimplementedIdentityServiceServer) AddGitUserCredential(context.Context, *AddGitUserCredentialRequest) (*AddGitUserCredentialResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AddGitUserCredential not implemented")
+}
+func (UnimplementedIdentityServiceServer) AddRegistryUserCredential(context.Context, *AddRegistryUserCredentialRequest) (*AddRegistryUserCredentialResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AddRegistryUserCredential not implemented")
 }
 func (UnimplementedIdentityServiceServer) CreateUser(context.Context, *CreateUserRequest) (*v1.User, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateUser not implemented")
@@ -964,6 +1006,42 @@ func _IdentityService_AddKubernetesUserCredential_Handler(srv interface{}, ctx c
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(IdentityServiceServer).AddKubernetesUserCredential(ctx, req.(*AddKubernetesUserCredentialRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_AddGitUserCredential_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddGitUserCredentialRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).AddGitUserCredential(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_AddGitUserCredential_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).AddGitUserCredential(ctx, req.(*AddGitUserCredentialRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_AddRegistryUserCredential_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddRegistryUserCredentialRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).AddRegistryUserCredential(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_AddRegistryUserCredential_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).AddRegistryUserCredential(ctx, req.(*AddRegistryUserCredentialRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1372,6 +1450,14 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddKubernetesUserCredential",
 			Handler:    _IdentityService_AddKubernetesUserCredential_Handler,
+		},
+		{
+			MethodName: "AddGitUserCredential",
+			Handler:    _IdentityService_AddGitUserCredential_Handler,
+		},
+		{
+			MethodName: "AddRegistryUserCredential",
+			Handler:    _IdentityService_AddRegistryUserCredential_Handler,
 		},
 		{
 			MethodName: "CreateUser",

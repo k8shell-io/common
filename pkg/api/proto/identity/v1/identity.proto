@@ -65,6 +65,15 @@ service IdentityService {
   // TokenRequest API when the credential is fetched.
   rpc AddKubernetesUserCredential (AddKubernetesUserCredentialRequest) returns (AddKubernetesUserCredentialResponse);
 
+  // AddGitUserCredential stores a Git credential for a user. credential_source is always
+  // "stored" — the secret is persisted as given and returned as-is on resolution.
+  rpc AddGitUserCredential (AddGitUserCredentialRequest) returns (AddGitUserCredentialResponse);
+
+  // AddRegistryUserCredential stores a container registry credential for a user.
+  // credential_source is always "stored" — the secret is persisted as given and returned
+  // as-is on resolution.
+  rpc AddRegistryUserCredential (AddRegistryUserCredentialRequest) returns (AddRegistryUserCredentialResponse);
+
   // CreateUser creates a new local user record. The supplied password, if any,
   // is bcrypt-hashed server-side before being persisted, the same as SetUserPassword.
   rpc CreateUser (CreateUserRequest) returns (common.v1.User);
@@ -275,6 +284,37 @@ message AddKubernetesUserCredentialRequest {
 
 // AddKubernetesUserCredentialResponse carries the newly added credential.
 message AddKubernetesUserCredentialResponse {
+  common.v1.UserCredential credential = 1;
+}
+
+// AddGitUserCredentialRequest identifies a Git credential to store for a user. scope maps
+// to the credential's service_scope (the git host/repo URL) and subject maps to its subject
+// (the git login name). secret is the credential value (e.g. token or password) to store.
+message AddGitUserCredentialRequest {
+  string username = 1;
+  string scope    = 2;
+  string subject  = 3;
+  string secret   = 4;
+}
+
+// AddGitUserCredentialResponse carries the newly added credential.
+message AddGitUserCredentialResponse {
+  common.v1.UserCredential credential = 1;
+}
+
+// AddRegistryUserCredentialRequest identifies a container registry credential to store for a
+// user. scope maps to the credential's service_scope (the registry host) and subject maps to
+// its subject (the registry login name). secret is the credential value (e.g. token or
+// password) to store.
+message AddRegistryUserCredentialRequest {
+  string username = 1;
+  string scope    = 2;
+  string subject  = 3;
+  string secret   = 4;
+}
+
+// AddRegistryUserCredentialResponse carries the newly added credential.
+message AddRegistryUserCredentialResponse {
   common.v1.UserCredential credential = 1;
 }
 
