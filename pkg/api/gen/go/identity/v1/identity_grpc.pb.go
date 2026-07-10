@@ -147,9 +147,6 @@ type IdentityServiceClient interface {
 	// DeleteUserCredential deletes an external credential by its ID.
 	DeleteUserCredential(ctx context.Context, in *DeleteUserCredentialRequest, opts ...grpc.CallOption) (*DeleteUserCredentialResponse, error)
 	// RemoveUserCredential removes a specific credential owned by a user, identified by ID.
-	// Credentials whose credential_source matches "idp.k8shell.io/*" — provisioned by the
-	// onboarding flow (CompleteUserWebFlow / CompleteUserDeviceFlow) to link the user's git
-	// identity — cannot be removed through this RPC.
 	RemoveUserCredential(ctx context.Context, in *RemoveUserCredentialRequest, opts ...grpc.CallOption) (*RemoveUserCredentialResponse, error)
 	// GetAvailableIdentityProviders returns a list of available identity providers.
 	GetAvailableIdentityProviders(ctx context.Context, in *GetAvailableIdentityProvidersRequest, opts ...grpc.CallOption) (*GetAvailableIdentityProvidersResponse, error)
@@ -611,9 +608,6 @@ type IdentityServiceServer interface {
 	// DeleteUserCredential deletes an external credential by its ID.
 	DeleteUserCredential(context.Context, *DeleteUserCredentialRequest) (*DeleteUserCredentialResponse, error)
 	// RemoveUserCredential removes a specific credential owned by a user, identified by ID.
-	// Credentials whose credential_source matches "idp.k8shell.io/*" — provisioned by the
-	// onboarding flow (CompleteUserWebFlow / CompleteUserDeviceFlow) to link the user's git
-	// identity — cannot be removed through this RPC.
 	RemoveUserCredential(context.Context, *RemoveUserCredentialRequest) (*RemoveUserCredentialResponse, error)
 	// GetAvailableIdentityProviders returns a list of available identity providers.
 	GetAvailableIdentityProviders(context.Context, *GetAvailableIdentityProvidersRequest) (*GetAvailableIdentityProvidersResponse, error)

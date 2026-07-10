@@ -125,9 +125,6 @@ service IdentityService {
   rpc DeleteUserCredential (DeleteUserCredentialRequest) returns (DeleteUserCredentialResponse);
 
   // RemoveUserCredential removes a specific credential owned by a user, identified by ID.
-  // Credentials whose credential_source matches "idp.k8shell.io/*" — provisioned by the
-  // onboarding flow (CompleteUserWebFlow / CompleteUserDeviceFlow) to link the user's git
-  // identity — cannot be removed through this RPC.
   rpc RemoveUserCredential (RemoveUserCredentialRequest) returns (RemoveUserCredentialResponse);
 
   // GetAvailableIdentityProviders returns a list of available identity providers.
