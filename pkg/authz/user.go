@@ -51,14 +51,19 @@ package authz
 //   idp  identity provider name (required)
 //   org  organization name      (optional)
 //
-// Context   (none)
+// Context
+//   surface  ssh | web (required) — the login surface being authenticated.
+//            The enforcer evaluates once per surface it needs an answer for;
+//            a single check answers only the surface named in the request.
 //
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
 // Obligations
 //   auth_methods  JSON array of allowed auth method strings — "publickey",
-//                 "password", or both (e.g. ["publickey","password"]). The
-//                 enforcer offers only the methods present in this list.
+//                 "password", or both (e.g. ["publickey","password"]),
+//                 scoped to the surface in the request context. The enforcer
+//                 offers only the methods present in this list. publickey is
+//                 only meaningful for the ssh surface.
 //
 // ---
 //
@@ -236,13 +241,33 @@ func validateUserWriteDataType(dt UserDataType) error {
 	}
 }
 
-// UserAuthMethod is the typed representation of an SSH authentication method.
+// UserAuthMethod is the typed representation of a user authentication method.
 type UserAuthMethod string
 
 const (
 	UserAuthMethodPublicKey UserAuthMethod = "publickey"
 	UserAuthMethodPassword  UserAuthMethod = "password"
 )
+
+// AuthSurface identifies which login surface a user:auth check is evaluating.
+// publickey is only meaningful for AuthSurfaceSSH; AuthSurfaceWeb is
+// password-only in practice, though the contract does not enforce that.
+type AuthSurface string
+
+const (
+	AuthSurfaceSSH AuthSurface = "ssh"
+	AuthSurfaceWeb AuthSurface = "web"
+)
+
+// validateAuthSurface checks the surface valid for user:auth.
+func validateAuthSurface(s AuthSurface) error {
+	switch s {
+	case AuthSurfaceSSH, AuthSurfaceWeb:
+		return nil
+	default:
+		return fmt.Errorf("user:auth: context \"surface\" must be %q or %q, got %q", AuthSurfaceSSH, AuthSurfaceWeb, s)
+	}
+}
 
 // UserResource holds the resource-scoped attributes for a user policy check.
 type UserResource struct {
@@ -559,11 +584,18 @@ func (r *UserDeleteEvalRequest) Validate() error {
 	return nil
 }
 
+// UserAuthContext holds the context-scoped attributes for a user:auth policy check.
+type UserAuthContext struct {
+	// Surface is the login surface being authenticated (context["surface"]).
+	Surface AuthSurface
+}
+
 // UserAuthEvalRequest is the validated, typed model for user:auth policy
 // evaluation. Use NewUserAuthEvalRequest to start building, then chain With*
 // methods and call Build to get a validated instance.
 type UserAuthEvalRequest struct {
 	Resource UserResource
+	Context  UserAuthContext
 }
 
 var _ EvalRequest = (*UserAuthEvalRequest)(nil)
@@ -589,6 +621,12 @@ func (r *UserAuthEvalRequest) WithOrg(org string) *UserAuthEvalRequest {
 	return r
 }
 
+// WithSurface sets the login surface being authenticated on the context.
+func (r *UserAuthEvalRequest) WithSurface(surface AuthSurface) *UserAuthEvalRequest {
+	r.Context.Surface = surface
+	return r
+}
+
 // Build validates the request and returns it if all constraints are satisfied.
 // It is the required terminator for the builder chain.
 func (r *UserAuthEvalRequest) Build() (*UserAuthEvalRequest, error) {
@@ -610,6 +648,7 @@ func (r *UserAuthEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
 			Id:         r.Resource.ID,
 			Attributes: userResourceToAttrs(r.Resource),
 		},
+		Context: map[string]string{"surface": string(r.Context.Surface)},
 	}
 }
 
@@ -631,6 +670,7 @@ func UserAuthEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserAuthEvalRe
 	}
 	r := &UserAuthEvalRequest{
 		Resource: userResourceFromAttrs(req.Resource.Id, req.Resource.Attributes),
+		Context:  UserAuthContext{Surface: AuthSurface(req.Context["surface"])},
 	}
 	if err := r.Validate(); err != nil {
 		return nil, err
@@ -639,10 +679,13 @@ func UserAuthEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserAuthEvalRe
 }
 
 // Validate checks the request against the user:auth contract: ID and IDP are
-// required.
+// required, and surface must be a recognized value.
 // Implements EvalRequest.
 func (r *UserAuthEvalRequest) Validate() error {
-	return validateUserResource(r.Resource)
+	if err := validateUserResource(r.Resource); err != nil {
+		return err
+	}
+	return validateAuthSurface(r.Context.Surface)
 }
 
 // UserReadEvalRequest is the validated, typed model for user:read policy
