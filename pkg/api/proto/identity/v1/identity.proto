@@ -45,6 +45,12 @@ service IdentityService {
   // and returns the authentication result along with user details if valid.
   rpc AuthUserPassword (AuthUserPasswordRequest) returns (AuthUserResponse);
 
+  // VerifyUserPassword checks a password against a user's stored bcrypt hash without
+  // evaluating the user:auth authz policy, unlike AuthUserPassword. It is intended for
+  // callers that already gate password-verification requirements (e.g. requiring the
+  // current password before a change) with their own authorization logic.
+  rpc VerifyUserPassword (AuthUserPasswordRequest) returns (AuthUserResponse);
+
   // CompleteUserDeviceFlow is called by the client after the user has completed
   // device-flow authorization on the provider side. It provisions the git
   // credential and returns the user's access token.

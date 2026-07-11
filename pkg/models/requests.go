@@ -57,7 +57,8 @@ type UserKeysRequest struct {
 // password) can be distinguished from an absent field.
 // Note: proto counterpart is identityv1.SetUserPasswordRequest.
 type UserPasswordRequest struct {
-	Password *string `json:"password"`
+	Password        *string `json:"password"`
+	CurrentPassword *string `json:"current_password,omitempty"`
 }
 
 // UserKubernetesCredentialRequest is the HTTP request body for POST
