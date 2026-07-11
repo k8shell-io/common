@@ -68,6 +68,36 @@ type UserLoginRequest struct {
 	Password string `json:"password"`
 }
 
+// UserProfile is the HTTP response body for GET /me/profile and
+// GET /users/{username}/profile — the frontend's canonical view of a user
+// account. Fields are copied explicitly rather than reusing models.User
+// directly, so this contract only changes when a profile field is
+// deliberately added or removed here, independent of what models.User
+// carries for other (non-HTTP-facing) consumers.
+type UserProfile struct {
+	Username     string   `json:"username"`
+	Organization string   `json:"organization"`
+	Fullname     string   `json:"fullname"`
+	Email        string   `json:"email"`
+	UID          uint32   `json:"uid"`
+	GID          uint32   `json:"gid"`
+	Shell        string   `json:"shell"`
+	Sudo         bool     `json:"sudo"`
+	Source       string   `json:"source"`
+	Roles        []Role   `json:"roles"`
+	Blueprints   []string `json:"blueprints"`
+
+	// AccountLocked is the administrative lock an admin sets explicitly; it
+	// blocks all auth surfaces (SSH, PAT, session, password).
+	AccountLocked bool `json:"account_locked"`
+
+	// PasswordLocked reflects api-server's local, transient brute-force
+	// lockout for password-based auth specifically — other auth surfaces
+	// (e.g. SSH publickey) keep working while this is true.
+	PasswordLocked      bool   `json:"password_locked"`
+	PasswordLockedUntil string `json:"password_locked_until,omitempty"`
+}
+
 // UserKubernetesCredentialRequest is the HTTP request body for POST
 // /users/{username}/credentials/kubernetes, which provisions a Kubernetes
 // service-account credential for a user.
