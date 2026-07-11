@@ -1325,3 +1325,89 @@ func ParseOrgObligation(obligations map[string]string) (OrgObligation, bool) {
 	}
 	return OrgObligation{Org: v}, true
 }
+
+// init registers a capability probe for every user/token domain action. See
+// CapabilityCheck and registerCapabilityCheck in capability.go.
+func init() {
+	registerCapabilityCheck(CapabilityCheck{
+		Action: "user:list", Package: "user", Scope: "user:list",
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewUserListEvalRequest().Build()
+		},
+		SelfOnly: true,
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		Action: "user:onboard", Package: "user", Scope: "user:onboard",
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewUserOnboardEvalRequest(ctx.ResourceOwner).WithIDP(ctx.IDP).WithOrg(ctx.Org).Build()
+		},
+		SelfOnly: true,
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		Action: "user:create", Package: "user", Scope: "user:create",
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewUserCreateEvalRequest(ctx.ResourceOwner).WithOrg(ctx.Org).Build()
+		},
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		Action: "user:delete", Package: "user", Scope: "user:delete",
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewUserDeleteEvalRequest(ctx.ResourceOwner).WithOrg(ctx.Org).Build()
+		},
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		// "user:auth" itself has no dedicated const (unlike WorkspaceAction/
+		// SessionAction/SSHAction) — only the surface qualifier does.
+		Action: "user:auth:" + string(AuthSurfaceWeb), Package: "user", Scope: "user:auth:" + string(AuthSurfaceWeb),
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewUserAuthEvalRequest(ctx.ResourceOwner).WithIDP(ctx.IDP).WithOrg(ctx.Org).
+				WithSurface(AuthSurfaceWeb).Build()
+		},
+		SelfOnly: true,
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		Action: "user:auth:" + string(AuthSurfaceSSH), Package: "user", Scope: "user:auth:" + string(AuthSurfaceSSH),
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewUserAuthEvalRequest(ctx.ResourceOwner).WithIDP(ctx.IDP).WithOrg(ctx.Org).
+				WithSurface(AuthSurfaceSSH).Build()
+		},
+		SelfOnly: true,
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		Action: "token:create", Package: "user", Scope: "token:create",
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewUserTokenCreateEvalRequest(ctx.ResourceOwner).WithSource(TokenCreateSourceAPI).Build()
+		},
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		Action: "token:read", Package: "user", Scope: "token:read",
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewUserTokenReadEvalRequest(ctx.ResourceOwner).Build()
+		},
+	})
+
+	for _, dt := range []UserDataType{
+		UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys,
+	} {
+		action := "user:read:" + string(dt)
+		registerCapabilityCheck(CapabilityCheck{
+			Action: action, Package: "user", Scope: action,
+			Build: func(ctx CapabilityContext) (EvalRequest, error) {
+				return NewUserReadEvalRequest(ctx.ResourceOwner).WithDataType(dt).Build()
+			},
+		})
+	}
+
+	for _, dt := range []UserDataType{
+		UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys,
+		UserDataTypeSudo, UserDataTypeLocked, UserDataTypeOrg, UserDataTypePosix, UserDataTypePassword,
+	} {
+		action := "user:write:" + string(dt)
+		registerCapabilityCheck(CapabilityCheck{
+			Action: action, Package: "user", Scope: action,
+			Build: func(ctx CapabilityContext) (EvalRequest, error) {
+				return NewUserWriteEvalRequest(ctx.ResourceOwner).WithDataType(dt).Build()
+			},
+		})
+	}
+}

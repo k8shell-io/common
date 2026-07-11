@@ -68,6 +68,15 @@ type UserLoginRequest struct {
 	Password string `json:"password"`
 }
 
+// Capability describes whether a single policy-governed action is permitted for
+// the authenticated user, as returned by GET /me/capabilities.
+type Capability struct {
+	Action      string            `json:"action"`
+	Allowed     bool              `json:"allowed"`
+	Reason      string            `json:"reason"`
+	Obligations map[string]string `json:"obligations,omitempty"`
+}
+
 // UserProfile is the HTTP response body for GET /me/profile and
 // GET /users/{username}/profile — the frontend's canonical view of a user
 // account. Fields are copied explicitly rather than reusing models.User

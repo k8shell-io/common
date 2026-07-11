@@ -440,3 +440,23 @@ func ParseUsernameObligation(obligations map[string]string) (UsernameObligation,
 	}
 	return UsernameObligation{Username: v}, true
 }
+
+// init registers a capability probe for every session domain action. See
+// CapabilityCheck and registerCapabilityCheck in capability.go.
+func init() {
+	registerCapabilityCheck(CapabilityCheck{
+		Action: string(SessionActionList), Package: "session", Scope: string(SessionActionList),
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewSessionListEvalRequest().WithOwner(ctx.ResourceOwner).Build()
+		},
+		SelfOnly: true,
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		Action: string(SessionActionStart), Package: "session", Scope: string(SessionActionStart),
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewSessionStartEvalRequest(SessionActionStart, capabilityWildcardWorkspace, SessionTypeShell).
+				WithOwner(ctx.ResourceOwner).WithSource(SessionSourceAPIServer).Build()
+		},
+		SelfOnly: true,
+	})
+}

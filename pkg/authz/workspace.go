@@ -1063,3 +1063,132 @@ func parseJSONPointer(ptr string) ([]string, error) {
 	}
 	return tokens, nil
 }
+
+// init registers a capability probe for every workspace domain action. See
+// CapabilityCheck and registerCapabilityCheck in capability.go.
+func init() {
+	registerCapabilityCheck(CapabilityCheck{
+		Action: string(WorkspaceActionList), Package: "workspace", Scope: string(WorkspaceActionList),
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewWorkspaceOwnerEvalRequest(WorkspaceActionList, ctx.ResourceOwner).Build()
+		},
+		SelfOnly: true,
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		Action: string(WorkspaceActionCreate), Package: "workspace", Scope: string(WorkspaceActionCreate),
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewWorkspaceOwnerEvalRequest(WorkspaceActionCreate, ctx.ResourceOwner).Build()
+		},
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		Action: string(WorkspaceActionProvision), Package: "workspace", Scope: string(WorkspaceActionProvision),
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			b := NewWorkspaceEvalRequest(WorkspaceActionProvision, capabilityWildcardWorkspace).WithOwner(ctx.ResourceOwner)
+			if ctx.BlueprintName != "" {
+				bp := ctx.Blueprint
+				if bp == nil {
+					bp = &models.Blueprint{Name: ctx.BlueprintName}
+				}
+				b = b.WithBlueprintName(ctx.BlueprintName).WithBlueprint(bp).WithMode(WorkspaceProvisionModeStandalone)
+			}
+			return b.Build()
+		},
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		Action: string(WorkspaceActionRead), Package: "workspace", Scope: string(WorkspaceActionRead),
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewWorkspaceAccessEvalRequest(WorkspaceActionRead, capabilityWildcardWorkspace).WithOwner(ctx.ResourceOwner).Build()
+		},
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		Action: string(WorkspaceActionDelete), Package: "workspace", Scope: string(WorkspaceActionDelete),
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewWorkspaceAccessEvalRequest(WorkspaceActionDelete, capabilityWildcardWorkspace).WithOwner(ctx.ResourceOwner).Build()
+		},
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		Action:  string(WorkspaceActionConnect) + ":" + string(WorkspaceConnectTypeWebshell),
+		Package: "workspace",
+		Scope:   string(WorkspaceActionConnect) + ":" + string(WorkspaceConnectTypeWebshell),
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewWorkspaceConnectEvalRequest(capabilityWildcardWorkspace).
+				WithOwner(ctx.ResourceOwner).WithType(WorkspaceConnectTypeWebshell).Build()
+		},
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		Action:  string(WorkspaceActionConnect) + ":" + string(WorkspaceConnectTypeWebfiles),
+		Package: "workspace",
+		Scope:   string(WorkspaceActionConnect) + ":" + string(WorkspaceConnectTypeWebfiles),
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewWorkspaceConnectEvalRequest(capabilityWildcardWorkspace).
+				WithOwner(ctx.ResourceOwner).WithType(WorkspaceConnectTypeWebfiles).Build()
+		},
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		Action:  string(WorkspaceActionConnect) + ":" + string(WorkspaceConnectTypePortForward),
+		Package: "workspace",
+		Scope:   string(WorkspaceActionConnect) + ":" + string(WorkspaceConnectTypePortForward),
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewWorkspaceConnectEvalRequest(capabilityWildcardWorkspace).
+				WithOwner(ctx.ResourceOwner).WithType(WorkspaceConnectTypePortForward).WithPort(capabilityWildcardPort).Build()
+		},
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		// Scope stays the flat action (not action:op) — sftp.go's real
+		// checkAuthz call caps workspace:files as a single PAT scope
+		// regardless of download/upload; only the Action display label here
+		// is split for a more informative report.
+		Action:  string(WorkspaceActionFiles) + ":" + string(WorkspaceFilesOpDownload),
+		Package: "workspace",
+		Scope:   string(WorkspaceActionFiles),
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewWorkspaceFilesEvalRequest(capabilityWildcardWorkspace).
+				WithOwner(ctx.ResourceOwner).WithOp(WorkspaceFilesOpDownload).Build()
+		},
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		Action:  string(WorkspaceActionFiles) + ":" + string(WorkspaceFilesOpUpload),
+		Package: "workspace",
+		Scope:   string(WorkspaceActionFiles),
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewWorkspaceFilesEvalRequest(capabilityWildcardWorkspace).
+				WithOwner(ctx.ResourceOwner).WithOp(WorkspaceFilesOpUpload).Build()
+		},
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		Action:  string(WorkspaceActionApp) + ":" + string(WorkspaceAppOpRead),
+		Package: "workspace",
+		Scope:   string(WorkspaceActionApp) + ":" + string(WorkspaceAppOpRead),
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewWorkspaceAppEvalRequest(capabilityWildcardWorkspace, capabilityWildcardApp).
+				WithOwner(ctx.ResourceOwner).WithOp(WorkspaceAppOpRead).Build()
+		},
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		Action:  string(WorkspaceActionApp) + ":" + string(WorkspaceAppOpInstall),
+		Package: "workspace",
+		Scope:   string(WorkspaceActionApp) + ":" + string(WorkspaceAppOpInstall),
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewWorkspaceAppEvalRequest(capabilityWildcardWorkspace, capabilityWildcardApp).
+				WithOwner(ctx.ResourceOwner).WithOp(WorkspaceAppOpInstall).Build()
+		},
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		Action:  string(WorkspaceActionApp) + ":" + string(WorkspaceAppOpStart),
+		Package: "workspace",
+		Scope:   string(WorkspaceActionApp) + ":" + string(WorkspaceAppOpStart),
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewWorkspaceAppEvalRequest(capabilityWildcardWorkspace, capabilityWildcardApp).
+				WithOwner(ctx.ResourceOwner).WithOp(WorkspaceAppOpStart).Build()
+		},
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		Action:  string(WorkspaceActionApp) + ":" + string(WorkspaceAppOpStop),
+		Package: "workspace",
+		Scope:   string(WorkspaceActionApp) + ":" + string(WorkspaceAppOpStop),
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewWorkspaceAppEvalRequest(capabilityWildcardWorkspace, capabilityWildcardApp).
+				WithOwner(ctx.ResourceOwner).WithOp(WorkspaceAppOpStop).Build()
+		},
+	})
+}

@@ -288,3 +288,59 @@ func (r *SSHEvalRequest) Validate() error {
 
 	return nil
 }
+
+// init registers a capability probe for every ssh domain action. See
+// CapabilityCheck and registerCapabilityCheck in capability.go.
+//
+// These are evaluated under the "ssh" package, mirrored from the
+// "workspace"/"user"/"session" convention — verify this against the real
+// Rego package layout if it doesn't match, since no in-repo caller of this
+// package ever calls Evaluate for ssh:* itself (that's ssh-proxy's job), so
+// there's no confirmed package name to copy from.
+func init() {
+	registerCapabilityCheck(CapabilityCheck{
+		Action: string(SSHActionShell), Package: "ssh", Scope: string(SSHActionShell),
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewSSHEvalRequest(SSHActionShell, capabilityWildcardWorkspace).WithOwner(ctx.ResourceOwner).Build()
+		},
+		SelfOnly: true,
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		Action: string(SSHActionExec), Package: "ssh", Scope: string(SSHActionExec),
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewSSHEvalRequest(SSHActionExec, capabilityWildcardWorkspace).
+				WithOwner(ctx.ResourceOwner).WithCommand(capabilityWildcardCommand).Build()
+		},
+		SelfOnly: true,
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		Action: string(SSHActionSFTP), Package: "ssh", Scope: string(SSHActionSFTP),
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewSSHEvalRequest(SSHActionSFTP, capabilityWildcardWorkspace).WithOwner(ctx.ResourceOwner).Build()
+		},
+		SelfOnly: true,
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		Action: string(SSHActionDirectTCPIP), Package: "ssh", Scope: string(SSHActionDirectTCPIP),
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewSSHEvalRequest(SSHActionDirectTCPIP, capabilityWildcardWorkspace).
+				WithOwner(ctx.ResourceOwner).WithHost(capabilityWildcardHost).WithPort(capabilityWildcardPort).Build()
+		},
+		SelfOnly: true,
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		Action: string(SSHActionDirectStreamlocal), Package: "ssh", Scope: string(SSHActionDirectStreamlocal),
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewSSHEvalRequest(SSHActionDirectStreamlocal, capabilityWildcardWorkspace).
+				WithOwner(ctx.ResourceOwner).WithSocketPath(capabilityWildcardSocketPath).Build()
+		},
+		SelfOnly: true,
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		Action: string(SSHActionAgentForward), Package: "ssh", Scope: string(SSHActionAgentForward),
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewSSHEvalRequest(SSHActionAgentForward, capabilityWildcardWorkspace).WithOwner(ctx.ResourceOwner).Build()
+		},
+		SelfOnly: true,
+	})
+}
