@@ -247,10 +247,15 @@ func (x *EvaluateResponse) GetObligations() map[string]string {
 
 // BatchEvaluateRequest carries one or more independent checks.
 type BatchEvaluateRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Requests      []*EvaluateRequest     `protobuf:"bytes,1,rep,name=requests,proto3" json:"requests,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Requests []*EvaluateRequest     `protobuf:"bytes,1,rep,name=requests,proto3" json:"requests,omitempty"`
+	// capability_check marks every request in this batch as a synthetic
+	// "what can I do" probe (e.g. built from authz.CapabilityChecks()) rather
+	// than a real access attempt. Policy-decision auditing should record and
+	// classify these separately from genuine authorization decisions.
+	CapabilityCheck bool `protobuf:"varint,2,opt,name=capability_check,json=capabilityCheck,proto3" json:"capability_check,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *BatchEvaluateRequest) Reset() {
@@ -288,6 +293,13 @@ func (x *BatchEvaluateRequest) GetRequests() []*EvaluateRequest {
 		return x.Requests
 	}
 	return nil
+}
+
+func (x *BatchEvaluateRequest) GetCapabilityCheck() bool {
+	if x != nil {
+		return x.CapabilityCheck
+	}
+	return false
 }
 
 // BatchEvaluateResponse carries one response per request, in the same order.
@@ -364,9 +376,10 @@ const file_authz_v1_authz_proto_rawDesc = "" +
 	"\vobligations\x18\x03 \x03(\v2+.authz.v1.EvaluateResponse.ObligationsEntryR\vobligations\x1a>\n" +
 	"\x10ObligationsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"M\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"x\n" +
 	"\x14BatchEvaluateRequest\x125\n" +
-	"\brequests\x18\x01 \x03(\v2\x19.authz.v1.EvaluateRequestR\brequests\"Q\n" +
+	"\brequests\x18\x01 \x03(\v2\x19.authz.v1.EvaluateRequestR\brequests\x12)\n" +
+	"\x10capability_check\x18\x02 \x01(\bR\x0fcapabilityCheck\"Q\n" +
 	"\x15BatchEvaluateResponse\x128\n" +
 	"\tresponses\x18\x01 \x03(\v2\x1a.authz.v1.EvaluateResponseR\tresponses2\xa3\x01\n" +
 	"\fAuthzService\x12A\n" +

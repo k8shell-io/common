@@ -22,6 +22,15 @@ type PolicyInput struct {
 	Resource  PolicyResource
 	Context   map[string]string
 	Blueprint map[string]any // non-nil for workspace:* actions; decoded from context["blueprint"]
+
+	// CapabilityCheck marks this evaluation as a synthetic "what can I do"
+	// probe rather than a real access attempt. It is not set by
+	// BuildPolicyInput — since capability_check is a BatchEvaluateRequest-level
+	// flag, the caller of BatchEvaluate must propagate it onto each request's
+	// PolicyInput after construction. Policy-decision audit logging should
+	// record and classify these separately from genuine authorization
+	// decisions.
+	CapabilityCheck bool
 }
 
 // PolicyResource holds the resource fields for policy evaluation,

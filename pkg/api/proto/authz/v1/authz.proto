@@ -77,6 +77,12 @@ message EvaluateResponse {
 // BatchEvaluateRequest carries one or more independent checks.
 message BatchEvaluateRequest {
   repeated EvaluateRequest requests = 1;
+
+  // capability_check marks every request in this batch as a synthetic
+  // "what can I do" probe (e.g. built from authz.CapabilityChecks()) rather
+  // than a real access attempt. Policy-decision auditing should record and
+  // classify these separately from genuine authorization decisions.
+  bool capability_check = 2;
 }
 
 // BatchEvaluateResponse carries one response per request, in the same order.
