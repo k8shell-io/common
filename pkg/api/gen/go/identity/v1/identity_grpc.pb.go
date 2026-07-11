@@ -32,7 +32,6 @@ const (
 	IdentityService_CompleteUserWebFlow_FullMethodName           = "/identity.v1.IdentityService/CompleteUserWebFlow"
 	IdentityService_AuthUserPublicKey_FullMethodName             = "/identity.v1.IdentityService/AuthUserPublicKey"
 	IdentityService_AuthUserPassword_FullMethodName              = "/identity.v1.IdentityService/AuthUserPassword"
-	IdentityService_VerifyUserPassword_FullMethodName            = "/identity.v1.IdentityService/VerifyUserPassword"
 	IdentityService_CompleteUserDeviceFlow_FullMethodName        = "/identity.v1.IdentityService/CompleteUserDeviceFlow"
 	IdentityService_GetBlueprintByUserStr_FullMethodName         = "/identity.v1.IdentityService/GetBlueprintByUserStr"
 	IdentityService_ListUserCredentials_FullMethodName           = "/identity.v1.IdentityService/ListUserCredentials"
@@ -85,14 +84,12 @@ type IdentityServiceClient interface {
 	// AuthUserPublicKey authenticates a user using a public key and returns the authentication result
 	// along with user details if valid.
 	AuthUserPublicKey(ctx context.Context, in *AuthUserPublicKeyRequest, opts ...grpc.CallOption) (*AuthUserResponse, error)
-	// AuthUserPassword authenticates a user using a password stored locally (bcrypt-hashed)
-	// and returns the authentication result along with user details if valid.
+	// AuthUserPassword checks a password against a user's stored bcrypt hash and
+	// returns the result along with user details if valid. It does not evaluate
+	// the user:auth authz policy itself — it is shared by SSH and web login
+	// surfaces (and by non-login callers, e.g. requiring the current password
+	// before a change), each of which is responsible for its own authorization.
 	AuthUserPassword(ctx context.Context, in *AuthUserPasswordRequest, opts ...grpc.CallOption) (*AuthUserResponse, error)
-	// VerifyUserPassword checks a password against a user's stored bcrypt hash without
-	// evaluating the user:auth authz policy, unlike AuthUserPassword. It is intended for
-	// callers that already gate password-verification requirements (e.g. requiring the
-	// current password before a change) with their own authorization logic.
-	VerifyUserPassword(ctx context.Context, in *AuthUserPasswordRequest, opts ...grpc.CallOption) (*AuthUserResponse, error)
 	// CompleteUserDeviceFlow is called by the client after the user has completed
 	// device-flow authorization on the provider side. It provisions the git
 	// credential and returns the user's access token.
@@ -261,16 +258,6 @@ func (c *identityServiceClient) AuthUserPassword(ctx context.Context, in *AuthUs
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AuthUserResponse)
 	err := c.cc.Invoke(ctx, IdentityService_AuthUserPassword_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *identityServiceClient) VerifyUserPassword(ctx context.Context, in *AuthUserPasswordRequest, opts ...grpc.CallOption) (*AuthUserResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(AuthUserResponse)
-	err := c.cc.Invoke(ctx, IdentityService_VerifyUserPassword_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -561,14 +548,12 @@ type IdentityServiceServer interface {
 	// AuthUserPublicKey authenticates a user using a public key and returns the authentication result
 	// along with user details if valid.
 	AuthUserPublicKey(context.Context, *AuthUserPublicKeyRequest) (*AuthUserResponse, error)
-	// AuthUserPassword authenticates a user using a password stored locally (bcrypt-hashed)
-	// and returns the authentication result along with user details if valid.
+	// AuthUserPassword checks a password against a user's stored bcrypt hash and
+	// returns the result along with user details if valid. It does not evaluate
+	// the user:auth authz policy itself — it is shared by SSH and web login
+	// surfaces (and by non-login callers, e.g. requiring the current password
+	// before a change), each of which is responsible for its own authorization.
 	AuthUserPassword(context.Context, *AuthUserPasswordRequest) (*AuthUserResponse, error)
-	// VerifyUserPassword checks a password against a user's stored bcrypt hash without
-	// evaluating the user:auth authz policy, unlike AuthUserPassword. It is intended for
-	// callers that already gate password-verification requirements (e.g. requiring the
-	// current password before a change) with their own authorization logic.
-	VerifyUserPassword(context.Context, *AuthUserPasswordRequest) (*AuthUserResponse, error)
 	// CompleteUserDeviceFlow is called by the client after the user has completed
 	// device-flow authorization on the provider side. It provisions the git
 	// credential and returns the user's access token.
@@ -679,9 +664,6 @@ func (UnimplementedIdentityServiceServer) AuthUserPublicKey(context.Context, *Au
 }
 func (UnimplementedIdentityServiceServer) AuthUserPassword(context.Context, *AuthUserPasswordRequest) (*AuthUserResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method AuthUserPassword not implemented")
-}
-func (UnimplementedIdentityServiceServer) VerifyUserPassword(context.Context, *AuthUserPasswordRequest) (*AuthUserResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method VerifyUserPassword not implemented")
 }
 func (UnimplementedIdentityServiceServer) CompleteUserDeviceFlow(context.Context, *CompleteUserDeviceFlowRequest) (*CompleteUserDeviceFlowResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CompleteUserDeviceFlow not implemented")
@@ -940,24 +922,6 @@ func _IdentityService_AuthUserPassword_Handler(srv interface{}, ctx context.Cont
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(IdentityServiceServer).AuthUserPassword(ctx, req.(*AuthUserPasswordRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _IdentityService_VerifyUserPassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AuthUserPasswordRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(IdentityServiceServer).VerifyUserPassword(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: IdentityService_VerifyUserPassword_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IdentityServiceServer).VerifyUserPassword(ctx, req.(*AuthUserPasswordRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1472,10 +1436,6 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AuthUserPassword",
 			Handler:    _IdentityService_AuthUserPassword_Handler,
-		},
-		{
-			MethodName: "VerifyUserPassword",
-			Handler:    _IdentityService_VerifyUserPassword_Handler,
 		},
 		{
 			MethodName: "CompleteUserDeviceFlow",

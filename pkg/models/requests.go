@@ -61,6 +61,13 @@ type UserPasswordRequest struct {
 	CurrentPassword *string `json:"current_password,omitempty"`
 }
 
+// UserLoginRequest is the HTTP request body for POST /auth/login, which
+// authenticates a user against the identity service's "local" password provider.
+type UserLoginRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 // UserKubernetesCredentialRequest is the HTTP request body for POST
 // /users/{username}/credentials/kubernetes, which provisions a Kubernetes
 // service-account credential for a user.

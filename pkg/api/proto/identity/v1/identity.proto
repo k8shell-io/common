@@ -41,15 +41,12 @@ service IdentityService {
   // along with user details if valid.
   rpc AuthUserPublicKey (AuthUserPublicKeyRequest) returns (AuthUserResponse);
 
-  // AuthUserPassword authenticates a user using a password stored locally (bcrypt-hashed)
-  // and returns the authentication result along with user details if valid.
+  // AuthUserPassword checks a password against a user's stored bcrypt hash and
+  // returns the result along with user details if valid. It does not evaluate
+  // the user:auth authz policy itself — it is shared by SSH and web login
+  // surfaces (and by non-login callers, e.g. requiring the current password
+  // before a change), each of which is responsible for its own authorization.
   rpc AuthUserPassword (AuthUserPasswordRequest) returns (AuthUserResponse);
-
-  // VerifyUserPassword checks a password against a user's stored bcrypt hash without
-  // evaluating the user:auth authz policy, unlike AuthUserPassword. It is intended for
-  // callers that already gate password-verification requirements (e.g. requiring the
-  // current password before a change) with their own authorization logic.
-  rpc VerifyUserPassword (AuthUserPasswordRequest) returns (AuthUserResponse);
 
   // CompleteUserDeviceFlow is called by the client after the user has completed
   // device-flow authorization on the provider side. It provisions the git
