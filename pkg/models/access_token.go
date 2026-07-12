@@ -9,12 +9,13 @@ import "time"
 // It carries an explicit scopes list that caps what actions the token may perform.
 // The raw token value is never stored here; only the DB layer holds the hash.
 type AccessToken struct {
-	ID         int64
-	Username   string
-	Name       string
-	Scopes     []string
-	ExpiresAt  *time.Time
-	CreatedAt  time.Time
-	LastUsedAt *time.Time
-	IsActive   bool
+	ID           int64
+	Username     string
+	Name         string
+	Scopes       []string
+	ExpiresAt    *time.Time
+	CreatedAt    time.Time
+	LastUsedAt   *time.Time
+	IsActive     bool
+	TokenPreview *string
 }

@@ -1154,15 +1154,20 @@ func (x *ListUserAuthKeysResponse) GetAuthKeys() []*UserAuthKey {
 // AccessTokenInfo carries access token metadata returned in list responses.
 // The raw token and its hash are never included.
 type AccessTokenInfo struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
-	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	Scopes        []string               `protobuf:"bytes,4,rep,name=scopes,proto3" json:"scopes,omitempty"`
-	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	LastUsedAt    *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=last_used_at,json=lastUsedAt,proto3" json:"last_used_at,omitempty"`
-	IsActive      bool                   `protobuf:"varint,8,opt,name=is_active,json=isActive,proto3" json:"is_active,omitempty"`
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	Id         int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Username   string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	Name       string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	Scopes     []string               `protobuf:"bytes,4,rep,name=scopes,proto3" json:"scopes,omitempty"`
+	ExpiresAt  *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	CreatedAt  *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	LastUsedAt *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=last_used_at,json=lastUsedAt,proto3" json:"last_used_at,omitempty"`
+	IsActive   bool                   `protobuf:"varint,8,opt,name=is_active,json=isActive,proto3" json:"is_active,omitempty"`
+	// token_preview holds the first few characters of the token's random portion
+	// (after the k8sh_ prefix), letting a user tell their tokens apart without the
+	// raw value ever being stored or shown again. Empty for tokens issued before
+	// this field existed.
+	TokenPreview  string `protobuf:"bytes,9,opt,name=token_preview,json=tokenPreview,proto3" json:"token_preview,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1253,6 +1258,13 @@ func (x *AccessTokenInfo) GetIsActive() bool {
 	return false
 }
 
+func (x *AccessTokenInfo) GetTokenPreview() string {
+	if x != nil {
+		return x.TokenPreview
+	}
+	return ""
+}
+
 var File_identity_v1_types_proto protoreflect.FileDescriptor
 
 const file_identity_v1_types_proto_rawDesc = "" +
@@ -1327,7 +1339,7 @@ const file_identity_v1_types_proto_rawDesc = "" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x16\n" +
 	"\x06source\x18\x02 \x01(\tR\x06source\"Q\n" +
 	"\x18ListUserAuthKeysResponse\x125\n" +
-	"\tauth_keys\x18\x01 \x03(\v2\x18.identity.v1.UserAuthKeyR\bauthKeys\"\xba\x02\n" +
+	"\tauth_keys\x18\x01 \x03(\v2\x18.identity.v1.UserAuthKeyR\bauthKeys\"\xdf\x02\n" +
 	"\x0fAccessTokenInfo\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x12\n" +
@@ -1339,7 +1351,8 @@ const file_identity_v1_types_proto_rawDesc = "" +
 	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12<\n" +
 	"\flast_used_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"lastUsedAt\x12\x1b\n" +
-	"\tis_active\x18\b \x01(\bR\bisActiveBDZBgithub.com/k8shell-io/common/pkg/api/gen/go/identity/v1;identityv1b\x06proto3"
+	"\tis_active\x18\b \x01(\bR\bisActive\x12#\n" +
+	"\rtoken_preview\x18\t \x01(\tR\ftokenPreviewBDZBgithub.com/k8shell-io/common/pkg/api/gen/go/identity/v1;identityv1b\x06proto3"
 
 var (
 	file_identity_v1_types_proto_rawDescOnce sync.Once
