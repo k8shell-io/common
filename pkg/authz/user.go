@@ -162,7 +162,7 @@ package authz
 //                            only, never self.
 //              org         — organization membership; admin-managed only,
 //                            never self.
-//              posix       — POSIX uid/gid; admin-managed only, never self.
+//              ´posix       — POSIX uid/gid; admin-managed only, never self.
 //
 //              A single mutating RPC that touches fields from more than one
 //              group (e.g. UpdateUser, which carries fullname/email alongside
