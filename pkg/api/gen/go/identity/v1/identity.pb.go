@@ -1751,11 +1751,15 @@ func (x *GetAvailableIdentityProvidersResponse) GetProviders() []*IdentityProvid
 
 // CreateAccessTokenRequest carries the parameters for issuing a new access token.
 type CreateAccessTokenRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Username      string                 `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Scopes        []string               `protobuf:"bytes,3,rep,name=scopes,proto3" json:"scopes,omitempty"`
-	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"` // omit for non-expiring tokens
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	Username  string                 `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+	Name      string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Scopes    []string               `protobuf:"bytes,3,rep,name=scopes,proto3" json:"scopes,omitempty"`
+	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"` // omit for non-expiring tokens
+	// renew controls whether an existing active token with the same username and name
+	// is rotated in place instead of a new one being created. Defaults to false, which
+	// always creates a new token.
+	Renew         bool `protobuf:"varint,5,opt,name=renew,proto3" json:"renew,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1816,6 +1820,13 @@ func (x *CreateAccessTokenRequest) GetExpiresAt() *timestamppb.Timestamp {
 		return x.ExpiresAt
 	}
 	return nil
+}
+
+func (x *CreateAccessTokenRequest) GetRenew() bool {
+	if x != nil {
+		return x.Renew
+	}
+	return false
 }
 
 // CreateAccessTokenResponse carries the newly issued access token. The raw token
@@ -2253,13 +2264,14 @@ const file_identity_v1_identity_proto_rawDesc = "" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\"&\n" +
 	"$GetAvailableIdentityProvidersRequest\"h\n" +
 	"%GetAvailableIdentityProvidersResponse\x12?\n" +
-	"\tproviders\x18\x01 \x03(\v2!.identity.v1.IdentityProviderInfoR\tproviders\"\x9d\x01\n" +
+	"\tproviders\x18\x01 \x03(\v2!.identity.v1.IdentityProviderInfoR\tproviders\"\xb3\x01\n" +
 	"\x18CreateAccessTokenRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x16\n" +
 	"\x06scopes\x18\x03 \x03(\tR\x06scopes\x129\n" +
 	"\n" +
-	"expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"A\n" +
+	"expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12\x14\n" +
+	"\x05renew\x18\x05 \x01(\bR\x05renew\"A\n" +
 	"\x19CreateAccessTokenResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x14\n" +
 	"\x05token\x18\x02 \x01(\tR\x05token\"P\n" +

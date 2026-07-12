@@ -373,6 +373,10 @@ message CreateAccessTokenRequest {
   string                    name       = 2;
   repeated string           scopes     = 3;
   google.protobuf.Timestamp expires_at = 4; // omit for non-expiring tokens
+  // renew controls whether an existing active token with the same username and name
+  // is rotated in place instead of a new one being created. Defaults to false, which
+  // always creates a new token.
+  bool                      renew      = 5;
 }
 
 // CreateAccessTokenResponse carries the newly issued access token. The raw token
