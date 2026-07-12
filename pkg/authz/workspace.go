@@ -465,13 +465,17 @@ func (r *WorkspaceOwnerEvalRequest) Build() (*WorkspaceOwnerEvalRequest, error) 
 // ToProto serializes the typed request into a gRPC EvaluateRequest.
 // Implements EvalRequest.
 func (r *WorkspaceOwnerEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
+	attrs := map[string]string{}
+	if r.Resource.Owner != "" {
+		attrs["owner"] = r.Resource.Owner
+	}
 	return &authzv1.EvaluateRequest{
 		Token:  token,
 		Action: string(r.Action),
 		Resource: &authzv1.Resource{
 			Type:       "workspace",
 			Id:         r.Resource.ID,
-			Attributes: map[string]string{"owner": r.Resource.Owner},
+			Attributes: attrs,
 		},
 	}
 }
