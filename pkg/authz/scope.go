@@ -112,6 +112,14 @@ var scopeConstrainablePrefixes = map[string]struct{}{
 	// isn't listed here — it isn't a listing at all, and self-ness for it is
 	// already implicit (a session is always started as the caller).
 	"session:list": {},
+
+	// token:read/create/write/delete — the resource ID is always the
+	// username who owns the token(s) being acted on, so "self" is meaningful
+	// whenever that's the token's own subject (a token managing itself).
+	"token:read":   {},
+	"token:create": {},
+	"token:write":  {},
+	"token:delete": {},
 }
 
 // scopeConstrainable reports whether prefix — a "domain:action" or
@@ -185,6 +193,12 @@ var validExactScopes = map[string]struct{}{
 	"user:write:" + string(UserDataTypeOrg):         {},
 	"user:write:" + string(UserDataTypePosix):       {},
 	"user:write:" + string(UserDataTypePassword):    {},
+
+	// token — flat
+	"token:read":   {},
+	"token:create": {},
+	"token:write":  {},
+	"token:delete": {},
 }
 
 // validWildcardPrefixes is the set of prefixes that may appear before ":*".
@@ -197,6 +211,7 @@ var validWildcardPrefixes = map[string]struct{}{
 	"session":           {}, // all session actions
 	"user":              {}, // all user actions
 	"user:read":         {}, // profile | credentials | blueprints | roles | keys
+	"token":             {}, // read | create | write | delete
 }
 
 // ValidateScope reports whether s is a well-formed, recognized scope string.

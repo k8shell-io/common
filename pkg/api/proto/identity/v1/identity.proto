@@ -137,11 +137,18 @@ service IdentityService {
   // returned once in the response and is not recoverable after that.
   rpc CreateAccessToken (CreateAccessTokenRequest) returns (CreateAccessTokenResponse);
 
+  // UpdateAccessToken partially updates an existing access token's active state and/or
+  // scopes, enforcing username ownership. Fields left unset in the request are unchanged.
+  rpc UpdateAccessToken (UpdateAccessTokenRequest) returns (UpdateAccessTokenResponse);
+
   // ListAccessTokens returns access token metadata (no raw tokens or hashes) for a user.
   rpc ListAccessTokens (Username) returns (ListAccessTokensResponse);
 
   // RevokeAccessToken soft-deletes an access token by ID, enforcing username ownership.
   rpc RevokeAccessToken (RevokeAccessTokenRequest) returns (RevokeAccessTokenResponse);
+
+  // DeleteAccessToken permanently deletes an access token by ID.
+  rpc DeleteAccessToken (DeleteAccessTokenRequest) returns (DeleteAccessTokenResponse);
 
   // ResolveAccessToken looks up an access token by its raw value, updates last_used_at,
   // and returns the owning user plus the token's scopes. Called by API gateways
@@ -377,6 +384,8 @@ message CreateAccessTokenRequest {
   // is rotated in place instead of a new one being created. Defaults to false, which
   // always creates a new token.
   bool                      renew      = 5;
+  // active controls whether the token is created enabled. Omit for the default (active).
+  google.protobuf.BoolValue active     = 6;
 }
 
 // CreateAccessTokenResponse carries the newly issued access token. The raw token
@@ -384,6 +393,28 @@ message CreateAccessTokenRequest {
 message CreateAccessTokenResponse {
   int64  id    = 1;
   string token = 2;
+}
+
+// AccessTokenScopes wraps a scope list so UpdateAccessTokenRequest can distinguish
+// "leave scopes unchanged" (field unset) from "replace scopes" (field set, possibly
+// to an empty list), which a bare repeated field cannot express in proto3.
+message AccessTokenScopes {
+  repeated string scopes = 1;
+}
+
+// UpdateAccessTokenRequest partially updates an access token. Only active and scopes
+// may be changed; any other field on the token (name, expiry, etc.) is immutable after
+// creation. Fields left unset are not modified.
+message UpdateAccessTokenRequest {
+  int64                      id       = 1;
+  string                     username = 2; // asserts ownership, like RevokeAccessTokenRequest
+  google.protobuf.BoolValue  active   = 3;
+  AccessTokenScopes          scopes   = 4;
+}
+
+// UpdateAccessTokenResponse carries the updated access token metadata.
+message UpdateAccessTokenResponse {
+  AccessTokenInfo token = 1;
 }
 
 // ListAccessTokensResponse carries access token metadata for a user (no raw tokens or hashes).
@@ -399,6 +430,16 @@ message RevokeAccessTokenRequest {
 
 // RevokeAccessTokenResponse indicates whether the revocation was successful.
 message RevokeAccessTokenResponse {
+  bool success = 1;
+}
+
+// DeleteAccessTokenRequest identifies the access token to permanently delete by its ID.
+message DeleteAccessTokenRequest {
+  int64 id = 1;
+}
+
+// DeleteAccessTokenResponse indicates whether the deletion was successful.
+message DeleteAccessTokenResponse {
   bool success = 1;
 }
 

@@ -145,3 +145,38 @@ type UserCredentialUpdateRequest struct {
 	Secret  *string `json:"secret,omitempty"`
 	Active  *bool   `json:"active,omitempty"`
 }
+
+// AccessTokenCreateRequest is the HTTP request body for POST
+// /users/{username}/tokens (and /me/tokens), which issues a new Personal
+// Access Token for a user. Name and Scopes are required. Renew, when true,
+// rotates an existing active token with the same name in place instead of
+// creating a new one. Active, when set to false, creates the token disabled.
+// Note: proto counterpart is identityv1.CreateAccessTokenRequest.
+type AccessTokenCreateRequest struct {
+	Name      string   `json:"name"`
+	Scopes    []string `json:"scopes"`
+	ExpiresAt *string  `json:"expires_at,omitempty"` // RFC3339, omit for non-expiring
+	Renew     bool     `json:"renew,omitempty"`
+	Active    *bool    `json:"active,omitempty"`
+}
+
+// AccessTokenCreated is the HTTP response body for POST /users/{username}/tokens
+// (and /me/tokens). Token is the raw secret value; it is returned exactly once
+// and cannot be retrieved again.
+// Note: proto counterpart is identityv1.CreateAccessTokenResponse.
+type AccessTokenCreated struct {
+	ID    int64  `json:"id"`
+	Token string `json:"token"`
+}
+
+// AccessTokenUpdateRequest is the HTTP request body for PATCH
+// /users/{username}/tokens/{id} (and /me/tokens/{id}), which partially updates
+// an access token's active state and/or scopes. Only non-nil fields are
+// applied (PATCH semantics); name and expiry are immutable after creation.
+// Scopes set to a non-nil, possibly-empty slice replaces the token's scopes;
+// a nil Scopes leaves them unchanged.
+// Note: proto counterpart is identityv1.UpdateAccessTokenRequest.
+type AccessTokenUpdateRequest struct {
+	Active *bool     `json:"active,omitempty"`
+	Scopes *[]string `json:"scopes,omitempty"`
+}

@@ -186,6 +186,32 @@ package authz
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
 // Obligations  (none) — allow/deny only
+//
+// ---
+//
+// Contract: token:write
+//
+// Resource  type="user"
+//   id   username (required) — the user who owns the token being updated
+//
+// Context   (none)
+//
+// Subject   injected by the backend from JWT claims (username, roles, email, ...)
+//
+// Obligations  (none) — allow/deny only
+//
+// ---
+//
+// Contract: token:delete
+//
+// Resource  type="user"
+//   id   username (required) — the user who owns the token being permanently deleted
+//
+// Context   (none)
+//
+// Subject   injected by the backend from JWT claims (username, roles, email, ...)
+//
+// Obligations  (none) — allow/deny only
 
 import (
 	"encoding/json"
@@ -998,6 +1024,148 @@ func (r *UserTokenReadEvalRequest) Validate() error {
 	return nil
 }
 
+// UserTokenWriteEvalRequest is the validated, typed model for token:write
+// policy evaluation. The resource ID is the username who owns the token
+// being updated (active flag and/or scopes).
+type UserTokenWriteEvalRequest struct {
+	Resource UserResource
+}
+
+var _ EvalRequest = (*UserTokenWriteEvalRequest)(nil)
+
+// NewUserTokenWriteEvalRequest begins building a UserTokenWriteEvalRequest for
+// the given username (the token owner). Call Build to validate.
+func NewUserTokenWriteEvalRequest(username string) *UserTokenWriteEvalRequest {
+	return &UserTokenWriteEvalRequest{Resource: UserResource{ID: username}}
+}
+
+// Build validates the request and returns it if all constraints are satisfied.
+// It is the required terminator for the builder chain.
+func (r *UserTokenWriteEvalRequest) Build() (*UserTokenWriteEvalRequest, error) {
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// ToProto serializes the typed request into a gRPC EvaluateRequest, attaching
+// the supplied JWT token.
+// Implements EvalRequest.
+func (r *UserTokenWriteEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
+	return &authzv1.EvaluateRequest{
+		Token:  token,
+		Action: "token:write",
+		Resource: &authzv1.Resource{
+			Type: "user",
+			Id:   r.Resource.ID,
+		},
+	}
+}
+
+// UserTokenWriteEvalRequestFromProto converts a gRPC EvaluateRequest into a
+// validated UserTokenWriteEvalRequest.
+func UserTokenWriteEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserTokenWriteEvalRequest, error) {
+	if req == nil {
+		return nil, fmt.Errorf("token:write: EvaluateRequest is nil")
+	}
+	if req.Action != "token:write" {
+		return nil, fmt.Errorf("token:write: action must be \"token:write\", got %q", req.Action)
+	}
+	if req.Resource == nil {
+		return nil, fmt.Errorf("token:write: resource is nil")
+	}
+	if req.Resource.Type != "user" {
+		return nil, fmt.Errorf("token:write: resource type must be \"user\", got %q", req.Resource.Type)
+	}
+	r := &UserTokenWriteEvalRequest{
+		Resource: UserResource{ID: req.Resource.Id},
+	}
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// Validate checks the request against the token:write contract.
+// Implements EvalRequest.
+func (r *UserTokenWriteEvalRequest) Validate() error {
+	if r.Resource.ID == "" {
+		return fmt.Errorf("token:write: resource ID (username) is required")
+	}
+	return nil
+}
+
+// UserTokenDeleteEvalRequest is the validated, typed model for token:delete
+// policy evaluation. The resource ID is the username who owns the token being
+// permanently deleted.
+type UserTokenDeleteEvalRequest struct {
+	Resource UserResource
+}
+
+var _ EvalRequest = (*UserTokenDeleteEvalRequest)(nil)
+
+// NewUserTokenDeleteEvalRequest begins building a UserTokenDeleteEvalRequest
+// for the given username (the token owner). Call Build to validate.
+func NewUserTokenDeleteEvalRequest(username string) *UserTokenDeleteEvalRequest {
+	return &UserTokenDeleteEvalRequest{Resource: UserResource{ID: username}}
+}
+
+// Build validates the request and returns it if all constraints are satisfied.
+// It is the required terminator for the builder chain.
+func (r *UserTokenDeleteEvalRequest) Build() (*UserTokenDeleteEvalRequest, error) {
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// ToProto serializes the typed request into a gRPC EvaluateRequest, attaching
+// the supplied JWT token.
+// Implements EvalRequest.
+func (r *UserTokenDeleteEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
+	return &authzv1.EvaluateRequest{
+		Token:  token,
+		Action: "token:delete",
+		Resource: &authzv1.Resource{
+			Type: "user",
+			Id:   r.Resource.ID,
+		},
+	}
+}
+
+// UserTokenDeleteEvalRequestFromProto converts a gRPC EvaluateRequest into a
+// validated UserTokenDeleteEvalRequest.
+func UserTokenDeleteEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserTokenDeleteEvalRequest, error) {
+	if req == nil {
+		return nil, fmt.Errorf("token:delete: EvaluateRequest is nil")
+	}
+	if req.Action != "token:delete" {
+		return nil, fmt.Errorf("token:delete: action must be \"token:delete\", got %q", req.Action)
+	}
+	if req.Resource == nil {
+		return nil, fmt.Errorf("token:delete: resource is nil")
+	}
+	if req.Resource.Type != "user" {
+		return nil, fmt.Errorf("token:delete: resource type must be \"user\", got %q", req.Resource.Type)
+	}
+	r := &UserTokenDeleteEvalRequest{
+		Resource: UserResource{ID: req.Resource.Id},
+	}
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// Validate checks the request against the token:delete contract.
+// Implements EvalRequest.
+func (r *UserTokenDeleteEvalRequest) Validate() error {
+	if r.Resource.ID == "" {
+		return fmt.Errorf("token:delete: resource ID (username) is required")
+	}
+	return nil
+}
+
 // UserWriteEvalRequest is the validated, typed model for user:write policy
 // evaluation. It covers all mutations to a user record: profile fields, roles,
 // blueprints, and auth keys. Use NewUserWriteEvalRequest to build it.
@@ -1383,6 +1551,18 @@ func init() {
 		Action: "token:read", Package: "user", Scope: "token:read",
 		Build: func(ctx CapabilityContext) (EvalRequest, error) {
 			return NewUserTokenReadEvalRequest(ctx.ResourceOwner).Build()
+		},
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		Action: "token:write", Package: "user", Scope: "token:write",
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewUserTokenWriteEvalRequest(ctx.ResourceOwner).Build()
+		},
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		Action: "token:delete", Package: "user", Scope: "token:delete",
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewUserTokenDeleteEvalRequest(ctx.ResourceOwner).Build()
 		},
 	})
 
