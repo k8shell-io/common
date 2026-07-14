@@ -16,7 +16,7 @@ import "identity/v1/types.proto";
 // IdentityService provides operations for user management, authentication,
 // onboarding, and external credential management.
 service IdentityService {
-  // FindUser retrieves a user by username. It can be used for authentication and user lookup.
+  // FindUser retrieves a user by username or email. It can be used for authentication and user lookup.
   rpc FindUser (FindUserRequest) returns (common.v1.User);
 
   // GetUsers retrieves a list of users with pagination support.

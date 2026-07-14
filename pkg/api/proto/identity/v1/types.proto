@@ -33,9 +33,11 @@ message UserList {
   repeated common.v1.User users = 1;
 }
 
-// FindUserRequest looks up a user by username or access token.
+// FindUserRequest looks up a user by username or email. Exactly one of
+// username or email should be set.
 message FindUserRequest {
   string username = 1;
+  string email    = 2;
 }
 
 // GetUsersRequest carries pagination parameters, plus optional filters

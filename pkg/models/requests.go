@@ -68,6 +68,21 @@ type UserLoginRequest struct {
 	Password string `json:"password"`
 }
 
+// PasswordResetRequest is the HTTP request body for POST
+// /auth/password/reset, which starts a forgot-password flow by emailing a
+// single-use reset link to the account associated with Email, if one exists.
+type PasswordResetRequest struct {
+	Email string `json:"email"`
+}
+
+// PasswordResetConfirmRequest is the HTTP request body for POST
+// /auth/password/reset/confirm, which exchanges a reset token (from the
+// emailed link) for setting Password as the account's new local password.
+type PasswordResetConfirmRequest struct {
+	Token    string `json:"token"`
+	Password string `json:"password"`
+}
+
 // Capability describes whether a single policy-governed action is permitted for
 // the authenticated user, as returned by GET /me/capabilities.
 type Capability struct {
