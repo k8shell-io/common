@@ -48,6 +48,16 @@ service IdentityService {
   // before a change), each of which is responsible for its own authorization.
   rpc AuthUserPassword (AuthUserPasswordRequest) returns (AuthUserResponse);
 
+  // GetPasswordLockoutStatus returns the current password-lockout state for a
+  // username. Used to populate UserProfile.PasswordLocked/PasswordLockedUntil
+  // without api-server tracking lockout state itself.
+  rpc GetPasswordLockoutStatus (Username) returns (PasswordLockoutStatus);
+
+  // ClearPasswordLockout resets a username's password-lockout state immediately,
+  // letting an admin (or the user) unstick a legitimate lockout without
+  // waiting for it to expire naturally.
+  rpc ClearPasswordLockout (Username) returns (ClearPasswordLockoutResponse);
+
   // CompleteUserDeviceFlow is called by the client after the user has completed
   // device-flow authorization on the provider side. It provisions the git
   // credential and returns the user's access token.

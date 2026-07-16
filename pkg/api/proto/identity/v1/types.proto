@@ -77,8 +77,29 @@ message AuthUserPasswordRequest {
 
 // AuthUserResponse carries the result of an authentication attempt.
 message AuthUserResponse {
-  bool            valid = 1;
-  common.v1.User  user  = 2;
+  bool            valid  = 1;
+  common.v1.User  user   = 2;
+
+  // locked is true when the account's password auth is temporarily locked
+  // out due to repeated failed AuthUserPassword attempts (see identity's
+  // password-lockout tracking, keyed by username). Callers should show a
+  // generic "account temporarily locked" message rather than "invalid
+  // credentials" when this is set, rather than trying to distinguish it
+  // from a wrong-password response any other way. Always false for
+  // AuthUserPublicKey, which is not subject to password lockout.
+  bool            locked = 3;
+}
+
+// PasswordLockoutStatus carries a username's current password-lockout state,
+// as returned by GetPasswordLockoutStatus.
+message PasswordLockoutStatus {
+  bool  locked       = 1;
+  int64 locked_until = 2; // unix seconds; 0 when not locked
+}
+
+// ClearPasswordLockoutResponse carries the result of ClearPasswordLockout.
+message ClearPasswordLockoutResponse {
+  bool success = 1;
 }
 
 // OnboardUserDeviceFlowRequest initiates a device-flow onboarding session for the given provider.
