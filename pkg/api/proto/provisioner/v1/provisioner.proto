@@ -35,6 +35,13 @@ service ProvisionerService {
   // DeleteWorkspace deprovisions and permanently removes a workspace.
   rpc DeleteWorkspace(DeleteWorkspaceRequest) returns (DeleteWorkspaceResponse);
 
+  // DeleteUserWorkspaces hard-deletes every workspace (standalone and
+  // injected) owned by a user. Intended as a cleanup step when a user is
+  // removed from the system. Deletion runs asynchronously in the background;
+  // a call made while a previous deletion for the same user is still running
+  // is rejected rather than starting a second, concurrent cleanup.
+  rpc DeleteUserWorkspaces(DeleteUserWorkspacesRequest) returns (DeleteUserWorkspacesResponse);
+
   // StopWorkspace suspends a running workspace without removing its state.
   rpc StopWorkspace(StopWorkspaceRequest) returns (StopWorkspaceResponse);
 
@@ -154,6 +161,24 @@ message DeleteWorkspaceRequest {
 message DeleteWorkspaceResponse {
   // message provides a human-readable description of the result.
   string message = 1;
+}
+
+// DeleteUserWorkspacesRequest identifies the user whose workspaces should
+// all be hard-deleted.
+message DeleteUserWorkspacesRequest {
+  // username is the owner whose standalone and injected workspaces will be deleted.
+  string username = 1;
+}
+
+// DeleteUserWorkspacesResponse reports the outcome of submitting the bulk
+// delete request. Deletion happens asynchronously; this response confirms
+// what was queued, not that deletion has completed.
+message DeleteUserWorkspacesResponse {
+  // message provides a human-readable description of the result.
+  string message = 1;
+  // workspaces lists the names of the workspaces that were found for the
+  // user and queued for deletion at the time the request was accepted.
+  repeated string workspaces = 2;
 }
 
 // StopWorkspaceRequest identifies the workspace to stop.
