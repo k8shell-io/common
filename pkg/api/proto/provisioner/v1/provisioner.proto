@@ -45,6 +45,11 @@ service ProvisionerService {
   // StopWorkspace suspends a running workspace without removing its state.
   rpc StopWorkspace(StopWorkspaceRequest) returns (StopWorkspaceResponse);
 
+  // StartWorkspaceStream resumes a previously stopped workspace, recreating
+  // its pod from the existing Helm release, and streams progress events back
+  // to the caller until the workspace is ready or an error occurs.
+  rpc StartWorkspaceStream(StartWorkspaceRequest) returns (stream ProvisionWorkspaceResponse);
+
   // EjectWorkspace removes a previously injected workspace from a workload
   // and deletes all supporting resources (ConfigMaps, PVCs, NetworkPolicies).
   rpc EjectWorkspace(EjectWorkspaceRequest) returns (EjectWorkspaceResponse);
@@ -194,6 +199,18 @@ message StopWorkspaceRequest {
 message StopWorkspaceResponse {
   // message provides a human-readable description of the result.
   string message = 1;
+}
+
+// StartWorkspaceRequest identifies the stopped workspace to start.
+message StartWorkspaceRequest {
+  // workspace is the name of the workspace to start.
+  string workspace = 1;
+  // timeout is the maximum number of seconds to wait for the pod to become ready.
+  int32 timeout = 2;
+  // send_progress controls whether progress in percents are streamed.
+  bool send_progress = 3;
+  // send_events controls whether Kubernetes object events are included in the stream.
+  bool send_events = 4;
 }
 
 // EjectWorkspaceRequest identifies the workload from which to eject a workspace.

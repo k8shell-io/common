@@ -17,6 +17,7 @@ const (
 	WorkspaceStatusPulling      WorkspaceStatusMessage = "Pulling"
 	WorkspaceStatusRunning      WorkspaceStatusMessage = "Running"
 	WorkspaceStatusFailing      WorkspaceStatusMessage = "Failing"
+	WorkspaceStatusStopping     WorkspaceStatusMessage = "Stopping"
 	WorkspaceStatusTerminating  WorkspaceStatusMessage = "Terminating"
 	WorkspaceStatusStopped      WorkspaceStatusMessage = "Stopped"
 	WorkspaceStatusError        WorkspaceStatusMessage = "Error"

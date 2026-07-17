@@ -50,6 +50,21 @@ func (c *Client) ProvisionHandshake(ctx context.Context, us userstr.UserStr, tim
 	return c.waitForHandshakeMessage(stream)
 }
 
+// StartHandshake reads the first stream event that needs to be handshake, for
+// resuming a previously stopped workspace.
+func (c *Client) StartHandshake(ctx context.Context, workspaceName string, timeout int32) (jobWorkspaceName string, jobID string, stream grpc.ServerStreamingClient[provisionerv1.ProvisionWorkspaceResponse], err error) {
+	stream, err = c.StartWorkspaceStream(ctx, &provisionerv1.StartWorkspaceRequest{
+		Workspace:    workspaceName,
+		SendProgress: true,
+		SendEvents:   true,
+		Timeout:      timeout,
+	})
+	if err != nil {
+		return "", "", nil, fmt.Errorf("failed to start workspace stream: %w", err)
+	}
+	return c.waitForHandshakeMessage(stream)
+}
+
 func (c *Client) waitForHandshakeMessage(
 	stream grpc.ServerStreamingClient[provisionerv1.ProvisionWorkspaceResponse],
 ) (string, string, grpc.ServerStreamingClient[provisionerv1.ProvisionWorkspaceResponse], error) {

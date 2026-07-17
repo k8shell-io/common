@@ -35,6 +35,7 @@ const (
 	ProvisionerService_DeleteWorkspace_FullMethodName          = "/provisioner.v1.ProvisionerService/DeleteWorkspace"
 	ProvisionerService_DeleteUserWorkspaces_FullMethodName     = "/provisioner.v1.ProvisionerService/DeleteUserWorkspaces"
 	ProvisionerService_StopWorkspace_FullMethodName            = "/provisioner.v1.ProvisionerService/StopWorkspace"
+	ProvisionerService_StartWorkspaceStream_FullMethodName     = "/provisioner.v1.ProvisionerService/StartWorkspaceStream"
 	ProvisionerService_EjectWorkspace_FullMethodName           = "/provisioner.v1.ProvisionerService/EjectWorkspace"
 )
 
@@ -67,6 +68,10 @@ type ProvisionerServiceClient interface {
 	DeleteUserWorkspaces(ctx context.Context, in *DeleteUserWorkspacesRequest, opts ...grpc.CallOption) (*DeleteUserWorkspacesResponse, error)
 	// StopWorkspace suspends a running workspace without removing its state.
 	StopWorkspace(ctx context.Context, in *StopWorkspaceRequest, opts ...grpc.CallOption) (*StopWorkspaceResponse, error)
+	// StartWorkspaceStream resumes a previously stopped workspace, recreating
+	// its pod from the existing Helm release, and streams progress events back
+	// to the caller until the workspace is ready or an error occurs.
+	StartWorkspaceStream(ctx context.Context, in *StartWorkspaceRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ProvisionWorkspaceResponse], error)
 	// EjectWorkspace removes a previously injected workspace from a workload
 	// and deletes all supporting resources (ConfigMaps, PVCs, NetworkPolicies).
 	EjectWorkspace(ctx context.Context, in *EjectWorkspaceRequest, opts ...grpc.CallOption) (*EjectWorkspaceResponse, error)
@@ -169,6 +174,25 @@ func (c *provisionerServiceClient) StopWorkspace(ctx context.Context, in *StopWo
 	return out, nil
 }
 
+func (c *provisionerServiceClient) StartWorkspaceStream(ctx context.Context, in *StartWorkspaceRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ProvisionWorkspaceResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &ProvisionerService_ServiceDesc.Streams[1], ProvisionerService_StartWorkspaceStream_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[StartWorkspaceRequest, ProvisionWorkspaceResponse]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type ProvisionerService_StartWorkspaceStreamClient = grpc.ServerStreamingClient[ProvisionWorkspaceResponse]
+
 func (c *provisionerServiceClient) EjectWorkspace(ctx context.Context, in *EjectWorkspaceRequest, opts ...grpc.CallOption) (*EjectWorkspaceResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(EjectWorkspaceResponse)
@@ -208,6 +232,10 @@ type ProvisionerServiceServer interface {
 	DeleteUserWorkspaces(context.Context, *DeleteUserWorkspacesRequest) (*DeleteUserWorkspacesResponse, error)
 	// StopWorkspace suspends a running workspace without removing its state.
 	StopWorkspace(context.Context, *StopWorkspaceRequest) (*StopWorkspaceResponse, error)
+	// StartWorkspaceStream resumes a previously stopped workspace, recreating
+	// its pod from the existing Helm release, and streams progress events back
+	// to the caller until the workspace is ready or an error occurs.
+	StartWorkspaceStream(*StartWorkspaceRequest, grpc.ServerStreamingServer[ProvisionWorkspaceResponse]) error
 	// EjectWorkspace removes a previously injected workspace from a workload
 	// and deletes all supporting resources (ConfigMaps, PVCs, NetworkPolicies).
 	EjectWorkspace(context.Context, *EjectWorkspaceRequest) (*EjectWorkspaceResponse, error)
@@ -244,6 +272,9 @@ func (UnimplementedProvisionerServiceServer) DeleteUserWorkspaces(context.Contex
 }
 func (UnimplementedProvisionerServiceServer) StopWorkspace(context.Context, *StopWorkspaceRequest) (*StopWorkspaceResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method StopWorkspace not implemented")
+}
+func (UnimplementedProvisionerServiceServer) StartWorkspaceStream(*StartWorkspaceRequest, grpc.ServerStreamingServer[ProvisionWorkspaceResponse]) error {
+	return status.Error(codes.Unimplemented, "method StartWorkspaceStream not implemented")
 }
 func (UnimplementedProvisionerServiceServer) EjectWorkspace(context.Context, *EjectWorkspaceRequest) (*EjectWorkspaceResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method EjectWorkspace not implemented")
@@ -406,6 +437,17 @@ func _ProvisionerService_StopWorkspace_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProvisionerService_StartWorkspaceStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(StartWorkspaceRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ProvisionerServiceServer).StartWorkspaceStream(m, &grpc.GenericServerStream[StartWorkspaceRequest, ProvisionWorkspaceResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type ProvisionerService_StartWorkspaceStreamServer = grpc.ServerStreamingServer[ProvisionWorkspaceResponse]
+
 func _ProvisionerService_EjectWorkspace_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(EjectWorkspaceRequest)
 	if err := dec(in); err != nil {
@@ -468,6 +510,11 @@ var ProvisionerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "ProvisionWorkspaceStream",
 			Handler:       _ProvisionerService_ProvisionWorkspaceStream_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "StartWorkspaceStream",
+			Handler:       _ProvisionerService_StartWorkspaceStream_Handler,
 			ServerStreams: true,
 		},
 	},
