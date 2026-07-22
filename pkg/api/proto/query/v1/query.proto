@@ -1,0 +1,144 @@
+// Copyright 2026 the k8Shell authors.
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+syntax = "proto3";
+
+package query.v1;
+
+option go_package = "github.com/k8shell-io/common/pkg/api/gen/go/query/v1;queryv1";
+
+// FieldType is the value type of a queryable field. It drives value parsing
+// and which operators are valid against the field.
+enum FieldType {
+  FIELD_TYPE_UNSPECIFIED = 0;
+  FIELD_TYPE_STRING = 1;
+  FIELD_TYPE_NUMBER = 2;
+  FIELD_TYPE_BOOLEAN = 3;
+  FIELD_TYPE_DATETIME = 4;
+}
+
+// Operator is a comparison or match operator usable in a query Condition.
+enum Operator {
+  OPERATOR_UNSPECIFIED = 0;
+
+  // OPERATOR_EQ is equals. On a FIELD_TYPE_STRING field, the value may
+  // contain glob wildcards ("*" for any run of characters, "?" for any
+  // single character) for substring/prefix/suffix matching; a value with no
+  // wildcards is a case-insensitive exact match. Non-string fields always
+  // use strict equality.
+  OPERATOR_EQ = 1;
+
+  // OPERATOR_NE is not equals, with the same glob-wildcard support as
+  // OPERATOR_EQ on FIELD_TYPE_STRING fields.
+  OPERATOR_NE = 2;
+
+  reserved 3;
+  reserved "OPERATOR_CONTAINS"; // superseded by glob wildcards in OPERATOR_EQ/OPERATOR_NE values.
+
+  OPERATOR_IN = 4;     // value is one of a set (exact match; no wildcard support)
+  OPERATOR_GT = 5;     // greater than
+  OPERATOR_GTE = 6;    // greater than or equal
+  OPERATOR_LT = 7;     // less than
+  OPERATOR_LTE = 8;    // less than or equal
+  OPERATOR_EXISTS = 9; // field is set / not null
+}
+
+// SortDir is the sort direction for a single sort key.
+enum SortDir {
+  SORT_DIR_UNSPECIFIED = 0;
+  SORT_DIR_ASC = 1;
+  SORT_DIR_DESC = 2;
+}
+
+// FilterOp combines multiple conditions in a Filters group.
+enum FilterOp {
+  FILTER_OP_UNSPECIFIED = 0;
+  FILTER_OP_AND = 1;
+  FILTER_OP_OR = 2;
+}
+
+// FieldDescriptor describes a single queryable/sortable field of a resource.
+message FieldDescriptor {
+  // name is the wire field name referenced by Condition.field and Sort.field.
+  string name = 1;
+
+  // type drives value parsing/validation and which operators are valid.
+  FieldType type = 2;
+
+  reserved 3;
+  reserved "label";
+
+  // operators lists the operators valid for this specific field. A Condition
+  // using an operator not in this list must be rejected by the server.
+  repeated Operator operators = 4;
+}
+
+// Sort orders results by a single field.
+message Sort {
+  string field = 1;
+  SortDir dir = 2;
+}
+
+// Descriptor describes which fields of a resource are queryable and
+// sortable. Each resource-owning service declares and serves its own
+// Descriptor (e.g. via a <Resource>QuerySchema RPC); it is also the basis
+// against which that service validates incoming Payloads.
+message Descriptor {
+  // resource is the resource identifier, e.g. "users".
+  string resource = 1;
+
+  repeated FieldDescriptor fields = 2;
+
+  // default_sort applies when a client's Payload specifies no sort.
+  repeated Sort default_sort = 3;
+}
+
+// Condition is a single filter condition on one field.
+message Condition {
+  // field must match a FieldDescriptor.name from the resource's Descriptor.
+  string field = 1;
+
+  Operator op = 2;
+
+  // values holds the operand(s) for op. Single-value operators (eq, ne, gt,
+  // gte, lt, lte) expect exactly one entry; "in" expects one or more;
+  // "exists" expects zero or one ("true"/"false", default "true"). For eq/ne
+  // on a FIELD_TYPE_STRING field, the value may use glob wildcards ("*",
+  // "?"); see Operator.
+  repeated string values = 3;
+}
+
+// Filters combines one or more conditions with a single combinator. Nested
+// groups are not supported.
+message Filters {
+  FilterOp op = 1;
+  repeated Condition conditions = 2;
+}
+
+// Page requests a limit/offset window of results.
+message Page {
+  int32 limit = 1;
+  int32 offset = 2;
+}
+
+// Payload is a client-issued query against a resource's queryable fields,
+// sent alongside a resource's normal list/get request.
+message Payload {
+  // filters is left unset for "no filter".
+  Filters filters = 1;
+
+  // sort overrides the resource's default_sort when non-empty.
+  repeated Sort sort = 2;
+
+  // page requests a limit/offset window; unset means the resource's own
+  // default paging behavior applies.
+  Page page = 3;
+
+  // obligations carries the authz obligations map from the policy
+  // evaluation that authorized this request, verbatim (see
+  // common/pkg/authz ObligationKey*/Parse*Obligation). Gateways populate
+  // this after authz evaluation — it is never client-supplied. The
+  // resource-owning service must enforce it as a mandatory constraint
+  // ANDed onto the query, independent of Filters.op.
+  map<string, string> obligations = 4;
+}

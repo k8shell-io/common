@@ -12,6 +12,7 @@ import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 import "identity/v1/types.proto";
+import "query/v1/query.proto";
 
 // IdentityService provides operations for user management, authentication,
 // onboarding, and external credential management.
@@ -21,6 +22,15 @@ service IdentityService {
 
   // GetUsers retrieves a list of users with pagination support.
   rpc GetUsers (GetUsersRequest) returns (UserList);
+
+  // GetUsersQuerySchema returns the query.v1.Descriptor advertising which
+  // user fields are queryable/sortable via QueryUsers, and which operators
+  // are valid on each.
+  rpc GetUsersQuerySchema (GetUsersQuerySchemaRequest) returns (query.v1.Descriptor);
+
+  // QueryUsers retrieves users matching a generic query.v1.Payload, as
+  // advertised by GetUsersQuerySchema.
+  rpc QueryUsers (QueryUsersRequest) returns (UserList);
 
   // IssueUserToken issues a new JWT access token for a user
   rpc IssueUserToken (IssueUserTokenRequest) returns (IssueUserTokenResponse);

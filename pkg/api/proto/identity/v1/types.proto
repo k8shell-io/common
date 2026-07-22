@@ -9,6 +9,7 @@ option go_package = "github.com/k8shell-io/common/pkg/api/gen/go/identity/v1;ide
 
 import "common/v1/common.proto";
 import "google/protobuf/timestamp.proto";
+import "query/v1/query.proto";
 
 // Username carries a single username identifier.
 message Username {
@@ -54,6 +55,18 @@ message GetUsersRequest {
   repeated string roles      = 3; // user must have at least one of these roles
   repeated string blueprints = 4; // user must have at least one of these blueprints
   string          org        = 5; // user must belong to this organization
+}
+
+// GetUsersQuerySchemaRequest requests the query.v1.Descriptor for the users
+// resource. It carries no fields today; left as a message rather than
+// google.protobuf.Empty so parameters (e.g. org-scoping) can be added later
+// without changing the RPC signature.
+message GetUsersQuerySchemaRequest {}
+
+// QueryUsersRequest carries a generic query against the fields advertised
+// by GetUsersQuerySchema.
+message QueryUsersRequest {
+  query.v1.Payload query = 1;
 }
 
 // GetUsersResponse carries the paginated list of users.

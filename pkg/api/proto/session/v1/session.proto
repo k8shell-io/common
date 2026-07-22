@@ -8,11 +8,21 @@ package session.v1;
 option go_package = "github.com/k8shell-io/common/pkg/api/gen/go/session/v1;sessionv1";
 
 import "google/protobuf/empty.proto";
+import "query/v1/query.proto";
 
 // SessionService manages SSH session records.
 service SessionService {
   // GetSessions returns sessions matching the given filter criteria.
   rpc GetSessions(GetSessionsRequest) returns (Sessions);
+
+  // GetSessionsQuerySchema returns the query.v1.Descriptor advertising which
+  // session fields are queryable/sortable via QuerySessions, and which
+  // operators are valid on each.
+  rpc GetSessionsQuerySchema(GetSessionsQuerySchemaRequest) returns (query.v1.Descriptor);
+
+  // QuerySessions retrieves sessions matching a generic query.v1.Payload, as
+  // advertised by GetSessionsQuerySchema.
+  rpc QuerySessions(QuerySessionsRequest) returns (Sessions);
 
   // UpsertSession creates or updates a session record.
   // If a session with the given session_id already exists it is updated,
@@ -85,6 +95,18 @@ message Session {
 // Sessions is a list of session records.
 message Sessions {
   repeated Session sessions = 1;
+}
+
+// GetSessionsQuerySchemaRequest requests the query.v1.Descriptor for the
+// sessions resource. It carries no fields today; left as a message rather
+// than google.protobuf.Empty so parameters can be added later without
+// changing the RPC signature.
+message GetSessionsQuerySchemaRequest {}
+
+// QuerySessionsRequest carries a generic query against the fields advertised
+// by GetSessionsQuerySchema.
+message QuerySessionsRequest {
+  query.v1.Payload query = 1;
 }
 
 // UpsertSessionRequest carries the full session record to create or update.
