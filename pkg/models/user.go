@@ -160,4 +160,5 @@ type UserCredential struct {
 	CreatedAt        time.Time  `json:"createdAt"`
 	UpdatedAt        time.Time  `json:"updatedAt"`
 	ExpiresAt        *time.Time `json:"expiresAt,omitempty"`
+	LastUsedAt       *time.Time `json:"lastUsedAt,omitempty"`
 }

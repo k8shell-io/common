@@ -87,6 +87,10 @@ func UserCredentialToProto(c *models.UserCredential) *commonv1.UserCredential {
 	if c.ExpiresAt != nil {
 		expiresAt = timestamppb.New(*c.ExpiresAt)
 	}
+	var lastUsedAt *timestamppb.Timestamp
+	if c.LastUsedAt != nil {
+		lastUsedAt = timestamppb.New(*c.LastUsedAt)
+	}
 	return &commonv1.UserCredential{
 		Id:               c.ID,
 		Username:         c.Username,
@@ -99,6 +103,7 @@ func UserCredentialToProto(c *models.UserCredential) *commonv1.UserCredential {
 		CreatedAt:        timestamppb.New(c.CreatedAt),
 		UpdatedAt:        timestamppb.New(c.UpdatedAt),
 		ExpiresAt:        expiresAt,
+		LastUsedAt:       lastUsedAt,
 	}
 }
 
@@ -112,6 +117,11 @@ func ProtoToUserCredential(pb *commonv1.UserCredential) *models.UserCredential {
 		t := ts.AsTime()
 		expiresAt = &t
 	}
+	var lastUsedAt *time.Time
+	if ts := pb.GetLastUsedAt(); ts != nil {
+		t := ts.AsTime()
+		lastUsedAt = &t
+	}
 	return &models.UserCredential{
 		ID:               pb.GetId(),
 		Username:         pb.GetUsername(),
@@ -124,6 +134,7 @@ func ProtoToUserCredential(pb *commonv1.UserCredential) *models.UserCredential {
 		CreatedAt:        pb.GetCreatedAt().AsTime(),
 		UpdatedAt:        pb.GetUpdatedAt().AsTime(),
 		ExpiresAt:        expiresAt,
+		LastUsedAt:       lastUsedAt,
 	}
 }
 

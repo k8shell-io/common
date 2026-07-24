@@ -226,7 +226,9 @@ type UserCredential struct {
 	// updated_at is the time the credential was last updated.
 	UpdatedAt *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	// expires_at is the time at which the secret expires, if known.
-	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	// last_used_at is the time the credential's secret was last resolved for use.
+	LastUsedAt    *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=last_used_at,json=lastUsedAt,proto3" json:"last_used_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -334,6 +336,13 @@ func (x *UserCredential) GetUpdatedAt() *timestamppb.Timestamp {
 func (x *UserCredential) GetExpiresAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.ExpiresAt
+	}
+	return nil
+}
+
+func (x *UserCredential) GetLastUsedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.LastUsedAt
 	}
 	return nil
 }
@@ -989,7 +998,7 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"blueprints\x12\x16\n" +
 	"\x06source\x18\x13 \x01(\tR\x06source\x12\x14\n" +
 	"\x05shell\x18\x14 \x01(\tR\x05shell\x12\x12\n" +
-	"\x04sudo\x18\x15 \x01(\bR\x04sudoJ\x04\b\v\x10\fR\x05auths\"\xb1\x03\n" +
+	"\x04sudo\x18\x15 \x01(\bR\x04sudoJ\x04\b\v\x10\fR\x05auths\"\xef\x03\n" +
 	"\x0eUserCredential\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\rR\x02id\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12!\n" +
@@ -1005,7 +1014,9 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"updated_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x129\n" +
 	"\n" +
 	"expires_at\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"\xb6\x01\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12<\n" +
+	"\flast_used_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"lastUsedAt\"\xb6\x01\n" +
 	"\x15OnboardUserDeviceFlow\x12\x1a\n" +
 	"\bprovider\x18\x01 \x01(\tR\bprovider\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x1b\n" +
@@ -1093,13 +1104,14 @@ var file_common_v1_common_proto_depIdxs = []int32{
 	9, // 1: common.v1.UserCredential.created_at:type_name -> google.protobuf.Timestamp
 	9, // 2: common.v1.UserCredential.updated_at:type_name -> google.protobuf.Timestamp
 	9, // 3: common.v1.UserCredential.expires_at:type_name -> google.protobuf.Timestamp
-	9, // 4: common.v1.WorkspaceStatus.created:type_name -> google.protobuf.Timestamp
-	6, // 5: common.v1.WorkspaceDetails.workspace_status:type_name -> common.v1.WorkspaceStatus
-	6, // [6:6] is the sub-list for method output_type
-	6, // [6:6] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	9, // 4: common.v1.UserCredential.last_used_at:type_name -> google.protobuf.Timestamp
+	9, // 5: common.v1.WorkspaceStatus.created:type_name -> google.protobuf.Timestamp
+	6, // 6: common.v1.WorkspaceDetails.workspace_status:type_name -> common.v1.WorkspaceStatus
+	7, // [7:7] is the sub-list for method output_type
+	7, // [7:7] is the sub-list for method input_type
+	7, // [7:7] is the sub-list for extension type_name
+	7, // [7:7] is the sub-list for extension extendee
+	0, // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_common_v1_common_proto_init() }

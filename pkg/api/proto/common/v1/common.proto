@@ -74,6 +74,8 @@ message UserCredential {
   google.protobuf.Timestamp updated_at = 9;
   // expires_at is the time at which the secret expires, if known.
   google.protobuf.Timestamp expires_at = 10;
+  // last_used_at is the time the credential's secret was last resolved for use.
+  google.protobuf.Timestamp last_used_at = 12;
 }
 
 // OnboardUserDeviceFlow carries the data needed to complete a Device
