@@ -24,6 +24,18 @@ const (
 // User roles
 type Role string
 
+// RoleInfo is a registered entry in the role registry: the set of role names
+// that may be assigned to a User via its Roles field. It answers only
+// whether a role exists — any meaning encoded in its name (e.g. the
+// "<group>-admin" convention) is interpreted at the policy layer, not here.
+type RoleInfo struct {
+	Name        string    `yaml:"name" json:"name"`
+	Description string    `yaml:"description" json:"description"`
+	Org         string    `yaml:"org" json:"org"`
+	CreatedAt   time.Time `yaml:"createdAt" json:"createdAt"`
+	UserCount   int       `yaml:"userCount" json:"userCount"`
+}
+
 var ErrMethodNotSupported = errors.New("method not supported")
 var ErrUserNotFound = errors.New("user not found")
 var ErrActiveSessionNotFound = errors.New("active session not found")
@@ -81,8 +93,15 @@ type SSHSession struct {
 
 // Organization represents an organization in the system
 type Organization struct {
-	Name        string `yaml:"name" json:"name"`
-	Description string `yaml:"description" json:"description"`
+	Name        string    `yaml:"name" json:"name"`
+	Description string    `yaml:"description" json:"description"`
+	CreatedAt   time.Time `yaml:"createdAt" json:"createdAt"`
+
+	// AdminUsernames and UserCount are computed, read-only fields populated by
+	// ListOrganizations — not stored on the organization itself, and left
+	// empty/zero by CreateOrganization's response.
+	AdminUsernames []string `yaml:"adminUsernames" json:"adminUsernames"` // users in this org holding the "org-admin" role
+	UserCount      int      `yaml:"userCount" json:"userCount"`
 }
 
 // ProviderInfo holds information about a identity provider

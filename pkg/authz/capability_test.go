@@ -41,6 +41,8 @@ var expectedCapabilityActions = []string{
 	"user:write:password",
 	"token:create",
 	"token:read",
+	"token:write",
+	"token:delete",
 	"session:list",
 	"session:start",
 	"workspace:list",
@@ -63,6 +65,14 @@ var expectedCapabilityActions = []string{
 	"ssh:direct-tcpip",
 	"ssh:direct-streamlocal",
 	"ssh:agent-forward",
+	"role:list",
+	"role:create",
+	"role:delete",
+	"role:update",
+	"org:list",
+	"org:create",
+	"org:delete",
+	"org:update",
 }
 
 func TestCapabilityChecksCompleteness(t *testing.T) {
@@ -117,9 +127,19 @@ func TestCapabilityCheckBuildable(t *testing.T) {
 // accidental one.
 func TestCapabilityCheckSelfOnly(t *testing.T) {
 	wantSelfOnly := map[string]bool{
-		"user:onboard":  true,
-		"user:auth:web": true,
-		"user:auth:ssh": true,
+		"user:onboard":           true,
+		"user:auth:web":          true,
+		"user:auth:ssh":          true,
+		"user:list":              true,
+		"session:list":           true,
+		"session:start":          true,
+		"workspace:list":         true,
+		"ssh:shell":              true,
+		"ssh:exec":               true,
+		"ssh:sftp":               true,
+		"ssh:direct-tcpip":       true,
+		"ssh:direct-streamlocal": true,
+		"ssh:agent-forward":      true,
 	}
 
 	for _, c := range CapabilityChecks() {

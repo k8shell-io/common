@@ -199,6 +199,18 @@ var validExactScopes = map[string]struct{}{
 	"token:create": {},
 	"token:write":  {},
 	"token:delete": {},
+
+	// role — flat
+	"role:list":   {},
+	"role:create": {},
+	"role:delete": {},
+	"role:update": {},
+
+	// org — flat
+	"org:list":   {},
+	"org:create": {},
+	"org:delete": {},
+	"org:update": {},
 }
 
 // validWildcardPrefixes is the set of prefixes that may appear before ":*".
@@ -212,6 +224,8 @@ var validWildcardPrefixes = map[string]struct{}{
 	"user":              {}, // all user actions
 	"user:read":         {}, // profile | credentials | blueprints | roles | keys
 	"token":             {}, // read | create | write | delete
+	"role":              {}, // list | create | delete
+	"org":               {}, // list | create | delete
 }
 
 // ValidateScope reports whether s is a well-formed, recognized scope string.

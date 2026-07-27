@@ -40,6 +40,41 @@ type UserRolesRequest struct {
 	Roles []Role `json:"roles"`
 }
 
+// RoleCreateRequest is the HTTP request body for POST /roles (global roles)
+// and POST /organizations/{name}/roles (org-scoped roles) — org is always
+// taken from the route, never from this body.
+// Note: proto counterpart is identityv1.CreateRoleRequest.
+type RoleCreateRequest struct {
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+}
+
+// RoleUpdateRequest is the HTTP request body for PATCH /roles/{name} (global
+// roles) and PATCH /organizations/{org}/roles/{name} (org-scoped roles).
+// Name and org are immutable — both are taken from the route, never from
+// this body.
+// Note: proto counterpart is identityv1.UpdateRoleRequest.
+type RoleUpdateRequest struct {
+	Description *string `json:"description,omitempty"`
+}
+
+// OrganizationCreateRequest is the HTTP request body for POST /organizations,
+// which registers a new organization.
+// Note: proto counterpart is identityv1.CreateOrganizationRequest.
+type OrganizationCreateRequest struct {
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+}
+
+// OrganizationUpdateRequest is the HTTP request body for PATCH
+// /organizations/{name}, which partially updates an organization's
+// description. Name is immutable and cannot be changed through this
+// endpoint — it is taken from the route, never from this body.
+// Note: proto counterpart is identityv1.UpdateOrganizationRequest.
+type OrganizationUpdateRequest struct {
+	Description *string `json:"description,omitempty"`
+}
+
 // UserBlueprintsRequest is the HTTP request body for adding or removing blueprints on a user.
 // Note: proto counterpart is identityv1.UserBlueprintsRequest.
 type UserBlueprintsRequest struct {

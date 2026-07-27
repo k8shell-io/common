@@ -16,6 +16,8 @@ const (
 	capabilityWildcardHost       = "*"
 	capabilityWildcardPort       = "0"
 	capabilityWildcardSocketPath = "/*"
+	capabilityWildcardRole       = "*"
+	capabilityWildcardOrg        = "*"
 )
 
 // CapabilityContext carries every synthetic/representative value a

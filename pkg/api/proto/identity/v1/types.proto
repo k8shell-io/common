@@ -9,6 +9,7 @@ option go_package = "github.com/k8shell-io/common/pkg/api/gen/go/identity/v1;ide
 
 import "common/v1/common.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
 import "query/v1/query.proto";
 
 // Username carries a single username identifier.
@@ -158,6 +159,109 @@ message IdentityProviderInfo {
 message UserRolesRequest {
   string          username = 1;
   repeated string roles    = 2;
+}
+
+// Role is a role that may be assigned to users. Roles are flat, opaque name
+// strings; any structure in the name (e.g. "<group>-admin") is a policy-level
+// convention and is deliberately not modelled here.
+message Role {
+  string                    name        = 1;  // unique; exact string stored in User.roles
+  string                    description = 2;
+  string                    org         = 3;  // optional; empty means global
+  google.protobuf.Timestamp created_at  = 4;
+
+  // user_count is a computed, read-only field populated by ListRoles — the
+  // number of users currently holding this role. Not stored on the role
+  // itself and ignored (left zero) by CreateRole/UpdateRole's response.
+  int32                     user_count  = 5;
+}
+
+// RoleList holds a list of roles.
+message RoleList {
+  repeated Role roles = 1;
+}
+
+// ListRolesRequest carries optional filters, sourced from the role:list
+// authz obligations.
+message ListRolesRequest {
+  string org = 1;  // restrict to this organization; empty imposes no restriction
+}
+
+// CreateRoleRequest registers a new assignable role.
+message CreateRoleRequest {
+  string name        = 1;
+  string description = 2;
+  string org         = 3;
+}
+
+// UpdateRoleRequest partially updates a role's description. name and org
+// together identify the role and are immutable; org empty means the global
+// role, not "any org".
+message UpdateRoleRequest {
+  string                      name        = 1;
+  string                      org         = 2;
+  google.protobuf.StringValue description = 3;
+}
+
+// DeleteRoleRequest identifies the role to remove from the registry. name
+// and org together identify the role; org empty means the global role, not
+// "any org".
+message DeleteRoleRequest {
+  string name = 1;
+  string org  = 2;
+}
+
+// DeleteRoleResponse indicates whether the deletion was successful.
+message DeleteRoleResponse {
+  bool success = 1;
+}
+
+// Organization is a named tenant that groups users. Every user belongs to
+// exactly one organization (see common.v1.User.organization).
+message Organization {
+  string                    name        = 1;  // unique
+  string                    description = 2;
+  google.protobuf.Timestamp created_at  = 3;
+
+  // admin_usernames and user_count are computed, read-only fields populated
+  // by ListOrganizations — they are not stored on the organization itself
+  // and are ignored (left empty/zero) by CreateOrganization's response.
+  repeated string admin_usernames = 4;  // users in this org holding the "org-admin" role
+  int32           user_count      = 5;  // total number of users in this org
+}
+
+// OrganizationList holds a list of organizations.
+message OrganizationList {
+  repeated Organization organizations = 1;
+}
+
+// ListOrganizationsRequest carries no fields today; organizations are not
+// scoped by anything else, unlike roles. Left as a message rather than
+// google.protobuf.Empty so filters can be added later without changing the
+// RPC signature.
+message ListOrganizationsRequest {}
+
+// CreateOrganizationRequest registers a new organization.
+message CreateOrganizationRequest {
+  string name        = 1;
+  string description = 2;
+}
+
+// UpdateOrganizationRequest partially updates an organization's description.
+// Name is immutable and used only to identify the organization.
+message UpdateOrganizationRequest {
+  string                      name        = 1;
+  google.protobuf.StringValue description = 2;
+}
+
+// DeleteOrganizationRequest identifies the organization to remove from the registry.
+message DeleteOrganizationRequest {
+  string name = 1;
+}
+
+// DeleteOrganizationResponse indicates whether the deletion was successful.
+message DeleteOrganizationResponse {
+  bool success = 1;
 }
 
 // UserBlueprintsRequest carries a username and one or more blueprints to grant or revoke.

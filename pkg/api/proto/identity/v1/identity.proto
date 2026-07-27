@@ -115,6 +115,35 @@ service IdentityService {
   // RemoveUserRoles removes one or more roles from a user.
   rpc RemoveUserRoles (UserRolesRequest) returns (common.v1.User);
 
+  // ListRoles returns the roles that may be assigned to users, optionally
+  // filtered by organization.
+  rpc ListRoles (ListRolesRequest) returns (RoleList);
+
+  // CreateRole registers a new assignable role.
+  rpc CreateRole (CreateRoleRequest) returns (Role);
+
+  // UpdateRole updates a role's description. Name and org are immutable and
+  // cannot be changed.
+  rpc UpdateRole (UpdateRoleRequest) returns (Role);
+
+  // DeleteRole removes a role from the registry. Fails if any user still
+  // holds the role.
+  rpc DeleteRole (DeleteRoleRequest) returns (DeleteRoleResponse);
+
+  // ListOrganizations returns the registered organizations.
+  rpc ListOrganizations (ListOrganizationsRequest) returns (OrganizationList);
+
+  // CreateOrganization registers a new organization.
+  rpc CreateOrganization (CreateOrganizationRequest) returns (Organization);
+
+  // UpdateOrganization updates an organization's description. The name is
+  // immutable and cannot be changed.
+  rpc UpdateOrganization (UpdateOrganizationRequest) returns (Organization);
+
+  // DeleteOrganization removes an organization from the registry. Fails if
+  // any user or role still references it.
+  rpc DeleteOrganization (DeleteOrganizationRequest) returns (DeleteOrganizationResponse);
+
   // AddUserBlueprints grants a user access to one or more blueprints.
   rpc AddUserBlueprints (UserBlueprintsRequest) returns (common.v1.User);
 

@@ -49,6 +49,14 @@ const (
 	IdentityService_DeleteUser_FullMethodName                    = "/identity.v1.IdentityService/DeleteUser"
 	IdentityService_AddUserRoles_FullMethodName                  = "/identity.v1.IdentityService/AddUserRoles"
 	IdentityService_RemoveUserRoles_FullMethodName               = "/identity.v1.IdentityService/RemoveUserRoles"
+	IdentityService_ListRoles_FullMethodName                     = "/identity.v1.IdentityService/ListRoles"
+	IdentityService_CreateRole_FullMethodName                    = "/identity.v1.IdentityService/CreateRole"
+	IdentityService_UpdateRole_FullMethodName                    = "/identity.v1.IdentityService/UpdateRole"
+	IdentityService_DeleteRole_FullMethodName                    = "/identity.v1.IdentityService/DeleteRole"
+	IdentityService_ListOrganizations_FullMethodName             = "/identity.v1.IdentityService/ListOrganizations"
+	IdentityService_CreateOrganization_FullMethodName            = "/identity.v1.IdentityService/CreateOrganization"
+	IdentityService_UpdateOrganization_FullMethodName            = "/identity.v1.IdentityService/UpdateOrganization"
+	IdentityService_DeleteOrganization_FullMethodName            = "/identity.v1.IdentityService/DeleteOrganization"
 	IdentityService_AddUserBlueprints_FullMethodName             = "/identity.v1.IdentityService/AddUserBlueprints"
 	IdentityService_RemoveUserBlueprints_FullMethodName          = "/identity.v1.IdentityService/RemoveUserBlueprints"
 	IdentityService_ListUserAuthKeys_FullMethodName              = "/identity.v1.IdentityService/ListUserAuthKeys"
@@ -147,6 +155,27 @@ type IdentityServiceClient interface {
 	AddUserRoles(ctx context.Context, in *UserRolesRequest, opts ...grpc.CallOption) (*v1.User, error)
 	// RemoveUserRoles removes one or more roles from a user.
 	RemoveUserRoles(ctx context.Context, in *UserRolesRequest, opts ...grpc.CallOption) (*v1.User, error)
+	// ListRoles returns the roles that may be assigned to users, optionally
+	// filtered by organization.
+	ListRoles(ctx context.Context, in *ListRolesRequest, opts ...grpc.CallOption) (*RoleList, error)
+	// CreateRole registers a new assignable role.
+	CreateRole(ctx context.Context, in *CreateRoleRequest, opts ...grpc.CallOption) (*Role, error)
+	// UpdateRole updates a role's description. Name and org are immutable and
+	// cannot be changed.
+	UpdateRole(ctx context.Context, in *UpdateRoleRequest, opts ...grpc.CallOption) (*Role, error)
+	// DeleteRole removes a role from the registry. Fails if any user still
+	// holds the role.
+	DeleteRole(ctx context.Context, in *DeleteRoleRequest, opts ...grpc.CallOption) (*DeleteRoleResponse, error)
+	// ListOrganizations returns the registered organizations.
+	ListOrganizations(ctx context.Context, in *ListOrganizationsRequest, opts ...grpc.CallOption) (*OrganizationList, error)
+	// CreateOrganization registers a new organization.
+	CreateOrganization(ctx context.Context, in *CreateOrganizationRequest, opts ...grpc.CallOption) (*Organization, error)
+	// UpdateOrganization updates an organization's description. The name is
+	// immutable and cannot be changed.
+	UpdateOrganization(ctx context.Context, in *UpdateOrganizationRequest, opts ...grpc.CallOption) (*Organization, error)
+	// DeleteOrganization removes an organization from the registry. Fails if
+	// any user or role still references it.
+	DeleteOrganization(ctx context.Context, in *DeleteOrganizationRequest, opts ...grpc.CallOption) (*DeleteOrganizationResponse, error)
 	// AddUserBlueprints grants a user access to one or more blueprints.
 	AddUserBlueprints(ctx context.Context, in *UserBlueprintsRequest, opts ...grpc.CallOption) (*v1.User, error)
 	// RemoveUserBlueprints revokes access to one or more blueprints from a user.
@@ -451,6 +480,86 @@ func (c *identityServiceClient) RemoveUserRoles(ctx context.Context, in *UserRol
 	return out, nil
 }
 
+func (c *identityServiceClient) ListRoles(ctx context.Context, in *ListRolesRequest, opts ...grpc.CallOption) (*RoleList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RoleList)
+	err := c.cc.Invoke(ctx, IdentityService_ListRoles_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) CreateRole(ctx context.Context, in *CreateRoleRequest, opts ...grpc.CallOption) (*Role, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Role)
+	err := c.cc.Invoke(ctx, IdentityService_CreateRole_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) UpdateRole(ctx context.Context, in *UpdateRoleRequest, opts ...grpc.CallOption) (*Role, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Role)
+	err := c.cc.Invoke(ctx, IdentityService_UpdateRole_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) DeleteRole(ctx context.Context, in *DeleteRoleRequest, opts ...grpc.CallOption) (*DeleteRoleResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteRoleResponse)
+	err := c.cc.Invoke(ctx, IdentityService_DeleteRole_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) ListOrganizations(ctx context.Context, in *ListOrganizationsRequest, opts ...grpc.CallOption) (*OrganizationList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OrganizationList)
+	err := c.cc.Invoke(ctx, IdentityService_ListOrganizations_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) CreateOrganization(ctx context.Context, in *CreateOrganizationRequest, opts ...grpc.CallOption) (*Organization, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Organization)
+	err := c.cc.Invoke(ctx, IdentityService_CreateOrganization_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) UpdateOrganization(ctx context.Context, in *UpdateOrganizationRequest, opts ...grpc.CallOption) (*Organization, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Organization)
+	err := c.cc.Invoke(ctx, IdentityService_UpdateOrganization_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) DeleteOrganization(ctx context.Context, in *DeleteOrganizationRequest, opts ...grpc.CallOption) (*DeleteOrganizationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteOrganizationResponse)
+	err := c.cc.Invoke(ctx, IdentityService_DeleteOrganization_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *identityServiceClient) AddUserBlueprints(ctx context.Context, in *UserBlueprintsRequest, opts ...grpc.CallOption) (*v1.User, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(v1.User)
@@ -691,6 +800,27 @@ type IdentityServiceServer interface {
 	AddUserRoles(context.Context, *UserRolesRequest) (*v1.User, error)
 	// RemoveUserRoles removes one or more roles from a user.
 	RemoveUserRoles(context.Context, *UserRolesRequest) (*v1.User, error)
+	// ListRoles returns the roles that may be assigned to users, optionally
+	// filtered by organization.
+	ListRoles(context.Context, *ListRolesRequest) (*RoleList, error)
+	// CreateRole registers a new assignable role.
+	CreateRole(context.Context, *CreateRoleRequest) (*Role, error)
+	// UpdateRole updates a role's description. Name and org are immutable and
+	// cannot be changed.
+	UpdateRole(context.Context, *UpdateRoleRequest) (*Role, error)
+	// DeleteRole removes a role from the registry. Fails if any user still
+	// holds the role.
+	DeleteRole(context.Context, *DeleteRoleRequest) (*DeleteRoleResponse, error)
+	// ListOrganizations returns the registered organizations.
+	ListOrganizations(context.Context, *ListOrganizationsRequest) (*OrganizationList, error)
+	// CreateOrganization registers a new organization.
+	CreateOrganization(context.Context, *CreateOrganizationRequest) (*Organization, error)
+	// UpdateOrganization updates an organization's description. The name is
+	// immutable and cannot be changed.
+	UpdateOrganization(context.Context, *UpdateOrganizationRequest) (*Organization, error)
+	// DeleteOrganization removes an organization from the registry. Fails if
+	// any user or role still references it.
+	DeleteOrganization(context.Context, *DeleteOrganizationRequest) (*DeleteOrganizationResponse, error)
 	// AddUserBlueprints grants a user access to one or more blueprints.
 	AddUserBlueprints(context.Context, *UserBlueprintsRequest) (*v1.User, error)
 	// RemoveUserBlueprints revokes access to one or more blueprints from a user.
@@ -819,6 +949,30 @@ func (UnimplementedIdentityServiceServer) AddUserRoles(context.Context, *UserRol
 }
 func (UnimplementedIdentityServiceServer) RemoveUserRoles(context.Context, *UserRolesRequest) (*v1.User, error) {
 	return nil, status.Error(codes.Unimplemented, "method RemoveUserRoles not implemented")
+}
+func (UnimplementedIdentityServiceServer) ListRoles(context.Context, *ListRolesRequest) (*RoleList, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListRoles not implemented")
+}
+func (UnimplementedIdentityServiceServer) CreateRole(context.Context, *CreateRoleRequest) (*Role, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateRole not implemented")
+}
+func (UnimplementedIdentityServiceServer) UpdateRole(context.Context, *UpdateRoleRequest) (*Role, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateRole not implemented")
+}
+func (UnimplementedIdentityServiceServer) DeleteRole(context.Context, *DeleteRoleRequest) (*DeleteRoleResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteRole not implemented")
+}
+func (UnimplementedIdentityServiceServer) ListOrganizations(context.Context, *ListOrganizationsRequest) (*OrganizationList, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListOrganizations not implemented")
+}
+func (UnimplementedIdentityServiceServer) CreateOrganization(context.Context, *CreateOrganizationRequest) (*Organization, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateOrganization not implemented")
+}
+func (UnimplementedIdentityServiceServer) UpdateOrganization(context.Context, *UpdateOrganizationRequest) (*Organization, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateOrganization not implemented")
+}
+func (UnimplementedIdentityServiceServer) DeleteOrganization(context.Context, *DeleteOrganizationRequest) (*DeleteOrganizationResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteOrganization not implemented")
 }
 func (UnimplementedIdentityServiceServer) AddUserBlueprints(context.Context, *UserBlueprintsRequest) (*v1.User, error) {
 	return nil, status.Error(codes.Unimplemented, "method AddUserBlueprints not implemented")
@@ -1339,6 +1493,150 @@ func _IdentityService_RemoveUserRoles_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IdentityService_ListRoles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListRolesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).ListRoles(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_ListRoles_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).ListRoles(ctx, req.(*ListRolesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_CreateRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateRoleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).CreateRole(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_CreateRole_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).CreateRole(ctx, req.(*CreateRoleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_UpdateRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateRoleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).UpdateRole(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_UpdateRole_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).UpdateRole(ctx, req.(*UpdateRoleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_DeleteRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteRoleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).DeleteRole(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_DeleteRole_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).DeleteRole(ctx, req.(*DeleteRoleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_ListOrganizations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListOrganizationsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).ListOrganizations(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_ListOrganizations_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).ListOrganizations(ctx, req.(*ListOrganizationsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_CreateOrganization_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateOrganizationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).CreateOrganization(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_CreateOrganization_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).CreateOrganization(ctx, req.(*CreateOrganizationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_UpdateOrganization_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateOrganizationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).UpdateOrganization(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_UpdateOrganization_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).UpdateOrganization(ctx, req.(*UpdateOrganizationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_DeleteOrganization_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteOrganizationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).DeleteOrganization(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_DeleteOrganization_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).DeleteOrganization(ctx, req.(*DeleteOrganizationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _IdentityService_AddUserBlueprints_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UserBlueprintsRequest)
 	if err := dec(in); err != nil {
@@ -1733,6 +2031,38 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemoveUserRoles",
 			Handler:    _IdentityService_RemoveUserRoles_Handler,
+		},
+		{
+			MethodName: "ListRoles",
+			Handler:    _IdentityService_ListRoles_Handler,
+		},
+		{
+			MethodName: "CreateRole",
+			Handler:    _IdentityService_CreateRole_Handler,
+		},
+		{
+			MethodName: "UpdateRole",
+			Handler:    _IdentityService_UpdateRole_Handler,
+		},
+		{
+			MethodName: "DeleteRole",
+			Handler:    _IdentityService_DeleteRole_Handler,
+		},
+		{
+			MethodName: "ListOrganizations",
+			Handler:    _IdentityService_ListOrganizations_Handler,
+		},
+		{
+			MethodName: "CreateOrganization",
+			Handler:    _IdentityService_CreateOrganization_Handler,
+		},
+		{
+			MethodName: "UpdateOrganization",
+			Handler:    _IdentityService_UpdateOrganization_Handler,
+		},
+		{
+			MethodName: "DeleteOrganization",
+			Handler:    _IdentityService_DeleteOrganization_Handler,
 		},
 		{
 			MethodName: "AddUserBlueprints",
