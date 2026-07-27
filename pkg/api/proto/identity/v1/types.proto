@@ -181,34 +181,43 @@ message RoleList {
   repeated Role roles = 1;
 }
 
-// ListRolesRequest carries optional filters, sourced from the role:list
-// authz obligations.
+// ListRolesRequest carries the org whose assignable roles are being listed,
+// sourced from the role:list authz obligations. The result includes both
+// roles scoped to this org and global roles, since a caller assigning roles
+// within an org may still assign a global one.
 message ListRolesRequest {
-  string org = 1;  // restrict to this organization; empty imposes no restriction
+  string org = 1;  // required; the organization to list roles for
 }
 
-// CreateRoleRequest registers a new assignable role.
+// ListGlobalRolesRequest carries no fields; global roles are not scoped by
+// organization. Left as a message rather than google.protobuf.Empty so
+// filters can be added later without changing the RPC signature.
+message ListGlobalRolesRequest {}
+
+// CreateRoleRequest registers a new assignable role, scoped to org. Global
+// roles cannot be created through this RPC — only listed, via
+// ListGlobalRoles.
 message CreateRoleRequest {
   string name        = 1;
   string description = 2;
-  string org         = 3;
+  string org         = 3;  // required
 }
 
 // UpdateRoleRequest partially updates a role's description. name and org
-// together identify the role and are immutable; org empty means the global
-// role, not "any org".
+// together identify the role and are immutable. org is required — global
+// roles cannot be updated through this RPC.
 message UpdateRoleRequest {
   string                      name        = 1;
-  string                      org         = 2;
+  string                      org         = 2;  // required
   google.protobuf.StringValue description = 3;
 }
 
 // DeleteRoleRequest identifies the role to remove from the registry. name
-// and org together identify the role; org empty means the global role, not
-// "any org".
+// and org together identify the role. org is required — global roles cannot
+// be removed through this RPC.
 message DeleteRoleRequest {
   string name = 1;
-  string org  = 2;
+  string org  = 2;  // required
 }
 
 // DeleteRoleResponse indicates whether the deletion was successful.

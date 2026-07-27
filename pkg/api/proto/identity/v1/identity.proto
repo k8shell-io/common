@@ -115,19 +115,26 @@ service IdentityService {
   // RemoveUserRoles removes one or more roles from a user.
   rpc RemoveUserRoles (UserRolesRequest) returns (common.v1.User);
 
-  // ListRoles returns the roles that may be assigned to users, optionally
-  // filtered by organization.
+  // ListRoles returns the roles assignable within an organization: those
+  // scoped to it plus all global roles. org is required.
   rpc ListRoles (ListRolesRequest) returns (RoleList);
 
-  // CreateRole registers a new assignable role.
+  // ListGlobalRoles returns the roles assignable across every organization.
+  // Global roles can only be listed, never created, updated, or deleted.
+  rpc ListGlobalRoles (ListGlobalRolesRequest) returns (RoleList);
+
+  // CreateRole registers a new assignable role scoped to org. org is
+  // required; global roles cannot be created through this RPC.
   rpc CreateRole (CreateRoleRequest) returns (Role);
 
   // UpdateRole updates a role's description. Name and org are immutable and
-  // cannot be changed.
+  // cannot be changed. org is required; global roles cannot be updated
+  // through this RPC.
   rpc UpdateRole (UpdateRoleRequest) returns (Role);
 
   // DeleteRole removes a role from the registry. Fails if any user still
-  // holds the role.
+  // holds the role. org is required; global roles cannot be removed through
+  // this RPC.
   rpc DeleteRole (DeleteRoleRequest) returns (DeleteRoleResponse);
 
   // ListOrganizations returns the registered organizations.

@@ -50,6 +50,7 @@ const (
 	IdentityService_AddUserRoles_FullMethodName                  = "/identity.v1.IdentityService/AddUserRoles"
 	IdentityService_RemoveUserRoles_FullMethodName               = "/identity.v1.IdentityService/RemoveUserRoles"
 	IdentityService_ListRoles_FullMethodName                     = "/identity.v1.IdentityService/ListRoles"
+	IdentityService_ListGlobalRoles_FullMethodName               = "/identity.v1.IdentityService/ListGlobalRoles"
 	IdentityService_CreateRole_FullMethodName                    = "/identity.v1.IdentityService/CreateRole"
 	IdentityService_UpdateRole_FullMethodName                    = "/identity.v1.IdentityService/UpdateRole"
 	IdentityService_DeleteRole_FullMethodName                    = "/identity.v1.IdentityService/DeleteRole"
@@ -155,16 +156,22 @@ type IdentityServiceClient interface {
 	AddUserRoles(ctx context.Context, in *UserRolesRequest, opts ...grpc.CallOption) (*v1.User, error)
 	// RemoveUserRoles removes one or more roles from a user.
 	RemoveUserRoles(ctx context.Context, in *UserRolesRequest, opts ...grpc.CallOption) (*v1.User, error)
-	// ListRoles returns the roles that may be assigned to users, optionally
-	// filtered by organization.
+	// ListRoles returns the roles assignable within an organization: those
+	// scoped to it plus all global roles. org is required.
 	ListRoles(ctx context.Context, in *ListRolesRequest, opts ...grpc.CallOption) (*RoleList, error)
-	// CreateRole registers a new assignable role.
+	// ListGlobalRoles returns the roles assignable across every organization.
+	// Global roles can only be listed, never created, updated, or deleted.
+	ListGlobalRoles(ctx context.Context, in *ListGlobalRolesRequest, opts ...grpc.CallOption) (*RoleList, error)
+	// CreateRole registers a new assignable role scoped to org. org is
+	// required; global roles cannot be created through this RPC.
 	CreateRole(ctx context.Context, in *CreateRoleRequest, opts ...grpc.CallOption) (*Role, error)
 	// UpdateRole updates a role's description. Name and org are immutable and
-	// cannot be changed.
+	// cannot be changed. org is required; global roles cannot be updated
+	// through this RPC.
 	UpdateRole(ctx context.Context, in *UpdateRoleRequest, opts ...grpc.CallOption) (*Role, error)
 	// DeleteRole removes a role from the registry. Fails if any user still
-	// holds the role.
+	// holds the role. org is required; global roles cannot be removed through
+	// this RPC.
 	DeleteRole(ctx context.Context, in *DeleteRoleRequest, opts ...grpc.CallOption) (*DeleteRoleResponse, error)
 	// ListOrganizations returns the registered organizations.
 	ListOrganizations(ctx context.Context, in *ListOrganizationsRequest, opts ...grpc.CallOption) (*OrganizationList, error)
@@ -490,6 +497,16 @@ func (c *identityServiceClient) ListRoles(ctx context.Context, in *ListRolesRequ
 	return out, nil
 }
 
+func (c *identityServiceClient) ListGlobalRoles(ctx context.Context, in *ListGlobalRolesRequest, opts ...grpc.CallOption) (*RoleList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RoleList)
+	err := c.cc.Invoke(ctx, IdentityService_ListGlobalRoles_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *identityServiceClient) CreateRole(ctx context.Context, in *CreateRoleRequest, opts ...grpc.CallOption) (*Role, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Role)
@@ -800,16 +817,22 @@ type IdentityServiceServer interface {
 	AddUserRoles(context.Context, *UserRolesRequest) (*v1.User, error)
 	// RemoveUserRoles removes one or more roles from a user.
 	RemoveUserRoles(context.Context, *UserRolesRequest) (*v1.User, error)
-	// ListRoles returns the roles that may be assigned to users, optionally
-	// filtered by organization.
+	// ListRoles returns the roles assignable within an organization: those
+	// scoped to it plus all global roles. org is required.
 	ListRoles(context.Context, *ListRolesRequest) (*RoleList, error)
-	// CreateRole registers a new assignable role.
+	// ListGlobalRoles returns the roles assignable across every organization.
+	// Global roles can only be listed, never created, updated, or deleted.
+	ListGlobalRoles(context.Context, *ListGlobalRolesRequest) (*RoleList, error)
+	// CreateRole registers a new assignable role scoped to org. org is
+	// required; global roles cannot be created through this RPC.
 	CreateRole(context.Context, *CreateRoleRequest) (*Role, error)
 	// UpdateRole updates a role's description. Name and org are immutable and
-	// cannot be changed.
+	// cannot be changed. org is required; global roles cannot be updated
+	// through this RPC.
 	UpdateRole(context.Context, *UpdateRoleRequest) (*Role, error)
 	// DeleteRole removes a role from the registry. Fails if any user still
-	// holds the role.
+	// holds the role. org is required; global roles cannot be removed through
+	// this RPC.
 	DeleteRole(context.Context, *DeleteRoleRequest) (*DeleteRoleResponse, error)
 	// ListOrganizations returns the registered organizations.
 	ListOrganizations(context.Context, *ListOrganizationsRequest) (*OrganizationList, error)
@@ -952,6 +975,9 @@ func (UnimplementedIdentityServiceServer) RemoveUserRoles(context.Context, *User
 }
 func (UnimplementedIdentityServiceServer) ListRoles(context.Context, *ListRolesRequest) (*RoleList, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListRoles not implemented")
+}
+func (UnimplementedIdentityServiceServer) ListGlobalRoles(context.Context, *ListGlobalRolesRequest) (*RoleList, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListGlobalRoles not implemented")
 }
 func (UnimplementedIdentityServiceServer) CreateRole(context.Context, *CreateRoleRequest) (*Role, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateRole not implemented")
@@ -1511,6 +1537,24 @@ func _IdentityService_ListRoles_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IdentityService_ListGlobalRoles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListGlobalRolesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).ListGlobalRoles(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_ListGlobalRoles_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).ListGlobalRoles(ctx, req.(*ListGlobalRolesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _IdentityService_CreateRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateRoleRequest)
 	if err := dec(in); err != nil {
@@ -2035,6 +2079,10 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListRoles",
 			Handler:    _IdentityService_ListRoles_Handler,
+		},
+		{
+			MethodName: "ListGlobalRoles",
+			Handler:    _IdentityService_ListGlobalRoles_Handler,
 		},
 		{
 			MethodName: "CreateRole",

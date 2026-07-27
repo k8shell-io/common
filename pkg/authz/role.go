@@ -13,9 +13,15 @@ package authz
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
 // Obligations
-//   org  organization name — the enforcer lists only roles scoped to this
-//        org (plus global roles); absent/empty imposes no restriction.
-//        Parse with ParseOrgObligation.
+//   org           organization name — the enforcer lists only roles scoped
+//                 to this org; absent/empty imposes no restriction. Parse
+//                 with ParseOrgObligation.
+//   global_roles  "true"/"false" — whether the enforcer may also include
+//                 global (org-less) roles alongside the org-scoped ones.
+//                 Independent of the org key: a caller restricted to one
+//                 org may still be granted or denied global-role visibility.
+//                 Absent is treated as "false" (no global roles shown).
+//                 Parse with ParseGlobalRolesObligation.
 //
 // ---
 //
@@ -23,7 +29,8 @@ package authz
 //
 // Resource  type="role"
 //   id   proposed role name (required)
-//   org  organization the role is scoped to (optional) — empty means global
+//   org  organization the role is scoped to (required) — global roles
+//        cannot be created; identity's CreateRole rejects an empty org.
 //
 // Context   (none)
 //
@@ -43,7 +50,8 @@ package authz
 //
 // Resource  type="role"
 //   id   role name (required)
-//   org  organization the role is scoped to (optional) — empty means global.
+//   org  organization the role is scoped to (required) — global roles
+//        cannot be deleted; identity's DeleteRole rejects an empty org.
 //        name and org together identify the role.
 //
 // Context   (none)
@@ -58,7 +66,8 @@ package authz
 //
 // Resource  type="role"
 //   id   role name (required)
-//   org  organization the role is scoped to (optional) — empty means global.
+//   org  organization the role is scoped to (required) — global roles
+//        cannot be updated; identity's UpdateRole rejects an empty org.
 //        name and org together identify the role and are immutable; this
 //        action only ever changes the role's description.
 //
@@ -75,12 +84,14 @@ import (
 )
 
 // RoleResource holds the resource-scoped attributes for a role policy check.
+// Used by role:create, role:delete, and role:update — all three require a
+// non-empty Org, since global (org-less) roles can only ever be listed.
 type RoleResource struct {
 	// ID is the role name (resource.id in the EvaluateRequest).
 	ID string
 
 	// Org is the organization the role is scoped to (resource.attributes["org"]).
-	// Empty means global (assignable across all organizations).
+	// Required; global roles cannot be created, deleted, or updated.
 	Org string
 }
 
@@ -222,6 +233,9 @@ func (r *RoleCreateEvalRequest) Validate() error {
 	if r.Resource.ID == "" {
 		return fmt.Errorf("role:create: resource ID (role name) is required")
 	}
+	if r.Resource.Org == "" {
+		return fmt.Errorf("role:create: resource org is required — global roles cannot be created")
+	}
 	return nil
 }
 
@@ -303,6 +317,9 @@ func RoleDeleteEvalRequestFromProto(req *authzv1.EvaluateRequest) (*RoleDeleteEv
 func (r *RoleDeleteEvalRequest) Validate() error {
 	if r.Resource.ID == "" {
 		return fmt.Errorf("role:delete: resource ID (role name) is required")
+	}
+	if r.Resource.Org == "" {
+		return fmt.Errorf("role:delete: resource org is required — global roles cannot be deleted")
 	}
 	return nil
 }
@@ -386,7 +403,48 @@ func (r *RoleUpdateEvalRequest) Validate() error {
 	if r.Resource.ID == "" {
 		return fmt.Errorf("role:update: resource ID (role name) is required")
 	}
+	if r.Resource.Org == "" {
+		return fmt.Errorf("role:update: resource org is required — global roles cannot be updated")
+	}
 	return nil
+}
+
+const (
+	// ObligationKeyGlobalRoles is the key the policy engine writes on a
+	// role:list decision to indicate whether the caller may see global
+	// (org-less) roles alongside the org-scoped ones. Independent of the
+	// "org" obligation.
+	ObligationKeyGlobalRoles = "global_roles"
+
+	// ObligationGlobalRolesTrue is the obligation value that grants
+	// visibility into global roles.
+	ObligationGlobalRolesTrue = "true"
+
+	// ObligationGlobalRolesFalse is the obligation value that explicitly
+	// denies visibility into global roles.
+	ObligationGlobalRolesFalse = "false"
+)
+
+// GlobalRolesObligation is the typed representation of the "global_roles"
+// obligation key returned by the policy engine in a PolicyResult for
+// role:list.
+type GlobalRolesObligation struct {
+	// Granted is true when the policy allows the caller to see global roles.
+	Granted bool
+}
+
+// ParseGlobalRolesObligation reads the "global_roles" key from the
+// obligations map. Returns (obligation, true) when the key is present,
+// (zero value, false) when the policy did not set it. Either way, the
+// enforcer should treat visibility as denied unless Granted is true — the
+// zero value already defaults to false, so callers can use Granted directly
+// without checking the second return value.
+func ParseGlobalRolesObligation(obligations map[string]string) (GlobalRolesObligation, bool) {
+	v, ok := obligations[ObligationKeyGlobalRoles]
+	if !ok {
+		return GlobalRolesObligation{}, false
+	}
+	return GlobalRolesObligation{Granted: v == ObligationGlobalRolesTrue}, true
 }
 
 // init registers a capability probe for every role domain action. See
