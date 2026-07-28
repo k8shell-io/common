@@ -199,7 +199,6 @@ type CreateUserRequest struct {
 	Email         string                 `protobuf:"bytes,4,opt,name=email,proto3" json:"email,omitempty"`
 	Password      string                 `protobuf:"bytes,5,opt,name=password,proto3" json:"password,omitempty"`
 	Roles         []string               `protobuf:"bytes,6,rep,name=roles,proto3" json:"roles,omitempty"`
-	Blueprints    []string               `protobuf:"bytes,7,rep,name=blueprints,proto3" json:"blueprints,omitempty"`
 	Shell         string                 `protobuf:"bytes,8,opt,name=shell,proto3" json:"shell,omitempty"`
 	Sudo          bool                   `protobuf:"varint,9,opt,name=sudo,proto3" json:"sudo,omitempty"`
 	Locked        bool                   `protobuf:"varint,10,opt,name=locked,proto3" json:"locked,omitempty"`
@@ -281,13 +280,6 @@ func (x *CreateUserRequest) GetRoles() []string {
 	return nil
 }
 
-func (x *CreateUserRequest) GetBlueprints() []string {
-	if x != nil {
-		return x.Blueprints
-	}
-	return nil
-}
-
 func (x *CreateUserRequest) GetShell() string {
 	if x != nil {
 		return x.Shell
@@ -332,7 +324,6 @@ type UpdateUserRequest struct {
 	Fullname      *wrapperspb.StringValue `protobuf:"bytes,2,opt,name=fullname,proto3" json:"fullname,omitempty"`
 	Roles         []string                `protobuf:"bytes,3,rep,name=roles,proto3" json:"roles,omitempty"`
 	Sudo          *wrapperspb.BoolValue   `protobuf:"bytes,4,opt,name=sudo,proto3" json:"sudo,omitempty"`
-	Blueprints    []string                `protobuf:"bytes,5,rep,name=blueprints,proto3" json:"blueprints,omitempty"`
 	Locked        *wrapperspb.BoolValue   `protobuf:"bytes,6,opt,name=locked,proto3" json:"locked,omitempty"`
 	Org           *wrapperspb.StringValue `protobuf:"bytes,8,opt,name=org,proto3" json:"org,omitempty"`
 	Email         *wrapperspb.StringValue `protobuf:"bytes,9,opt,name=email,proto3" json:"email,omitempty"`
@@ -397,13 +388,6 @@ func (x *UpdateUserRequest) GetRoles() []string {
 func (x *UpdateUserRequest) GetSudo() *wrapperspb.BoolValue {
 	if x != nil {
 		return x.Sudo
-	}
-	return nil
-}
-
-func (x *UpdateUserRequest) GetBlueprints() []string {
-	if x != nil {
-		return x.Blueprints
 	}
 	return nil
 }
@@ -2416,38 +2400,34 @@ const file_identity_v1_identity_proto_rawDesc = "" +
 	"\x06format\x18\x02 \x01(\x0e2\x1a.identity.v1.AuthKeyFormatR\x06format\"L\n" +
 	"\x18RemoveUserAuthKeyRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\x14\n" +
-	"\x05index\x18\x02 \x01(\rR\x05index\"\xbd\x02\n" +
+	"\x05index\x18\x02 \x01(\rR\x05index\"\xaf\x02\n" +
 	"\x11CreateUserRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\"\n" +
 	"\forganization\x18\x02 \x01(\tR\forganization\x12\x1a\n" +
 	"\bfullname\x18\x03 \x01(\tR\bfullname\x12\x14\n" +
 	"\x05email\x18\x04 \x01(\tR\x05email\x12\x1a\n" +
 	"\bpassword\x18\x05 \x01(\tR\bpassword\x12\x14\n" +
-	"\x05roles\x18\x06 \x03(\tR\x05roles\x12\x1e\n" +
-	"\n" +
-	"blueprints\x18\a \x03(\tR\n" +
-	"blueprints\x12\x14\n" +
+	"\x05roles\x18\x06 \x03(\tR\x05roles\x12\x14\n" +
 	"\x05shell\x18\b \x01(\tR\x05shell\x12\x12\n" +
 	"\x04sudo\x18\t \x01(\bR\x04sudo\x12\x16\n" +
 	"\x06locked\x18\n" +
 	" \x01(\bR\x06locked\x12\x10\n" +
 	"\x03uid\x18\v \x01(\rR\x03uid\x12\x10\n" +
-	"\x03gid\x18\f \x01(\rR\x03gid\"\xfb\x03\n" +
+	"\x03gid\x18\f \x01(\rR\x03gidJ\x04\b\a\x10\bR\n" +
+	"blueprints\"\xed\x03\n" +
 	"\x11UpdateUserRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x128\n" +
 	"\bfullname\x18\x02 \x01(\v2\x1c.google.protobuf.StringValueR\bfullname\x12\x14\n" +
 	"\x05roles\x18\x03 \x03(\tR\x05roles\x12.\n" +
-	"\x04sudo\x18\x04 \x01(\v2\x1a.google.protobuf.BoolValueR\x04sudo\x12\x1e\n" +
-	"\n" +
-	"blueprints\x18\x05 \x03(\tR\n" +
-	"blueprints\x122\n" +
+	"\x04sudo\x18\x04 \x01(\v2\x1a.google.protobuf.BoolValueR\x04sudo\x122\n" +
 	"\x06locked\x18\x06 \x01(\v2\x1a.google.protobuf.BoolValueR\x06locked\x12.\n" +
 	"\x03org\x18\b \x01(\v2\x1c.google.protobuf.StringValueR\x03org\x122\n" +
 	"\x05email\x18\t \x01(\v2\x1c.google.protobuf.StringValueR\x05email\x12.\n" +
 	"\x03uid\x18\n" +
 	" \x01(\v2\x1c.google.protobuf.UInt32ValueR\x03uid\x12.\n" +
 	"\x03gid\x18\v \x01(\v2\x1c.google.protobuf.UInt32ValueR\x03gid\x122\n" +
-	"\x05shell\x18\f \x01(\v2\x1c.google.protobuf.StringValueR\x05shell\"/\n" +
+	"\x05shell\x18\f \x01(\v2\x1c.google.protobuf.StringValueR\x05shellJ\x04\b\x05\x10\x06R\n" +
+	"blueprints\"/\n" +
 	"\x11DeleteUserRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\".\n" +
 	"\x12DeleteUserResponse\x12\x18\n" +
@@ -2570,7 +2550,7 @@ const file_identity_v1_identity_proto_rawDesc = "" +
 	"\rAuthKeyFormat\x12\x1f\n" +
 	"\x1bAUTH_KEY_FORMAT_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16AUTH_KEY_FORMAT_NORMAL\x10\x01\x12\x1a\n" +
-	"\x16AUTH_KEY_FORMAT_DIGEST\x10\x022\xe5\"\n" +
+	"\x16AUTH_KEY_FORMAT_DIGEST\x10\x022\xe9\"\n" +
 	"\x0fIdentityService\x129\n" +
 	"\bFindUser\x12\x1c.identity.v1.FindUserRequest\x1a\x0f.common.v1.User\x12?\n" +
 	"\bGetUsers\x12\x1c.identity.v1.GetUsersRequest\x1a\x15.identity.v1.UserList\x12T\n" +
@@ -2608,13 +2588,13 @@ const file_identity_v1_identity_proto_rawDesc = "" +
 	"\n" +
 	"UpdateRole\x12\x1e.identity.v1.UpdateRoleRequest\x1a\x11.identity.v1.Role\x12M\n" +
 	"\n" +
-	"DeleteRole\x12\x1e.identity.v1.DeleteRoleRequest\x1a\x1f.identity.v1.DeleteRoleResponse\x12Y\n" +
+	"DeleteRole\x12\x1e.identity.v1.DeleteRoleRequest\x1a\x1f.identity.v1.DeleteRoleResponse\x12J\n" +
+	"\x11AddRoleBlueprints\x12\".identity.v1.RoleBlueprintsRequest\x1a\x11.identity.v1.Role\x12M\n" +
+	"\x14RemoveRoleBlueprints\x12\".identity.v1.RoleBlueprintsRequest\x1a\x11.identity.v1.Role\x12Y\n" +
 	"\x11ListOrganizations\x12%.identity.v1.ListOrganizationsRequest\x1a\x1d.identity.v1.OrganizationList\x12W\n" +
 	"\x12CreateOrganization\x12&.identity.v1.CreateOrganizationRequest\x1a\x19.identity.v1.Organization\x12W\n" +
 	"\x12UpdateOrganization\x12&.identity.v1.UpdateOrganizationRequest\x1a\x19.identity.v1.Organization\x12e\n" +
-	"\x12DeleteOrganization\x12&.identity.v1.DeleteOrganizationRequest\x1a'.identity.v1.DeleteOrganizationResponse\x12H\n" +
-	"\x11AddUserBlueprints\x12\".identity.v1.UserBlueprintsRequest\x1a\x0f.common.v1.User\x12K\n" +
-	"\x14RemoveUserBlueprints\x12\".identity.v1.UserBlueprintsRequest\x1a\x0f.common.v1.User\x12_\n" +
+	"\x12DeleteOrganization\x12&.identity.v1.DeleteOrganizationRequest\x1a'.identity.v1.DeleteOrganizationResponse\x12_\n" +
 	"\x10ListUserAuthKeys\x12$.identity.v1.ListUserAuthKeysRequest\x1a%.identity.v1.ListUserAuthKeysResponse\x12D\n" +
 	"\x0fAddUserAuthKeys\x12 .identity.v1.UserAuthKeysRequest\x1a\x0f.common.v1.User\x12K\n" +
 	"\x11RemoveUserAuthKey\x12%.identity.v1.RemoveUserAuthKeyRequest\x1a\x0f.common.v1.User\x12G\n" +
@@ -2713,11 +2693,11 @@ var file_identity_v1_identity_proto_goTypes = []any{
 	(*CreateRoleRequest)(nil),                     // 65: identity.v1.CreateRoleRequest
 	(*UpdateRoleRequest)(nil),                     // 66: identity.v1.UpdateRoleRequest
 	(*DeleteRoleRequest)(nil),                     // 67: identity.v1.DeleteRoleRequest
-	(*ListOrganizationsRequest)(nil),              // 68: identity.v1.ListOrganizationsRequest
-	(*CreateOrganizationRequest)(nil),             // 69: identity.v1.CreateOrganizationRequest
-	(*UpdateOrganizationRequest)(nil),             // 70: identity.v1.UpdateOrganizationRequest
-	(*DeleteOrganizationRequest)(nil),             // 71: identity.v1.DeleteOrganizationRequest
-	(*UserBlueprintsRequest)(nil),                 // 72: identity.v1.UserBlueprintsRequest
+	(*RoleBlueprintsRequest)(nil),                 // 68: identity.v1.RoleBlueprintsRequest
+	(*ListOrganizationsRequest)(nil),              // 69: identity.v1.ListOrganizationsRequest
+	(*CreateOrganizationRequest)(nil),             // 70: identity.v1.CreateOrganizationRequest
+	(*UpdateOrganizationRequest)(nil),             // 71: identity.v1.UpdateOrganizationRequest
+	(*DeleteOrganizationRequest)(nil),             // 72: identity.v1.DeleteOrganizationRequest
 	(*UserAuthKeysRequest)(nil),                   // 73: identity.v1.UserAuthKeysRequest
 	(*UserList)(nil),                              // 74: identity.v1.UserList
 	(*v11.Descriptor)(nil),                        // 75: query.v1.Descriptor
@@ -2794,12 +2774,12 @@ var file_identity_v1_identity_proto_depIdxs = []int32{
 	65, // 54: identity.v1.IdentityService.CreateRole:input_type -> identity.v1.CreateRoleRequest
 	66, // 55: identity.v1.IdentityService.UpdateRole:input_type -> identity.v1.UpdateRoleRequest
 	67, // 56: identity.v1.IdentityService.DeleteRole:input_type -> identity.v1.DeleteRoleRequest
-	68, // 57: identity.v1.IdentityService.ListOrganizations:input_type -> identity.v1.ListOrganizationsRequest
-	69, // 58: identity.v1.IdentityService.CreateOrganization:input_type -> identity.v1.CreateOrganizationRequest
-	70, // 59: identity.v1.IdentityService.UpdateOrganization:input_type -> identity.v1.UpdateOrganizationRequest
-	71, // 60: identity.v1.IdentityService.DeleteOrganization:input_type -> identity.v1.DeleteOrganizationRequest
-	72, // 61: identity.v1.IdentityService.AddUserBlueprints:input_type -> identity.v1.UserBlueprintsRequest
-	72, // 62: identity.v1.IdentityService.RemoveUserBlueprints:input_type -> identity.v1.UserBlueprintsRequest
+	68, // 57: identity.v1.IdentityService.AddRoleBlueprints:input_type -> identity.v1.RoleBlueprintsRequest
+	68, // 58: identity.v1.IdentityService.RemoveRoleBlueprints:input_type -> identity.v1.RoleBlueprintsRequest
+	69, // 59: identity.v1.IdentityService.ListOrganizations:input_type -> identity.v1.ListOrganizationsRequest
+	70, // 60: identity.v1.IdentityService.CreateOrganization:input_type -> identity.v1.CreateOrganizationRequest
+	71, // 61: identity.v1.IdentityService.UpdateOrganization:input_type -> identity.v1.UpdateOrganizationRequest
+	72, // 62: identity.v1.IdentityService.DeleteOrganization:input_type -> identity.v1.DeleteOrganizationRequest
 	1,  // 63: identity.v1.IdentityService.ListUserAuthKeys:input_type -> identity.v1.ListUserAuthKeysRequest
 	73, // 64: identity.v1.IdentityService.AddUserAuthKeys:input_type -> identity.v1.UserAuthKeysRequest
 	2,  // 65: identity.v1.IdentityService.RemoveUserAuthKey:input_type -> identity.v1.RemoveUserAuthKeyRequest
@@ -2844,12 +2824,12 @@ var file_identity_v1_identity_proto_depIdxs = []int32{
 	84, // 104: identity.v1.IdentityService.CreateRole:output_type -> identity.v1.Role
 	84, // 105: identity.v1.IdentityService.UpdateRole:output_type -> identity.v1.Role
 	85, // 106: identity.v1.IdentityService.DeleteRole:output_type -> identity.v1.DeleteRoleResponse
-	86, // 107: identity.v1.IdentityService.ListOrganizations:output_type -> identity.v1.OrganizationList
-	87, // 108: identity.v1.IdentityService.CreateOrganization:output_type -> identity.v1.Organization
-	87, // 109: identity.v1.IdentityService.UpdateOrganization:output_type -> identity.v1.Organization
-	88, // 110: identity.v1.IdentityService.DeleteOrganization:output_type -> identity.v1.DeleteOrganizationResponse
-	50, // 111: identity.v1.IdentityService.AddUserBlueprints:output_type -> common.v1.User
-	50, // 112: identity.v1.IdentityService.RemoveUserBlueprints:output_type -> common.v1.User
+	84, // 107: identity.v1.IdentityService.AddRoleBlueprints:output_type -> identity.v1.Role
+	84, // 108: identity.v1.IdentityService.RemoveRoleBlueprints:output_type -> identity.v1.Role
+	86, // 109: identity.v1.IdentityService.ListOrganizations:output_type -> identity.v1.OrganizationList
+	87, // 110: identity.v1.IdentityService.CreateOrganization:output_type -> identity.v1.Organization
+	87, // 111: identity.v1.IdentityService.UpdateOrganization:output_type -> identity.v1.Organization
+	88, // 112: identity.v1.IdentityService.DeleteOrganization:output_type -> identity.v1.DeleteOrganizationResponse
 	89, // 113: identity.v1.IdentityService.ListUserAuthKeys:output_type -> identity.v1.ListUserAuthKeysResponse
 	50, // 114: identity.v1.IdentityService.AddUserAuthKeys:output_type -> common.v1.User
 	50, // 115: identity.v1.IdentityService.RemoveUserAuthKey:output_type -> common.v1.User

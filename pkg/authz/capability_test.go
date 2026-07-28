@@ -31,7 +31,6 @@ var expectedCapabilityActions = []string{
 	"user:read:keys",
 	"user:write:profile",
 	"user:write:credentials",
-	"user:write:blueprints",
 	"user:write:roles",
 	"user:write:keys",
 	"user:write:sudo",
@@ -73,6 +72,7 @@ var expectedCapabilityActions = []string{
 	"org:create",
 	"org:delete",
 	"org:update",
+	"blueprints:read",
 }
 
 func TestCapabilityChecksCompleteness(t *testing.T) {

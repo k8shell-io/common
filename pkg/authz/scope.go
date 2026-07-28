@@ -183,9 +183,10 @@ var validExactScopes = map[string]struct{}{
 	"user:read:" + string(UserDataTypeKeys):        {},
 
 	// user:write — one entry per data type
+	// (no UserDataTypeBlueprints entry — blueprint access is granted only via
+	// roles, see role:update; there is no direct user:write path for it.)
 	"user:write:" + string(UserDataTypeProfile):     {},
 	"user:write:" + string(UserDataTypeCredentials): {},
-	"user:write:" + string(UserDataTypeBlueprints):  {},
 	"user:write:" + string(UserDataTypeRoles):       {},
 	"user:write:" + string(UserDataTypeKeys):        {},
 	"user:write:" + string(UserDataTypeSudo):        {},
@@ -211,6 +212,9 @@ var validExactScopes = map[string]struct{}{
 	"org:create": {},
 	"org:delete": {},
 	"org:update": {},
+
+	// blueprint — flat
+	"blueprints:read": {},
 }
 
 // validWildcardPrefixes is the set of prefixes that may appear before ":*".

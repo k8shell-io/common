@@ -54,12 +54,12 @@ const (
 	IdentityService_CreateRole_FullMethodName                    = "/identity.v1.IdentityService/CreateRole"
 	IdentityService_UpdateRole_FullMethodName                    = "/identity.v1.IdentityService/UpdateRole"
 	IdentityService_DeleteRole_FullMethodName                    = "/identity.v1.IdentityService/DeleteRole"
+	IdentityService_AddRoleBlueprints_FullMethodName             = "/identity.v1.IdentityService/AddRoleBlueprints"
+	IdentityService_RemoveRoleBlueprints_FullMethodName          = "/identity.v1.IdentityService/RemoveRoleBlueprints"
 	IdentityService_ListOrganizations_FullMethodName             = "/identity.v1.IdentityService/ListOrganizations"
 	IdentityService_CreateOrganization_FullMethodName            = "/identity.v1.IdentityService/CreateOrganization"
 	IdentityService_UpdateOrganization_FullMethodName            = "/identity.v1.IdentityService/UpdateOrganization"
 	IdentityService_DeleteOrganization_FullMethodName            = "/identity.v1.IdentityService/DeleteOrganization"
-	IdentityService_AddUserBlueprints_FullMethodName             = "/identity.v1.IdentityService/AddUserBlueprints"
-	IdentityService_RemoveUserBlueprints_FullMethodName          = "/identity.v1.IdentityService/RemoveUserBlueprints"
 	IdentityService_ListUserAuthKeys_FullMethodName              = "/identity.v1.IdentityService/ListUserAuthKeys"
 	IdentityService_AddUserAuthKeys_FullMethodName               = "/identity.v1.IdentityService/AddUserAuthKeys"
 	IdentityService_RemoveUserAuthKey_FullMethodName             = "/identity.v1.IdentityService/RemoveUserAuthKey"
@@ -173,6 +173,12 @@ type IdentityServiceClient interface {
 	// holds the role. org is required; global roles cannot be removed through
 	// this RPC.
 	DeleteRole(ctx context.Context, in *DeleteRoleRequest, opts ...grpc.CallOption) (*DeleteRoleResponse, error)
+	// AddRoleBlueprints grants a role one or more blueprints; every user
+	// holding the role gains access to them. org is required; global roles are
+	// not supported through this RPC.
+	AddRoleBlueprints(ctx context.Context, in *RoleBlueprintsRequest, opts ...grpc.CallOption) (*Role, error)
+	// RemoveRoleBlueprints revokes one or more blueprints from a role.
+	RemoveRoleBlueprints(ctx context.Context, in *RoleBlueprintsRequest, opts ...grpc.CallOption) (*Role, error)
 	// ListOrganizations returns the registered organizations.
 	ListOrganizations(ctx context.Context, in *ListOrganizationsRequest, opts ...grpc.CallOption) (*OrganizationList, error)
 	// CreateOrganization registers a new organization.
@@ -183,10 +189,6 @@ type IdentityServiceClient interface {
 	// DeleteOrganization removes an organization from the registry. Fails if
 	// any user or role still references it.
 	DeleteOrganization(ctx context.Context, in *DeleteOrganizationRequest, opts ...grpc.CallOption) (*DeleteOrganizationResponse, error)
-	// AddUserBlueprints grants a user access to one or more blueprints.
-	AddUserBlueprints(ctx context.Context, in *UserBlueprintsRequest, opts ...grpc.CallOption) (*v1.User, error)
-	// RemoveUserBlueprints revokes access to one or more blueprints from a user.
-	RemoveUserBlueprints(ctx context.Context, in *UserBlueprintsRequest, opts ...grpc.CallOption) (*v1.User, error)
 	// ListUserAuthKeys retrieves all SSH public keys registered for a user, in
 	// either normal or digest-only form depending on the request's format field.
 	ListUserAuthKeys(ctx context.Context, in *ListUserAuthKeysRequest, opts ...grpc.CallOption) (*ListUserAuthKeysResponse, error)
@@ -537,6 +539,26 @@ func (c *identityServiceClient) DeleteRole(ctx context.Context, in *DeleteRoleRe
 	return out, nil
 }
 
+func (c *identityServiceClient) AddRoleBlueprints(ctx context.Context, in *RoleBlueprintsRequest, opts ...grpc.CallOption) (*Role, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Role)
+	err := c.cc.Invoke(ctx, IdentityService_AddRoleBlueprints_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) RemoveRoleBlueprints(ctx context.Context, in *RoleBlueprintsRequest, opts ...grpc.CallOption) (*Role, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Role)
+	err := c.cc.Invoke(ctx, IdentityService_RemoveRoleBlueprints_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *identityServiceClient) ListOrganizations(ctx context.Context, in *ListOrganizationsRequest, opts ...grpc.CallOption) (*OrganizationList, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(OrganizationList)
@@ -571,26 +593,6 @@ func (c *identityServiceClient) DeleteOrganization(ctx context.Context, in *Dele
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeleteOrganizationResponse)
 	err := c.cc.Invoke(ctx, IdentityService_DeleteOrganization_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *identityServiceClient) AddUserBlueprints(ctx context.Context, in *UserBlueprintsRequest, opts ...grpc.CallOption) (*v1.User, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(v1.User)
-	err := c.cc.Invoke(ctx, IdentityService_AddUserBlueprints_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *identityServiceClient) RemoveUserBlueprints(ctx context.Context, in *UserBlueprintsRequest, opts ...grpc.CallOption) (*v1.User, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(v1.User)
-	err := c.cc.Invoke(ctx, IdentityService_RemoveUserBlueprints_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -834,6 +836,12 @@ type IdentityServiceServer interface {
 	// holds the role. org is required; global roles cannot be removed through
 	// this RPC.
 	DeleteRole(context.Context, *DeleteRoleRequest) (*DeleteRoleResponse, error)
+	// AddRoleBlueprints grants a role one or more blueprints; every user
+	// holding the role gains access to them. org is required; global roles are
+	// not supported through this RPC.
+	AddRoleBlueprints(context.Context, *RoleBlueprintsRequest) (*Role, error)
+	// RemoveRoleBlueprints revokes one or more blueprints from a role.
+	RemoveRoleBlueprints(context.Context, *RoleBlueprintsRequest) (*Role, error)
 	// ListOrganizations returns the registered organizations.
 	ListOrganizations(context.Context, *ListOrganizationsRequest) (*OrganizationList, error)
 	// CreateOrganization registers a new organization.
@@ -844,10 +852,6 @@ type IdentityServiceServer interface {
 	// DeleteOrganization removes an organization from the registry. Fails if
 	// any user or role still references it.
 	DeleteOrganization(context.Context, *DeleteOrganizationRequest) (*DeleteOrganizationResponse, error)
-	// AddUserBlueprints grants a user access to one or more blueprints.
-	AddUserBlueprints(context.Context, *UserBlueprintsRequest) (*v1.User, error)
-	// RemoveUserBlueprints revokes access to one or more blueprints from a user.
-	RemoveUserBlueprints(context.Context, *UserBlueprintsRequest) (*v1.User, error)
 	// ListUserAuthKeys retrieves all SSH public keys registered for a user, in
 	// either normal or digest-only form depending on the request's format field.
 	ListUserAuthKeys(context.Context, *ListUserAuthKeysRequest) (*ListUserAuthKeysResponse, error)
@@ -988,6 +992,12 @@ func (UnimplementedIdentityServiceServer) UpdateRole(context.Context, *UpdateRol
 func (UnimplementedIdentityServiceServer) DeleteRole(context.Context, *DeleteRoleRequest) (*DeleteRoleResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteRole not implemented")
 }
+func (UnimplementedIdentityServiceServer) AddRoleBlueprints(context.Context, *RoleBlueprintsRequest) (*Role, error) {
+	return nil, status.Error(codes.Unimplemented, "method AddRoleBlueprints not implemented")
+}
+func (UnimplementedIdentityServiceServer) RemoveRoleBlueprints(context.Context, *RoleBlueprintsRequest) (*Role, error) {
+	return nil, status.Error(codes.Unimplemented, "method RemoveRoleBlueprints not implemented")
+}
 func (UnimplementedIdentityServiceServer) ListOrganizations(context.Context, *ListOrganizationsRequest) (*OrganizationList, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListOrganizations not implemented")
 }
@@ -999,12 +1009,6 @@ func (UnimplementedIdentityServiceServer) UpdateOrganization(context.Context, *U
 }
 func (UnimplementedIdentityServiceServer) DeleteOrganization(context.Context, *DeleteOrganizationRequest) (*DeleteOrganizationResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteOrganization not implemented")
-}
-func (UnimplementedIdentityServiceServer) AddUserBlueprints(context.Context, *UserBlueprintsRequest) (*v1.User, error) {
-	return nil, status.Error(codes.Unimplemented, "method AddUserBlueprints not implemented")
-}
-func (UnimplementedIdentityServiceServer) RemoveUserBlueprints(context.Context, *UserBlueprintsRequest) (*v1.User, error) {
-	return nil, status.Error(codes.Unimplemented, "method RemoveUserBlueprints not implemented")
 }
 func (UnimplementedIdentityServiceServer) ListUserAuthKeys(context.Context, *ListUserAuthKeysRequest) (*ListUserAuthKeysResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListUserAuthKeys not implemented")
@@ -1609,6 +1613,42 @@ func _IdentityService_DeleteRole_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IdentityService_AddRoleBlueprints_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RoleBlueprintsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).AddRoleBlueprints(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_AddRoleBlueprints_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).AddRoleBlueprints(ctx, req.(*RoleBlueprintsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_RemoveRoleBlueprints_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RoleBlueprintsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).RemoveRoleBlueprints(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_RemoveRoleBlueprints_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).RemoveRoleBlueprints(ctx, req.(*RoleBlueprintsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _IdentityService_ListOrganizations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListOrganizationsRequest)
 	if err := dec(in); err != nil {
@@ -1677,42 +1717,6 @@ func _IdentityService_DeleteOrganization_Handler(srv interface{}, ctx context.Co
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(IdentityServiceServer).DeleteOrganization(ctx, req.(*DeleteOrganizationRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _IdentityService_AddUserBlueprints_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UserBlueprintsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(IdentityServiceServer).AddUserBlueprints(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: IdentityService_AddUserBlueprints_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IdentityServiceServer).AddUserBlueprints(ctx, req.(*UserBlueprintsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _IdentityService_RemoveUserBlueprints_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UserBlueprintsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(IdentityServiceServer).RemoveUserBlueprints(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: IdentityService_RemoveUserBlueprints_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IdentityServiceServer).RemoveUserBlueprints(ctx, req.(*UserBlueprintsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2097,6 +2101,14 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _IdentityService_DeleteRole_Handler,
 		},
 		{
+			MethodName: "AddRoleBlueprints",
+			Handler:    _IdentityService_AddRoleBlueprints_Handler,
+		},
+		{
+			MethodName: "RemoveRoleBlueprints",
+			Handler:    _IdentityService_RemoveRoleBlueprints_Handler,
+		},
+		{
 			MethodName: "ListOrganizations",
 			Handler:    _IdentityService_ListOrganizations_Handler,
 		},
@@ -2111,14 +2123,6 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteOrganization",
 			Handler:    _IdentityService_DeleteOrganization_Handler,
-		},
-		{
-			MethodName: "AddUserBlueprints",
-			Handler:    _IdentityService_AddUserBlueprints_Handler,
-		},
-		{
-			MethodName: "RemoveUserBlueprints",
-			Handler:    _IdentityService_RemoveUserBlueprints_Handler,
 		},
 		{
 			MethodName: "ListUserAuthKeys",

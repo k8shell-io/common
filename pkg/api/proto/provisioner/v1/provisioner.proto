@@ -25,8 +25,9 @@ service ProvisionerService {
   // GetWorkspacesByUserStr returns workspaces for the given userstr
   rpc GetWorkspacesByUserStr(GetWorkspacesByUserStrRequest) returns (GetWorkspacesResponse);
 
-  // GetUserBlueprints returns the list of blueprints available to a user.
-  rpc GetUserBlueprints(GetUserBlueprintsRequest) returns (GetUserBlueprintsResponse);
+  // GetBlueprints returns every blueprint registered in the provisioner,
+  // regardless of user.
+  rpc GetBlueprints(GetBlueprintsRequest) returns (GetBlueprintsResponse);
 
   // ProvisionWorkspaceStream provisions a new workspace and streams progress
   // events back to the caller until the workspace is ready or an error occurs.
@@ -91,15 +92,12 @@ message GetWorkspacesResponse {
   repeated common.v1.WorkspaceDetails workspaces = 1;
 }
 
-// GetUserBlueprintsRequest identifies the user whose blueprints to fetch.
-message GetUserBlueprintsRequest {
-  // username is the user whose available blueprints are requested.
-  string username = 1;
-}
+// GetBlueprintsRequest requests every blueprint registered in the provisioner.
+message GetBlueprintsRequest {}
 
-// GetUserBlueprintsResponse contains the blueprints available to the user.
-message GetUserBlueprintsResponse {
-  // blueprints is the list of blueprints the user may provision.
+// GetBlueprintsResponse contains all blueprints registered in the provisioner.
+message GetBlueprintsResponse {
+  // blueprints is the list of all registered blueprints.
   repeated common.v1.BlueprintSummary blueprints = 1;
 }
 

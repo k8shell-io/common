@@ -67,9 +67,14 @@ package authz
 // Resource  type="role"
 //   id   role name (required)
 //   org  organization the role is scoped to (required) — global roles
-//        cannot be updated; identity's UpdateRole rejects an empty org.
-//        name and org together identify the role and are immutable; this
-//        action only ever changes the role's description.
+//        cannot be updated; identity's UpdateRole, AddRoleBlueprints, and
+//        RemoveRoleBlueprints all reject an empty org.
+//        name and org together identify the role and are immutable.
+//
+// Also gates AddRoleBlueprints/RemoveRoleBlueprints — granting or revoking
+// the blueprints a role carries is a write to the role, same authorization
+// weight as changing its description, so it shares this contract rather
+// than getting a bespoke action.
 //
 // Context   (none)
 //

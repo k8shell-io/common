@@ -30,7 +30,7 @@ const (
 	ProvisionerService_GetWorkspaces_FullMethodName            = "/provisioner.v1.ProvisionerService/GetWorkspaces"
 	ProvisionerService_FindWorkspace_FullMethodName            = "/provisioner.v1.ProvisionerService/FindWorkspace"
 	ProvisionerService_GetWorkspacesByUserStr_FullMethodName   = "/provisioner.v1.ProvisionerService/GetWorkspacesByUserStr"
-	ProvisionerService_GetUserBlueprints_FullMethodName        = "/provisioner.v1.ProvisionerService/GetUserBlueprints"
+	ProvisionerService_GetBlueprints_FullMethodName            = "/provisioner.v1.ProvisionerService/GetBlueprints"
 	ProvisionerService_ProvisionWorkspaceStream_FullMethodName = "/provisioner.v1.ProvisionerService/ProvisionWorkspaceStream"
 	ProvisionerService_DeleteWorkspace_FullMethodName          = "/provisioner.v1.ProvisionerService/DeleteWorkspace"
 	ProvisionerService_DeleteUserWorkspaces_FullMethodName     = "/provisioner.v1.ProvisionerService/DeleteUserWorkspaces"
@@ -53,8 +53,9 @@ type ProvisionerServiceClient interface {
 	FindWorkspace(ctx context.Context, in *FindWorkspaceRequest, opts ...grpc.CallOption) (*v1.WorkspaceDetails, error)
 	// GetWorkspacesByUserStr returns workspaces for the given userstr
 	GetWorkspacesByUserStr(ctx context.Context, in *GetWorkspacesByUserStrRequest, opts ...grpc.CallOption) (*GetWorkspacesResponse, error)
-	// GetUserBlueprints returns the list of blueprints available to a user.
-	GetUserBlueprints(ctx context.Context, in *GetUserBlueprintsRequest, opts ...grpc.CallOption) (*GetUserBlueprintsResponse, error)
+	// GetBlueprints returns every blueprint registered in the provisioner,
+	// regardless of user.
+	GetBlueprints(ctx context.Context, in *GetBlueprintsRequest, opts ...grpc.CallOption) (*GetBlueprintsResponse, error)
 	// ProvisionWorkspaceStream provisions a new workspace and streams progress
 	// events back to the caller until the workspace is ready or an error occurs.
 	ProvisionWorkspaceStream(ctx context.Context, in *ProvisionWorkspaceRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ProvisionWorkspaceResponse], error)
@@ -115,10 +116,10 @@ func (c *provisionerServiceClient) GetWorkspacesByUserStr(ctx context.Context, i
 	return out, nil
 }
 
-func (c *provisionerServiceClient) GetUserBlueprints(ctx context.Context, in *GetUserBlueprintsRequest, opts ...grpc.CallOption) (*GetUserBlueprintsResponse, error) {
+func (c *provisionerServiceClient) GetBlueprints(ctx context.Context, in *GetBlueprintsRequest, opts ...grpc.CallOption) (*GetBlueprintsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetUserBlueprintsResponse)
-	err := c.cc.Invoke(ctx, ProvisionerService_GetUserBlueprints_FullMethodName, in, out, cOpts...)
+	out := new(GetBlueprintsResponse)
+	err := c.cc.Invoke(ctx, ProvisionerService_GetBlueprints_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -217,8 +218,9 @@ type ProvisionerServiceServer interface {
 	FindWorkspace(context.Context, *FindWorkspaceRequest) (*v1.WorkspaceDetails, error)
 	// GetWorkspacesByUserStr returns workspaces for the given userstr
 	GetWorkspacesByUserStr(context.Context, *GetWorkspacesByUserStrRequest) (*GetWorkspacesResponse, error)
-	// GetUserBlueprints returns the list of blueprints available to a user.
-	GetUserBlueprints(context.Context, *GetUserBlueprintsRequest) (*GetUserBlueprintsResponse, error)
+	// GetBlueprints returns every blueprint registered in the provisioner,
+	// regardless of user.
+	GetBlueprints(context.Context, *GetBlueprintsRequest) (*GetBlueprintsResponse, error)
 	// ProvisionWorkspaceStream provisions a new workspace and streams progress
 	// events back to the caller until the workspace is ready or an error occurs.
 	ProvisionWorkspaceStream(*ProvisionWorkspaceRequest, grpc.ServerStreamingServer[ProvisionWorkspaceResponse]) error
@@ -258,8 +260,8 @@ func (UnimplementedProvisionerServiceServer) FindWorkspace(context.Context, *Fin
 func (UnimplementedProvisionerServiceServer) GetWorkspacesByUserStr(context.Context, *GetWorkspacesByUserStrRequest) (*GetWorkspacesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetWorkspacesByUserStr not implemented")
 }
-func (UnimplementedProvisionerServiceServer) GetUserBlueprints(context.Context, *GetUserBlueprintsRequest) (*GetUserBlueprintsResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetUserBlueprints not implemented")
+func (UnimplementedProvisionerServiceServer) GetBlueprints(context.Context, *GetBlueprintsRequest) (*GetBlueprintsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetBlueprints not implemented")
 }
 func (UnimplementedProvisionerServiceServer) ProvisionWorkspaceStream(*ProvisionWorkspaceRequest, grpc.ServerStreamingServer[ProvisionWorkspaceResponse]) error {
 	return status.Error(codes.Unimplemented, "method ProvisionWorkspaceStream not implemented")
@@ -354,20 +356,20 @@ func _ProvisionerService_GetWorkspacesByUserStr_Handler(srv interface{}, ctx con
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ProvisionerService_GetUserBlueprints_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetUserBlueprintsRequest)
+func _ProvisionerService_GetBlueprints_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetBlueprintsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ProvisionerServiceServer).GetUserBlueprints(ctx, in)
+		return srv.(ProvisionerServiceServer).GetBlueprints(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ProvisionerService_GetUserBlueprints_FullMethodName,
+		FullMethod: ProvisionerService_GetBlueprints_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProvisionerServiceServer).GetUserBlueprints(ctx, req.(*GetUserBlueprintsRequest))
+		return srv.(ProvisionerServiceServer).GetBlueprints(ctx, req.(*GetBlueprintsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -486,8 +488,8 @@ var ProvisionerService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ProvisionerService_GetWorkspacesByUserStr_Handler,
 		},
 		{
-			MethodName: "GetUserBlueprints",
-			Handler:    _ProvisionerService_GetUserBlueprints_Handler,
+			MethodName: "GetBlueprints",
+			Handler:    _ProvisionerService_GetBlueprints_Handler,
 		},
 		{
 			MethodName: "DeleteWorkspace",

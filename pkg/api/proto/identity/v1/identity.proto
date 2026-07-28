@@ -137,6 +137,14 @@ service IdentityService {
   // this RPC.
   rpc DeleteRole (DeleteRoleRequest) returns (DeleteRoleResponse);
 
+  // AddRoleBlueprints grants a role one or more blueprints; every user
+  // holding the role gains access to them. org is required; global roles are
+  // not supported through this RPC.
+  rpc AddRoleBlueprints (RoleBlueprintsRequest) returns (Role);
+
+  // RemoveRoleBlueprints revokes one or more blueprints from a role.
+  rpc RemoveRoleBlueprints (RoleBlueprintsRequest) returns (Role);
+
   // ListOrganizations returns the registered organizations.
   rpc ListOrganizations (ListOrganizationsRequest) returns (OrganizationList);
 
@@ -150,12 +158,6 @@ service IdentityService {
   // DeleteOrganization removes an organization from the registry. Fails if
   // any user or role still references it.
   rpc DeleteOrganization (DeleteOrganizationRequest) returns (DeleteOrganizationResponse);
-
-  // AddUserBlueprints grants a user access to one or more blueprints.
-  rpc AddUserBlueprints (UserBlueprintsRequest) returns (common.v1.User);
-
-  // RemoveUserBlueprints revokes access to one or more blueprints from a user.
-  rpc RemoveUserBlueprints (UserBlueprintsRequest) returns (common.v1.User);
 
   // ListUserAuthKeys retrieves all SSH public keys registered for a user, in
   // either normal or digest-only form depending on the request's format field.
@@ -240,13 +242,15 @@ message RemoveUserAuthKeyRequest {
 // The supplied password, if any, is bcrypt-hashed server-side before being
 // persisted; the raw value is never stored or returned.
 message CreateUserRequest {
+  reserved 7;
+  reserved "blueprints"; // superseded by role-derived blueprints (see Role.blueprints)
+
   string          username     = 1;
   string          organization = 2;
   string          fullname     = 3;
   string          email        = 4;
   string          password     = 5;
   repeated string roles        = 6;
-  repeated string blueprints   = 7;
   string          shell        = 8;
   bool            sudo         = 9;
   bool            locked       = 10;
@@ -258,11 +262,13 @@ message CreateUserRequest {
 // Only wrapper-typed fields that are set (non-nil) and repeated fields that
 // are non-empty will be applied; unset fields leave the existing value intact.
 message UpdateUserRequest {
+  reserved 5;
+  reserved "blueprints"; // superseded by role-derived blueprints (see Role.blueprints)
+
   string                      username   = 1;
   google.protobuf.StringValue fullname   = 2;
   repeated string             roles      = 3;
   google.protobuf.BoolValue   sudo       = 4;
-  repeated string             blueprints = 5;
   google.protobuf.BoolValue   locked     = 6;
   google.protobuf.StringValue org        = 8;
   google.protobuf.StringValue email      = 9;

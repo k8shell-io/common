@@ -15,9 +15,11 @@ package authz
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
 // Obligations
-//   sudo       true | false
-//   roles      JSON array of role name strings  (e.g. ["admin","dev"])
-//   blueprints JSON array of blueprint name strings  (e.g. ["bp1","bp2"])
+//   sudo  true | false
+//   roles JSON array of role name strings  (e.g. ["admin","dev"])
+//
+//   Blueprint access is not a direct obligation here — it's derived from
+//   whichever roles are granted (see Role.blueprints).
 //
 // ---
 //
@@ -38,9 +40,11 @@ package authz
 //           apply here since the new user has no backing identity provider.
 //
 // Obligations
-//   sudo       true | false
-//   roles      JSON array of role name strings  (e.g. ["admin","dev"])
-//   blueprints JSON array of blueprint name strings  (e.g. ["bp1","bp2"])
+//   sudo  true | false
+//   roles JSON array of role name strings  (e.g. ["admin","dev"])
+//
+//   Blueprint access is not a direct obligation here — it's derived from
+//   whichever roles are granted (see Role.blueprints).
 //
 // ---
 //
@@ -256,13 +260,16 @@ func validateUserDataType(dt UserDataType) error {
 
 // validateUserWriteDataType checks the data types valid for user:write, which
 // additionally includes the admin-managed sudo, locked, org, and posix groups.
+// Blueprints is deliberately absent — blueprint access is granted only via
+// roles (see Role.Blueprints / role:update), there is no direct user:write
+// path for it.
 func validateUserWriteDataType(dt UserDataType) error {
 	switch dt {
-	case UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys, UserDataTypeSudo, UserDataTypeLocked, UserDataTypeOrg, UserDataTypePosix, UserDataTypePassword:
+	case UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeRoles, UserDataTypeKeys, UserDataTypeSudo, UserDataTypeLocked, UserDataTypeOrg, UserDataTypePosix, UserDataTypePassword:
 		return nil
 	default:
-		return fmt.Errorf("context \"data_type\" must be %q, %q, %q, %q, %q, %q, %q, %q, %q, or %q, got %q",
-			UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys,
+		return fmt.Errorf("context \"data_type\" must be %q, %q, %q, %q, %q, %q, %q, %q, or %q, got %q",
+			UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeRoles, UserDataTypeKeys,
 			UserDataTypeSudo, UserDataTypeLocked, UserDataTypeOrg, UserDataTypePosix, UserDataTypePassword, dt)
 	}
 }
@@ -1579,7 +1586,7 @@ func init() {
 	}
 
 	for _, dt := range []UserDataType{
-		UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys,
+		UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeRoles, UserDataTypeKeys,
 		UserDataTypeSudo, UserDataTypeLocked, UserDataTypeOrg, UserDataTypePosix, UserDataTypePassword,
 	} {
 		action := "user:write:" + string(dt)

@@ -21,7 +21,6 @@ func TestValidateScope(t *testing.T) {
 		// qualifier wildcard.
 		"user:write:profile:self",
 		"user:write:credentials:self",
-		"user:write:blueprints:self",
 		"user:write:roles:self",
 		"user:write:keys:self",
 		"user:write:password:self",
@@ -58,8 +57,9 @@ func TestValidateScope(t *testing.T) {
 		"user:write:locked:self",
 		"user:write:org:self",
 		"user:write:posix:self",
-		"user:write:*:self",  // wildcard can't cover a partial exclusion set
-		"session:start:self", // not a listing; self is already implicit
+		"user:write:blueprints:self", // no longer a scope — blueprints are role-derived only
+		"user:write:*:self",          // wildcard can't cover a partial exclusion set
+		"session:start:self",         // not a listing; self is already implicit
 	}
 	for _, s := range invalid {
 		if err := ValidateScope(s); err == nil {

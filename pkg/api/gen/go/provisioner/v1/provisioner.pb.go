@@ -267,29 +267,27 @@ func (x *GetWorkspacesResponse) GetWorkspaces() []*v1.WorkspaceDetails {
 	return nil
 }
 
-// GetUserBlueprintsRequest identifies the user whose blueprints to fetch.
-type GetUserBlueprintsRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// username is the user whose available blueprints are requested.
-	Username      string `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+// GetBlueprintsRequest requests every blueprint registered in the provisioner.
+type GetBlueprintsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetUserBlueprintsRequest) Reset() {
-	*x = GetUserBlueprintsRequest{}
+func (x *GetBlueprintsRequest) Reset() {
+	*x = GetBlueprintsRequest{}
 	mi := &file_provisioner_v1_provisioner_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetUserBlueprintsRequest) String() string {
+func (x *GetBlueprintsRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetUserBlueprintsRequest) ProtoMessage() {}
+func (*GetBlueprintsRequest) ProtoMessage() {}
 
-func (x *GetUserBlueprintsRequest) ProtoReflect() protoreflect.Message {
+func (x *GetBlueprintsRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_provisioner_v1_provisioner_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -301,41 +299,34 @@ func (x *GetUserBlueprintsRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetUserBlueprintsRequest.ProtoReflect.Descriptor instead.
-func (*GetUserBlueprintsRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetBlueprintsRequest.ProtoReflect.Descriptor instead.
+func (*GetBlueprintsRequest) Descriptor() ([]byte, []int) {
 	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *GetUserBlueprintsRequest) GetUsername() string {
-	if x != nil {
-		return x.Username
-	}
-	return ""
-}
-
-// GetUserBlueprintsResponse contains the blueprints available to the user.
-type GetUserBlueprintsResponse struct {
+// GetBlueprintsResponse contains all blueprints registered in the provisioner.
+type GetBlueprintsResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// blueprints is the list of blueprints the user may provision.
+	// blueprints is the list of all registered blueprints.
 	Blueprints    []*v1.BlueprintSummary `protobuf:"bytes,1,rep,name=blueprints,proto3" json:"blueprints,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetUserBlueprintsResponse) Reset() {
-	*x = GetUserBlueprintsResponse{}
+func (x *GetBlueprintsResponse) Reset() {
+	*x = GetBlueprintsResponse{}
 	mi := &file_provisioner_v1_provisioner_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetUserBlueprintsResponse) String() string {
+func (x *GetBlueprintsResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetUserBlueprintsResponse) ProtoMessage() {}
+func (*GetBlueprintsResponse) ProtoMessage() {}
 
-func (x *GetUserBlueprintsResponse) ProtoReflect() protoreflect.Message {
+func (x *GetBlueprintsResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_provisioner_v1_provisioner_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -347,12 +338,12 @@ func (x *GetUserBlueprintsResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetUserBlueprintsResponse.ProtoReflect.Descriptor instead.
-func (*GetUserBlueprintsResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetBlueprintsResponse.ProtoReflect.Descriptor instead.
+func (*GetBlueprintsResponse) Descriptor() ([]byte, []int) {
 	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *GetUserBlueprintsResponse) GetBlueprints() []*v1.BlueprintSummary {
+func (x *GetBlueprintsResponse) GetBlueprints() []*v1.BlueprintSummary {
 	if x != nil {
 		return x.Blueprints
 	}
@@ -1199,10 +1190,9 @@ const file_provisioner_v1_provisioner_proto_rawDesc = "" +
 	"\x15GetWorkspacesResponse\x12;\n" +
 	"\n" +
 	"workspaces\x18\x01 \x03(\v2\x1b.common.v1.WorkspaceDetailsR\n" +
-	"workspaces\"6\n" +
-	"\x18GetUserBlueprintsRequest\x12\x1a\n" +
-	"\busername\x18\x01 \x01(\tR\busername\"X\n" +
-	"\x19GetUserBlueprintsResponse\x12;\n" +
+	"workspaces\"\x16\n" +
+	"\x14GetBlueprintsRequest\"T\n" +
+	"\x15GetBlueprintsResponse\x12;\n" +
 	"\n" +
 	"blueprints\x18\x01 \x03(\v2\x1b.common.v1.BlueprintSummaryR\n" +
 	"blueprints\"\x95\x01\n" +
@@ -1257,12 +1247,12 @@ const file_provisioner_v1_provisioner_proto_rawDesc = "" +
 	"\rworkload_name\x18\x04 \x01(\tR\fworkloadName\x12'\n" +
 	"\x0ftimeout_seconds\x18\x05 \x01(\x05R\x0etimeoutSeconds\"6\n" +
 	"\x16EjectWorkspaceResponse\x12\x1c\n" +
-	"\tworkspace\x18\x01 \x01(\tR\tworkspace2\x98\b\n" +
+	"\tworkspace\x18\x01 \x01(\tR\tworkspace2\x8c\b\n" +
 	"\x12ProvisionerService\x12\\\n" +
 	"\rGetWorkspaces\x12$.provisioner.v1.GetWorkspacesRequest\x1a%.provisioner.v1.GetWorkspacesResponse\x12R\n" +
 	"\rFindWorkspace\x12$.provisioner.v1.FindWorkspaceRequest\x1a\x1b.common.v1.WorkspaceDetails\x12n\n" +
-	"\x16GetWorkspacesByUserStr\x12-.provisioner.v1.GetWorkspacesByUserStrRequest\x1a%.provisioner.v1.GetWorkspacesResponse\x12h\n" +
-	"\x11GetUserBlueprints\x12(.provisioner.v1.GetUserBlueprintsRequest\x1a).provisioner.v1.GetUserBlueprintsResponse\x12s\n" +
+	"\x16GetWorkspacesByUserStr\x12-.provisioner.v1.GetWorkspacesByUserStrRequest\x1a%.provisioner.v1.GetWorkspacesResponse\x12\\\n" +
+	"\rGetBlueprints\x12$.provisioner.v1.GetBlueprintsRequest\x1a%.provisioner.v1.GetBlueprintsResponse\x12s\n" +
 	"\x18ProvisionWorkspaceStream\x12).provisioner.v1.ProvisionWorkspaceRequest\x1a*.provisioner.v1.ProvisionWorkspaceResponse0\x01\x12b\n" +
 	"\x0fDeleteWorkspace\x12&.provisioner.v1.DeleteWorkspaceRequest\x1a'.provisioner.v1.DeleteWorkspaceResponse\x12q\n" +
 	"\x14DeleteUserWorkspaces\x12+.provisioner.v1.DeleteUserWorkspacesRequest\x1a,.provisioner.v1.DeleteUserWorkspacesResponse\x12\\\n" +
@@ -1288,8 +1278,8 @@ var file_provisioner_v1_provisioner_proto_goTypes = []any{
 	(*GetWorkspacesRequest)(nil),          // 1: provisioner.v1.GetWorkspacesRequest
 	(*GetWorkspacesByUserStrRequest)(nil), // 2: provisioner.v1.GetWorkspacesByUserStrRequest
 	(*GetWorkspacesResponse)(nil),         // 3: provisioner.v1.GetWorkspacesResponse
-	(*GetUserBlueprintsRequest)(nil),      // 4: provisioner.v1.GetUserBlueprintsRequest
-	(*GetUserBlueprintsResponse)(nil),     // 5: provisioner.v1.GetUserBlueprintsResponse
+	(*GetBlueprintsRequest)(nil),          // 4: provisioner.v1.GetBlueprintsRequest
+	(*GetBlueprintsResponse)(nil),         // 5: provisioner.v1.GetBlueprintsResponse
 	(*ProvisionWorkspaceRequest)(nil),     // 6: provisioner.v1.ProvisionWorkspaceRequest
 	(*ProvisionWorkspaceResponse)(nil),    // 7: provisioner.v1.ProvisionWorkspaceResponse
 	(*HandshakeResponse)(nil),             // 8: provisioner.v1.HandshakeResponse
@@ -1308,13 +1298,13 @@ var file_provisioner_v1_provisioner_proto_goTypes = []any{
 }
 var file_provisioner_v1_provisioner_proto_depIdxs = []int32{
 	19, // 0: provisioner.v1.GetWorkspacesResponse.workspaces:type_name -> common.v1.WorkspaceDetails
-	20, // 1: provisioner.v1.GetUserBlueprintsResponse.blueprints:type_name -> common.v1.BlueprintSummary
+	20, // 1: provisioner.v1.GetBlueprintsResponse.blueprints:type_name -> common.v1.BlueprintSummary
 	8,  // 2: provisioner.v1.ProvisionWorkspaceResponse.handshake:type_name -> provisioner.v1.HandshakeResponse
 	9,  // 3: provisioner.v1.ProvisionWorkspaceResponse.event:type_name -> provisioner.v1.ProvisionEvent
 	1,  // 4: provisioner.v1.ProvisionerService.GetWorkspaces:input_type -> provisioner.v1.GetWorkspacesRequest
 	0,  // 5: provisioner.v1.ProvisionerService.FindWorkspace:input_type -> provisioner.v1.FindWorkspaceRequest
 	2,  // 6: provisioner.v1.ProvisionerService.GetWorkspacesByUserStr:input_type -> provisioner.v1.GetWorkspacesByUserStrRequest
-	4,  // 7: provisioner.v1.ProvisionerService.GetUserBlueprints:input_type -> provisioner.v1.GetUserBlueprintsRequest
+	4,  // 7: provisioner.v1.ProvisionerService.GetBlueprints:input_type -> provisioner.v1.GetBlueprintsRequest
 	6,  // 8: provisioner.v1.ProvisionerService.ProvisionWorkspaceStream:input_type -> provisioner.v1.ProvisionWorkspaceRequest
 	10, // 9: provisioner.v1.ProvisionerService.DeleteWorkspace:input_type -> provisioner.v1.DeleteWorkspaceRequest
 	12, // 10: provisioner.v1.ProvisionerService.DeleteUserWorkspaces:input_type -> provisioner.v1.DeleteUserWorkspacesRequest
@@ -1324,7 +1314,7 @@ var file_provisioner_v1_provisioner_proto_depIdxs = []int32{
 	3,  // 14: provisioner.v1.ProvisionerService.GetWorkspaces:output_type -> provisioner.v1.GetWorkspacesResponse
 	19, // 15: provisioner.v1.ProvisionerService.FindWorkspace:output_type -> common.v1.WorkspaceDetails
 	3,  // 16: provisioner.v1.ProvisionerService.GetWorkspacesByUserStr:output_type -> provisioner.v1.GetWorkspacesResponse
-	5,  // 17: provisioner.v1.ProvisionerService.GetUserBlueprints:output_type -> provisioner.v1.GetUserBlueprintsResponse
+	5,  // 17: provisioner.v1.ProvisionerService.GetBlueprints:output_type -> provisioner.v1.GetBlueprintsResponse
 	7,  // 18: provisioner.v1.ProvisionerService.ProvisionWorkspaceStream:output_type -> provisioner.v1.ProvisionWorkspaceResponse
 	11, // 19: provisioner.v1.ProvisionerService.DeleteWorkspace:output_type -> provisioner.v1.DeleteWorkspaceResponse
 	13, // 20: provisioner.v1.ProvisionerService.DeleteUserWorkspaces:output_type -> provisioner.v1.DeleteUserWorkspacesResponse

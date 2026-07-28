@@ -4,34 +4,54 @@ package models
 // new local user record with no backing identity provider (unlike onboarding).
 // Note: proto counterpart is identityv1.CreateUserRequest (different wire format, no json tags).
 type UserCreateRequest struct {
-	Username   string   `json:"username"`
-	Org        string   `json:"org"`
-	Fullname   string   `json:"fullname,omitempty"`
-	Email      string   `json:"email,omitempty"`
-	Password   string   `json:"password,omitempty"`
-	Roles      []Role   `json:"roles,omitempty"`
-	Blueprints []string `json:"blueprints,omitempty"`
-	Shell      string   `json:"shell,omitempty"`
-	Sudo       bool     `json:"sudo,omitempty"`
-	Locked     bool     `json:"locked,omitempty"`
-	UID        uint32   `json:"uid,omitempty"`
-	GID        uint32   `json:"gid,omitempty"`
+	Username string `json:"username"`
+	Org      string `json:"org"`
+	Fullname string `json:"fullname,omitempty"`
+	Email    string `json:"email,omitempty"`
+	Password string `json:"password,omitempty"`
+	Roles    []Role `json:"roles,omitempty"`
+	Shell    string `json:"shell,omitempty"`
+	Sudo     bool   `json:"sudo,omitempty"`
+	Locked   bool   `json:"locked,omitempty"`
+	UID      uint32 `json:"uid,omitempty"`
+	GID      uint32 `json:"gid,omitempty"`
 }
 
 // UserUpdateRequest is the HTTP request body for PATCH /users/{username}.
 // Only non-nil pointer fields and non-empty slices are applied (PATCH semantics).
-// Note: proto counterpart is identityv1.UpdateUserRequest (different wire format, no json tags).
+// Note: proto counterpart is identityv1.UpdateUserRequest (different wire format, no json tags) —
+// PreserveWorkspaces has no proto counterpart at all; it's an api-server-only
+// orchestration flag, never sent to identity.
 type UserUpdateRequest struct {
-	Fullname   *string  `json:"fullname,omitempty"`
-	Shell      *string  `json:"shell,omitempty"`
-	Email      *string  `json:"email,omitempty"`
-	Org        *string  `json:"org,omitempty"`
-	Roles      []Role   `json:"roles,omitempty"`
-	Sudo       *bool    `json:"sudo,omitempty"`
-	Blueprints []string `json:"blueprints,omitempty"`
-	Locked     *bool    `json:"locked,omitempty"`
-	UID        *uint32  `json:"uid,omitempty"`
-	GID        *uint32  `json:"gid,omitempty"`
+	Fullname *string `json:"fullname,omitempty"`
+	Shell    *string `json:"shell,omitempty"`
+	Email    *string `json:"email,omitempty"`
+	Org      *string `json:"org,omitempty"`
+	Roles    []Role  `json:"roles,omitempty"`
+	Sudo     *bool   `json:"sudo,omitempty"`
+	Locked   *bool   `json:"locked,omitempty"`
+	UID      *uint32 `json:"uid,omitempty"`
+	GID      *uint32 `json:"gid,omitempty"`
+
+	// PreserveWorkspaces, when true, keeps a user's workspaces intact across
+	// an org change. Ignored unless Org is set and actually differs from the
+	// user's current organization — the default (false) is destructive: on a
+	// real org move, api-server deletes every workspace the user owns via
+	// provisioner.DeleteUserWorkspaces.
+	PreserveWorkspaces bool `json:"preserveWorkspaces,omitempty"`
+}
+
+// UserDeleteRequest is the optional HTTP request body for DELETE
+// /users/{username}. An empty/absent body is equivalent to the zero value
+// (PreserveWorkspaces: false).
+// Note: no proto counterpart — PreserveWorkspaces is an api-server-only
+// orchestration flag, never sent to identity.
+type UserDeleteRequest struct {
+	// PreserveWorkspaces, when true, skips the workspace cleanup that
+	// otherwise runs unconditionally when a user is deleted (see
+	// provisioner.DeleteUserWorkspaces). Default false — deleting a user
+	// deletes their workspaces too, unless this is set.
+	PreserveWorkspaces bool `json:"preserveWorkspaces,omitempty"`
 }
 
 // UserRolesRequest is the HTTP request body for adding or removing roles on a user.
@@ -58,6 +78,13 @@ type RoleUpdateRequest struct {
 	Description *string `json:"description,omitempty"`
 }
 
+// RoleBlueprintsRequest is the HTTP request body for adding or removing
+// blueprints on a role (POST/DELETE /organizations/{org}/roles/{name}/blueprints).
+// Note: proto counterpart is identityv1.RoleBlueprintsRequest.
+type RoleBlueprintsRequest struct {
+	Blueprints []string `json:"blueprints"`
+}
+
 // OrganizationCreateRequest is the HTTP request body for POST /organizations,
 // which registers a new organization.
 // Note: proto counterpart is identityv1.CreateOrganizationRequest.
@@ -73,12 +100,6 @@ type OrganizationCreateRequest struct {
 // Note: proto counterpart is identityv1.UpdateOrganizationRequest.
 type OrganizationUpdateRequest struct {
 	Description *string `json:"description,omitempty"`
-}
-
-// UserBlueprintsRequest is the HTTP request body for adding or removing blueprints on a user.
-// Note: proto counterpart is identityv1.UserBlueprintsRequest.
-type UserBlueprintsRequest struct {
-	Blueprints []string `json:"blueprints"`
 }
 
 // UserKeysRequest is the HTTP request body for adding SSH public keys on a user.

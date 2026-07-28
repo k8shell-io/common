@@ -34,6 +34,11 @@ type RoleInfo struct {
 	Org         string    `yaml:"org" json:"org"`
 	CreatedAt   time.Time `yaml:"createdAt" json:"createdAt"`
 	UserCount   int       `yaml:"userCount" json:"userCount"`
+
+	// Blueprints are the blueprint names this role grants. A user's
+	// effective blueprint access is the union of blueprints across every
+	// role they hold.
+	Blueprints []string `yaml:"blueprints" json:"blueprints"`
 }
 
 var ErrMethodNotSupported = errors.New("method not supported")
