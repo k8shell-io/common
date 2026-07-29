@@ -247,11 +247,18 @@ message Organization {
   string                    description = 2;
   google.protobuf.Timestamp created_at  = 3;
 
-  // admin_usernames and user_count are computed, read-only fields populated
-  // by ListOrganizations — they are not stored on the organization itself
-  // and are ignored (left empty/zero) by CreateOrganization's response.
+  // admin_usernames and user_count are computed fields populated by
+  // ListOrganizations — they are not stored on the organization itself and
+  // are ignored (left empty/zero) by CreateOrganization's response.
   repeated string admin_usernames = 4;  // users in this org holding the "org-admin" role
   int32           user_count      = 5;  // total number of users in this org
+
+  // read_only is true for the built-in "default" organization only: it
+  // cannot be updated or deleted, since it's the fallback organization every
+  // k8Shell deployment is seeded with. UpdateOrganization/DeleteOrganization
+  // reject any attempt against it with FailedPrecondition. Computed from
+  // name, not stored.
+  bool read_only = 6;
 }
 
 // OrganizationList holds a list of organizations.
@@ -264,6 +271,11 @@ message OrganizationList {
 // google.protobuf.Empty so filters can be added later without changing the
 // RPC signature.
 message ListOrganizationsRequest {}
+
+// GetOrganizationRequest identifies a single organization to retrieve by name.
+message GetOrganizationRequest {
+  string name = 1;
+}
 
 // GetOrganizationsQuerySchemaRequest requests the query.v1.Descriptor for
 // the organizations resource. It carries no fields today; left as a message

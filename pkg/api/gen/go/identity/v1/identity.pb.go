@@ -2563,7 +2563,7 @@ const file_identity_v1_identity_proto_rawDesc = "" +
 	"\rAuthKeyFormat\x12\x1f\n" +
 	"\x1bAUTH_KEY_FORMAT_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16AUTH_KEY_FORMAT_NORMAL\x10\x01\x12\x1a\n" +
-	"\x16AUTH_KEY_FORMAT_DIGEST\x10\x022\xac$\n" +
+	"\x16AUTH_KEY_FORMAT_DIGEST\x10\x022\xff$\n" +
 	"\x0fIdentityService\x129\n" +
 	"\bFindUser\x12\x1c.identity.v1.FindUserRequest\x1a\x0f.common.v1.User\x12?\n" +
 	"\bGetUsers\x12\x1c.identity.v1.GetUsersRequest\x1a\x15.identity.v1.UserList\x12T\n" +
@@ -2604,7 +2604,8 @@ const file_identity_v1_identity_proto_rawDesc = "" +
 	"DeleteRole\x12\x1e.identity.v1.DeleteRoleRequest\x1a\x1f.identity.v1.DeleteRoleResponse\x12J\n" +
 	"\x11AddRoleBlueprints\x12\".identity.v1.RoleBlueprintsRequest\x1a\x11.identity.v1.Role\x12M\n" +
 	"\x14RemoveRoleBlueprints\x12\".identity.v1.RoleBlueprintsRequest\x1a\x11.identity.v1.Role\x12Y\n" +
-	"\x11ListOrganizations\x12%.identity.v1.ListOrganizationsRequest\x1a\x1d.identity.v1.OrganizationList\x12d\n" +
+	"\x11ListOrganizations\x12%.identity.v1.ListOrganizationsRequest\x1a\x1d.identity.v1.OrganizationList\x12Q\n" +
+	"\x0fGetOrganization\x12#.identity.v1.GetOrganizationRequest\x1a\x19.identity.v1.Organization\x12d\n" +
 	"\x1bGetOrganizationsQuerySchema\x12/.identity.v1.GetOrganizationsQuerySchemaRequest\x1a\x14.query.v1.Descriptor\x12[\n" +
 	"\x12QueryOrganizations\x12&.identity.v1.QueryOrganizationsRequest\x1a\x1d.identity.v1.OrganizationList\x12W\n" +
 	"\x12CreateOrganization\x12&.identity.v1.CreateOrganizationRequest\x1a\x19.identity.v1.Organization\x12W\n" +
@@ -2710,28 +2711,29 @@ var file_identity_v1_identity_proto_goTypes = []any{
 	(*DeleteRoleRequest)(nil),                     // 67: identity.v1.DeleteRoleRequest
 	(*RoleBlueprintsRequest)(nil),                 // 68: identity.v1.RoleBlueprintsRequest
 	(*ListOrganizationsRequest)(nil),              // 69: identity.v1.ListOrganizationsRequest
-	(*GetOrganizationsQuerySchemaRequest)(nil),    // 70: identity.v1.GetOrganizationsQuerySchemaRequest
-	(*QueryOrganizationsRequest)(nil),             // 71: identity.v1.QueryOrganizationsRequest
-	(*CreateOrganizationRequest)(nil),             // 72: identity.v1.CreateOrganizationRequest
-	(*UpdateOrganizationRequest)(nil),             // 73: identity.v1.UpdateOrganizationRequest
-	(*DeleteOrganizationRequest)(nil),             // 74: identity.v1.DeleteOrganizationRequest
-	(*UserAuthKeysRequest)(nil),                   // 75: identity.v1.UserAuthKeysRequest
-	(*UserList)(nil),                              // 76: identity.v1.UserList
-	(*v11.Descriptor)(nil),                        // 77: query.v1.Descriptor
-	(*v1.UserOnboardCapability)(nil),              // 78: common.v1.UserOnboardCapability
-	(*v1.OnboardUserDeviceFlow)(nil),              // 79: common.v1.OnboardUserDeviceFlow
-	(*v1.OnboardUserWebFlow)(nil),                 // 80: common.v1.OnboardUserWebFlow
-	(*AuthUserResponse)(nil),                      // 81: identity.v1.AuthUserResponse
-	(*PasswordLockoutStatus)(nil),                 // 82: identity.v1.PasswordLockoutStatus
-	(*ClearPasswordLockoutResponse)(nil),          // 83: identity.v1.ClearPasswordLockoutResponse
-	(*Blueprint)(nil),                             // 84: identity.v1.Blueprint
-	(*RoleList)(nil),                              // 85: identity.v1.RoleList
-	(*Role)(nil),                                  // 86: identity.v1.Role
-	(*DeleteRoleResponse)(nil),                    // 87: identity.v1.DeleteRoleResponse
-	(*OrganizationList)(nil),                      // 88: identity.v1.OrganizationList
-	(*Organization)(nil),                          // 89: identity.v1.Organization
-	(*DeleteOrganizationResponse)(nil),            // 90: identity.v1.DeleteOrganizationResponse
-	(*ListUserAuthKeysResponse)(nil),              // 91: identity.v1.ListUserAuthKeysResponse
+	(*GetOrganizationRequest)(nil),                // 70: identity.v1.GetOrganizationRequest
+	(*GetOrganizationsQuerySchemaRequest)(nil),    // 71: identity.v1.GetOrganizationsQuerySchemaRequest
+	(*QueryOrganizationsRequest)(nil),             // 72: identity.v1.QueryOrganizationsRequest
+	(*CreateOrganizationRequest)(nil),             // 73: identity.v1.CreateOrganizationRequest
+	(*UpdateOrganizationRequest)(nil),             // 74: identity.v1.UpdateOrganizationRequest
+	(*DeleteOrganizationRequest)(nil),             // 75: identity.v1.DeleteOrganizationRequest
+	(*UserAuthKeysRequest)(nil),                   // 76: identity.v1.UserAuthKeysRequest
+	(*UserList)(nil),                              // 77: identity.v1.UserList
+	(*v11.Descriptor)(nil),                        // 78: query.v1.Descriptor
+	(*v1.UserOnboardCapability)(nil),              // 79: common.v1.UserOnboardCapability
+	(*v1.OnboardUserDeviceFlow)(nil),              // 80: common.v1.OnboardUserDeviceFlow
+	(*v1.OnboardUserWebFlow)(nil),                 // 81: common.v1.OnboardUserWebFlow
+	(*AuthUserResponse)(nil),                      // 82: identity.v1.AuthUserResponse
+	(*PasswordLockoutStatus)(nil),                 // 83: identity.v1.PasswordLockoutStatus
+	(*ClearPasswordLockoutResponse)(nil),          // 84: identity.v1.ClearPasswordLockoutResponse
+	(*Blueprint)(nil),                             // 85: identity.v1.Blueprint
+	(*RoleList)(nil),                              // 86: identity.v1.RoleList
+	(*Role)(nil),                                  // 87: identity.v1.Role
+	(*DeleteRoleResponse)(nil),                    // 88: identity.v1.DeleteRoleResponse
+	(*OrganizationList)(nil),                      // 89: identity.v1.OrganizationList
+	(*Organization)(nil),                          // 90: identity.v1.Organization
+	(*DeleteOrganizationResponse)(nil),            // 91: identity.v1.DeleteOrganizationResponse
+	(*ListUserAuthKeysResponse)(nil),              // 92: identity.v1.ListUserAuthKeysResponse
 }
 var file_identity_v1_identity_proto_depIdxs = []int32{
 	0,  // 0: identity.v1.ListUserAuthKeysRequest.format:type_name -> identity.v1.AuthKeyFormat
@@ -2794,79 +2796,81 @@ var file_identity_v1_identity_proto_depIdxs = []int32{
 	68, // 57: identity.v1.IdentityService.AddRoleBlueprints:input_type -> identity.v1.RoleBlueprintsRequest
 	68, // 58: identity.v1.IdentityService.RemoveRoleBlueprints:input_type -> identity.v1.RoleBlueprintsRequest
 	69, // 59: identity.v1.IdentityService.ListOrganizations:input_type -> identity.v1.ListOrganizationsRequest
-	70, // 60: identity.v1.IdentityService.GetOrganizationsQuerySchema:input_type -> identity.v1.GetOrganizationsQuerySchemaRequest
-	71, // 61: identity.v1.IdentityService.QueryOrganizations:input_type -> identity.v1.QueryOrganizationsRequest
-	72, // 62: identity.v1.IdentityService.CreateOrganization:input_type -> identity.v1.CreateOrganizationRequest
-	73, // 63: identity.v1.IdentityService.UpdateOrganization:input_type -> identity.v1.UpdateOrganizationRequest
-	74, // 64: identity.v1.IdentityService.DeleteOrganization:input_type -> identity.v1.DeleteOrganizationRequest
-	1,  // 65: identity.v1.IdentityService.ListUserAuthKeys:input_type -> identity.v1.ListUserAuthKeysRequest
-	75, // 66: identity.v1.IdentityService.AddUserAuthKeys:input_type -> identity.v1.UserAuthKeysRequest
-	2,  // 67: identity.v1.IdentityService.RemoveUserAuthKey:input_type -> identity.v1.RemoveUserAuthKeyRequest
-	7,  // 68: identity.v1.IdentityService.SetUserPassword:input_type -> identity.v1.SetUserPasswordRequest
-	22, // 69: identity.v1.IdentityService.UpdateUserCredential:input_type -> identity.v1.UpdateUserCredentialRequest
-	24, // 70: identity.v1.IdentityService.DeleteUserCredential:input_type -> identity.v1.DeleteUserCredentialRequest
-	26, // 71: identity.v1.IdentityService.RemoveUserCredential:input_type -> identity.v1.RemoveUserCredentialRequest
-	28, // 72: identity.v1.IdentityService.GetAvailableIdentityProviders:input_type -> identity.v1.GetAvailableIdentityProvidersRequest
-	30, // 73: identity.v1.IdentityService.CreateAccessToken:input_type -> identity.v1.CreateAccessTokenRequest
-	33, // 74: identity.v1.IdentityService.UpdateAccessToken:input_type -> identity.v1.UpdateAccessTokenRequest
-	55, // 75: identity.v1.IdentityService.ListAccessTokens:input_type -> identity.v1.Username
-	36, // 76: identity.v1.IdentityService.RevokeAccessToken:input_type -> identity.v1.RevokeAccessTokenRequest
-	38, // 77: identity.v1.IdentityService.DeleteAccessToken:input_type -> identity.v1.DeleteAccessTokenRequest
-	40, // 78: identity.v1.IdentityService.ResolveAccessToken:input_type -> identity.v1.ResolveAccessTokenRequest
-	50, // 79: identity.v1.IdentityService.FindUser:output_type -> common.v1.User
-	76, // 80: identity.v1.IdentityService.GetUsers:output_type -> identity.v1.UserList
-	77, // 81: identity.v1.IdentityService.GetUsersQuerySchema:output_type -> query.v1.Descriptor
-	76, // 82: identity.v1.IdentityService.QueryUsers:output_type -> identity.v1.UserList
-	9,  // 83: identity.v1.IdentityService.IssueUserToken:output_type -> identity.v1.IssueUserTokenResponse
-	78, // 84: identity.v1.IdentityService.GetUserOnboardCapability:output_type -> common.v1.UserOnboardCapability
-	79, // 85: identity.v1.IdentityService.OnboardUserDeviceFlow:output_type -> common.v1.OnboardUserDeviceFlow
-	80, // 86: identity.v1.IdentityService.OnboardUserWebFlow:output_type -> common.v1.OnboardUserWebFlow
-	12, // 87: identity.v1.IdentityService.CompleteUserWebFlow:output_type -> identity.v1.CompleteUserWebFlowResponse
-	81, // 88: identity.v1.IdentityService.AuthUserPublicKey:output_type -> identity.v1.AuthUserResponse
-	81, // 89: identity.v1.IdentityService.AuthUserPassword:output_type -> identity.v1.AuthUserResponse
-	82, // 90: identity.v1.IdentityService.GetPasswordLockoutStatus:output_type -> identity.v1.PasswordLockoutStatus
-	83, // 91: identity.v1.IdentityService.ClearPasswordLockout:output_type -> identity.v1.ClearPasswordLockoutResponse
-	11, // 92: identity.v1.IdentityService.CompleteUserDeviceFlow:output_type -> identity.v1.CompleteUserDeviceFlowResponse
-	84, // 93: identity.v1.IdentityService.GetBlueprintByUserStr:output_type -> identity.v1.Blueprint
-	14, // 94: identity.v1.IdentityService.ListUserCredentials:output_type -> identity.v1.ListUserCredentialsResponse
-	45, // 95: identity.v1.IdentityService.GetUserCredential:output_type -> common.v1.UserCredential
-	17, // 96: identity.v1.IdentityService.AddKubernetesUserCredential:output_type -> identity.v1.AddKubernetesUserCredentialResponse
-	19, // 97: identity.v1.IdentityService.AddGitUserCredential:output_type -> identity.v1.AddGitUserCredentialResponse
-	21, // 98: identity.v1.IdentityService.AddRegistryUserCredential:output_type -> identity.v1.AddRegistryUserCredentialResponse
-	50, // 99: identity.v1.IdentityService.CreateUser:output_type -> common.v1.User
-	50, // 100: identity.v1.IdentityService.UpdateUser:output_type -> common.v1.User
-	6,  // 101: identity.v1.IdentityService.DeleteUser:output_type -> identity.v1.DeleteUserResponse
-	50, // 102: identity.v1.IdentityService.AddUserRoles:output_type -> common.v1.User
-	50, // 103: identity.v1.IdentityService.RemoveUserRoles:output_type -> common.v1.User
-	85, // 104: identity.v1.IdentityService.ListRoles:output_type -> identity.v1.RoleList
-	85, // 105: identity.v1.IdentityService.ListGlobalRoles:output_type -> identity.v1.RoleList
-	86, // 106: identity.v1.IdentityService.CreateRole:output_type -> identity.v1.Role
-	86, // 107: identity.v1.IdentityService.UpdateRole:output_type -> identity.v1.Role
-	87, // 108: identity.v1.IdentityService.DeleteRole:output_type -> identity.v1.DeleteRoleResponse
-	86, // 109: identity.v1.IdentityService.AddRoleBlueprints:output_type -> identity.v1.Role
-	86, // 110: identity.v1.IdentityService.RemoveRoleBlueprints:output_type -> identity.v1.Role
-	88, // 111: identity.v1.IdentityService.ListOrganizations:output_type -> identity.v1.OrganizationList
-	77, // 112: identity.v1.IdentityService.GetOrganizationsQuerySchema:output_type -> query.v1.Descriptor
-	88, // 113: identity.v1.IdentityService.QueryOrganizations:output_type -> identity.v1.OrganizationList
-	89, // 114: identity.v1.IdentityService.CreateOrganization:output_type -> identity.v1.Organization
-	89, // 115: identity.v1.IdentityService.UpdateOrganization:output_type -> identity.v1.Organization
-	90, // 116: identity.v1.IdentityService.DeleteOrganization:output_type -> identity.v1.DeleteOrganizationResponse
-	91, // 117: identity.v1.IdentityService.ListUserAuthKeys:output_type -> identity.v1.ListUserAuthKeysResponse
-	50, // 118: identity.v1.IdentityService.AddUserAuthKeys:output_type -> common.v1.User
-	50, // 119: identity.v1.IdentityService.RemoveUserAuthKey:output_type -> common.v1.User
-	50, // 120: identity.v1.IdentityService.SetUserPassword:output_type -> common.v1.User
-	23, // 121: identity.v1.IdentityService.UpdateUserCredential:output_type -> identity.v1.UpdateUserCredentialResponse
-	25, // 122: identity.v1.IdentityService.DeleteUserCredential:output_type -> identity.v1.DeleteUserCredentialResponse
-	27, // 123: identity.v1.IdentityService.RemoveUserCredential:output_type -> identity.v1.RemoveUserCredentialResponse
-	29, // 124: identity.v1.IdentityService.GetAvailableIdentityProviders:output_type -> identity.v1.GetAvailableIdentityProvidersResponse
-	31, // 125: identity.v1.IdentityService.CreateAccessToken:output_type -> identity.v1.CreateAccessTokenResponse
-	34, // 126: identity.v1.IdentityService.UpdateAccessToken:output_type -> identity.v1.UpdateAccessTokenResponse
-	35, // 127: identity.v1.IdentityService.ListAccessTokens:output_type -> identity.v1.ListAccessTokensResponse
-	37, // 128: identity.v1.IdentityService.RevokeAccessToken:output_type -> identity.v1.RevokeAccessTokenResponse
-	39, // 129: identity.v1.IdentityService.DeleteAccessToken:output_type -> identity.v1.DeleteAccessTokenResponse
-	41, // 130: identity.v1.IdentityService.ResolveAccessToken:output_type -> identity.v1.ResolveAccessTokenResponse
-	79, // [79:131] is the sub-list for method output_type
-	27, // [27:79] is the sub-list for method input_type
+	70, // 60: identity.v1.IdentityService.GetOrganization:input_type -> identity.v1.GetOrganizationRequest
+	71, // 61: identity.v1.IdentityService.GetOrganizationsQuerySchema:input_type -> identity.v1.GetOrganizationsQuerySchemaRequest
+	72, // 62: identity.v1.IdentityService.QueryOrganizations:input_type -> identity.v1.QueryOrganizationsRequest
+	73, // 63: identity.v1.IdentityService.CreateOrganization:input_type -> identity.v1.CreateOrganizationRequest
+	74, // 64: identity.v1.IdentityService.UpdateOrganization:input_type -> identity.v1.UpdateOrganizationRequest
+	75, // 65: identity.v1.IdentityService.DeleteOrganization:input_type -> identity.v1.DeleteOrganizationRequest
+	1,  // 66: identity.v1.IdentityService.ListUserAuthKeys:input_type -> identity.v1.ListUserAuthKeysRequest
+	76, // 67: identity.v1.IdentityService.AddUserAuthKeys:input_type -> identity.v1.UserAuthKeysRequest
+	2,  // 68: identity.v1.IdentityService.RemoveUserAuthKey:input_type -> identity.v1.RemoveUserAuthKeyRequest
+	7,  // 69: identity.v1.IdentityService.SetUserPassword:input_type -> identity.v1.SetUserPasswordRequest
+	22, // 70: identity.v1.IdentityService.UpdateUserCredential:input_type -> identity.v1.UpdateUserCredentialRequest
+	24, // 71: identity.v1.IdentityService.DeleteUserCredential:input_type -> identity.v1.DeleteUserCredentialRequest
+	26, // 72: identity.v1.IdentityService.RemoveUserCredential:input_type -> identity.v1.RemoveUserCredentialRequest
+	28, // 73: identity.v1.IdentityService.GetAvailableIdentityProviders:input_type -> identity.v1.GetAvailableIdentityProvidersRequest
+	30, // 74: identity.v1.IdentityService.CreateAccessToken:input_type -> identity.v1.CreateAccessTokenRequest
+	33, // 75: identity.v1.IdentityService.UpdateAccessToken:input_type -> identity.v1.UpdateAccessTokenRequest
+	55, // 76: identity.v1.IdentityService.ListAccessTokens:input_type -> identity.v1.Username
+	36, // 77: identity.v1.IdentityService.RevokeAccessToken:input_type -> identity.v1.RevokeAccessTokenRequest
+	38, // 78: identity.v1.IdentityService.DeleteAccessToken:input_type -> identity.v1.DeleteAccessTokenRequest
+	40, // 79: identity.v1.IdentityService.ResolveAccessToken:input_type -> identity.v1.ResolveAccessTokenRequest
+	50, // 80: identity.v1.IdentityService.FindUser:output_type -> common.v1.User
+	77, // 81: identity.v1.IdentityService.GetUsers:output_type -> identity.v1.UserList
+	78, // 82: identity.v1.IdentityService.GetUsersQuerySchema:output_type -> query.v1.Descriptor
+	77, // 83: identity.v1.IdentityService.QueryUsers:output_type -> identity.v1.UserList
+	9,  // 84: identity.v1.IdentityService.IssueUserToken:output_type -> identity.v1.IssueUserTokenResponse
+	79, // 85: identity.v1.IdentityService.GetUserOnboardCapability:output_type -> common.v1.UserOnboardCapability
+	80, // 86: identity.v1.IdentityService.OnboardUserDeviceFlow:output_type -> common.v1.OnboardUserDeviceFlow
+	81, // 87: identity.v1.IdentityService.OnboardUserWebFlow:output_type -> common.v1.OnboardUserWebFlow
+	12, // 88: identity.v1.IdentityService.CompleteUserWebFlow:output_type -> identity.v1.CompleteUserWebFlowResponse
+	82, // 89: identity.v1.IdentityService.AuthUserPublicKey:output_type -> identity.v1.AuthUserResponse
+	82, // 90: identity.v1.IdentityService.AuthUserPassword:output_type -> identity.v1.AuthUserResponse
+	83, // 91: identity.v1.IdentityService.GetPasswordLockoutStatus:output_type -> identity.v1.PasswordLockoutStatus
+	84, // 92: identity.v1.IdentityService.ClearPasswordLockout:output_type -> identity.v1.ClearPasswordLockoutResponse
+	11, // 93: identity.v1.IdentityService.CompleteUserDeviceFlow:output_type -> identity.v1.CompleteUserDeviceFlowResponse
+	85, // 94: identity.v1.IdentityService.GetBlueprintByUserStr:output_type -> identity.v1.Blueprint
+	14, // 95: identity.v1.IdentityService.ListUserCredentials:output_type -> identity.v1.ListUserCredentialsResponse
+	45, // 96: identity.v1.IdentityService.GetUserCredential:output_type -> common.v1.UserCredential
+	17, // 97: identity.v1.IdentityService.AddKubernetesUserCredential:output_type -> identity.v1.AddKubernetesUserCredentialResponse
+	19, // 98: identity.v1.IdentityService.AddGitUserCredential:output_type -> identity.v1.AddGitUserCredentialResponse
+	21, // 99: identity.v1.IdentityService.AddRegistryUserCredential:output_type -> identity.v1.AddRegistryUserCredentialResponse
+	50, // 100: identity.v1.IdentityService.CreateUser:output_type -> common.v1.User
+	50, // 101: identity.v1.IdentityService.UpdateUser:output_type -> common.v1.User
+	6,  // 102: identity.v1.IdentityService.DeleteUser:output_type -> identity.v1.DeleteUserResponse
+	50, // 103: identity.v1.IdentityService.AddUserRoles:output_type -> common.v1.User
+	50, // 104: identity.v1.IdentityService.RemoveUserRoles:output_type -> common.v1.User
+	86, // 105: identity.v1.IdentityService.ListRoles:output_type -> identity.v1.RoleList
+	86, // 106: identity.v1.IdentityService.ListGlobalRoles:output_type -> identity.v1.RoleList
+	87, // 107: identity.v1.IdentityService.CreateRole:output_type -> identity.v1.Role
+	87, // 108: identity.v1.IdentityService.UpdateRole:output_type -> identity.v1.Role
+	88, // 109: identity.v1.IdentityService.DeleteRole:output_type -> identity.v1.DeleteRoleResponse
+	87, // 110: identity.v1.IdentityService.AddRoleBlueprints:output_type -> identity.v1.Role
+	87, // 111: identity.v1.IdentityService.RemoveRoleBlueprints:output_type -> identity.v1.Role
+	89, // 112: identity.v1.IdentityService.ListOrganizations:output_type -> identity.v1.OrganizationList
+	90, // 113: identity.v1.IdentityService.GetOrganization:output_type -> identity.v1.Organization
+	78, // 114: identity.v1.IdentityService.GetOrganizationsQuerySchema:output_type -> query.v1.Descriptor
+	89, // 115: identity.v1.IdentityService.QueryOrganizations:output_type -> identity.v1.OrganizationList
+	90, // 116: identity.v1.IdentityService.CreateOrganization:output_type -> identity.v1.Organization
+	90, // 117: identity.v1.IdentityService.UpdateOrganization:output_type -> identity.v1.Organization
+	91, // 118: identity.v1.IdentityService.DeleteOrganization:output_type -> identity.v1.DeleteOrganizationResponse
+	92, // 119: identity.v1.IdentityService.ListUserAuthKeys:output_type -> identity.v1.ListUserAuthKeysResponse
+	50, // 120: identity.v1.IdentityService.AddUserAuthKeys:output_type -> common.v1.User
+	50, // 121: identity.v1.IdentityService.RemoveUserAuthKey:output_type -> common.v1.User
+	50, // 122: identity.v1.IdentityService.SetUserPassword:output_type -> common.v1.User
+	23, // 123: identity.v1.IdentityService.UpdateUserCredential:output_type -> identity.v1.UpdateUserCredentialResponse
+	25, // 124: identity.v1.IdentityService.DeleteUserCredential:output_type -> identity.v1.DeleteUserCredentialResponse
+	27, // 125: identity.v1.IdentityService.RemoveUserCredential:output_type -> identity.v1.RemoveUserCredentialResponse
+	29, // 126: identity.v1.IdentityService.GetAvailableIdentityProviders:output_type -> identity.v1.GetAvailableIdentityProvidersResponse
+	31, // 127: identity.v1.IdentityService.CreateAccessToken:output_type -> identity.v1.CreateAccessTokenResponse
+	34, // 128: identity.v1.IdentityService.UpdateAccessToken:output_type -> identity.v1.UpdateAccessTokenResponse
+	35, // 129: identity.v1.IdentityService.ListAccessTokens:output_type -> identity.v1.ListAccessTokensResponse
+	37, // 130: identity.v1.IdentityService.RevokeAccessToken:output_type -> identity.v1.RevokeAccessTokenResponse
+	39, // 131: identity.v1.IdentityService.DeleteAccessToken:output_type -> identity.v1.DeleteAccessTokenResponse
+	41, // 132: identity.v1.IdentityService.ResolveAccessToken:output_type -> identity.v1.ResolveAccessTokenResponse
+	80, // [80:133] is the sub-list for method output_type
+	27, // [27:80] is the sub-list for method input_type
 	27, // [27:27] is the sub-list for extension type_name
 	27, // [27:27] is the sub-list for extension extendee
 	0,  // [0:27] is the sub-list for field type_name

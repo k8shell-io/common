@@ -108,6 +108,32 @@ type UserKeysRequest struct {
 	Keys []string `json:"keys"`
 }
 
+// OrganizationDeleteRequest is the optional HTTP request body for DELETE
+// /organizations/{name}. identity.DeleteOrganization always fails closed
+// (rejects deletion while any user remains), so api-server always resolves
+// the org's users first — either deleting them or, if MoveUsersToOrg is set,
+// re-homing them to another org — before deleting the org itself (which
+// also removes its now-unreferenced roles).
+// Note: no proto counterpart — these are api-server-only orchestration
+// flags.
+type OrganizationDeleteRequest struct {
+	// MoveUsersToOrg, when set, moves every user out of the org being
+	// deleted into this org instead of deleting them — the same mechanism
+	// as PATCH /users/{username}/profile's org field. Mutually exclusive
+	// with plain deletion: when set, no user in the org is deleted.
+	MoveUsersToOrg string `json:"moveUsersToOrg,omitempty"`
+
+	// PreserveWorkspaces, when true, skips workspace cleanup. Its meaning
+	// depends on MoveUsersToOrg:
+	//   - unset: each user being deleted keeps their workspaces instead of
+	//     having them deleted via provisioner.DeleteUserWorkspaces.
+	//   - set: each moved user keeps their workspaces even though their new
+	//     org's roles may not match those workspaces — normally an org
+	//     change deletes them (see UserUpdateRequest.PreserveWorkspaces)
+	//     precisely because of that mismatch; this opts back out of it.
+	PreserveWorkspaces bool `json:"preserveWorkspaces,omitempty"`
+}
+
 // UserPasswordRequest is the HTTP request body for setting or clearing a user's
 // local password. Password is a pointer so an explicit empty string (clear the
 // password) can be distinguished from an absent field.

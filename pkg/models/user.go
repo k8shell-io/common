@@ -102,11 +102,17 @@ type Organization struct {
 	Description string    `yaml:"description" json:"description"`
 	CreatedAt   time.Time `yaml:"createdAt" json:"createdAt"`
 
-	// AdminUsernames and UserCount are computed, read-only fields populated by
+	// AdminUsernames and UserCount are computed fields populated by
 	// ListOrganizations — not stored on the organization itself, and left
 	// empty/zero by CreateOrganization's response.
 	AdminUsernames []string `yaml:"adminUsernames" json:"adminUsernames"` // users in this org holding the "org-admin" role
 	UserCount      int      `yaml:"userCount" json:"userCount"`
+
+	// ReadOnly is true for the built-in "default" organization only: it
+	// cannot be updated or deleted, since it's the fallback organization
+	// every k8Shell deployment is seeded with. Computed from Name, not
+	// stored.
+	ReadOnly bool `yaml:"readOnly" json:"readOnly"`
 }
 
 // ProviderInfo holds information about a identity provider

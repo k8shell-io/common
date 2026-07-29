@@ -148,6 +148,9 @@ service IdentityService {
   // ListOrganizations returns the registered organizations.
   rpc ListOrganizations (ListOrganizationsRequest) returns (OrganizationList);
 
+  // GetOrganization retrieves a single organization by name.
+  rpc GetOrganization (GetOrganizationRequest) returns (Organization);
+
   // GetOrganizationsQuerySchema returns the query.v1.Descriptor advertising
   // which organization fields are queryable/sortable via QueryOrganizations,
   // and which operators are valid on each.

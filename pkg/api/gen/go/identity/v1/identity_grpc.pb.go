@@ -57,6 +57,7 @@ const (
 	IdentityService_AddRoleBlueprints_FullMethodName             = "/identity.v1.IdentityService/AddRoleBlueprints"
 	IdentityService_RemoveRoleBlueprints_FullMethodName          = "/identity.v1.IdentityService/RemoveRoleBlueprints"
 	IdentityService_ListOrganizations_FullMethodName             = "/identity.v1.IdentityService/ListOrganizations"
+	IdentityService_GetOrganization_FullMethodName               = "/identity.v1.IdentityService/GetOrganization"
 	IdentityService_GetOrganizationsQuerySchema_FullMethodName   = "/identity.v1.IdentityService/GetOrganizationsQuerySchema"
 	IdentityService_QueryOrganizations_FullMethodName            = "/identity.v1.IdentityService/QueryOrganizations"
 	IdentityService_CreateOrganization_FullMethodName            = "/identity.v1.IdentityService/CreateOrganization"
@@ -183,6 +184,8 @@ type IdentityServiceClient interface {
 	RemoveRoleBlueprints(ctx context.Context, in *RoleBlueprintsRequest, opts ...grpc.CallOption) (*Role, error)
 	// ListOrganizations returns the registered organizations.
 	ListOrganizations(ctx context.Context, in *ListOrganizationsRequest, opts ...grpc.CallOption) (*OrganizationList, error)
+	// GetOrganization retrieves a single organization by name.
+	GetOrganization(ctx context.Context, in *GetOrganizationRequest, opts ...grpc.CallOption) (*Organization, error)
 	// GetOrganizationsQuerySchema returns the query.v1.Descriptor advertising
 	// which organization fields are queryable/sortable via QueryOrganizations,
 	// and which operators are valid on each.
@@ -578,6 +581,16 @@ func (c *identityServiceClient) ListOrganizations(ctx context.Context, in *ListO
 	return out, nil
 }
 
+func (c *identityServiceClient) GetOrganization(ctx context.Context, in *GetOrganizationRequest, opts ...grpc.CallOption) (*Organization, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Organization)
+	err := c.cc.Invoke(ctx, IdentityService_GetOrganization_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *identityServiceClient) GetOrganizationsQuerySchema(ctx context.Context, in *GetOrganizationsQuerySchemaRequest, opts ...grpc.CallOption) (*v11.Descriptor, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(v11.Descriptor)
@@ -873,6 +886,8 @@ type IdentityServiceServer interface {
 	RemoveRoleBlueprints(context.Context, *RoleBlueprintsRequest) (*Role, error)
 	// ListOrganizations returns the registered organizations.
 	ListOrganizations(context.Context, *ListOrganizationsRequest) (*OrganizationList, error)
+	// GetOrganization retrieves a single organization by name.
+	GetOrganization(context.Context, *GetOrganizationRequest) (*Organization, error)
 	// GetOrganizationsQuerySchema returns the query.v1.Descriptor advertising
 	// which organization fields are queryable/sortable via QueryOrganizations,
 	// and which operators are valid on each.
@@ -1036,6 +1051,9 @@ func (UnimplementedIdentityServiceServer) RemoveRoleBlueprints(context.Context, 
 }
 func (UnimplementedIdentityServiceServer) ListOrganizations(context.Context, *ListOrganizationsRequest) (*OrganizationList, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListOrganizations not implemented")
+}
+func (UnimplementedIdentityServiceServer) GetOrganization(context.Context, *GetOrganizationRequest) (*Organization, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetOrganization not implemented")
 }
 func (UnimplementedIdentityServiceServer) GetOrganizationsQuerySchema(context.Context, *GetOrganizationsQuerySchemaRequest) (*v11.Descriptor, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetOrganizationsQuerySchema not implemented")
@@ -1709,6 +1727,24 @@ func _IdentityService_ListOrganizations_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IdentityService_GetOrganization_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOrganizationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).GetOrganization(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_GetOrganization_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).GetOrganization(ctx, req.(*GetOrganizationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _IdentityService_GetOrganizationsQuerySchema_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetOrganizationsQuerySchemaRequest)
 	if err := dec(in); err != nil {
@@ -2189,6 +2225,10 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListOrganizations",
 			Handler:    _IdentityService_ListOrganizations_Handler,
+		},
+		{
+			MethodName: "GetOrganization",
+			Handler:    _IdentityService_GetOrganization_Handler,
 		},
 		{
 			MethodName: "GetOrganizationsQuerySchema",
