@@ -317,7 +317,10 @@ func (x *CreateUserRequest) GetGid() uint32 {
 
 // UpdateUserRequest carries a partial update for a user record.
 // Only wrapper-typed fields that are set (non-nil) and repeated fields that
-// are non-empty will be applied; unset fields leave the existing value intact.
+// are non-empty will be applied; unset fields leave the existing value
+// intact. Because proto3 cannot distinguish an absent "roles" list from an
+// explicitly empty one on the wire, clear_roles must be set to remove all
+// of a user's roles; roles must be empty when clear_roles is set.
 type UpdateUserRequest struct {
 	state         protoimpl.MessageState  `protogen:"open.v1"`
 	Username      string                  `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
@@ -330,6 +333,7 @@ type UpdateUserRequest struct {
 	Uid           *wrapperspb.UInt32Value `protobuf:"bytes,10,opt,name=uid,proto3" json:"uid,omitempty"`
 	Gid           *wrapperspb.UInt32Value `protobuf:"bytes,11,opt,name=gid,proto3" json:"gid,omitempty"`
 	Shell         *wrapperspb.StringValue `protobuf:"bytes,12,opt,name=shell,proto3" json:"shell,omitempty"`
+	ClearRoles    bool                    `protobuf:"varint,13,opt,name=clear_roles,json=clearRoles,proto3" json:"clear_roles,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -432,6 +436,13 @@ func (x *UpdateUserRequest) GetShell() *wrapperspb.StringValue {
 		return x.Shell
 	}
 	return nil
+}
+
+func (x *UpdateUserRequest) GetClearRoles() bool {
+	if x != nil {
+		return x.ClearRoles
+	}
+	return false
 }
 
 // DeleteUserRequest identifies the user record to delete by username.
@@ -2414,7 +2425,7 @@ const file_identity_v1_identity_proto_rawDesc = "" +
 	" \x01(\bR\x06locked\x12\x10\n" +
 	"\x03uid\x18\v \x01(\rR\x03uid\x12\x10\n" +
 	"\x03gid\x18\f \x01(\rR\x03gidJ\x04\b\a\x10\bR\n" +
-	"blueprints\"\xed\x03\n" +
+	"blueprints\"\x8e\x04\n" +
 	"\x11UpdateUserRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x128\n" +
 	"\bfullname\x18\x02 \x01(\v2\x1c.google.protobuf.StringValueR\bfullname\x12\x14\n" +
@@ -2426,7 +2437,9 @@ const file_identity_v1_identity_proto_rawDesc = "" +
 	"\x03uid\x18\n" +
 	" \x01(\v2\x1c.google.protobuf.UInt32ValueR\x03uid\x12.\n" +
 	"\x03gid\x18\v \x01(\v2\x1c.google.protobuf.UInt32ValueR\x03gid\x122\n" +
-	"\x05shell\x18\f \x01(\v2\x1c.google.protobuf.StringValueR\x05shellJ\x04\b\x05\x10\x06R\n" +
+	"\x05shell\x18\f \x01(\v2\x1c.google.protobuf.StringValueR\x05shell\x12\x1f\n" +
+	"\vclear_roles\x18\r \x01(\bR\n" +
+	"clearRolesJ\x04\b\x05\x10\x06R\n" +
 	"blueprints\"/\n" +
 	"\x11DeleteUserRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\".\n" +

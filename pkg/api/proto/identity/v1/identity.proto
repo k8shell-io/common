@@ -260,21 +260,25 @@ message CreateUserRequest {
 
 // UpdateUserRequest carries a partial update for a user record.
 // Only wrapper-typed fields that are set (non-nil) and repeated fields that
-// are non-empty will be applied; unset fields leave the existing value intact.
+// are non-empty will be applied; unset fields leave the existing value
+// intact. Because proto3 cannot distinguish an absent "roles" list from an
+// explicitly empty one on the wire, clear_roles must be set to remove all
+// of a user's roles; roles must be empty when clear_roles is set.
 message UpdateUserRequest {
   reserved 5;
   reserved "blueprints"; // superseded by role-derived blueprints (see Role.blueprints)
 
-  string                      username   = 1;
-  google.protobuf.StringValue fullname   = 2;
-  repeated string             roles      = 3;
-  google.protobuf.BoolValue   sudo       = 4;
-  google.protobuf.BoolValue   locked     = 6;
-  google.protobuf.StringValue org        = 8;
-  google.protobuf.StringValue email      = 9;
-  google.protobuf.UInt32Value uid        = 10;
-  google.protobuf.UInt32Value gid        = 11;
-  google.protobuf.StringValue shell      = 12;
+  string                      username     = 1;
+  google.protobuf.StringValue fullname     = 2;
+  repeated string             roles        = 3;
+  google.protobuf.BoolValue   sudo         = 4;
+  google.protobuf.BoolValue   locked       = 6;
+  google.protobuf.StringValue org          = 8;
+  google.protobuf.StringValue email        = 9;
+  google.protobuf.UInt32Value uid          = 10;
+  google.protobuf.UInt32Value gid          = 11;
+  google.protobuf.StringValue shell        = 12;
+  bool                        clear_roles  = 13;
 }
 
 // DeleteUserRequest identifies the user record to delete by username.
