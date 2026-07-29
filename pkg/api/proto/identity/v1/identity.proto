@@ -148,6 +148,15 @@ service IdentityService {
   // ListOrganizations returns the registered organizations.
   rpc ListOrganizations (ListOrganizationsRequest) returns (OrganizationList);
 
+  // GetOrganizationsQuerySchema returns the query.v1.Descriptor advertising
+  // which organization fields are queryable/sortable via QueryOrganizations,
+  // and which operators are valid on each.
+  rpc GetOrganizationsQuerySchema (GetOrganizationsQuerySchemaRequest) returns (query.v1.Descriptor);
+
+  // QueryOrganizations retrieves organizations matching a generic
+  // query.v1.Payload, as advertised by GetOrganizationsQuerySchema.
+  rpc QueryOrganizations (QueryOrganizationsRequest) returns (OrganizationList);
+
   // CreateOrganization registers a new organization.
   rpc CreateOrganization (CreateOrganizationRequest) returns (Organization);
 

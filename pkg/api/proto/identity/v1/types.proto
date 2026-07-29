@@ -265,6 +265,18 @@ message OrganizationList {
 // RPC signature.
 message ListOrganizationsRequest {}
 
+// GetOrganizationsQuerySchemaRequest requests the query.v1.Descriptor for
+// the organizations resource. It carries no fields today; left as a message
+// rather than google.protobuf.Empty so parameters can be added later
+// without changing the RPC signature.
+message GetOrganizationsQuerySchemaRequest {}
+
+// QueryOrganizationsRequest carries a generic query against the fields
+// advertised by GetOrganizationsQuerySchema.
+message QueryOrganizationsRequest {
+  query.v1.Payload query = 1;
+}
+
 // CreateOrganizationRequest registers a new organization.
 message CreateOrganizationRequest {
   string name        = 1;
