@@ -18,6 +18,19 @@ package authz
 //
 // ---
 //
+// Contract: org:read
+//
+// Resource  type="org"
+//   id   organization name (required)
+//
+// Context   (none)
+//
+// Subject   injected by the backend from JWT claims (username, roles, email, ...)
+//
+// Obligations  (none) — allow/deny only
+//
+// ---
+//
 // Contract: org:create
 //
 // Resource  type="org"
@@ -128,6 +141,77 @@ func OrganizationListEvalRequestFromProto(req *authzv1.EvaluateRequest) (*Organi
 // Validate is a no-op for org:list; no fields are required.
 // Implements EvalRequest.
 func (r *OrganizationListEvalRequest) Validate() error { return nil }
+
+// OrganizationReadEvalRequest is the validated, typed model for org:read
+// policy evaluation. Use NewOrganizationReadEvalRequest to start building,
+// then call Build to get a validated instance.
+type OrganizationReadEvalRequest struct {
+	Resource OrganizationResource
+}
+
+var _ EvalRequest = (*OrganizationReadEvalRequest)(nil)
+
+// NewOrganizationReadEvalRequest begins building an OrganizationReadEvalRequest
+// for the given organization name. Call Build to validate and obtain the final struct.
+func NewOrganizationReadEvalRequest(name string) *OrganizationReadEvalRequest {
+	return &OrganizationReadEvalRequest{Resource: OrganizationResource{ID: name}}
+}
+
+// Build validates the request and returns it if all constraints are satisfied.
+// It is the required terminator for the builder chain.
+func (r *OrganizationReadEvalRequest) Build() (*OrganizationReadEvalRequest, error) {
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// ToProto serializes the typed request into a gRPC EvaluateRequest, attaching
+// the supplied JWT token.
+// Implements EvalRequest.
+func (r *OrganizationReadEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
+	return &authzv1.EvaluateRequest{
+		Token:  token,
+		Action: "org:read",
+		Resource: &authzv1.Resource{
+			Type: "org",
+			Id:   r.Resource.ID,
+		},
+	}
+}
+
+// OrganizationReadEvalRequestFromProto converts a gRPC EvaluateRequest into
+// a validated OrganizationReadEvalRequest.
+func OrganizationReadEvalRequestFromProto(req *authzv1.EvaluateRequest) (*OrganizationReadEvalRequest, error) {
+	if req == nil {
+		return nil, fmt.Errorf("org:read: EvaluateRequest is nil")
+	}
+	if req.Action != "org:read" {
+		return nil, fmt.Errorf("org:read: action must be \"org:read\", got %q", req.Action)
+	}
+	if req.Resource == nil {
+		return nil, fmt.Errorf("org:read: resource is nil")
+	}
+	if req.Resource.Type != "org" {
+		return nil, fmt.Errorf("org:read: resource type must be \"org\", got %q", req.Resource.Type)
+	}
+	r := &OrganizationReadEvalRequest{
+		Resource: OrganizationResource{ID: req.Resource.Id},
+	}
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// Validate checks the request against the org:read contract.
+// Implements EvalRequest.
+func (r *OrganizationReadEvalRequest) Validate() error {
+	if r.Resource.ID == "" {
+		return fmt.Errorf("org:read: resource ID (organization name) is required")
+	}
+	return nil
+}
 
 // OrganizationCreateEvalRequest is the validated, typed model for org:create
 // policy evaluation. Use NewOrganizationCreateEvalRequest to start building,
@@ -350,6 +434,12 @@ func init() {
 		Action: "org:list", Package: "org", Scope: "org:list",
 		Build: func(ctx CapabilityContext) (EvalRequest, error) {
 			return NewOrganizationListEvalRequest().Build()
+		},
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		Action: "org:read", Package: "org", Scope: "org:read",
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewOrganizationReadEvalRequest(capabilityWildcardOrg).Build()
 		},
 	})
 	registerCapabilityCheck(CapabilityCheck{
