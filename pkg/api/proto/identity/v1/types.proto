@@ -312,6 +312,128 @@ message DeleteOrganizationResponse {
   bool success = 1;
 }
 
+// OnboardRule controls whether a new user may onboard, and what they get
+// when they do. A row is either a pattern rule (username_pattern contains
+// '*'), admin-authored as a standing policy (e.g. idp="github",
+// username_pattern="*", action="waitlist" as that idp's catch-all), or a
+// concrete decision (username_pattern has no '*'): either a one-off
+// admin-authored allow/reject for a specific person, or a row the system
+// inserted the first time that exact user hit a "waitlist" pattern rule.
+// There is no separate waitlist table — approving a pending row is simply
+// flipping its action from "waitlist" to "allow".
+message OnboardRule {
+  int32  id               = 1;
+  string idp               = 2;  // provider name, "local", or "*" (any)
+  string username_pattern  = 3;  // exact username, or a pattern containing '*'
+
+  // org is the destination organization a matching user is placed into —
+  // not a scope filter — replacing whatever the identity provider itself
+  // reported. Always set; there is no "global" org for this table.
+  string org               = 4;
+
+  string action            = 5;  // "allow" | "reject" | "waitlist"
+  int32  priority          = 6;  // lower wins among matching rows of the same specificity
+
+  // status tracks the outcome of an actual onboarding attempt against this
+  // row, separate from action (the configured policy/decision): "none" (no
+  // attempt yet), "pending" (hit as a "waitlist" decision, no admin
+  // decision yet), "rejected" (rejected, either directly by an
+  // action="reject" rule or by an admin after waitlist), "onboarded" (the
+  // user was actually created and exists in org's user list). Not
+  // admin-editable directly — set by the server as attempts resolve.
+  string status = 17;
+
+  // roles/sudo are the attributes applied to the user when this row
+  // resolves to "allow" (replacing what OPA's onboarding obligations used
+  // to grant). roles must be valid within org (org-scoped-or-global).
+  repeated string roles = 7;
+  bool            sudo  = 8;
+
+  // fullname/email are display metadata for system-inserted (waitlist-hit)
+  // rows, so an admin can see who's asking without a fresh provider
+  // round-trip.
+  string fullname = 9;
+  string email    = 10;
+
+  string note = 11;  // admin comment / rejection reason
+
+  google.protobuf.Timestamp requested_at = 12;  // set only for system-inserted rows
+  google.protobuf.Timestamp decided_at   = 13;  // set when action moves out of "waitlist"
+  string                    decided_by   = 14;  // admin username who approved/rejected
+
+  google.protobuf.Timestamp created_at = 15;
+  google.protobuf.Timestamp updated_at = 16;
+}
+
+// OnboardRuleList holds a list of onboard rules.
+message OnboardRuleList {
+  repeated OnboardRule rules = 1;
+}
+
+// CreateOnboardRuleRequest registers a new onboard rule.
+message CreateOnboardRuleRequest {
+  string          idp              = 1;
+  string          username_pattern = 2;
+  string          org              = 3;
+  string          action           = 4;
+  int32           priority         = 5;
+  repeated string roles            = 6;
+  bool            sudo             = 7;
+  string          note             = 8;
+}
+
+// UpdateOnboardRuleRequest fully replaces the mutable fields of an onboard
+// rule identified by id. idp/username_pattern/org are immutable — delete
+// and recreate the rule to change them.
+message UpdateOnboardRuleRequest {
+  int32           id       = 1;
+  string          action   = 2;
+  int32           priority = 3;
+  repeated string roles    = 4;
+  bool            sudo     = 5;
+  string          note     = 6;
+}
+
+// DeleteOnboardRuleRequest identifies the onboard rule to remove by id.
+message DeleteOnboardRuleRequest {
+  int32 id = 1;
+}
+
+// DeleteOnboardRuleResponse indicates whether the deletion was successful.
+message DeleteOnboardRuleResponse {
+  bool success = 1;
+}
+
+// GetOnboardRulesQuerySchemaRequest carries no fields today. Left as a
+// message rather than google.protobuf.Empty so parameters can be added
+// later without changing the RPC signature.
+message GetOnboardRulesQuerySchemaRequest {}
+
+// QueryOnboardRulesRequest carries a generic query against the fields
+// advertised by GetOnboardRulesQuerySchema. A frontend renders the pending
+// approval queue by filtering action = "waitlist", and manages standing
+// rules with any other filter — there is no separate "list waitlist" RPC.
+message QueryOnboardRulesRequest {
+  query.v1.Payload query = 1;
+}
+
+// ApproveOnboardRuleRequest identifies a pending onboard rule by id to
+// approve, flipping its action to "allow". decided_by records who approved
+// it (the caller's identity isn't otherwise available server-side).
+message ApproveOnboardRuleRequest {
+  int32  id          = 1;
+  string decided_by  = 2;
+}
+
+// RejectOnboardRuleRequest identifies a pending onboard rule by id to
+// reject, flipping its action to "reject". decided_by records who rejected
+// it; note is an optional reason recorded on the row.
+message RejectOnboardRuleRequest {
+  int32  id          = 1;
+  string decided_by  = 2;
+  string note        = 3;
+}
+
 // UserAuthKeysRequest carries a username and one or more SSH public keys to register.
 message UserAuthKeysRequest {
   string          username  = 1;

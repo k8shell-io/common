@@ -63,6 +63,13 @@ const (
 	IdentityService_CreateOrganization_FullMethodName            = "/identity.v1.IdentityService/CreateOrganization"
 	IdentityService_UpdateOrganization_FullMethodName            = "/identity.v1.IdentityService/UpdateOrganization"
 	IdentityService_DeleteOrganization_FullMethodName            = "/identity.v1.IdentityService/DeleteOrganization"
+	IdentityService_GetOnboardRulesQuerySchema_FullMethodName    = "/identity.v1.IdentityService/GetOnboardRulesQuerySchema"
+	IdentityService_QueryOnboardRules_FullMethodName             = "/identity.v1.IdentityService/QueryOnboardRules"
+	IdentityService_CreateOnboardRule_FullMethodName             = "/identity.v1.IdentityService/CreateOnboardRule"
+	IdentityService_UpdateOnboardRule_FullMethodName             = "/identity.v1.IdentityService/UpdateOnboardRule"
+	IdentityService_DeleteOnboardRule_FullMethodName             = "/identity.v1.IdentityService/DeleteOnboardRule"
+	IdentityService_ApproveOnboardRequest_FullMethodName         = "/identity.v1.IdentityService/ApproveOnboardRequest"
+	IdentityService_RejectOnboardRequest_FullMethodName          = "/identity.v1.IdentityService/RejectOnboardRequest"
 	IdentityService_ListUserAuthKeys_FullMethodName              = "/identity.v1.IdentityService/ListUserAuthKeys"
 	IdentityService_AddUserAuthKeys_FullMethodName               = "/identity.v1.IdentityService/AddUserAuthKeys"
 	IdentityService_RemoveUserAuthKey_FullMethodName             = "/identity.v1.IdentityService/RemoveUserAuthKey"
@@ -201,6 +208,31 @@ type IdentityServiceClient interface {
 	// DeleteOrganization removes an organization from the registry. Fails if
 	// any user or role still references it.
 	DeleteOrganization(ctx context.Context, in *DeleteOrganizationRequest, opts ...grpc.CallOption) (*DeleteOrganizationResponse, error)
+	// GetOnboardRulesQuerySchema returns the query.v1.Descriptor advertising
+	// which onboard rule fields are queryable/sortable via QueryOnboardRules,
+	// and which operators are valid on each.
+	GetOnboardRulesQuerySchema(ctx context.Context, in *GetOnboardRulesQuerySchemaRequest, opts ...grpc.CallOption) (*v11.Descriptor, error)
+	// QueryOnboardRules retrieves onboard rules matching a generic
+	// query.v1.Payload, as advertised by GetOnboardRulesQuerySchema. Filtering
+	// by action = "waitlist" is how a frontend renders the pending approval
+	// queue — there is no separate RPC for that.
+	QueryOnboardRules(ctx context.Context, in *QueryOnboardRulesRequest, opts ...grpc.CallOption) (*OnboardRuleList, error)
+	// CreateOnboardRule registers a new onboard rule (a standing pattern
+	// policy, or a one-off decision for a specific username).
+	CreateOnboardRule(ctx context.Context, in *CreateOnboardRuleRequest, opts ...grpc.CallOption) (*OnboardRule, error)
+	// UpdateOnboardRule fully replaces the mutable fields of an onboard rule.
+	// idp/username_pattern/org are immutable.
+	UpdateOnboardRule(ctx context.Context, in *UpdateOnboardRuleRequest, opts ...grpc.CallOption) (*OnboardRule, error)
+	// DeleteOnboardRule removes an onboard rule from the registry.
+	DeleteOnboardRule(ctx context.Context, in *DeleteOnboardRuleRequest, opts ...grpc.CallOption) (*DeleteOnboardRuleResponse, error)
+	// ApproveOnboardRequest approves a pending ("waitlist") onboard rule,
+	// flipping its action to "allow", and immediately onboards the user it
+	// names rather than waiting for their next login attempt.
+	ApproveOnboardRequest(ctx context.Context, in *ApproveOnboardRuleRequest, opts ...grpc.CallOption) (*v1.User, error)
+	// RejectOnboardRequest rejects a pending ("waitlist") onboard rule,
+	// flipping its action to "reject" so the user cannot re-trigger a new
+	// waitlist entry by trying again.
+	RejectOnboardRequest(ctx context.Context, in *RejectOnboardRuleRequest, opts ...grpc.CallOption) (*OnboardRule, error)
 	// ListUserAuthKeys retrieves all SSH public keys registered for a user, in
 	// either normal or digest-only form depending on the request's format field.
 	ListUserAuthKeys(ctx context.Context, in *ListUserAuthKeysRequest, opts ...grpc.CallOption) (*ListUserAuthKeysResponse, error)
@@ -641,6 +673,76 @@ func (c *identityServiceClient) DeleteOrganization(ctx context.Context, in *Dele
 	return out, nil
 }
 
+func (c *identityServiceClient) GetOnboardRulesQuerySchema(ctx context.Context, in *GetOnboardRulesQuerySchemaRequest, opts ...grpc.CallOption) (*v11.Descriptor, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(v11.Descriptor)
+	err := c.cc.Invoke(ctx, IdentityService_GetOnboardRulesQuerySchema_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) QueryOnboardRules(ctx context.Context, in *QueryOnboardRulesRequest, opts ...grpc.CallOption) (*OnboardRuleList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OnboardRuleList)
+	err := c.cc.Invoke(ctx, IdentityService_QueryOnboardRules_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) CreateOnboardRule(ctx context.Context, in *CreateOnboardRuleRequest, opts ...grpc.CallOption) (*OnboardRule, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OnboardRule)
+	err := c.cc.Invoke(ctx, IdentityService_CreateOnboardRule_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) UpdateOnboardRule(ctx context.Context, in *UpdateOnboardRuleRequest, opts ...grpc.CallOption) (*OnboardRule, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OnboardRule)
+	err := c.cc.Invoke(ctx, IdentityService_UpdateOnboardRule_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) DeleteOnboardRule(ctx context.Context, in *DeleteOnboardRuleRequest, opts ...grpc.CallOption) (*DeleteOnboardRuleResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteOnboardRuleResponse)
+	err := c.cc.Invoke(ctx, IdentityService_DeleteOnboardRule_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) ApproveOnboardRequest(ctx context.Context, in *ApproveOnboardRuleRequest, opts ...grpc.CallOption) (*v1.User, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(v1.User)
+	err := c.cc.Invoke(ctx, IdentityService_ApproveOnboardRequest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) RejectOnboardRequest(ctx context.Context, in *RejectOnboardRuleRequest, opts ...grpc.CallOption) (*OnboardRule, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OnboardRule)
+	err := c.cc.Invoke(ctx, IdentityService_RejectOnboardRequest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *identityServiceClient) ListUserAuthKeys(ctx context.Context, in *ListUserAuthKeysRequest, opts ...grpc.CallOption) (*ListUserAuthKeysResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListUserAuthKeysResponse)
@@ -903,6 +1005,31 @@ type IdentityServiceServer interface {
 	// DeleteOrganization removes an organization from the registry. Fails if
 	// any user or role still references it.
 	DeleteOrganization(context.Context, *DeleteOrganizationRequest) (*DeleteOrganizationResponse, error)
+	// GetOnboardRulesQuerySchema returns the query.v1.Descriptor advertising
+	// which onboard rule fields are queryable/sortable via QueryOnboardRules,
+	// and which operators are valid on each.
+	GetOnboardRulesQuerySchema(context.Context, *GetOnboardRulesQuerySchemaRequest) (*v11.Descriptor, error)
+	// QueryOnboardRules retrieves onboard rules matching a generic
+	// query.v1.Payload, as advertised by GetOnboardRulesQuerySchema. Filtering
+	// by action = "waitlist" is how a frontend renders the pending approval
+	// queue — there is no separate RPC for that.
+	QueryOnboardRules(context.Context, *QueryOnboardRulesRequest) (*OnboardRuleList, error)
+	// CreateOnboardRule registers a new onboard rule (a standing pattern
+	// policy, or a one-off decision for a specific username).
+	CreateOnboardRule(context.Context, *CreateOnboardRuleRequest) (*OnboardRule, error)
+	// UpdateOnboardRule fully replaces the mutable fields of an onboard rule.
+	// idp/username_pattern/org are immutable.
+	UpdateOnboardRule(context.Context, *UpdateOnboardRuleRequest) (*OnboardRule, error)
+	// DeleteOnboardRule removes an onboard rule from the registry.
+	DeleteOnboardRule(context.Context, *DeleteOnboardRuleRequest) (*DeleteOnboardRuleResponse, error)
+	// ApproveOnboardRequest approves a pending ("waitlist") onboard rule,
+	// flipping its action to "allow", and immediately onboards the user it
+	// names rather than waiting for their next login attempt.
+	ApproveOnboardRequest(context.Context, *ApproveOnboardRuleRequest) (*v1.User, error)
+	// RejectOnboardRequest rejects a pending ("waitlist") onboard rule,
+	// flipping its action to "reject" so the user cannot re-trigger a new
+	// waitlist entry by trying again.
+	RejectOnboardRequest(context.Context, *RejectOnboardRuleRequest) (*OnboardRule, error)
 	// ListUserAuthKeys retrieves all SSH public keys registered for a user, in
 	// either normal or digest-only form depending on the request's format field.
 	ListUserAuthKeys(context.Context, *ListUserAuthKeysRequest) (*ListUserAuthKeysResponse, error)
@@ -1069,6 +1196,27 @@ func (UnimplementedIdentityServiceServer) UpdateOrganization(context.Context, *U
 }
 func (UnimplementedIdentityServiceServer) DeleteOrganization(context.Context, *DeleteOrganizationRequest) (*DeleteOrganizationResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteOrganization not implemented")
+}
+func (UnimplementedIdentityServiceServer) GetOnboardRulesQuerySchema(context.Context, *GetOnboardRulesQuerySchemaRequest) (*v11.Descriptor, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetOnboardRulesQuerySchema not implemented")
+}
+func (UnimplementedIdentityServiceServer) QueryOnboardRules(context.Context, *QueryOnboardRulesRequest) (*OnboardRuleList, error) {
+	return nil, status.Error(codes.Unimplemented, "method QueryOnboardRules not implemented")
+}
+func (UnimplementedIdentityServiceServer) CreateOnboardRule(context.Context, *CreateOnboardRuleRequest) (*OnboardRule, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateOnboardRule not implemented")
+}
+func (UnimplementedIdentityServiceServer) UpdateOnboardRule(context.Context, *UpdateOnboardRuleRequest) (*OnboardRule, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateOnboardRule not implemented")
+}
+func (UnimplementedIdentityServiceServer) DeleteOnboardRule(context.Context, *DeleteOnboardRuleRequest) (*DeleteOnboardRuleResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteOnboardRule not implemented")
+}
+func (UnimplementedIdentityServiceServer) ApproveOnboardRequest(context.Context, *ApproveOnboardRuleRequest) (*v1.User, error) {
+	return nil, status.Error(codes.Unimplemented, "method ApproveOnboardRequest not implemented")
+}
+func (UnimplementedIdentityServiceServer) RejectOnboardRequest(context.Context, *RejectOnboardRuleRequest) (*OnboardRule, error) {
+	return nil, status.Error(codes.Unimplemented, "method RejectOnboardRequest not implemented")
 }
 func (UnimplementedIdentityServiceServer) ListUserAuthKeys(context.Context, *ListUserAuthKeysRequest) (*ListUserAuthKeysResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListUserAuthKeys not implemented")
@@ -1835,6 +1983,132 @@ func _IdentityService_DeleteOrganization_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IdentityService_GetOnboardRulesQuerySchema_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOnboardRulesQuerySchemaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).GetOnboardRulesQuerySchema(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_GetOnboardRulesQuerySchema_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).GetOnboardRulesQuerySchema(ctx, req.(*GetOnboardRulesQuerySchemaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_QueryOnboardRules_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryOnboardRulesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).QueryOnboardRules(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_QueryOnboardRules_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).QueryOnboardRules(ctx, req.(*QueryOnboardRulesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_CreateOnboardRule_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateOnboardRuleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).CreateOnboardRule(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_CreateOnboardRule_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).CreateOnboardRule(ctx, req.(*CreateOnboardRuleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_UpdateOnboardRule_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateOnboardRuleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).UpdateOnboardRule(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_UpdateOnboardRule_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).UpdateOnboardRule(ctx, req.(*UpdateOnboardRuleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_DeleteOnboardRule_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteOnboardRuleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).DeleteOnboardRule(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_DeleteOnboardRule_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).DeleteOnboardRule(ctx, req.(*DeleteOnboardRuleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_ApproveOnboardRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ApproveOnboardRuleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).ApproveOnboardRequest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_ApproveOnboardRequest_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).ApproveOnboardRequest(ctx, req.(*ApproveOnboardRuleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_RejectOnboardRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RejectOnboardRuleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).RejectOnboardRequest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_RejectOnboardRequest_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).RejectOnboardRequest(ctx, req.(*RejectOnboardRuleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _IdentityService_ListUserAuthKeys_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListUserAuthKeysRequest)
 	if err := dec(in); err != nil {
@@ -2249,6 +2523,34 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteOrganization",
 			Handler:    _IdentityService_DeleteOrganization_Handler,
+		},
+		{
+			MethodName: "GetOnboardRulesQuerySchema",
+			Handler:    _IdentityService_GetOnboardRulesQuerySchema_Handler,
+		},
+		{
+			MethodName: "QueryOnboardRules",
+			Handler:    _IdentityService_QueryOnboardRules_Handler,
+		},
+		{
+			MethodName: "CreateOnboardRule",
+			Handler:    _IdentityService_CreateOnboardRule_Handler,
+		},
+		{
+			MethodName: "UpdateOnboardRule",
+			Handler:    _IdentityService_UpdateOnboardRule_Handler,
+		},
+		{
+			MethodName: "DeleteOnboardRule",
+			Handler:    _IdentityService_DeleteOnboardRule_Handler,
+		},
+		{
+			MethodName: "ApproveOnboardRequest",
+			Handler:    _IdentityService_ApproveOnboardRequest_Handler,
+		},
+		{
+			MethodName: "RejectOnboardRequest",
+			Handler:    _IdentityService_RejectOnboardRequest_Handler,
 		},
 		{
 			MethodName: "ListUserAuthKeys",

@@ -171,6 +171,38 @@ service IdentityService {
   // any user or role still references it.
   rpc DeleteOrganization (DeleteOrganizationRequest) returns (DeleteOrganizationResponse);
 
+  // GetOnboardRulesQuerySchema returns the query.v1.Descriptor advertising
+  // which onboard rule fields are queryable/sortable via QueryOnboardRules,
+  // and which operators are valid on each.
+  rpc GetOnboardRulesQuerySchema (GetOnboardRulesQuerySchemaRequest) returns (query.v1.Descriptor);
+
+  // QueryOnboardRules retrieves onboard rules matching a generic
+  // query.v1.Payload, as advertised by GetOnboardRulesQuerySchema. Filtering
+  // by action = "waitlist" is how a frontend renders the pending approval
+  // queue — there is no separate RPC for that.
+  rpc QueryOnboardRules (QueryOnboardRulesRequest) returns (OnboardRuleList);
+
+  // CreateOnboardRule registers a new onboard rule (a standing pattern
+  // policy, or a one-off decision for a specific username).
+  rpc CreateOnboardRule (CreateOnboardRuleRequest) returns (OnboardRule);
+
+  // UpdateOnboardRule fully replaces the mutable fields of an onboard rule.
+  // idp/username_pattern/org are immutable.
+  rpc UpdateOnboardRule (UpdateOnboardRuleRequest) returns (OnboardRule);
+
+  // DeleteOnboardRule removes an onboard rule from the registry.
+  rpc DeleteOnboardRule (DeleteOnboardRuleRequest) returns (DeleteOnboardRuleResponse);
+
+  // ApproveOnboardRequest approves a pending ("waitlist") onboard rule,
+  // flipping its action to "allow", and immediately onboards the user it
+  // names rather than waiting for their next login attempt.
+  rpc ApproveOnboardRequest (ApproveOnboardRuleRequest) returns (common.v1.User);
+
+  // RejectOnboardRequest rejects a pending ("waitlist") onboard rule,
+  // flipping its action to "reject" so the user cannot re-trigger a new
+  // waitlist entry by trying again.
+  rpc RejectOnboardRequest (RejectOnboardRuleRequest) returns (OnboardRule);
+
   // ListUserAuthKeys retrieves all SSH public keys registered for a user, in
   // either normal or digest-only form depending on the request's format field.
   rpc ListUserAuthKeys (ListUserAuthKeysRequest) returns (ListUserAuthKeysResponse);

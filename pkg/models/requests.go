@@ -108,6 +108,43 @@ type UserKeysRequest struct {
 	Keys []string `json:"keys"`
 }
 
+// OnboardRuleCreateRequest is the HTTP request body for POST
+// /organizations/{org}/onboard-rules, which registers a new onboard rule (a
+// standing pattern policy, or a one-off decision for a specific username).
+// Org is always taken from the route, never from this body.
+// Note: proto counterpart is identityv1.CreateOnboardRuleRequest.
+type OnboardRuleCreateRequest struct {
+	IDP             string   `json:"idp"`
+	UsernamePattern string   `json:"usernamePattern"`
+	Action          string   `json:"action"`
+	Priority        int32    `json:"priority,omitempty"`
+	Roles           []string `json:"roles,omitempty"`
+	Sudo            bool     `json:"sudo,omitempty"`
+	Note            string   `json:"note,omitempty"`
+}
+
+// OnboardRuleUpdateRequest is the HTTP request body for PATCH
+// /organizations/{org}/onboard-rules/{id}, which fully replaces the mutable
+// fields of an onboard rule. Idp/UsernamePattern/Org are immutable — taken
+// from the existing row, never from this body; delete and recreate the rule
+// to change them.
+// Note: proto counterpart is identityv1.UpdateOnboardRuleRequest.
+type OnboardRuleUpdateRequest struct {
+	Action   string   `json:"action"`
+	Priority int32    `json:"priority,omitempty"`
+	Roles    []string `json:"roles,omitempty"`
+	Sudo     bool     `json:"sudo,omitempty"`
+	Note     string   `json:"note,omitempty"`
+}
+
+// OnboardRuleRejectRequest is the optional HTTP request body for POST
+// /organizations/{org}/onboard-rules/{id}/reject. DecidedBy is never taken
+// from the body — it's always the authenticated caller's own username.
+// Note: proto counterpart is identityv1.RejectOnboardRuleRequest, minus DecidedBy.
+type OnboardRuleRejectRequest struct {
+	Note string `json:"note,omitempty"`
+}
+
 // OrganizationDeleteRequest is the optional HTTP request body for DELETE
 // /organizations/{name}. identity.DeleteOrganization always fails closed
 // (rejects deletion while any user remains), so api-server always resolves

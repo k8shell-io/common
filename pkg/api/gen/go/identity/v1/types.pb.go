@@ -2178,6 +2178,731 @@ func (x *DeleteOrganizationResponse) GetSuccess() bool {
 	return false
 }
 
+// OnboardRule controls whether a new user may onboard, and what they get
+// when they do. A row is either a pattern rule (username_pattern contains
+// '*'), admin-authored as a standing policy (e.g. idp="github",
+// username_pattern="*", action="waitlist" as that idp's catch-all), or a
+// concrete decision (username_pattern has no '*'): either a one-off
+// admin-authored allow/reject for a specific person, or a row the system
+// inserted the first time that exact user hit a "waitlist" pattern rule.
+// There is no separate waitlist table — approving a pending row is simply
+// flipping its action from "waitlist" to "allow".
+type OnboardRule struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Id              int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Idp             string                 `protobuf:"bytes,2,opt,name=idp,proto3" json:"idp,omitempty"`                                                // provider name, "local", or "*" (any)
+	UsernamePattern string                 `protobuf:"bytes,3,opt,name=username_pattern,json=usernamePattern,proto3" json:"username_pattern,omitempty"` // exact username, or a pattern containing '*'
+	// org is the destination organization a matching user is placed into —
+	// not a scope filter — replacing whatever the identity provider itself
+	// reported. Always set; there is no "global" org for this table.
+	Org      string `protobuf:"bytes,4,opt,name=org,proto3" json:"org,omitempty"`
+	Action   string `protobuf:"bytes,5,opt,name=action,proto3" json:"action,omitempty"`      // "allow" | "reject" | "waitlist"
+	Priority int32  `protobuf:"varint,6,opt,name=priority,proto3" json:"priority,omitempty"` // lower wins among matching rows of the same specificity
+	// status tracks the outcome of an actual onboarding attempt against this
+	// row, separate from action (the configured policy/decision): "none" (no
+	// attempt yet), "pending" (hit as a "waitlist" decision, no admin
+	// decision yet), "rejected" (rejected, either directly by an
+	// action="reject" rule or by an admin after waitlist), "onboarded" (the
+	// user was actually created and exists in org's user list). Not
+	// admin-editable directly — set by the server as attempts resolve.
+	Status string `protobuf:"bytes,17,opt,name=status,proto3" json:"status,omitempty"`
+	// roles/sudo are the attributes applied to the user when this row
+	// resolves to "allow" (replacing what OPA's onboarding obligations used
+	// to grant). roles must be valid within org (org-scoped-or-global).
+	Roles []string `protobuf:"bytes,7,rep,name=roles,proto3" json:"roles,omitempty"`
+	Sudo  bool     `protobuf:"varint,8,opt,name=sudo,proto3" json:"sudo,omitempty"`
+	// fullname/email are display metadata for system-inserted (waitlist-hit)
+	// rows, so an admin can see who's asking without a fresh provider
+	// round-trip.
+	Fullname      string                 `protobuf:"bytes,9,opt,name=fullname,proto3" json:"fullname,omitempty"`
+	Email         string                 `protobuf:"bytes,10,opt,name=email,proto3" json:"email,omitempty"`
+	Note          string                 `protobuf:"bytes,11,opt,name=note,proto3" json:"note,omitempty"`                                  // admin comment / rejection reason
+	RequestedAt   *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=requested_at,json=requestedAt,proto3" json:"requested_at,omitempty"` // set only for system-inserted rows
+	DecidedAt     *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=decided_at,json=decidedAt,proto3" json:"decided_at,omitempty"`       // set when action moves out of "waitlist"
+	DecidedBy     string                 `protobuf:"bytes,14,opt,name=decided_by,json=decidedBy,proto3" json:"decided_by,omitempty"`       // admin username who approved/rejected
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,16,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OnboardRule) Reset() {
+	*x = OnboardRule{}
+	mi := &file_identity_v1_types_proto_msgTypes[40]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OnboardRule) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OnboardRule) ProtoMessage() {}
+
+func (x *OnboardRule) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_types_proto_msgTypes[40]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OnboardRule.ProtoReflect.Descriptor instead.
+func (*OnboardRule) Descriptor() ([]byte, []int) {
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{40}
+}
+
+func (x *OnboardRule) GetId() int32 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *OnboardRule) GetIdp() string {
+	if x != nil {
+		return x.Idp
+	}
+	return ""
+}
+
+func (x *OnboardRule) GetUsernamePattern() string {
+	if x != nil {
+		return x.UsernamePattern
+	}
+	return ""
+}
+
+func (x *OnboardRule) GetOrg() string {
+	if x != nil {
+		return x.Org
+	}
+	return ""
+}
+
+func (x *OnboardRule) GetAction() string {
+	if x != nil {
+		return x.Action
+	}
+	return ""
+}
+
+func (x *OnboardRule) GetPriority() int32 {
+	if x != nil {
+		return x.Priority
+	}
+	return 0
+}
+
+func (x *OnboardRule) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *OnboardRule) GetRoles() []string {
+	if x != nil {
+		return x.Roles
+	}
+	return nil
+}
+
+func (x *OnboardRule) GetSudo() bool {
+	if x != nil {
+		return x.Sudo
+	}
+	return false
+}
+
+func (x *OnboardRule) GetFullname() string {
+	if x != nil {
+		return x.Fullname
+	}
+	return ""
+}
+
+func (x *OnboardRule) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *OnboardRule) GetNote() string {
+	if x != nil {
+		return x.Note
+	}
+	return ""
+}
+
+func (x *OnboardRule) GetRequestedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.RequestedAt
+	}
+	return nil
+}
+
+func (x *OnboardRule) GetDecidedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.DecidedAt
+	}
+	return nil
+}
+
+func (x *OnboardRule) GetDecidedBy() string {
+	if x != nil {
+		return x.DecidedBy
+	}
+	return ""
+}
+
+func (x *OnboardRule) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *OnboardRule) GetUpdatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.UpdatedAt
+	}
+	return nil
+}
+
+// OnboardRuleList holds a list of onboard rules.
+type OnboardRuleList struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Rules         []*OnboardRule         `protobuf:"bytes,1,rep,name=rules,proto3" json:"rules,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OnboardRuleList) Reset() {
+	*x = OnboardRuleList{}
+	mi := &file_identity_v1_types_proto_msgTypes[41]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OnboardRuleList) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OnboardRuleList) ProtoMessage() {}
+
+func (x *OnboardRuleList) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_types_proto_msgTypes[41]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OnboardRuleList.ProtoReflect.Descriptor instead.
+func (*OnboardRuleList) Descriptor() ([]byte, []int) {
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{41}
+}
+
+func (x *OnboardRuleList) GetRules() []*OnboardRule {
+	if x != nil {
+		return x.Rules
+	}
+	return nil
+}
+
+// CreateOnboardRuleRequest registers a new onboard rule.
+type CreateOnboardRuleRequest struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Idp             string                 `protobuf:"bytes,1,opt,name=idp,proto3" json:"idp,omitempty"`
+	UsernamePattern string                 `protobuf:"bytes,2,opt,name=username_pattern,json=usernamePattern,proto3" json:"username_pattern,omitempty"`
+	Org             string                 `protobuf:"bytes,3,opt,name=org,proto3" json:"org,omitempty"`
+	Action          string                 `protobuf:"bytes,4,opt,name=action,proto3" json:"action,omitempty"`
+	Priority        int32                  `protobuf:"varint,5,opt,name=priority,proto3" json:"priority,omitempty"`
+	Roles           []string               `protobuf:"bytes,6,rep,name=roles,proto3" json:"roles,omitempty"`
+	Sudo            bool                   `protobuf:"varint,7,opt,name=sudo,proto3" json:"sudo,omitempty"`
+	Note            string                 `protobuf:"bytes,8,opt,name=note,proto3" json:"note,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *CreateOnboardRuleRequest) Reset() {
+	*x = CreateOnboardRuleRequest{}
+	mi := &file_identity_v1_types_proto_msgTypes[42]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateOnboardRuleRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateOnboardRuleRequest) ProtoMessage() {}
+
+func (x *CreateOnboardRuleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_types_proto_msgTypes[42]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateOnboardRuleRequest.ProtoReflect.Descriptor instead.
+func (*CreateOnboardRuleRequest) Descriptor() ([]byte, []int) {
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{42}
+}
+
+func (x *CreateOnboardRuleRequest) GetIdp() string {
+	if x != nil {
+		return x.Idp
+	}
+	return ""
+}
+
+func (x *CreateOnboardRuleRequest) GetUsernamePattern() string {
+	if x != nil {
+		return x.UsernamePattern
+	}
+	return ""
+}
+
+func (x *CreateOnboardRuleRequest) GetOrg() string {
+	if x != nil {
+		return x.Org
+	}
+	return ""
+}
+
+func (x *CreateOnboardRuleRequest) GetAction() string {
+	if x != nil {
+		return x.Action
+	}
+	return ""
+}
+
+func (x *CreateOnboardRuleRequest) GetPriority() int32 {
+	if x != nil {
+		return x.Priority
+	}
+	return 0
+}
+
+func (x *CreateOnboardRuleRequest) GetRoles() []string {
+	if x != nil {
+		return x.Roles
+	}
+	return nil
+}
+
+func (x *CreateOnboardRuleRequest) GetSudo() bool {
+	if x != nil {
+		return x.Sudo
+	}
+	return false
+}
+
+func (x *CreateOnboardRuleRequest) GetNote() string {
+	if x != nil {
+		return x.Note
+	}
+	return ""
+}
+
+// UpdateOnboardRuleRequest fully replaces the mutable fields of an onboard
+// rule identified by id. idp/username_pattern/org are immutable — delete
+// and recreate the rule to change them.
+type UpdateOnboardRuleRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Action        string                 `protobuf:"bytes,2,opt,name=action,proto3" json:"action,omitempty"`
+	Priority      int32                  `protobuf:"varint,3,opt,name=priority,proto3" json:"priority,omitempty"`
+	Roles         []string               `protobuf:"bytes,4,rep,name=roles,proto3" json:"roles,omitempty"`
+	Sudo          bool                   `protobuf:"varint,5,opt,name=sudo,proto3" json:"sudo,omitempty"`
+	Note          string                 `protobuf:"bytes,6,opt,name=note,proto3" json:"note,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateOnboardRuleRequest) Reset() {
+	*x = UpdateOnboardRuleRequest{}
+	mi := &file_identity_v1_types_proto_msgTypes[43]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateOnboardRuleRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateOnboardRuleRequest) ProtoMessage() {}
+
+func (x *UpdateOnboardRuleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_types_proto_msgTypes[43]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateOnboardRuleRequest.ProtoReflect.Descriptor instead.
+func (*UpdateOnboardRuleRequest) Descriptor() ([]byte, []int) {
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{43}
+}
+
+func (x *UpdateOnboardRuleRequest) GetId() int32 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *UpdateOnboardRuleRequest) GetAction() string {
+	if x != nil {
+		return x.Action
+	}
+	return ""
+}
+
+func (x *UpdateOnboardRuleRequest) GetPriority() int32 {
+	if x != nil {
+		return x.Priority
+	}
+	return 0
+}
+
+func (x *UpdateOnboardRuleRequest) GetRoles() []string {
+	if x != nil {
+		return x.Roles
+	}
+	return nil
+}
+
+func (x *UpdateOnboardRuleRequest) GetSudo() bool {
+	if x != nil {
+		return x.Sudo
+	}
+	return false
+}
+
+func (x *UpdateOnboardRuleRequest) GetNote() string {
+	if x != nil {
+		return x.Note
+	}
+	return ""
+}
+
+// DeleteOnboardRuleRequest identifies the onboard rule to remove by id.
+type DeleteOnboardRuleRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteOnboardRuleRequest) Reset() {
+	*x = DeleteOnboardRuleRequest{}
+	mi := &file_identity_v1_types_proto_msgTypes[44]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteOnboardRuleRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteOnboardRuleRequest) ProtoMessage() {}
+
+func (x *DeleteOnboardRuleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_types_proto_msgTypes[44]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteOnboardRuleRequest.ProtoReflect.Descriptor instead.
+func (*DeleteOnboardRuleRequest) Descriptor() ([]byte, []int) {
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{44}
+}
+
+func (x *DeleteOnboardRuleRequest) GetId() int32 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+// DeleteOnboardRuleResponse indicates whether the deletion was successful.
+type DeleteOnboardRuleResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteOnboardRuleResponse) Reset() {
+	*x = DeleteOnboardRuleResponse{}
+	mi := &file_identity_v1_types_proto_msgTypes[45]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteOnboardRuleResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteOnboardRuleResponse) ProtoMessage() {}
+
+func (x *DeleteOnboardRuleResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_types_proto_msgTypes[45]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteOnboardRuleResponse.ProtoReflect.Descriptor instead.
+func (*DeleteOnboardRuleResponse) Descriptor() ([]byte, []int) {
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{45}
+}
+
+func (x *DeleteOnboardRuleResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+// GetOnboardRulesQuerySchemaRequest carries no fields today. Left as a
+// message rather than google.protobuf.Empty so parameters can be added
+// later without changing the RPC signature.
+type GetOnboardRulesQuerySchemaRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetOnboardRulesQuerySchemaRequest) Reset() {
+	*x = GetOnboardRulesQuerySchemaRequest{}
+	mi := &file_identity_v1_types_proto_msgTypes[46]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetOnboardRulesQuerySchemaRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetOnboardRulesQuerySchemaRequest) ProtoMessage() {}
+
+func (x *GetOnboardRulesQuerySchemaRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_types_proto_msgTypes[46]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetOnboardRulesQuerySchemaRequest.ProtoReflect.Descriptor instead.
+func (*GetOnboardRulesQuerySchemaRequest) Descriptor() ([]byte, []int) {
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{46}
+}
+
+// QueryOnboardRulesRequest carries a generic query against the fields
+// advertised by GetOnboardRulesQuerySchema. A frontend renders the pending
+// approval queue by filtering action = "waitlist", and manages standing
+// rules with any other filter — there is no separate "list waitlist" RPC.
+type QueryOnboardRulesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Query         *v11.Payload           `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *QueryOnboardRulesRequest) Reset() {
+	*x = QueryOnboardRulesRequest{}
+	mi := &file_identity_v1_types_proto_msgTypes[47]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QueryOnboardRulesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QueryOnboardRulesRequest) ProtoMessage() {}
+
+func (x *QueryOnboardRulesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_types_proto_msgTypes[47]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QueryOnboardRulesRequest.ProtoReflect.Descriptor instead.
+func (*QueryOnboardRulesRequest) Descriptor() ([]byte, []int) {
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{47}
+}
+
+func (x *QueryOnboardRulesRequest) GetQuery() *v11.Payload {
+	if x != nil {
+		return x.Query
+	}
+	return nil
+}
+
+// ApproveOnboardRuleRequest identifies a pending onboard rule by id to
+// approve, flipping its action to "allow". decided_by records who approved
+// it (the caller's identity isn't otherwise available server-side).
+type ApproveOnboardRuleRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	DecidedBy     string                 `protobuf:"bytes,2,opt,name=decided_by,json=decidedBy,proto3" json:"decided_by,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ApproveOnboardRuleRequest) Reset() {
+	*x = ApproveOnboardRuleRequest{}
+	mi := &file_identity_v1_types_proto_msgTypes[48]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ApproveOnboardRuleRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ApproveOnboardRuleRequest) ProtoMessage() {}
+
+func (x *ApproveOnboardRuleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_types_proto_msgTypes[48]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ApproveOnboardRuleRequest.ProtoReflect.Descriptor instead.
+func (*ApproveOnboardRuleRequest) Descriptor() ([]byte, []int) {
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{48}
+}
+
+func (x *ApproveOnboardRuleRequest) GetId() int32 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *ApproveOnboardRuleRequest) GetDecidedBy() string {
+	if x != nil {
+		return x.DecidedBy
+	}
+	return ""
+}
+
+// RejectOnboardRuleRequest identifies a pending onboard rule by id to
+// reject, flipping its action to "reject". decided_by records who rejected
+// it; note is an optional reason recorded on the row.
+type RejectOnboardRuleRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	DecidedBy     string                 `protobuf:"bytes,2,opt,name=decided_by,json=decidedBy,proto3" json:"decided_by,omitempty"`
+	Note          string                 `protobuf:"bytes,3,opt,name=note,proto3" json:"note,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RejectOnboardRuleRequest) Reset() {
+	*x = RejectOnboardRuleRequest{}
+	mi := &file_identity_v1_types_proto_msgTypes[49]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RejectOnboardRuleRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RejectOnboardRuleRequest) ProtoMessage() {}
+
+func (x *RejectOnboardRuleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_types_proto_msgTypes[49]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RejectOnboardRuleRequest.ProtoReflect.Descriptor instead.
+func (*RejectOnboardRuleRequest) Descriptor() ([]byte, []int) {
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{49}
+}
+
+func (x *RejectOnboardRuleRequest) GetId() int32 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *RejectOnboardRuleRequest) GetDecidedBy() string {
+	if x != nil {
+		return x.DecidedBy
+	}
+	return ""
+}
+
+func (x *RejectOnboardRuleRequest) GetNote() string {
+	if x != nil {
+		return x.Note
+	}
+	return ""
+}
+
 // UserAuthKeysRequest carries a username and one or more SSH public keys to register.
 type UserAuthKeysRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -2189,7 +2914,7 @@ type UserAuthKeysRequest struct {
 
 func (x *UserAuthKeysRequest) Reset() {
 	*x = UserAuthKeysRequest{}
-	mi := &file_identity_v1_types_proto_msgTypes[40]
+	mi := &file_identity_v1_types_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2201,7 +2926,7 @@ func (x *UserAuthKeysRequest) String() string {
 func (*UserAuthKeysRequest) ProtoMessage() {}
 
 func (x *UserAuthKeysRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[40]
+	mi := &file_identity_v1_types_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2214,7 +2939,7 @@ func (x *UserAuthKeysRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserAuthKeysRequest.ProtoReflect.Descriptor instead.
 func (*UserAuthKeysRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{40}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *UserAuthKeysRequest) GetUsername() string {
@@ -2244,7 +2969,7 @@ type UserAuthKey struct {
 
 func (x *UserAuthKey) Reset() {
 	*x = UserAuthKey{}
-	mi := &file_identity_v1_types_proto_msgTypes[41]
+	mi := &file_identity_v1_types_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2256,7 +2981,7 @@ func (x *UserAuthKey) String() string {
 func (*UserAuthKey) ProtoMessage() {}
 
 func (x *UserAuthKey) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[41]
+	mi := &file_identity_v1_types_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2269,7 +2994,7 @@ func (x *UserAuthKey) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserAuthKey.ProtoReflect.Descriptor instead.
 func (*UserAuthKey) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{41}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *UserAuthKey) GetKey() string {
@@ -2296,7 +3021,7 @@ type ListUserAuthKeysResponse struct {
 
 func (x *ListUserAuthKeysResponse) Reset() {
 	*x = ListUserAuthKeysResponse{}
-	mi := &file_identity_v1_types_proto_msgTypes[42]
+	mi := &file_identity_v1_types_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2308,7 +3033,7 @@ func (x *ListUserAuthKeysResponse) String() string {
 func (*ListUserAuthKeysResponse) ProtoMessage() {}
 
 func (x *ListUserAuthKeysResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[42]
+	mi := &file_identity_v1_types_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2321,7 +3046,7 @@ func (x *ListUserAuthKeysResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListUserAuthKeysResponse.ProtoReflect.Descriptor instead.
 func (*ListUserAuthKeysResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{42}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *ListUserAuthKeysResponse) GetAuthKeys() []*UserAuthKey {
@@ -2354,7 +3079,7 @@ type AccessTokenInfo struct {
 
 func (x *AccessTokenInfo) Reset() {
 	*x = AccessTokenInfo{}
-	mi := &file_identity_v1_types_proto_msgTypes[43]
+	mi := &file_identity_v1_types_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2366,7 +3091,7 @@ func (x *AccessTokenInfo) String() string {
 func (*AccessTokenInfo) ProtoMessage() {}
 
 func (x *AccessTokenInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[43]
+	mi := &file_identity_v1_types_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2379,7 +3104,7 @@ func (x *AccessTokenInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AccessTokenInfo.ProtoReflect.Descriptor instead.
 func (*AccessTokenInfo) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{43}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *AccessTokenInfo) GetId() int64 {
@@ -2578,7 +3303,64 @@ const file_identity_v1_types_proto_rawDesc = "" +
 	"\x19DeleteOrganizationRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\"6\n" +
 	"\x1aDeleteOrganizationResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"N\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xb7\x04\n" +
+	"\vOnboardRule\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x10\n" +
+	"\x03idp\x18\x02 \x01(\tR\x03idp\x12)\n" +
+	"\x10username_pattern\x18\x03 \x01(\tR\x0fusernamePattern\x12\x10\n" +
+	"\x03org\x18\x04 \x01(\tR\x03org\x12\x16\n" +
+	"\x06action\x18\x05 \x01(\tR\x06action\x12\x1a\n" +
+	"\bpriority\x18\x06 \x01(\x05R\bpriority\x12\x16\n" +
+	"\x06status\x18\x11 \x01(\tR\x06status\x12\x14\n" +
+	"\x05roles\x18\a \x03(\tR\x05roles\x12\x12\n" +
+	"\x04sudo\x18\b \x01(\bR\x04sudo\x12\x1a\n" +
+	"\bfullname\x18\t \x01(\tR\bfullname\x12\x14\n" +
+	"\x05email\x18\n" +
+	" \x01(\tR\x05email\x12\x12\n" +
+	"\x04note\x18\v \x01(\tR\x04note\x12=\n" +
+	"\frequested_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\vrequestedAt\x129\n" +
+	"\n" +
+	"decided_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tdecidedAt\x12\x1d\n" +
+	"\n" +
+	"decided_by\x18\x0e \x01(\tR\tdecidedBy\x129\n" +
+	"\n" +
+	"created_at\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"\n" +
+	"updated_at\x18\x10 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"A\n" +
+	"\x0fOnboardRuleList\x12.\n" +
+	"\x05rules\x18\x01 \x03(\v2\x18.identity.v1.OnboardRuleR\x05rules\"\xdb\x01\n" +
+	"\x18CreateOnboardRuleRequest\x12\x10\n" +
+	"\x03idp\x18\x01 \x01(\tR\x03idp\x12)\n" +
+	"\x10username_pattern\x18\x02 \x01(\tR\x0fusernamePattern\x12\x10\n" +
+	"\x03org\x18\x03 \x01(\tR\x03org\x12\x16\n" +
+	"\x06action\x18\x04 \x01(\tR\x06action\x12\x1a\n" +
+	"\bpriority\x18\x05 \x01(\x05R\bpriority\x12\x14\n" +
+	"\x05roles\x18\x06 \x03(\tR\x05roles\x12\x12\n" +
+	"\x04sudo\x18\a \x01(\bR\x04sudo\x12\x12\n" +
+	"\x04note\x18\b \x01(\tR\x04note\"\x9c\x01\n" +
+	"\x18UpdateOnboardRuleRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x16\n" +
+	"\x06action\x18\x02 \x01(\tR\x06action\x12\x1a\n" +
+	"\bpriority\x18\x03 \x01(\x05R\bpriority\x12\x14\n" +
+	"\x05roles\x18\x04 \x03(\tR\x05roles\x12\x12\n" +
+	"\x04sudo\x18\x05 \x01(\bR\x04sudo\x12\x12\n" +
+	"\x04note\x18\x06 \x01(\tR\x04note\"*\n" +
+	"\x18DeleteOnboardRuleRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x05R\x02id\"5\n" +
+	"\x19DeleteOnboardRuleResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"#\n" +
+	"!GetOnboardRulesQuerySchemaRequest\"C\n" +
+	"\x18QueryOnboardRulesRequest\x12'\n" +
+	"\x05query\x18\x01 \x01(\v2\x11.query.v1.PayloadR\x05query\"J\n" +
+	"\x19ApproveOnboardRuleRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x1d\n" +
+	"\n" +
+	"decided_by\x18\x02 \x01(\tR\tdecidedBy\"]\n" +
+	"\x18RejectOnboardRuleRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x1d\n" +
+	"\n" +
+	"decided_by\x18\x02 \x01(\tR\tdecidedBy\x12\x12\n" +
+	"\x04note\x18\x03 \x01(\tR\x04note\"N\n" +
 	"\x13UserAuthKeysRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\x1b\n" +
 	"\tauth_keys\x18\x02 \x03(\tR\bauthKeys\"7\n" +
@@ -2613,7 +3395,7 @@ func file_identity_v1_types_proto_rawDescGZIP() []byte {
 	return file_identity_v1_types_proto_rawDescData
 }
 
-var file_identity_v1_types_proto_msgTypes = make([]protoimpl.MessageInfo, 44)
+var file_identity_v1_types_proto_msgTypes = make([]protoimpl.MessageInfo, 54)
 var file_identity_v1_types_proto_goTypes = []any{
 	(*Username)(nil),                           // 0: identity.v1.Username
 	(*UserStr)(nil),                            // 1: identity.v1.UserStr
@@ -2655,36 +3437,52 @@ var file_identity_v1_types_proto_goTypes = []any{
 	(*UpdateOrganizationRequest)(nil),          // 37: identity.v1.UpdateOrganizationRequest
 	(*DeleteOrganizationRequest)(nil),          // 38: identity.v1.DeleteOrganizationRequest
 	(*DeleteOrganizationResponse)(nil),         // 39: identity.v1.DeleteOrganizationResponse
-	(*UserAuthKeysRequest)(nil),                // 40: identity.v1.UserAuthKeysRequest
-	(*UserAuthKey)(nil),                        // 41: identity.v1.UserAuthKey
-	(*ListUserAuthKeysResponse)(nil),           // 42: identity.v1.ListUserAuthKeysResponse
-	(*AccessTokenInfo)(nil),                    // 43: identity.v1.AccessTokenInfo
-	(*v1.User)(nil),                            // 44: common.v1.User
-	(*v11.Payload)(nil),                        // 45: query.v1.Payload
-	(*timestamppb.Timestamp)(nil),              // 46: google.protobuf.Timestamp
-	(*wrapperspb.StringValue)(nil),             // 47: google.protobuf.StringValue
+	(*OnboardRule)(nil),                        // 40: identity.v1.OnboardRule
+	(*OnboardRuleList)(nil),                    // 41: identity.v1.OnboardRuleList
+	(*CreateOnboardRuleRequest)(nil),           // 42: identity.v1.CreateOnboardRuleRequest
+	(*UpdateOnboardRuleRequest)(nil),           // 43: identity.v1.UpdateOnboardRuleRequest
+	(*DeleteOnboardRuleRequest)(nil),           // 44: identity.v1.DeleteOnboardRuleRequest
+	(*DeleteOnboardRuleResponse)(nil),          // 45: identity.v1.DeleteOnboardRuleResponse
+	(*GetOnboardRulesQuerySchemaRequest)(nil),  // 46: identity.v1.GetOnboardRulesQuerySchemaRequest
+	(*QueryOnboardRulesRequest)(nil),           // 47: identity.v1.QueryOnboardRulesRequest
+	(*ApproveOnboardRuleRequest)(nil),          // 48: identity.v1.ApproveOnboardRuleRequest
+	(*RejectOnboardRuleRequest)(nil),           // 49: identity.v1.RejectOnboardRuleRequest
+	(*UserAuthKeysRequest)(nil),                // 50: identity.v1.UserAuthKeysRequest
+	(*UserAuthKey)(nil),                        // 51: identity.v1.UserAuthKey
+	(*ListUserAuthKeysResponse)(nil),           // 52: identity.v1.ListUserAuthKeysResponse
+	(*AccessTokenInfo)(nil),                    // 53: identity.v1.AccessTokenInfo
+	(*v1.User)(nil),                            // 54: common.v1.User
+	(*v11.Payload)(nil),                        // 55: query.v1.Payload
+	(*timestamppb.Timestamp)(nil),              // 56: google.protobuf.Timestamp
+	(*wrapperspb.StringValue)(nil),             // 57: google.protobuf.StringValue
 }
 var file_identity_v1_types_proto_depIdxs = []int32{
-	44, // 0: identity.v1.UserList.users:type_name -> common.v1.User
-	45, // 1: identity.v1.QueryUsersRequest.query:type_name -> query.v1.Payload
-	44, // 2: identity.v1.GetUsersResponse.users:type_name -> common.v1.User
-	44, // 3: identity.v1.AuthUserResponse.user:type_name -> common.v1.User
-	46, // 4: identity.v1.Role.created_at:type_name -> google.protobuf.Timestamp
+	54, // 0: identity.v1.UserList.users:type_name -> common.v1.User
+	55, // 1: identity.v1.QueryUsersRequest.query:type_name -> query.v1.Payload
+	54, // 2: identity.v1.GetUsersResponse.users:type_name -> common.v1.User
+	54, // 3: identity.v1.AuthUserResponse.user:type_name -> common.v1.User
+	56, // 4: identity.v1.Role.created_at:type_name -> google.protobuf.Timestamp
 	21, // 5: identity.v1.RoleList.roles:type_name -> identity.v1.Role
-	47, // 6: identity.v1.UpdateRoleRequest.description:type_name -> google.protobuf.StringValue
-	46, // 7: identity.v1.Organization.created_at:type_name -> google.protobuf.Timestamp
+	57, // 6: identity.v1.UpdateRoleRequest.description:type_name -> google.protobuf.StringValue
+	56, // 7: identity.v1.Organization.created_at:type_name -> google.protobuf.Timestamp
 	30, // 8: identity.v1.OrganizationList.organizations:type_name -> identity.v1.Organization
-	45, // 9: identity.v1.QueryOrganizationsRequest.query:type_name -> query.v1.Payload
-	47, // 10: identity.v1.UpdateOrganizationRequest.description:type_name -> google.protobuf.StringValue
-	41, // 11: identity.v1.ListUserAuthKeysResponse.auth_keys:type_name -> identity.v1.UserAuthKey
-	46, // 12: identity.v1.AccessTokenInfo.expires_at:type_name -> google.protobuf.Timestamp
-	46, // 13: identity.v1.AccessTokenInfo.created_at:type_name -> google.protobuf.Timestamp
-	46, // 14: identity.v1.AccessTokenInfo.last_used_at:type_name -> google.protobuf.Timestamp
-	15, // [15:15] is the sub-list for method output_type
-	15, // [15:15] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	55, // 9: identity.v1.QueryOrganizationsRequest.query:type_name -> query.v1.Payload
+	57, // 10: identity.v1.UpdateOrganizationRequest.description:type_name -> google.protobuf.StringValue
+	56, // 11: identity.v1.OnboardRule.requested_at:type_name -> google.protobuf.Timestamp
+	56, // 12: identity.v1.OnboardRule.decided_at:type_name -> google.protobuf.Timestamp
+	56, // 13: identity.v1.OnboardRule.created_at:type_name -> google.protobuf.Timestamp
+	56, // 14: identity.v1.OnboardRule.updated_at:type_name -> google.protobuf.Timestamp
+	40, // 15: identity.v1.OnboardRuleList.rules:type_name -> identity.v1.OnboardRule
+	55, // 16: identity.v1.QueryOnboardRulesRequest.query:type_name -> query.v1.Payload
+	51, // 17: identity.v1.ListUserAuthKeysResponse.auth_keys:type_name -> identity.v1.UserAuthKey
+	56, // 18: identity.v1.AccessTokenInfo.expires_at:type_name -> google.protobuf.Timestamp
+	56, // 19: identity.v1.AccessTokenInfo.created_at:type_name -> google.protobuf.Timestamp
+	56, // 20: identity.v1.AccessTokenInfo.last_used_at:type_name -> google.protobuf.Timestamp
+	21, // [21:21] is the sub-list for method output_type
+	21, // [21:21] is the sub-list for method input_type
+	21, // [21:21] is the sub-list for extension type_name
+	21, // [21:21] is the sub-list for extension extendee
+	0,  // [0:21] is the sub-list for field type_name
 }
 
 func init() { file_identity_v1_types_proto_init() }
@@ -2698,7 +3496,7 @@ func file_identity_v1_types_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_identity_v1_types_proto_rawDesc), len(file_identity_v1_types_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   44,
+			NumMessages:   54,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
