@@ -30,7 +30,7 @@ type CapabilityContext struct {
 	ResourceOwner string
 
 	// IDP and Org are ResourceOwner's real identity source and organization,
-	// required by user:onboard, user:auth, and used by user:create/delete.
+	// required by user:auth, and used by user:create/delete.
 	// Leave empty when unknown (e.g. ResourceOwner doesn't exist yet) — the
 	// affected Build funcs then fail Validate() and the check is reported as
 	// unevaluated rather than answered against a fabricated identity.
@@ -64,8 +64,7 @@ type CapabilityCheck struct {
 
 	// SelfOnly marks an action whose contract only makes sense when the
 	// subject is the resource itself — user:auth (you can only authenticate
-	// as yourself) and user:onboard (onboarding is bootstrapping your own
-	// account). Callers building a report for a resource owner other than
+	// as yourself). Callers building a report for a resource owner other than
 	// the subject should skip SelfOnly checks entirely: there is no honest
 	// answer to "can Z authenticate as X" for Z != X.
 	SelfOnly bool

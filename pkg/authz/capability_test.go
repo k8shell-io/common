@@ -19,7 +19,8 @@ import (
 // report silently going out of sync with the contracts.
 var expectedCapabilityActions = []string{
 	"user:list",
-	"user:onboard",
+	"user:exists:username",
+	"user:exists:email",
 	"user:create",
 	"user:delete",
 	"user:auth:web",
@@ -127,7 +128,6 @@ func TestCapabilityCheckBuildable(t *testing.T) {
 // accidental one.
 func TestCapabilityCheckSelfOnly(t *testing.T) {
 	wantSelfOnly := map[string]bool{
-		"user:onboard":           true,
 		"user:auth:web":          true,
 		"user:auth:ssh":          true,
 		"user:list":              true,

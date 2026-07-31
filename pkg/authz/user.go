@@ -3,26 +3,6 @@
 
 package authz
 
-// Contract: user:onboard
-//
-// Resource  type="user"
-//   id   username               (required)
-//   idp  identity provider name (required)
-//   org  organization name      (optional)
-//
-// Context   (none)
-//
-// Subject   injected by the backend from JWT claims (username, roles, email, ...)
-//
-// Obligations
-//   sudo  true | false
-//   roles JSON array of role name strings  (e.g. ["admin","dev"])
-//
-//   Blueprint access is not a direct obligation here — it's derived from
-//   whichever roles are granted (see Role.blueprints).
-//
-// ---
-//
 // Contract: user:create
 //
 // Resource  type="user"
@@ -34,10 +14,8 @@ package authz
 //
 // Subject   the ADMIN performing the creation, injected by the backend from
 //           JWT claims (username, roles, email, ...) — NOT the new user being
-//           created, who has no token yet. This differs from user:onboard,
-//           where subject and resource are the same person (a user onboarding
-//           themselves), and from user:onboard's idp attribute, which doesn't
-//           apply here since the new user has no backing identity provider.
+//           created, who has no token yet, and who has no backing identity
+//           provider either, unlike an SSO-onboarded user.
 //
 // Obligations
 //   sudo  true | false
@@ -103,6 +81,25 @@ package authz
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
 // Obligations  (none) — allow/deny only
+//
+// ---
+//
+// Contract: user:exists
+//
+// Resource  type="user"
+//   id   (none) — the check targets an arbitrary, possibly nonexistent,
+//        username or email supplied by the caller, not a record the subject
+//        already has standing to act on.
+//
+// Context
+//   field  username | email (required) — which identifier is being checked,
+//          mirroring FindUserRequest's "exactly one of username or email"
+//          contract on the identity side.
+//
+// Subject   injected by the backend from JWT claims (username, roles, email, ...)
+//
+// Obligations  (none) — allow/deny only. The response this backs only ever
+//   reveals whether the identifier is taken, never who owns it.
 //
 // ---
 //
@@ -343,100 +340,14 @@ func validateUserResource(r UserResource) error {
 	return nil
 }
 
-// UserOnboardEvalRequest is the validated, typed model for user:onboard policy
-// evaluation. Use NewUserOnboardEvalRequest to start building, then chain With*
-// methods and call Build to get a validated instance.
-type UserOnboardEvalRequest struct {
-	Resource UserResource
-}
-
-var _ EvalRequest = (*UserOnboardEvalRequest)(nil)
-
-// NewUserOnboardEvalRequest begins building a UserOnboardEvalRequest for the
-// given username. Chain With* methods to supply additional fields, then call
-// Build to validate and obtain the final struct.
-func NewUserOnboardEvalRequest(username string) *UserOnboardEvalRequest {
-	return &UserOnboardEvalRequest{
-		Resource: UserResource{ID: username},
-	}
-}
-
-// WithIDP sets the identity provider name on the resource.
-func (r *UserOnboardEvalRequest) WithIDP(idp string) *UserOnboardEvalRequest {
-	r.Resource.IDP = idp
-	return r
-}
-
-// WithOrg sets the organization on the resource.
-func (r *UserOnboardEvalRequest) WithOrg(org string) *UserOnboardEvalRequest {
-	r.Resource.Org = org
-	return r
-}
-
-// Build validates the request and returns it if all constraints are satisfied.
-// It is the required terminator for the builder chain.
-func (r *UserOnboardEvalRequest) Build() (*UserOnboardEvalRequest, error) {
-	if err := r.Validate(); err != nil {
-		return nil, err
-	}
-	return r, nil
-}
-
-// ToProto serializes the typed request into a gRPC EvaluateRequest, attaching
-// the supplied JWT token.
-// Implements EvalRequest.
-func (r *UserOnboardEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
-	return &authzv1.EvaluateRequest{
-		Token:  token,
-		Action: "user:onboard",
-		Resource: &authzv1.Resource{
-			Type:       "user",
-			Id:         r.Resource.ID,
-			Attributes: userResourceToAttrs(r.Resource),
-		},
-	}
-}
-
-// UserOnboardEvalRequestFromProto converts a gRPC EvaluateRequest into a
-// validated UserOnboardEvalRequest. Returns an error if the request does not
-// conform to the user:onboard contract.
-func UserOnboardEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserOnboardEvalRequest, error) {
-	if req == nil {
-		return nil, fmt.Errorf("user:onboard: EvaluateRequest is nil")
-	}
-	if req.Action != "user:onboard" {
-		return nil, fmt.Errorf("user:onboard: action must be \"user:onboard\", got %q", req.Action)
-	}
-	if req.Resource == nil {
-		return nil, fmt.Errorf("user:onboard: resource is nil")
-	}
-	if req.Resource.Type != "user" {
-		return nil, fmt.Errorf("user:onboard: resource type must be \"user\", got %q", req.Resource.Type)
-	}
-	r := &UserOnboardEvalRequest{
-		Resource: userResourceFromAttrs(req.Resource.Id, req.Resource.Attributes),
-	}
-	if err := r.Validate(); err != nil {
-		return nil, err
-	}
-	return r, nil
-}
-
-// Validate checks the request against the user:onboard contract.
-// Implements EvalRequest.
-func (r *UserOnboardEvalRequest) Validate() error {
-	return validateUserResource(r.Resource)
-}
-
 // UserCreateEvalRequest is the validated, typed model for user:create policy
 // evaluation. Use NewUserCreateEvalRequest to start building, then chain
 // With* methods and call Build to get a validated instance.
 //
-// user:create authorizes an admin to create a brand-new local user record --
-// one with no backing identity provider, unlike user:onboard. The acting
-// principal is the admin performing the creation, not the new user, so
-// callers evaluate this with the admin's own token rather than one issued
-// for the user being created.
+// user:create authorizes an admin to create a brand-new local user record
+// with no backing identity provider. The acting principal is the admin
+// performing the creation, not the new user, so callers evaluate this with
+// the admin's own token rather than one issued for the user being created.
 type UserCreateEvalRequest struct {
 	Resource UserResource
 }
@@ -802,6 +713,94 @@ func (r *UserReadEvalRequest) Validate() error {
 		return fmt.Errorf("user:read: %w", err)
 	}
 	return nil
+}
+
+// UserExistsField identifies which identifier user:exists is checking.
+type UserExistsField string
+
+const (
+	UserExistsFieldUsername UserExistsField = "username"
+	UserExistsFieldEmail    UserExistsField = "email"
+)
+
+// validateUserExistsField checks the field valid for user:exists.
+func validateUserExistsField(f UserExistsField) error {
+	switch f {
+	case UserExistsFieldUsername, UserExistsFieldEmail:
+		return nil
+	default:
+		return fmt.Errorf("user:exists: context \"field\" must be %q or %q, got %q",
+			UserExistsFieldUsername, UserExistsFieldEmail, f)
+	}
+}
+
+// UserExistsEvalRequest is the validated, typed model for user:exists policy
+// evaluation. No resource id is required — the check targets an arbitrary,
+// possibly nonexistent, username or email supplied by the caller, not a
+// record the subject already has standing to act on.
+type UserExistsEvalRequest struct {
+	Field UserExistsField
+}
+
+var _ EvalRequest = (*UserExistsEvalRequest)(nil)
+
+// NewUserExistsEvalRequest begins building a UserExistsEvalRequest for the
+// given field. Call Build to validate and obtain the final struct.
+func NewUserExistsEvalRequest(field UserExistsField) *UserExistsEvalRequest {
+	return &UserExistsEvalRequest{Field: field}
+}
+
+// Build validates the request and returns it if all constraints are satisfied.
+// It is the required terminator for the builder chain.
+func (r *UserExistsEvalRequest) Build() (*UserExistsEvalRequest, error) {
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// ToProto serializes the typed request into a gRPC EvaluateRequest, attaching
+// the supplied JWT token.
+// Implements EvalRequest.
+func (r *UserExistsEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
+	return &authzv1.EvaluateRequest{
+		Token:  token,
+		Action: "user:exists",
+		Resource: &authzv1.Resource{
+			Type: "user",
+		},
+		Context: map[string]string{"field": string(r.Field)},
+	}
+}
+
+// UserExistsEvalRequestFromProto converts a gRPC EvaluateRequest into a
+// validated UserExistsEvalRequest.
+func UserExistsEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserExistsEvalRequest, error) {
+	if req == nil {
+		return nil, fmt.Errorf("user:exists: EvaluateRequest is nil")
+	}
+	if req.Action != "user:exists" {
+		return nil, fmt.Errorf("user:exists: action must be \"user:exists\", got %q", req.Action)
+	}
+	if req.Resource == nil {
+		return nil, fmt.Errorf("user:exists: resource is nil")
+	}
+	if req.Resource.Type != "user" {
+		return nil, fmt.Errorf("user:exists: resource type must be \"user\", got %q", req.Resource.Type)
+	}
+	r := &UserExistsEvalRequest{
+		Field: UserExistsField(req.Context["field"]),
+	}
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// Validate checks the request against the user:exists contract.
+// Implements EvalRequest.
+func (r *UserExistsEvalRequest) Validate() error {
+	return validateUserExistsField(r.Field)
 }
 
 // UserListEvalRequest is the validated, typed model for user:list policy
@@ -1369,7 +1368,7 @@ func ParseExpiresInObligation(obligations map[string]string) (ExpiresInObligatio
 const (
 	// ObligationKeySudo is the key the policy engine writes when expressing a
 	// sudo obligation. The enforcer reads this key and applies the value to the
-	// user record before completing onboarding or admin-driven creation.
+	// user record before completing admin-driven creation.
 	ObligationKeySudo = "sudo"
 
 	// ObligationSudoTrue is the obligation value that grants sudo access.
@@ -1380,8 +1379,7 @@ const (
 )
 
 // SudoObligation is the typed representation of the "sudo" obligation key
-// returned by the policy engine in a PolicyResult for user:onboard or
-// user:create.
+// returned by the policy engine in a PolicyResult for user:create.
 type SudoObligation struct {
 	// Granted is true when the policy grants sudo access, false when it denies it.
 	Granted bool
@@ -1401,14 +1399,13 @@ func ParseSudoObligation(obligations map[string]string) (SudoObligation, bool) {
 
 const (
 	// ObligationKeyRoles is the key the policy engine writes to assign roles
-	// during onboarding or admin-driven creation. The value is a JSON-encoded
-	// array of role name strings.
+	// during admin-driven creation. The value is a JSON-encoded array of role
+	// name strings.
 	ObligationKeyRoles = "roles"
 )
 
 // RolesObligation is the typed representation of the "roles" obligation key
-// returned by the policy engine in a PolicyResult for user:onboard or
-// user:create.
+// returned by the policy engine in a PolicyResult for user:create.
 type RolesObligation struct {
 	// Roles is the list of roles the policy assigns to the user.
 	Roles []models.Role
@@ -1438,15 +1435,15 @@ func ParseRolesObligation(obligations map[string]string) (RolesObligation, bool)
 
 const (
 	// ObligationKeyBlueprints is the key the policy engine writes to assign
-	// allowed blueprints during onboarding or admin-driven creation. The value
-	// is a comma-separated list of blueprint names; "*" grants access to all
+	// allowed blueprints during admin-driven creation. The value is a
+	// comma-separated list of blueprint names; "*" grants access to all
 	// blueprints.
 	ObligationKeyBlueprints = "blueprints"
 )
 
 // BlueprintsObligation is the typed representation of the "blueprints"
 // obligation key returned by the policy engine in a PolicyResult for
-// user:onboard or user:create.
+// user:create.
 type BlueprintsObligation struct {
 	// Blueprints is the list of blueprint names the policy assigns to the user.
 	// An entry of "*" grants access to all blueprints.
@@ -1511,13 +1508,15 @@ func init() {
 		},
 		SelfOnly: true,
 	})
-	registerCapabilityCheck(CapabilityCheck{
-		Action: "user:onboard", Package: "user", Scope: "user:onboard",
-		Build: func(ctx CapabilityContext) (EvalRequest, error) {
-			return NewUserOnboardEvalRequest(ctx.ResourceOwner).WithIDP(ctx.IDP).WithOrg(ctx.Org).Build()
-		},
-		SelfOnly: true,
-	})
+	for _, field := range []UserExistsField{UserExistsFieldUsername, UserExistsFieldEmail} {
+		action := "user:exists:" + string(field)
+		registerCapabilityCheck(CapabilityCheck{
+			Action: action, Package: "user", Scope: action,
+			Build: func(ctx CapabilityContext) (EvalRequest, error) {
+				return NewUserExistsEvalRequest(field).Build()
+			},
+		})
+	}
 	registerCapabilityCheck(CapabilityCheck{
 		Action: "user:create", Package: "user", Scope: "user:create",
 		Build: func(ctx CapabilityContext) (EvalRequest, error) {
