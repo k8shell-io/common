@@ -96,15 +96,18 @@ var scopeConstrainablePrefixes = map[string]struct{}{
 	// explicit target is given — see workspace:list's contract for the
 	// owner-optional listing scope). "self" is meaningful whenever that
 	// target is the token's own subject.
-	"workspace":           {}, // enables "workspace:*:self"
-	"workspace:provision": {},
-	"workspace:create":    {},
-	"workspace:read":      {},
-	"workspace:delete":    {},
-	"workspace:files":     {},
-	"workspace:connect":   {}, // webshell | webfiles | portforward
-	"workspace:app":       {}, // read | install | start | stop
-	"workspace:list":      {},
+	//
+	// (no "workspace:provision" entry — that action is evaluated by the
+	// Provisioner service, not through any api-server request path, so no PAT
+	// scope check ever consumes it; see validExactScopes.)
+	"workspace":         {}, // enables "workspace:*:self"
+	"workspace:create":  {},
+	"workspace:read":    {},
+	"workspace:delete":  {},
+	"workspace:files":   {},
+	"workspace:connect": {}, // webshell | webfiles | portforward
+	"workspace:app":     {}, // read | install | start | stop
+	"workspace:list":    {},
 
 	// session:list — same reasoning as workspace:list: the API server sets
 	// the owner attribute to the actual queried username, so "self" is
@@ -116,6 +119,10 @@ var scopeConstrainablePrefixes = map[string]struct{}{
 	// token:read/create/write/delete — the resource ID is always the
 	// username who owns the token(s) being acted on, so "self" is meaningful
 	// whenever that's the token's own subject (a token managing itself).
+	// Every action in the domain qualifies, so the bare "token" entry is
+	// included too, enabling "token:*:self" (a token that can fully manage
+	// only its own owner's other tokens).
+	"token":        {}, // enables "token:*:self"
 	"token:read":   {},
 	"token:create": {},
 	"token:write":  {},
@@ -151,12 +158,16 @@ func scopeConstrainable(prefix string) bool {
 // session:start, ssh:shell, …), the 2-segment string is the entry.
 var validExactScopes = map[string]struct{}{
 	// workspace — flat
-	string(WorkspaceActionProvision): {},
-	string(WorkspaceActionList):      {},
-	string(WorkspaceActionCreate):    {},
-	string(WorkspaceActionRead):      {},
-	string(WorkspaceActionDelete):    {},
-	string(WorkspaceActionFiles):     {},
+	//
+	// (no WorkspaceActionProvision entry — the api-server's only
+	// workspace-creation route evaluates WorkspaceActionCreate, never
+	// WorkspaceActionProvision; that action is checked by the Provisioner
+	// service itself when it runs the job, a path PAT scopes don't reach.)
+	string(WorkspaceActionList):   {},
+	string(WorkspaceActionCreate): {},
+	string(WorkspaceActionRead):   {},
+	string(WorkspaceActionDelete): {},
+	string(WorkspaceActionFiles):  {},
 
 	// workspace:connect — one entry per connect type
 	string(WorkspaceActionConnect) + ":" + string(WorkspaceConnectTypeWebshell):    {},
@@ -227,6 +238,7 @@ var validWildcardPrefixes = map[string]struct{}{
 	"session":           {}, // all session actions
 	"user":              {}, // all user actions
 	"user:read":         {}, // profile | credentials | blueprints | roles | keys
+	"user:write":        {}, // profile | credentials | roles | keys | sudo | locked | org | posix | password
 	"token":             {}, // read | create | write | delete
 	"role":              {}, // list | create | delete
 	"org":               {}, // list | create | delete

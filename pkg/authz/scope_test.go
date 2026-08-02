@@ -11,6 +11,7 @@ func TestValidateScope(t *testing.T) {
 		"user:list",
 		"user:read:profile",
 		"user:read:*",
+		"user:write:*",
 		"user:*",
 		"workspace:connect:webshell",
 		"workspace:connect:*",
@@ -28,7 +29,6 @@ func TestValidateScope(t *testing.T) {
 		"workspace:read:self",
 		"workspace:delete:self",
 		"workspace:create:self",
-		"workspace:provision:self",
 		"workspace:files:self",
 		"workspace:connect:webshell:self",
 		"workspace:connect:*:self",
@@ -37,6 +37,12 @@ func TestValidateScope(t *testing.T) {
 		"workspace:*:self",
 		"workspace:list:self",
 		"session:list:self",
+		// token — every action accepts :self, individually and via the domain wildcard.
+		"token:read:self",
+		"token:create:self",
+		"token:write:self",
+		"token:delete:self",
+		"token:*:self",
 	}
 	for _, s := range valid {
 		if err := ValidateScope(s); err != nil {
@@ -60,6 +66,7 @@ func TestValidateScope(t *testing.T) {
 		"user:write:blueprints:self", // no longer a scope — blueprints are role-derived only
 		"user:write:*:self",          // wildcard can't cover a partial exclusion set
 		"session:start:self",         // not a listing; self is already implicit
+		"workspace:provision:self",   // no longer a scope — provisioning isn't reachable via api-server
 	}
 	for _, s := range invalid {
 		if err := ValidateScope(s); err == nil {
@@ -194,6 +201,32 @@ func TestScopeAllowsConstraint(t *testing.T) {
 			action:    "workspace:list",
 			satisfied: nil,
 			want:      false,
+		},
+		{
+			name:      "token domain wildcard self covers any token action for self",
+			scopes:    []string{"token:*:self"},
+			action:    "token:delete",
+			satisfied: []ScopeConstraint{ScopeConstraintSelf},
+			want:      true,
+		},
+		{
+			name:      "token domain wildcard self denies non-self token action",
+			scopes:    []string{"token:*:self"},
+			action:    "token:delete",
+			satisfied: nil,
+			want:      false,
+		},
+		{
+			name:   "user:write wildcard covers sensitive data types too",
+			scopes: []string{"user:write:*"},
+			action: "user:write:sudo",
+			want:   true,
+		},
+		{
+			name:   "user:write wildcard does not leak to user:read",
+			scopes: []string{"user:write:*"},
+			action: "user:read:profile",
+			want:   false,
 		},
 	}
 	for _, tt := range tests {
