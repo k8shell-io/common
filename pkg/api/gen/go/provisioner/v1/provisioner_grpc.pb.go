@@ -16,6 +16,7 @@ package provisionerv1
 import (
 	context "context"
 	v1 "github.com/k8shell-io/common/pkg/api/gen/go/common/v1"
+	v11 "github.com/k8shell-io/common/pkg/api/gen/go/query/v1"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -30,6 +31,8 @@ const (
 	ProvisionerService_GetWorkspaces_FullMethodName            = "/provisioner.v1.ProvisionerService/GetWorkspaces"
 	ProvisionerService_FindWorkspace_FullMethodName            = "/provisioner.v1.ProvisionerService/FindWorkspace"
 	ProvisionerService_GetWorkspacesByUserStr_FullMethodName   = "/provisioner.v1.ProvisionerService/GetWorkspacesByUserStr"
+	ProvisionerService_GetWorkspacesQuerySchema_FullMethodName = "/provisioner.v1.ProvisionerService/GetWorkspacesQuerySchema"
+	ProvisionerService_QueryWorkspaces_FullMethodName          = "/provisioner.v1.ProvisionerService/QueryWorkspaces"
 	ProvisionerService_GetBlueprints_FullMethodName            = "/provisioner.v1.ProvisionerService/GetBlueprints"
 	ProvisionerService_ProvisionWorkspaceStream_FullMethodName = "/provisioner.v1.ProvisionerService/ProvisionWorkspaceStream"
 	ProvisionerService_DeleteWorkspace_FullMethodName          = "/provisioner.v1.ProvisionerService/DeleteWorkspace"
@@ -53,6 +56,13 @@ type ProvisionerServiceClient interface {
 	FindWorkspace(ctx context.Context, in *FindWorkspaceRequest, opts ...grpc.CallOption) (*v1.WorkspaceDetails, error)
 	// GetWorkspacesByUserStr returns workspaces for the given userstr
 	GetWorkspacesByUserStr(ctx context.Context, in *GetWorkspacesByUserStrRequest, opts ...grpc.CallOption) (*GetWorkspacesResponse, error)
+	// GetWorkspacesQuerySchema returns the query.v1.Descriptor advertising
+	// which workspace fields are queryable/sortable via QueryWorkspaces, and
+	// which operators are valid on each.
+	GetWorkspacesQuerySchema(ctx context.Context, in *GetWorkspacesQuerySchemaRequest, opts ...grpc.CallOption) (*v11.Descriptor, error)
+	// QueryWorkspaces retrieves workspaces matching a generic query.v1.Payload,
+	// as advertised by GetWorkspacesQuerySchema.
+	QueryWorkspaces(ctx context.Context, in *QueryWorkspacesRequest, opts ...grpc.CallOption) (*GetWorkspacesResponse, error)
 	// GetBlueprints returns every blueprint registered in the provisioner,
 	// regardless of user.
 	GetBlueprints(ctx context.Context, in *GetBlueprintsRequest, opts ...grpc.CallOption) (*GetBlueprintsResponse, error)
@@ -110,6 +120,26 @@ func (c *provisionerServiceClient) GetWorkspacesByUserStr(ctx context.Context, i
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetWorkspacesResponse)
 	err := c.cc.Invoke(ctx, ProvisionerService_GetWorkspacesByUserStr_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *provisionerServiceClient) GetWorkspacesQuerySchema(ctx context.Context, in *GetWorkspacesQuerySchemaRequest, opts ...grpc.CallOption) (*v11.Descriptor, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(v11.Descriptor)
+	err := c.cc.Invoke(ctx, ProvisionerService_GetWorkspacesQuerySchema_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *provisionerServiceClient) QueryWorkspaces(ctx context.Context, in *QueryWorkspacesRequest, opts ...grpc.CallOption) (*GetWorkspacesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetWorkspacesResponse)
+	err := c.cc.Invoke(ctx, ProvisionerService_QueryWorkspaces_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -218,6 +248,13 @@ type ProvisionerServiceServer interface {
 	FindWorkspace(context.Context, *FindWorkspaceRequest) (*v1.WorkspaceDetails, error)
 	// GetWorkspacesByUserStr returns workspaces for the given userstr
 	GetWorkspacesByUserStr(context.Context, *GetWorkspacesByUserStrRequest) (*GetWorkspacesResponse, error)
+	// GetWorkspacesQuerySchema returns the query.v1.Descriptor advertising
+	// which workspace fields are queryable/sortable via QueryWorkspaces, and
+	// which operators are valid on each.
+	GetWorkspacesQuerySchema(context.Context, *GetWorkspacesQuerySchemaRequest) (*v11.Descriptor, error)
+	// QueryWorkspaces retrieves workspaces matching a generic query.v1.Payload,
+	// as advertised by GetWorkspacesQuerySchema.
+	QueryWorkspaces(context.Context, *QueryWorkspacesRequest) (*GetWorkspacesResponse, error)
 	// GetBlueprints returns every blueprint registered in the provisioner,
 	// regardless of user.
 	GetBlueprints(context.Context, *GetBlueprintsRequest) (*GetBlueprintsResponse, error)
@@ -259,6 +296,12 @@ func (UnimplementedProvisionerServiceServer) FindWorkspace(context.Context, *Fin
 }
 func (UnimplementedProvisionerServiceServer) GetWorkspacesByUserStr(context.Context, *GetWorkspacesByUserStrRequest) (*GetWorkspacesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetWorkspacesByUserStr not implemented")
+}
+func (UnimplementedProvisionerServiceServer) GetWorkspacesQuerySchema(context.Context, *GetWorkspacesQuerySchemaRequest) (*v11.Descriptor, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetWorkspacesQuerySchema not implemented")
+}
+func (UnimplementedProvisionerServiceServer) QueryWorkspaces(context.Context, *QueryWorkspacesRequest) (*GetWorkspacesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method QueryWorkspaces not implemented")
 }
 func (UnimplementedProvisionerServiceServer) GetBlueprints(context.Context, *GetBlueprintsRequest) (*GetBlueprintsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetBlueprints not implemented")
@@ -352,6 +395,42 @@ func _ProvisionerService_GetWorkspacesByUserStr_Handler(srv interface{}, ctx con
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ProvisionerServiceServer).GetWorkspacesByUserStr(ctx, req.(*GetWorkspacesByUserStrRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProvisionerService_GetWorkspacesQuerySchema_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetWorkspacesQuerySchemaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProvisionerServiceServer).GetWorkspacesQuerySchema(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProvisionerService_GetWorkspacesQuerySchema_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProvisionerServiceServer).GetWorkspacesQuerySchema(ctx, req.(*GetWorkspacesQuerySchemaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProvisionerService_QueryWorkspaces_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryWorkspacesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProvisionerServiceServer).QueryWorkspaces(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProvisionerService_QueryWorkspaces_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProvisionerServiceServer).QueryWorkspaces(ctx, req.(*QueryWorkspacesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -486,6 +565,14 @@ var ProvisionerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetWorkspacesByUserStr",
 			Handler:    _ProvisionerService_GetWorkspacesByUserStr_Handler,
+		},
+		{
+			MethodName: "GetWorkspacesQuerySchema",
+			Handler:    _ProvisionerService_GetWorkspacesQuerySchema_Handler,
+		},
+		{
+			MethodName: "QueryWorkspaces",
+			Handler:    _ProvisionerService_QueryWorkspaces_Handler,
 		},
 		{
 			MethodName: "GetBlueprints",

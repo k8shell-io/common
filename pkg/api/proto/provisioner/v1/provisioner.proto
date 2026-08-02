@@ -11,6 +11,7 @@ package provisioner.v1;
 option go_package = "github.com/k8shell-io/common/pkg/api/gen/go/provisioner/v1;provisionerv1";
 
 import "common/v1/common.proto";
+import "query/v1/query.proto";
 
 // ProvisionerService manages the full lifecycle of user workspaces.
 // Clients interact with this service to provision new workspaces
@@ -24,6 +25,15 @@ service ProvisionerService {
 
   // GetWorkspacesByUserStr returns workspaces for the given userstr
   rpc GetWorkspacesByUserStr(GetWorkspacesByUserStrRequest) returns (GetWorkspacesResponse);
+
+  // GetWorkspacesQuerySchema returns the query.v1.Descriptor advertising
+  // which workspace fields are queryable/sortable via QueryWorkspaces, and
+  // which operators are valid on each.
+  rpc GetWorkspacesQuerySchema(GetWorkspacesQuerySchemaRequest) returns (query.v1.Descriptor);
+
+  // QueryWorkspaces retrieves workspaces matching a generic query.v1.Payload,
+  // as advertised by GetWorkspacesQuerySchema.
+  rpc QueryWorkspaces(QueryWorkspacesRequest) returns (GetWorkspacesResponse);
 
   // GetBlueprints returns every blueprint registered in the provisioner,
   // regardless of user.
@@ -90,6 +100,18 @@ message GetWorkspacesByUserStrRequest {
 message GetWorkspacesResponse {
   // workspaces holds the details of each matched workspace.
   repeated common.v1.WorkspaceDetails workspaces = 1;
+}
+
+// GetWorkspacesQuerySchemaRequest requests the query.v1.Descriptor for the
+// workspaces resource. It carries no fields today; left as a message rather
+// than google.protobuf.Empty so parameters can be added later without
+// changing the RPC signature.
+message GetWorkspacesQuerySchemaRequest {}
+
+// QueryWorkspacesRequest carries a generic query against the fields
+// advertised by GetWorkspacesQuerySchema.
+message QueryWorkspacesRequest {
+  query.v1.Payload query = 1;
 }
 
 // GetBlueprintsRequest requests every blueprint registered in the provisioner.
