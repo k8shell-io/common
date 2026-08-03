@@ -747,7 +747,10 @@ type WorkspaceDetails struct {
 	// job_id is the identifier of the provisioning job that created this workspace.
 	JobId string `protobuf:"bytes,18,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
 	// namespace is the Kubernetes namespace in which the workspace pod is running.
-	Namespace     string `protobuf:"bytes,19,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	Namespace string `protobuf:"bytes,19,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	// origin identifies where the workspace's content came from: "repo_owner/repo_name"
+	// when both are set, otherwise the blueprint name.
+	Origin        string `protobuf:"bytes,20,opt,name=origin,proto3" json:"origin,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -908,6 +911,13 @@ func (x *WorkspaceDetails) GetNamespace() string {
 	return ""
 }
 
+func (x *WorkspaceDetails) GetOrigin() string {
+	if x != nil {
+		return x.Origin
+	}
+	return ""
+}
+
 // BlueprintSummary is a lightweight representation of a blueprint used in
 // listing responses.
 type BlueprintSummary struct {
@@ -1043,7 +1053,7 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"\x06status\x18\x02 \x01(\tR\x06status\x12\x18\n" +
 	"\amessage\x18\x03 \x01(\tR\amessage\x12\x1a\n" +
 	"\brestarts\x18\x04 \x01(\x05R\brestarts\x12*\n" +
-	"\x11last_fail_message\x18\x05 \x01(\tR\x0flastFailMessage\"\xab\x04\n" +
+	"\x11last_fail_message\x18\x05 \x01(\tR\x0flastFailMessage\"\xc3\x04\n" +
 	"\x10WorkspaceDetails\x12E\n" +
 	"\x10workspace_status\x18\x01 \x01(\v2\x1a.common.v1.WorkspaceStatusR\x0fworkspaceStatus\x12\x1f\n" +
 	"\vapp_version\x18\x02 \x01(\tR\n" +
@@ -1067,7 +1077,8 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"\x06memory\x18\x10 \x01(\tR\x06memory\x12\x1a\n" +
 	"\bhostname\x18\x11 \x01(\tR\bhostname\x12\x15\n" +
 	"\x06job_id\x18\x12 \x01(\tR\x05jobId\x12\x1c\n" +
-	"\tnamespace\x18\x13 \x01(\tR\tnamespace\"i\n" +
+	"\tnamespace\x18\x13 \x01(\tR\tnamespace\x12\x16\n" +
+	"\x06origin\x18\x14 \x01(\tR\x06origin\"i\n" +
 	"\x10BlueprintSummary\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x1f\n" +

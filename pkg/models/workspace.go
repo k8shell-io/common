@@ -44,6 +44,7 @@ type WorkspaceDetails struct {
 	RepoName     string `json:"repoName,omitempty"`
 	RepoRef      string `json:"repoRef,omitempty"`
 	Blueprint    string `json:"blueprint"`
+	Origin       string `json:"origin"`
 	Organization string `json:"organization"`
 	CPU          string `json:"cpu" example:"500m"`
 	Memory       string `json:"memory" example:"256Mi"`

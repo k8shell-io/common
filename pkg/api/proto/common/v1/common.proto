@@ -180,6 +180,9 @@ message WorkspaceDetails {
   string job_id = 18;
   // namespace is the Kubernetes namespace in which the workspace pod is running.
   string namespace = 19;
+  // origin identifies where the workspace's content came from: "repo_owner/repo_name"
+  // when both are set, otherwise the blueprint name.
+  string origin = 20;
 }
 
 // BlueprintSummary is a lightweight representation of a blueprint used in
