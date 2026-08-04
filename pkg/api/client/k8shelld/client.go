@@ -11,7 +11,6 @@ import (
 
 	"github.com/k8shell-io/common/pkg/api/client/session"
 	k8shelldv1 "github.com/k8shell-io/common/pkg/api/gen/go/k8shelld/v1"
-	"github.com/k8shell-io/common/pkg/authz"
 	"github.com/k8shell-io/common/pkg/gapi"
 	"github.com/k8shell-io/common/pkg/logger"
 	"github.com/rs/zerolog"
@@ -19,12 +18,6 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
-
-// ContextKey is an unexported type for context keys in this package,
-// preventing collisions with keys defined in other packages.
-type ContextKey string
-
-const TokenContextKey ContextKey = "token"
 
 // BufferedReadWriter is an interface that is used to read and write data with
 // buffer size checking and stderr support.
@@ -96,23 +89,11 @@ func NewClient(
 }
 
 // Handshake performs a handshake with the k8shelld service to establish a session.
-// The caller's identity JWT (user.UserToken) is sent so the server can verify it
-// matches the workspace identity token.
-func (c *K8shelld) Handshake(ctx context.Context, userToken string) (*k8shelldv1.HandshakeResponse, error) {
-	_, err := authz.ParseUnverifiedClaims(userToken, true)
-	if err != nil {
-		return nil, fmt.Errorf("invalid user token: %w", err)
-	}
-
-	md := metadata.Pairs("token", userToken)
-	ctx = metadata.NewOutgoingContext(ctx, md)
-
+func (c *K8shelld) Handshake(ctx context.Context) (*k8shelldv1.HandshakeResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	req := &k8shelldv1.HandshakeRequest{
-		UserToken: userToken,
-	}
+	req := &k8shelldv1.HandshakeRequest{}
 
 	return c.systemClient.Handshake(ctx, req)
 }
@@ -225,15 +206,7 @@ func (c *K8shelld) RunShell(
 		return fmt.Errorf("session recording requested but session client is not set")
 	}
 
-	_, err := authz.ParseUnverifiedClaims(userToken, true)
-	if err != nil {
-		return fmt.Errorf("invalid user token: %w", err)
-	}
-
-	md := metadata.Pairs(
-		"session-id", sessionId,
-		"token", userToken,
-	)
+	md := metadata.Pairs("session-id", sessionId)
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -346,16 +319,8 @@ func (c *K8shelld) RunShell(
 
 // ResizeTerminal sends a terminal resize event to the running shell session and, if
 // session recording is active, records the resize with the correct time offset.
-func (c *K8shelld) ResizeTerminal(ctx context.Context, userToken string, sessionId string, width, height uint32) error {
-	_, err := authz.ParseUnverifiedClaims(userToken, true)
-	if err != nil {
-		return fmt.Errorf("invalid user token: %w", err)
-	}
-
-	md := metadata.Pairs(
-		"session-id", sessionId,
-		"token", userToken,
-	)
+func (c *K8shelld) ResizeTerminal(ctx context.Context, sessionId string, width, height uint32) error {
+	md := metadata.Pairs("session-id", sessionId)
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
 	req := &k8shelldv1.ResizeTerminalRequest{
@@ -363,7 +328,7 @@ func (c *K8shelld) ResizeTerminal(ctx context.Context, userToken string, session
 		Height: height,
 	}
 
-	_, err = c.sshClient.ResizeTerminal(ctx, req)
+	_, err := c.sshClient.ResizeTerminal(ctx, req)
 	if err == nil && c.shellRecorder != nil {
 		c.shellRecorder.ObserveResize(width, height, time.Since(c.shellRecorderStart))
 	}
@@ -394,21 +359,12 @@ func (c *K8shelld) GetCWD(ctx context.Context, shellId string) (string, error) {
 // RunUnixSocket creates a Unix socket connection over gRPC and bridges it with the RW channel.
 func (c *K8shelld) RunUnixSocket(
 	ctx context.Context,
-	userToken string,
 	upstream BufferedReadWriter,
 	unixSocketId string,
 	socketPath string,
 	mode string,
 ) error {
-	_, err := authz.ParseUnverifiedClaims(userToken, true)
-	if err != nil {
-		return fmt.Errorf("invalid user token: %w", err)
-	}
-
-	md := metadata.Pairs(
-		"unixsocket-id", unixSocketId,
-		"token", userToken,
-	)
+	md := metadata.Pairs("unixsocket-id", unixSocketId)
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -537,15 +493,8 @@ func (c *K8shelld) RunPortForward(
 	if destinationIP == "" {
 		destinationIP = "localhost"
 	}
-	_, err := authz.ParseUnverifiedClaims(userToken, true)
-	if err != nil {
-		return fmt.Errorf("invalid user token: %w", err)
-	}
 
-	md := metadata.Pairs(
-		"portforward-id", portForwardID,
-		"token", userToken,
-	)
+	md := metadata.Pairs("portforward-id", portForwardID)
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -657,12 +606,8 @@ func (c *K8shelld) RunExec(
 	if enableRecording && c.sessionClient == nil {
 		return 1, fmt.Errorf("session recording requested but session client is not set")
 	}
-	_, err := authz.ParseUnverifiedClaims(userToken, true)
-	if err != nil {
-		return 1, fmt.Errorf("invalid user token: %w", err)
-	}
 
-	md := metadata.Pairs("exec-id", execID, "token", userToken)
+	md := metadata.Pairs("exec-id", execID)
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -860,12 +805,8 @@ func (c *K8shelld) RunSFTP(
 	if enableRecording && c.sessionClient == nil {
 		return 1, fmt.Errorf("session recording requested but session client is not set")
 	}
-	_, err := authz.ParseUnverifiedClaims(userToken, true)
-	if err != nil {
-		return 1, fmt.Errorf("invalid user token: %w", err)
-	}
 
-	md := metadata.Pairs("exec-id", sessionID, "token", userToken)
+	md := metadata.Pairs("exec-id", sessionID)
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
 	ctx, cancel := context.WithCancel(ctx)

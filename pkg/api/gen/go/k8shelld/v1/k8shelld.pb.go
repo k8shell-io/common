@@ -650,7 +650,6 @@ func (x *DockerUsage) GetDeclaredSize() uint64 {
 type HandshakeRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ClientVersion string                 `protobuf:"bytes,1,opt,name=client_version,json=clientVersion,proto3" json:"client_version,omitempty"`
-	UserToken     string                 `protobuf:"bytes,2,opt,name=user_token,json=userToken,proto3" json:"user_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -688,13 +687,6 @@ func (*HandshakeRequest) Descriptor() ([]byte, []int) {
 func (x *HandshakeRequest) GetClientVersion() string {
 	if x != nil {
 		return x.ClientVersion
-	}
-	return ""
-}
-
-func (x *HandshakeRequest) GetUserToken() string {
-	if x != nil {
-		return x.UserToken
 	}
 	return ""
 }
@@ -2796,11 +2788,9 @@ const file_k8shelld_v1_k8shelld_proto_rawDesc = "" +
 	"\n" +
 	"totalBytes\x18\x0f \x01(\x04R\n" +
 	"totalBytes\x12\"\n" +
-	"\fdeclaredSize\x18\x14 \x01(\x04R\fdeclaredSize\"X\n" +
+	"\fdeclaredSize\x18\x14 \x01(\x04R\fdeclaredSize\"9\n" +
 	"\x10HandshakeRequest\x12%\n" +
-	"\x0eclient_version\x18\x01 \x01(\tR\rclientVersion\x12\x1d\n" +
-	"\n" +
-	"user_token\x18\x02 \x01(\tR\tuserToken\"p\n" +
+	"\x0eclient_version\x18\x01 \x01(\tR\rclientVersion\"p\n" +
 	"\x11HandshakeResponse\x12%\n" +
 	"\x0eserver_version\x18\x01 \x01(\tR\rserverVersion\x12\x1a\n" +
 	"\baccepted\x18\x02 \x01(\bR\baccepted\x12\x18\n" +

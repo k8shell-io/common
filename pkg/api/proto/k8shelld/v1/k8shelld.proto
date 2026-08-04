@@ -70,7 +70,6 @@ message DockerUsage {
 // HandshakeRequest message
 message HandshakeRequest {
   string client_version = 1;
-  string user_token = 2;
 }
 
 // HandshakeResponse message
