@@ -5,6 +5,7 @@ package query
 
 import (
 	"testing"
+	"time"
 
 	queryv1 "github.com/k8shell-io/common/pkg/api/gen/go/query/v1"
 )
@@ -372,5 +373,72 @@ func TestParseValue_Datetime(t *testing.T) {
 	}
 	if _, err := ParseValue(queryv1.FieldType_FIELD_TYPE_DATETIME, "not-a-date"); err == nil {
 		t.Fatal("expected invalid datetime to error")
+	}
+}
+
+func TestParseValue_RelativeDatetime(t *testing.T) {
+	fixed := time.Date(2026, 8, 4, 15, 30, 0, 0, time.UTC) // a Tuesday
+	orig := timeNow
+	timeNow = func() time.Time { return fixed }
+	defer func() { timeNow = orig }()
+
+	cases := []struct {
+		raw  string
+		want time.Time
+	}{
+		{"now", fixed},
+		{"NOW", fixed}, // anchors are case-insensitive
+		{"today", time.Date(2026, 8, 4, 0, 0, 0, 0, time.UTC)},
+		{"yesterday", time.Date(2026, 8, 3, 0, 0, 0, 0, time.UTC)},
+		{"lastweek", time.Date(2026, 7, 27, 0, 0, 0, 0, time.UTC)}, // Monday of the prior ISO week
+		{"now-1h", fixed.Add(-time.Hour)},
+		{"now-90m+15s", fixed.Add(-90*time.Minute + 15*time.Second)},
+		{"today+2d", time.Date(2026, 8, 6, 0, 0, 0, 0, time.UTC)},
+		{"now-1M", fixed.AddDate(0, -1, 0)},
+		{"now-1y", fixed.AddDate(-1, 0, 0)},
+		{"now-1w", fixed.AddDate(0, 0, -7)},
+	}
+	for _, c := range cases {
+		got, err := ParseValue(queryv1.FieldType_FIELD_TYPE_DATETIME, c.raw)
+		if err != nil {
+			t.Fatalf("ParseValue(%q) unexpected error: %v", c.raw, err)
+		}
+		gt, ok := got.(time.Time)
+		if !ok || !gt.Equal(c.want) {
+			t.Fatalf("ParseValue(%q) = %v, want %v", c.raw, got, c.want)
+		}
+	}
+}
+
+func TestParseValue_RelativeDatetime_Errors(t *testing.T) {
+	if _, err := ParseValue(queryv1.FieldType_FIELD_TYPE_DATETIME, "nowish"); err == nil {
+		t.Fatal("expected error for unknown anchor")
+	}
+	if _, err := ParseValue(queryv1.FieldType_FIELD_TYPE_DATETIME, "now-1x"); err == nil {
+		t.Fatal("expected error for unknown offset unit")
+	}
+}
+
+func TestBuildWhere_RelativeDatetime(t *testing.T) {
+	fixed := time.Date(2026, 8, 4, 15, 30, 0, 0, time.UTC)
+	orig := timeNow
+	timeNow = func() time.Time { return fixed }
+	defer func() { timeNow = orig }()
+
+	desc := usersDescriptor()
+	filters := &queryv1.Filters{Conditions: []*queryv1.Condition{
+		{Field: "startTime", Op: queryv1.Operator_OPERATOR_GTE, Values: []string{"now-1h"}},
+	}}
+	clause, args, err := BuildWhere(desc, nil, filters, 0)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if clause != "startTime >= $1" {
+		t.Fatalf("clause = %q", clause)
+	}
+	want := fixed.Add(-time.Hour)
+	got, ok := args[0].(time.Time)
+	if !ok || !got.Equal(want) {
+		t.Fatalf("args[0] = %v, want %v", args[0], want)
 	}
 }

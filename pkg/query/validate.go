@@ -116,7 +116,14 @@ func ParseValue(t queryv1.FieldType, raw string) (any, error) {
 		if v, err := time.Parse(dateOnlyLayout, raw); err == nil {
 			return v, nil
 		}
-		return nil, fmt.Errorf("invalid datetime %q (expected RFC3339 or YYYY-MM-DD)", raw)
+		if v, matched, err := parseRelativeDatetime(raw); matched {
+			if err != nil {
+				return nil, err
+			}
+			return v, nil
+		}
+		return nil, fmt.Errorf("invalid datetime %q (expected RFC3339, YYYY-MM-DD, or a relative "+
+			"expression like now-1h)", raw)
 	default:
 		return nil, fmt.Errorf("field has unspecified type")
 	}
