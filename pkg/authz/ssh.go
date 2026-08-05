@@ -303,7 +303,6 @@ func init() {
 		Build: func(ctx CapabilityContext) (EvalRequest, error) {
 			return NewSSHEvalRequest(SSHActionShell, capabilityWildcardWorkspace).WithOwner(ctx.ResourceOwner).Build()
 		},
-		SelfOnly: true,
 	})
 	registerCapabilityCheck(CapabilityCheck{
 		Action: string(SSHActionExec), Package: "ssh", Scope: string(SSHActionExec),
@@ -311,14 +310,12 @@ func init() {
 			return NewSSHEvalRequest(SSHActionExec, capabilityWildcardWorkspace).
 				WithOwner(ctx.ResourceOwner).WithCommand(capabilityWildcardCommand).Build()
 		},
-		SelfOnly: true,
 	})
 	registerCapabilityCheck(CapabilityCheck{
 		Action: string(SSHActionSFTP), Package: "ssh", Scope: string(SSHActionSFTP),
 		Build: func(ctx CapabilityContext) (EvalRequest, error) {
 			return NewSSHEvalRequest(SSHActionSFTP, capabilityWildcardWorkspace).WithOwner(ctx.ResourceOwner).Build()
 		},
-		SelfOnly: true,
 	})
 	registerCapabilityCheck(CapabilityCheck{
 		Action: string(SSHActionDirectTCPIP), Package: "ssh", Scope: string(SSHActionDirectTCPIP),
@@ -326,7 +323,6 @@ func init() {
 			return NewSSHEvalRequest(SSHActionDirectTCPIP, capabilityWildcardWorkspace).
 				WithOwner(ctx.ResourceOwner).WithHost(capabilityWildcardHost).WithPort(capabilityWildcardPort).Build()
 		},
-		SelfOnly: true,
 	})
 	registerCapabilityCheck(CapabilityCheck{
 		Action: string(SSHActionDirectStreamlocal), Package: "ssh", Scope: string(SSHActionDirectStreamlocal),
@@ -334,13 +330,11 @@ func init() {
 			return NewSSHEvalRequest(SSHActionDirectStreamlocal, capabilityWildcardWorkspace).
 				WithOwner(ctx.ResourceOwner).WithSocketPath(capabilityWildcardSocketPath).Build()
 		},
-		SelfOnly: true,
 	})
 	registerCapabilityCheck(CapabilityCheck{
 		Action: string(SSHActionAgentForward), Package: "ssh", Scope: string(SSHActionAgentForward),
 		Build: func(ctx CapabilityContext) (EvalRequest, error) {
 			return NewSSHEvalRequest(SSHActionAgentForward, capabilityWildcardWorkspace).WithOwner(ctx.ResourceOwner).Build()
 		},
-		SelfOnly: true,
 	})
 }

@@ -449,7 +449,6 @@ func init() {
 		Build: func(ctx CapabilityContext) (EvalRequest, error) {
 			return NewSessionListEvalRequest().WithOwner(ctx.ResourceOwner).Build()
 		},
-		SelfOnly: true,
 	})
 	registerCapabilityCheck(CapabilityCheck{
 		Action: string(SessionActionStart), Package: "session", Scope: string(SessionActionStart),
@@ -457,6 +456,5 @@ func init() {
 			return NewSessionStartEvalRequest(SessionActionStart, capabilityWildcardWorkspace, SessionTypeShell).
 				WithOwner(ctx.ResourceOwner).WithSource(SessionSourceAPIServer).Build()
 		},
-		SelfOnly: true,
 	})
 }

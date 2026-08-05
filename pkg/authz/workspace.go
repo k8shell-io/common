@@ -1076,7 +1076,6 @@ func init() {
 		Build: func(ctx CapabilityContext) (EvalRequest, error) {
 			return NewWorkspaceOwnerEvalRequest(WorkspaceActionList, ctx.ResourceOwner).Build()
 		},
-		SelfOnly: true,
 	})
 	registerCapabilityCheck(CapabilityCheck{
 		Action: string(WorkspaceActionCreate), Package: "workspace", Scope: string(WorkspaceActionCreate),
