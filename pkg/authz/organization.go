@@ -12,9 +12,13 @@ package authz
 //
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
-// Obligations  (none) — allow/deny only. Organizations are not scoped by
-// another organization the way roles/users can be, so there is no dimension
-// to narrow the listing by.
+// Obligations
+//   orgs  JSON array of organization name strings — the enforcer lists only
+//         these organizations. Absent means unrestricted (e.g. a global
+//         admin sees every organization); an org-scoped admin role is
+//         expected to set this to the org(s) they administer rather than
+//         relying on org:list allow/deny alone, since allow/deny has no way
+//         to express "some but not all organizations are visible."
 //
 // ---
 //
@@ -78,6 +82,7 @@ package authz
 // Obligations  (none) — allow/deny only
 
 import (
+	"encoding/json"
 	"fmt"
 
 	authzv1 "github.com/k8shell-io/common/pkg/api/gen/go/authz/v1"
@@ -141,6 +146,43 @@ func OrganizationListEvalRequestFromProto(req *authzv1.EvaluateRequest) (*Organi
 // Validate is a no-op for org:list; no fields are required.
 // Implements EvalRequest.
 func (r *OrganizationListEvalRequest) Validate() error { return nil }
+
+const (
+	// ObligationKeyOrgs is the key the policy engine writes to scope an
+	// org:list result to a set of organizations. The value is a JSON-encoded
+	// array of organization name strings.
+	ObligationKeyOrgs = "orgs"
+)
+
+// OrgsObligation is the typed representation of the "orgs" obligation key
+// returned by the policy engine in a PolicyResult for org:list.
+type OrgsObligation struct {
+	// Orgs is the list of organization names the enforcer should restrict
+	// the listing to.
+	Orgs []string
+}
+
+// ParseOrgsObligation reads the "orgs" key from the obligations map.
+// Returns (obligation, true) when the key is present, (zero value, false)
+// when the policy did not set an orgs obligation — in that case the
+// enforcer should not scope the listing by organization.
+func ParseOrgsObligation(obligations map[string]string) (OrgsObligation, bool) {
+	v, ok := obligations[ObligationKeyOrgs]
+	if !ok {
+		return OrgsObligation{}, false
+	}
+	var raw []string
+	if err := json.Unmarshal([]byte(v), &raw); err != nil {
+		return OrgsObligation{}, false
+	}
+	orgs := make([]string, 0, len(raw))
+	for _, o := range raw {
+		if o != "" {
+			orgs = append(orgs, o)
+		}
+	}
+	return OrgsObligation{Orgs: orgs}, true
+}
 
 // OrganizationReadEvalRequest is the validated, typed model for org:read
 // policy evaluation. Use NewOrganizationReadEvalRequest to start building,
