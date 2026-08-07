@@ -24,6 +24,16 @@ const (
 	WorkspaceStatusUnknown      WorkspaceStatusMessage = "Unknown"
 )
 
+// WorkspaceType is how a workspace is deployed.
+type WorkspaceType string
+
+const (
+	// WorkspaceTypeStandalone is a workspace running as its own Helm release.
+	WorkspaceTypeStandalone WorkspaceType = "standalone"
+	// WorkspaceTypeInjected is a workspace injected into an existing workload.
+	WorkspaceTypeInjected WorkspaceType = "injected"
+)
+
 // WorkspaceStatus represents the status of a workspace pod
 type WorkspaceStatus struct {
 	Created         time.Time              `json:"created" example:"2025-08-05T10:30:00Z"`
@@ -55,6 +65,12 @@ type WorkspaceDetails struct {
 	Namespace    string `json:"namespace"`
 	Hostname     string `json:"hostname,omitempty"`
 	JobId        string `json:"jobId,omitempty"`
+	// WorkspaceType tells standalone workspaces apart from injected ones.
+	WorkspaceType WorkspaceType `json:"workspaceType" example:"standalone"`
+	// WorkloadKind and WorkloadName identify the workload an injected
+	// workspace lives in. Both are empty for a standalone workspace.
+	WorkloadKind string `json:"workloadKind,omitempty" example:"Deployment"`
+	WorkloadName string `json:"workloadName,omitempty" example:"api-server"`
 }
 
 // WorkspaceCreateRequest represents workspace resources (CPU and memory)

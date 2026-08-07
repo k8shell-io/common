@@ -183,6 +183,17 @@ message WorkspaceDetails {
   // origin identifies where the workspace's content came from: "repo_owner/repo_name"
   // when both are set, otherwise the blueprint name.
   string origin = 20;
+  // workspace_type is how the workspace is deployed: "standalone" for a
+  // workspace running as its own Helm release, "injected" for one injected
+  // into an existing workload.
+  string workspace_type = 21;
+  // workload_kind is the Kubernetes kind of the workload the workspace was
+  // injected into (e.g. "Deployment", "StatefulSet"). Set only when
+  // workspace_type is "injected".
+  string workload_kind = 22;
+  // workload_name is the name of the workload the workspace was injected
+  // into. Set only when workspace_type is "injected".
+  string workload_name = 23;
 }
 
 // BlueprintSummary is a lightweight representation of a blueprint used in

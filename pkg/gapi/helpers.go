@@ -306,6 +306,9 @@ func WorkspaceDetailsToProto(m *models.WorkspaceDetails) *commonv1.WorkspaceDeta
 		Hostname:        m.Hostname,
 		JobId:           m.JobId,
 		Namespace:       m.Namespace,
+		WorkspaceType:   string(m.WorkspaceType),
+		WorkloadKind:    m.WorkloadKind,
+		WorkloadName:    m.WorkloadName,
 	}
 }
 
@@ -335,6 +338,9 @@ func ProtoToWorkspaceDetails(pb *commonv1.WorkspaceDetails) *models.WorkspaceDet
 		Hostname:        pb.GetHostname(),
 		JobId:           pb.GetJobId(),
 		Namespace:       pb.GetNamespace(),
+		WorkspaceType:   models.WorkspaceType(pb.GetWorkspaceType()),
+		WorkloadKind:    pb.GetWorkloadKind(),
+		WorkloadName:    pb.GetWorkloadName(),
 	}
 }
 
