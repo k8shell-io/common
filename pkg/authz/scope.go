@@ -77,7 +77,7 @@ var validScopeConstraints = map[ScopeConstraint]struct{}{
 var scopeConstrainablePrefixes = map[string]struct{}{
 	// user:read — every data type addresses the resource owner's own
 	// record, so the whole action is opted in at once.
-	"user:read": {}, // profile | credentials | blueprints | roles | keys
+	"user:read": {}, // profile | credentials | blueprints | roles | keys | repos
 
 	// user:write — opted in per data type, deliberately excluding sudo,
 	// locked, org, and posix: the user:write contract (see user.go) forbids
@@ -192,6 +192,7 @@ var validExactScopes = map[string]struct{}{
 	"user:read:" + string(UserDataTypeBlueprints):  {},
 	"user:read:" + string(UserDataTypeRoles):       {},
 	"user:read:" + string(UserDataTypeKeys):        {},
+	"user:read:" + string(UserDataTypeRepos):       {},
 
 	// user:write — one entry per data type
 	// (no UserDataTypeBlueprints entry — blueprint access is granted only via
@@ -237,7 +238,7 @@ var validWildcardPrefixes = map[string]struct{}{
 	"workspace:app":     {}, // install | start | stop
 	"session":           {}, // all session actions
 	"user":              {}, // all user actions
-	"user:read":         {}, // profile | credentials | blueprints | roles | keys
+	"user:read":         {}, // profile | credentials | blueprints | roles | keys | repos
 	"user:write":        {}, // profile | credentials | roles | keys | sudo | locked | org | posix | password
 	"token":             {}, // read | create | write | delete
 	"role":              {}, // list | create | delete

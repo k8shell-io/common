@@ -72,11 +72,14 @@ package authz
 //   id   username (required)
 //
 // Context
-//   data_type  profile | credentials | blueprints | roles | keys  (required)
+//   data_type  profile | credentials | blueprints | roles | keys | repos  (required)
 //              profile returns the full profile view, including the sudo and
 //              locked flags — those are not broken out into their own
 //              data_type for reads, only for writes (see user:write below).
 //              keys covers SSH public key listing, distinct from credentials.
+//              repos covers browsing the user's identity-provider repository
+//              catalog (repo owners and repos under an owner) — used by the
+//              inject-mode workspace-creation picker, not stored user data.
 //
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
@@ -228,7 +231,9 @@ import (
 // UserDataTypeOrg, UserDataTypePosix, and UserDataTypePassword are write-only
 // values: user:read never selects them individually, since UserDataTypeProfile
 // already returns the full profile view including sudo, locked, org, and uid/gid,
-// and a password is never readable at all.
+// and a password is never readable at all. UserDataTypeRepos is read-only in
+// the other direction: it addresses the user's identity-provider repository
+// catalog (owners and repos), which is never written through user:write.
 type UserDataType string
 
 const (
@@ -237,6 +242,7 @@ const (
 	UserDataTypeBlueprints  UserDataType = "blueprints"
 	UserDataTypeRoles       UserDataType = "roles"
 	UserDataTypeKeys        UserDataType = "keys"
+	UserDataTypeRepos       UserDataType = "repos"
 	UserDataTypeSudo        UserDataType = "sudo"
 	UserDataTypeLocked      UserDataType = "locked"
 	UserDataTypeOrg         UserDataType = "org"
@@ -247,11 +253,11 @@ const (
 // validateUserDataType checks the data types valid for user:read.
 func validateUserDataType(dt UserDataType) error {
 	switch dt {
-	case UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys:
+	case UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys, UserDataTypeRepos:
 		return nil
 	default:
-		return fmt.Errorf("context \"data_type\" must be %q, %q, %q, %q, or %q, got %q",
-			UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys, dt)
+		return fmt.Errorf("context \"data_type\" must be %q, %q, %q, %q, %q, or %q, got %q",
+			UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys, UserDataTypeRepos, dt)
 	}
 }
 
@@ -1573,7 +1579,7 @@ func init() {
 	})
 
 	for _, dt := range []UserDataType{
-		UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys,
+		UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys, UserDataTypeRepos,
 	} {
 		action := "user:read:" + string(dt)
 		registerCapabilityCheck(CapabilityCheck{

@@ -134,6 +134,7 @@ var scopeCatalogSource = []domainSpec{
 				{scope: "user:read:blueprints", label: "Blueprints", description: "Read a user's assigned workspace blueprints."},
 				{scope: "user:read:roles", label: "Roles", description: "Read a user's assigned roles."},
 				{scope: "user:read:keys", label: "Keys", description: "Read a user's SSH/API keys."},
+				{scope: "user:read:repos", label: "Repos", description: "Browse a user's identity-provider repository owners and repos."},
 			}},
 			{action: "user:write", label: "Write", wildcard: &entrySpec{scope: "user:write:*", label: "Any data type", description: "Any data type (including sensitive ones)"}, entries: []entrySpec{
 				{scope: "user:write:profile", label: "Profile", description: "Update a user's profile."},

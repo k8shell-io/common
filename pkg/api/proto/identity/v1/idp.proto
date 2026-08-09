@@ -45,6 +45,15 @@ service IdentityProviderService {
 
   // ResolvePullRequestToRef resolves a pull request to a repository reference (e.g., branch or commit).
   rpc ResolvePullRequestToRef(RepoPullRequestRequest) returns (RepoRefResponse);
+
+  // ListRepoOwners lists the repository owners (the user's personal account plus any
+  // organizations) that the user has access to on the provider. It is the first step
+  // in browsing repositories: the login chosen here becomes the repo_owner of a
+  // subsequent ListRepos call.
+  rpc ListRepoOwners(Username) returns (RepoOwnerList);
+
+  // ListRepos lists the repositories under the given owner that the user can access.
+  rpc ListRepos(ListReposRequest) returns (RepoList);
 }
 
 // ProviderInfoRequest is an empty request message used to query provider metadata.

@@ -78,6 +78,8 @@ const (
 	IdentityService_DeleteUserCredential_FullMethodName          = "/identity.v1.IdentityService/DeleteUserCredential"
 	IdentityService_RemoveUserCredential_FullMethodName          = "/identity.v1.IdentityService/RemoveUserCredential"
 	IdentityService_GetAvailableIdentityProviders_FullMethodName = "/identity.v1.IdentityService/GetAvailableIdentityProviders"
+	IdentityService_ListRepoOwners_FullMethodName                = "/identity.v1.IdentityService/ListRepoOwners"
+	IdentityService_ListRepos_FullMethodName                     = "/identity.v1.IdentityService/ListRepos"
 	IdentityService_CreateAccessToken_FullMethodName             = "/identity.v1.IdentityService/CreateAccessToken"
 	IdentityService_UpdateAccessToken_FullMethodName             = "/identity.v1.IdentityService/UpdateAccessToken"
 	IdentityService_ListAccessTokens_FullMethodName              = "/identity.v1.IdentityService/ListAccessTokens"
@@ -257,6 +259,15 @@ type IdentityServiceClient interface {
 	RemoveUserCredential(ctx context.Context, in *RemoveUserCredentialRequest, opts ...grpc.CallOption) (*RemoveUserCredentialResponse, error)
 	// GetAvailableIdentityProviders returns a list of available identity providers.
 	GetAvailableIdentityProviders(ctx context.Context, in *GetAvailableIdentityProvidersRequest, opts ...grpc.CallOption) (*GetAvailableIdentityProvidersResponse, error)
+	// ListRepoOwners lists the repository owners — the user's own account plus any
+	// organizations they belong to — available to the user on their identity provider.
+	// It is the first step in browsing repositories: the login of a returned owner
+	// becomes the repo_owner of a subsequent ListRepos call. Delegates to the
+	// provider that sourced the user.
+	ListRepoOwners(ctx context.Context, in *Username, opts ...grpc.CallOption) (*RepoOwnerList, error)
+	// ListRepos lists the repositories under the given owner that the user can access
+	// on their identity provider. Delegates to the provider that sourced the user.
+	ListRepos(ctx context.Context, in *ListReposRequest, opts ...grpc.CallOption) (*RepoList, error)
 	// CreateAccessToken issues a new Personal Access Token for a user. The raw token is
 	// returned once in the response and is not recoverable after that.
 	CreateAccessToken(ctx context.Context, in *CreateAccessTokenRequest, opts ...grpc.CallOption) (*CreateAccessTokenResponse, error)
@@ -823,6 +834,26 @@ func (c *identityServiceClient) GetAvailableIdentityProviders(ctx context.Contex
 	return out, nil
 }
 
+func (c *identityServiceClient) ListRepoOwners(ctx context.Context, in *Username, opts ...grpc.CallOption) (*RepoOwnerList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RepoOwnerList)
+	err := c.cc.Invoke(ctx, IdentityService_ListRepoOwners_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) ListRepos(ctx context.Context, in *ListReposRequest, opts ...grpc.CallOption) (*RepoList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RepoList)
+	err := c.cc.Invoke(ctx, IdentityService_ListRepos_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *identityServiceClient) CreateAccessToken(ctx context.Context, in *CreateAccessTokenRequest, opts ...grpc.CallOption) (*CreateAccessTokenResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CreateAccessTokenResponse)
@@ -1054,6 +1085,15 @@ type IdentityServiceServer interface {
 	RemoveUserCredential(context.Context, *RemoveUserCredentialRequest) (*RemoveUserCredentialResponse, error)
 	// GetAvailableIdentityProviders returns a list of available identity providers.
 	GetAvailableIdentityProviders(context.Context, *GetAvailableIdentityProvidersRequest) (*GetAvailableIdentityProvidersResponse, error)
+	// ListRepoOwners lists the repository owners — the user's own account plus any
+	// organizations they belong to — available to the user on their identity provider.
+	// It is the first step in browsing repositories: the login of a returned owner
+	// becomes the repo_owner of a subsequent ListRepos call. Delegates to the
+	// provider that sourced the user.
+	ListRepoOwners(context.Context, *Username) (*RepoOwnerList, error)
+	// ListRepos lists the repositories under the given owner that the user can access
+	// on their identity provider. Delegates to the provider that sourced the user.
+	ListRepos(context.Context, *ListReposRequest) (*RepoList, error)
 	// CreateAccessToken issues a new Personal Access Token for a user. The raw token is
 	// returned once in the response and is not recoverable after that.
 	CreateAccessToken(context.Context, *CreateAccessTokenRequest) (*CreateAccessTokenResponse, error)
@@ -1241,6 +1281,12 @@ func (UnimplementedIdentityServiceServer) RemoveUserCredential(context.Context, 
 }
 func (UnimplementedIdentityServiceServer) GetAvailableIdentityProviders(context.Context, *GetAvailableIdentityProvidersRequest) (*GetAvailableIdentityProvidersResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetAvailableIdentityProviders not implemented")
+}
+func (UnimplementedIdentityServiceServer) ListRepoOwners(context.Context, *Username) (*RepoOwnerList, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListRepoOwners not implemented")
+}
+func (UnimplementedIdentityServiceServer) ListRepos(context.Context, *ListReposRequest) (*RepoList, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListRepos not implemented")
 }
 func (UnimplementedIdentityServiceServer) CreateAccessToken(context.Context, *CreateAccessTokenRequest) (*CreateAccessTokenResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateAccessToken not implemented")
@@ -2253,6 +2299,42 @@ func _IdentityService_GetAvailableIdentityProviders_Handler(srv interface{}, ctx
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IdentityService_ListRepoOwners_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Username)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).ListRepoOwners(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_ListRepoOwners_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).ListRepoOwners(ctx, req.(*Username))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_ListRepos_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListReposRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).ListRepos(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_ListRepos_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).ListRepos(ctx, req.(*ListReposRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _IdentityService_CreateAccessToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateAccessTokenRequest)
 	if err := dec(in); err != nil {
@@ -2583,6 +2665,14 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAvailableIdentityProviders",
 			Handler:    _IdentityService_GetAvailableIdentityProviders_Handler,
+		},
+		{
+			MethodName: "ListRepoOwners",
+			Handler:    _IdentityService_ListRepoOwners_Handler,
+		},
+		{
+			MethodName: "ListRepos",
+			Handler:    _IdentityService_ListRepos_Handler,
 		},
 		{
 			MethodName: "CreateAccessToken",

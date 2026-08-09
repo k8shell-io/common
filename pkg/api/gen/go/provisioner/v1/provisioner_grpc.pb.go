@@ -40,6 +40,8 @@ const (
 	ProvisionerService_StopWorkspace_FullMethodName            = "/provisioner.v1.ProvisionerService/StopWorkspace"
 	ProvisionerService_StartWorkspaceStream_FullMethodName     = "/provisioner.v1.ProvisionerService/StartWorkspaceStream"
 	ProvisionerService_EjectWorkspace_FullMethodName           = "/provisioner.v1.ProvisionerService/EjectWorkspace"
+	ProvisionerService_ListInjectNamespaces_FullMethodName     = "/provisioner.v1.ProvisionerService/ListInjectNamespaces"
+	ProvisionerService_ListInjectWorkloads_FullMethodName      = "/provisioner.v1.ProvisionerService/ListInjectWorkloads"
 )
 
 // ProvisionerServiceClient is the client API for ProvisionerService service.
@@ -86,6 +88,16 @@ type ProvisionerServiceClient interface {
 	// EjectWorkspace removes a previously injected workspace from a workload
 	// and deletes all supporting resources (ConfigMaps, PVCs, NetworkPolicies).
 	EjectWorkspace(ctx context.Context, in *EjectWorkspaceRequest, opts ...grpc.CallOption) (*EjectWorkspaceResponse, error)
+	// ListInjectNamespaces returns the namespaces the provisioner is configured
+	// to allow workspace injection into. It is the first step in building an
+	// inject-mode provisioning request: the namespace chosen here becomes the
+	// "ns=" of the userstr passed to ProvisionWorkspaceStream.
+	ListInjectNamespaces(ctx context.Context, in *ListInjectNamespacesRequest, opts ...grpc.CallOption) (*ListInjectNamespacesResponse, error)
+	// ListInjectWorkloads returns the workloads a workspace can be injected
+	// into, each reporting whether it already hosts an injected workspace and
+	// who owns it. A workload hosts at most one workspace, so an occupied
+	// workload must be ejected before anyone else can inject into it.
+	ListInjectWorkloads(ctx context.Context, in *ListInjectWorkloadsRequest, opts ...grpc.CallOption) (*ListInjectWorkloadsResponse, error)
 }
 
 type provisionerServiceClient struct {
@@ -234,6 +246,26 @@ func (c *provisionerServiceClient) EjectWorkspace(ctx context.Context, in *Eject
 	return out, nil
 }
 
+func (c *provisionerServiceClient) ListInjectNamespaces(ctx context.Context, in *ListInjectNamespacesRequest, opts ...grpc.CallOption) (*ListInjectNamespacesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListInjectNamespacesResponse)
+	err := c.cc.Invoke(ctx, ProvisionerService_ListInjectNamespaces_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *provisionerServiceClient) ListInjectWorkloads(ctx context.Context, in *ListInjectWorkloadsRequest, opts ...grpc.CallOption) (*ListInjectWorkloadsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListInjectWorkloadsResponse)
+	err := c.cc.Invoke(ctx, ProvisionerService_ListInjectWorkloads_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ProvisionerServiceServer is the server API for ProvisionerService service.
 // All implementations must embed UnimplementedProvisionerServiceServer
 // for forward compatibility.
@@ -278,6 +310,16 @@ type ProvisionerServiceServer interface {
 	// EjectWorkspace removes a previously injected workspace from a workload
 	// and deletes all supporting resources (ConfigMaps, PVCs, NetworkPolicies).
 	EjectWorkspace(context.Context, *EjectWorkspaceRequest) (*EjectWorkspaceResponse, error)
+	// ListInjectNamespaces returns the namespaces the provisioner is configured
+	// to allow workspace injection into. It is the first step in building an
+	// inject-mode provisioning request: the namespace chosen here becomes the
+	// "ns=" of the userstr passed to ProvisionWorkspaceStream.
+	ListInjectNamespaces(context.Context, *ListInjectNamespacesRequest) (*ListInjectNamespacesResponse, error)
+	// ListInjectWorkloads returns the workloads a workspace can be injected
+	// into, each reporting whether it already hosts an injected workspace and
+	// who owns it. A workload hosts at most one workspace, so an occupied
+	// workload must be ejected before anyone else can inject into it.
+	ListInjectWorkloads(context.Context, *ListInjectWorkloadsRequest) (*ListInjectWorkloadsResponse, error)
 	mustEmbedUnimplementedProvisionerServiceServer()
 }
 
@@ -323,6 +365,12 @@ func (UnimplementedProvisionerServiceServer) StartWorkspaceStream(*StartWorkspac
 }
 func (UnimplementedProvisionerServiceServer) EjectWorkspace(context.Context, *EjectWorkspaceRequest) (*EjectWorkspaceResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method EjectWorkspace not implemented")
+}
+func (UnimplementedProvisionerServiceServer) ListInjectNamespaces(context.Context, *ListInjectNamespacesRequest) (*ListInjectNamespacesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListInjectNamespaces not implemented")
+}
+func (UnimplementedProvisionerServiceServer) ListInjectWorkloads(context.Context, *ListInjectWorkloadsRequest) (*ListInjectWorkloadsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListInjectWorkloads not implemented")
 }
 func (UnimplementedProvisionerServiceServer) mustEmbedUnimplementedProvisionerServiceServer() {}
 func (UnimplementedProvisionerServiceServer) testEmbeddedByValue()                            {}
@@ -547,6 +595,42 @@ func _ProvisionerService_EjectWorkspace_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProvisionerService_ListInjectNamespaces_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListInjectNamespacesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProvisionerServiceServer).ListInjectNamespaces(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProvisionerService_ListInjectNamespaces_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProvisionerServiceServer).ListInjectNamespaces(ctx, req.(*ListInjectNamespacesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProvisionerService_ListInjectWorkloads_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListInjectWorkloadsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProvisionerServiceServer).ListInjectWorkloads(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProvisionerService_ListInjectWorkloads_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProvisionerServiceServer).ListInjectWorkloads(ctx, req.(*ListInjectWorkloadsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ProvisionerService_ServiceDesc is the grpc.ServiceDesc for ProvisionerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -593,6 +677,14 @@ var ProvisionerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "EjectWorkspace",
 			Handler:    _ProvisionerService_EjectWorkspace_Handler,
+		},
+		{
+			MethodName: "ListInjectNamespaces",
+			Handler:    _ProvisionerService_ListInjectNamespaces_Handler,
+		},
+		{
+			MethodName: "ListInjectWorkloads",
+			Handler:    _ProvisionerService_ListInjectWorkloads_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

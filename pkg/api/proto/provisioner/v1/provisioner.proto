@@ -64,6 +64,18 @@ service ProvisionerService {
   // EjectWorkspace removes a previously injected workspace from a workload
   // and deletes all supporting resources (ConfigMaps, PVCs, NetworkPolicies).
   rpc EjectWorkspace(EjectWorkspaceRequest) returns (EjectWorkspaceResponse);
+
+  // ListInjectNamespaces returns the namespaces the provisioner is configured
+  // to allow workspace injection into. It is the first step in building an
+  // inject-mode provisioning request: the namespace chosen here becomes the
+  // "ns=" of the userstr passed to ProvisionWorkspaceStream.
+  rpc ListInjectNamespaces(ListInjectNamespacesRequest) returns (ListInjectNamespacesResponse);
+
+  // ListInjectWorkloads returns the workloads a workspace can be injected
+  // into, each reporting whether it already hosts an injected workspace and
+  // who owns it. A workload hosts at most one workspace, so an occupied
+  // workload must be ejected before anyone else can inject into it.
+  rpc ListInjectWorkloads(ListInjectWorkloadsRequest) returns (ListInjectWorkloadsResponse);
 }
 
 // FindWorkspaceRequest identifies a single workspace to look up.
@@ -252,4 +264,82 @@ message EjectWorkspaceRequest {
 message EjectWorkspaceResponse {
   // workspace is the canonical workspace name that was ejected.
   string workspace = 1;
+}
+
+// ListInjectNamespacesRequest requests the injectable namespaces. It carries no
+// fields today; left as a message rather than google.protobuf.Empty so
+// parameters can be added later without changing the RPC signature.
+message ListInjectNamespacesRequest {}
+
+// ListInjectNamespacesResponse lists the namespaces open to injection.
+message ListInjectNamespacesResponse {
+  // namespaces are the namespaces a workspace may be injected into. Empty
+  // means injection is disabled for this provisioner.
+  repeated string namespaces = 1;
+  // cluster_wide is true when the provisioner is configured to allow injection
+  // into every namespace ("*"), in which case namespaces is the set of
+  // namespaces that exist in the cluster right now rather than a fixed
+  // allow-list, and may include system namespaces.
+  bool cluster_wide = 2;
+}
+
+// ListInjectWorkloadsRequest selects which workloads to list.
+message ListInjectWorkloadsRequest {
+  // namespace restricts the listing to a single namespace. It must be one of
+  // the namespaces returned by ListInjectNamespaces. Leave empty to list
+  // across every injectable namespace.
+  string namespace = 1;
+  // kinds restricts the listing to the given workload kinds ("deployment",
+  // "statefulset", "daemonset"). Empty means all supported kinds.
+  repeated string kinds = 2;
+}
+
+// InjectWorkload is a workload a workspace can be injected into, together with
+// its current injection state.
+message InjectWorkload {
+  // namespace is the Kubernetes namespace holding the workload.
+  string namespace = 1;
+  // kind is the workload kind: "deployment", "statefulset", or "daemonset".
+  string kind = 2;
+  // name is the workload name. Together with namespace and kind it forms the
+  // "workload=<kind>/<name>+ns=<namespace>" part of an inject-mode userstr.
+  string name = 3;
+  // replicas is the workload's desired replica count. Injecting produces one
+  // workspace per replica.
+  int32 replicas = 4;
+  // injected is true when this workload already hosts an injected workspace.
+  // A workload holds at most one, so a caller must treat an injected workload
+  // as unavailable until it is ejected.
+  bool injected = 5;
+  // workspace is the canonical id of the workspace currently injected into
+  // this workload. Empty unless injected is true.
+  string workspace = 6;
+  // username is the owner of the currently injected workspace, and
+  // organization their tenant. Both are empty unless injected is true; they
+  // are what distinguishes a workload the caller may re-enter from one
+  // occupied by somebody else.
+  string username = 7;
+  string organization = 8;
+  // blueprint is the blueprint the injected workspace was created from.
+  // Empty unless injected is true.
+  string blueprint = 9;
+  // repo_source is the URL of the repository the workload was built from and
+  // repo_revision the revision it was built at, taken verbatim from the
+  // workload's "org.opencontainers.image.source" and
+  // "org.opencontainers.image.revision" annotations. They describe the
+  // workload itself, not any workspace inside it, and so are set whether or
+  // not injected is true.
+  //
+  // The strings are passed through exactly as the workload declares them and
+  // are not validated or normalised; a workload declaring neither is still
+  // injectable and simply reports these empty.
+  string repo_source = 10;
+  string repo_revision = 11;
+}
+
+// ListInjectWorkloadsResponse lists the injectable workloads found.
+message ListInjectWorkloadsResponse {
+  // workloads are the matching workloads, ordered by namespace, then kind,
+  // then name.
+  repeated InjectWorkload workloads = 1;
 }

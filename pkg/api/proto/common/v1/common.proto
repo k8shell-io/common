@@ -188,12 +188,22 @@ message WorkspaceDetails {
   // into an existing workload.
   string workspace_type = 21;
   // workload_kind is the Kubernetes kind of the workload the workspace was
-  // injected into (e.g. "Deployment", "StatefulSet"). Set only when
+  // injected into: "deployment", "statefulset", or "daemonset". Set only when
   // workspace_type is "injected".
   string workload_kind = 22;
   // workload_name is the name of the workload the workspace was injected
   // into. Set only when workspace_type is "injected".
   string workload_name = 23;
+  // replica_index is which replica of the workload this workspace is. For a
+  // StatefulSet it is the pod's ordinal and is stable. For a Deployment it is
+  // the pod's position among its siblings ordered by pod name, and for a
+  // DaemonSet its position ordered by node name; a Deployment index therefore
+  // shifts when pods are replaced. Set only when workspace_type is "injected".
+  optional int32 replica_index = 24;
+  // replica_count is the workload's desired replica count: spec.replicas for a
+  // Deployment or StatefulSet, status.desiredNumberScheduled for a DaemonSet.
+  // Set only when workspace_type is "injected".
+  optional int32 replica_count = 25;
 }
 
 // BlueprintSummary is a lightweight representation of a blueprint used in

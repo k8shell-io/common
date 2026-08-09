@@ -69,8 +69,16 @@ type WorkspaceDetails struct {
 	WorkspaceType WorkspaceType `json:"workspaceType" example:"standalone"`
 	// WorkloadKind and WorkloadName identify the workload an injected
 	// workspace lives in. Both are empty for a standalone workspace.
-	WorkloadKind string `json:"workloadKind,omitempty" example:"Deployment"`
+	WorkloadKind string `json:"workloadKind,omitempty" example:"deployment"`
 	WorkloadName string `json:"workloadName,omitempty" example:"api-server"`
+	// ReplicaIndex is which replica of the workload this workspace is, and
+	// ReplicaCount the workload's desired replica count. Both are nil for a
+	// standalone workspace — a pointer rather than a plain int so that replica
+	// 0, the ordinary case, stays distinguishable from "not applicable".
+	// ReplicaIndex is a stable ordinal for a StatefulSet; for a Deployment it
+	// is derived from pod-name order and can shift when a pod is replaced.
+	ReplicaIndex *int32 `json:"replicaIndex,omitempty" example:"0"`
+	ReplicaCount *int32 `json:"replicaCount,omitempty" example:"3"`
 }
 
 // WorkspaceCreateRequest represents workspace resources (CPU and memory)

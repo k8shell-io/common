@@ -149,6 +149,46 @@ message RepoRefResponse {
   string repo_ref = 1;
 }
 
+// RepoOwner is an entity that can own repositories on the provider: the user's own
+// personal account, or an organization/group the user belongs to.
+message RepoOwner {
+  // login is the owner's handle, passed as ListReposRequest.repo_owner to list its
+  // repositories.
+  string login       = 1;
+  // kind is "user" for the caller's personal account or "organization" for a group.
+  string kind        = 2;
+  string description = 3;
+  string avatar_url  = 4;
+}
+
+// RepoOwnerList holds the repo owners a user has access to.
+message RepoOwnerList {
+  repeated RepoOwner owners = 1;
+}
+
+// ListReposRequest selects the user and owner whose repositories are being listed.
+message ListReposRequest {
+  string username   = 1;
+  // repo_owner is a login returned by ListRepoOwners.
+  string repo_owner = 2;
+}
+
+// Repo is a repository owned by a RepoOwner.
+message Repo {
+  string name            = 1;
+  // full_name is "<owner_login>/<name>".
+  string full_name       = 2;
+  string description     = 3;
+  bool   private         = 4;
+  string default_branch  = 5;
+  string html_url        = 6;
+}
+
+// RepoList holds the repositories under a single owner.
+message RepoList {
+  repeated Repo repos = 1;
+}
+
 // IdentityProviderInfo carries data about the identity provider
 message IdentityProviderInfo {
   string          name         = 1;

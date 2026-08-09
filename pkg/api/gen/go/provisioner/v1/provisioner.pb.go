@@ -1256,6 +1256,362 @@ func (x *EjectWorkspaceResponse) GetWorkspace() string {
 	return ""
 }
 
+// ListInjectNamespacesRequest requests the injectable namespaces. It carries no
+// fields today; left as a message rather than google.protobuf.Empty so
+// parameters can be added later without changing the RPC signature.
+type ListInjectNamespacesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListInjectNamespacesRequest) Reset() {
+	*x = ListInjectNamespacesRequest{}
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListInjectNamespacesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListInjectNamespacesRequest) ProtoMessage() {}
+
+func (x *ListInjectNamespacesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListInjectNamespacesRequest.ProtoReflect.Descriptor instead.
+func (*ListInjectNamespacesRequest) Descriptor() ([]byte, []int) {
+	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{21}
+}
+
+// ListInjectNamespacesResponse lists the namespaces open to injection.
+type ListInjectNamespacesResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// namespaces are the namespaces a workspace may be injected into. Empty
+	// means injection is disabled for this provisioner.
+	Namespaces []string `protobuf:"bytes,1,rep,name=namespaces,proto3" json:"namespaces,omitempty"`
+	// cluster_wide is true when the provisioner is configured to allow injection
+	// into every namespace ("*"), in which case namespaces is the set of
+	// namespaces that exist in the cluster right now rather than a fixed
+	// allow-list, and may include system namespaces.
+	ClusterWide   bool `protobuf:"varint,2,opt,name=cluster_wide,json=clusterWide,proto3" json:"cluster_wide,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListInjectNamespacesResponse) Reset() {
+	*x = ListInjectNamespacesResponse{}
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListInjectNamespacesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListInjectNamespacesResponse) ProtoMessage() {}
+
+func (x *ListInjectNamespacesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListInjectNamespacesResponse.ProtoReflect.Descriptor instead.
+func (*ListInjectNamespacesResponse) Descriptor() ([]byte, []int) {
+	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *ListInjectNamespacesResponse) GetNamespaces() []string {
+	if x != nil {
+		return x.Namespaces
+	}
+	return nil
+}
+
+func (x *ListInjectNamespacesResponse) GetClusterWide() bool {
+	if x != nil {
+		return x.ClusterWide
+	}
+	return false
+}
+
+// ListInjectWorkloadsRequest selects which workloads to list.
+type ListInjectWorkloadsRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// namespace restricts the listing to a single namespace. It must be one of
+	// the namespaces returned by ListInjectNamespaces. Leave empty to list
+	// across every injectable namespace.
+	Namespace string `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	// kinds restricts the listing to the given workload kinds ("deployment",
+	// "statefulset", "daemonset"). Empty means all supported kinds.
+	Kinds         []string `protobuf:"bytes,2,rep,name=kinds,proto3" json:"kinds,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListInjectWorkloadsRequest) Reset() {
+	*x = ListInjectWorkloadsRequest{}
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListInjectWorkloadsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListInjectWorkloadsRequest) ProtoMessage() {}
+
+func (x *ListInjectWorkloadsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListInjectWorkloadsRequest.ProtoReflect.Descriptor instead.
+func (*ListInjectWorkloadsRequest) Descriptor() ([]byte, []int) {
+	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *ListInjectWorkloadsRequest) GetNamespace() string {
+	if x != nil {
+		return x.Namespace
+	}
+	return ""
+}
+
+func (x *ListInjectWorkloadsRequest) GetKinds() []string {
+	if x != nil {
+		return x.Kinds
+	}
+	return nil
+}
+
+// InjectWorkload is a workload a workspace can be injected into, together with
+// its current injection state.
+type InjectWorkload struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// namespace is the Kubernetes namespace holding the workload.
+	Namespace string `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	// kind is the workload kind: "deployment", "statefulset", or "daemonset".
+	Kind string `protobuf:"bytes,2,opt,name=kind,proto3" json:"kind,omitempty"`
+	// name is the workload name. Together with namespace and kind it forms the
+	// "workload=<kind>/<name>+ns=<namespace>" part of an inject-mode userstr.
+	Name string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	// replicas is the workload's desired replica count. Injecting produces one
+	// workspace per replica.
+	Replicas int32 `protobuf:"varint,4,opt,name=replicas,proto3" json:"replicas,omitempty"`
+	// injected is true when this workload already hosts an injected workspace.
+	// A workload holds at most one, so a caller must treat an injected workload
+	// as unavailable until it is ejected.
+	Injected bool `protobuf:"varint,5,opt,name=injected,proto3" json:"injected,omitempty"`
+	// workspace is the canonical id of the workspace currently injected into
+	// this workload. Empty unless injected is true.
+	Workspace string `protobuf:"bytes,6,opt,name=workspace,proto3" json:"workspace,omitempty"`
+	// username is the owner of the currently injected workspace, and
+	// organization their tenant. Both are empty unless injected is true; they
+	// are what distinguishes a workload the caller may re-enter from one
+	// occupied by somebody else.
+	Username     string `protobuf:"bytes,7,opt,name=username,proto3" json:"username,omitempty"`
+	Organization string `protobuf:"bytes,8,opt,name=organization,proto3" json:"organization,omitempty"`
+	// blueprint is the blueprint the injected workspace was created from.
+	// Empty unless injected is true.
+	Blueprint string `protobuf:"bytes,9,opt,name=blueprint,proto3" json:"blueprint,omitempty"`
+	// repo_source is the URL of the repository the workload was built from and
+	// repo_revision the revision it was built at, taken verbatim from the
+	// workload's "org.opencontainers.image.source" and
+	// "org.opencontainers.image.revision" annotations. They describe the
+	// workload itself, not any workspace inside it, and so are set whether or
+	// not injected is true.
+	//
+	// The strings are passed through exactly as the workload declares them and
+	// are not validated or normalised; a workload declaring neither is still
+	// injectable and simply reports these empty.
+	RepoSource    string `protobuf:"bytes,10,opt,name=repo_source,json=repoSource,proto3" json:"repo_source,omitempty"`
+	RepoRevision  string `protobuf:"bytes,11,opt,name=repo_revision,json=repoRevision,proto3" json:"repo_revision,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *InjectWorkload) Reset() {
+	*x = InjectWorkload{}
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InjectWorkload) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InjectWorkload) ProtoMessage() {}
+
+func (x *InjectWorkload) ProtoReflect() protoreflect.Message {
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InjectWorkload.ProtoReflect.Descriptor instead.
+func (*InjectWorkload) Descriptor() ([]byte, []int) {
+	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *InjectWorkload) GetNamespace() string {
+	if x != nil {
+		return x.Namespace
+	}
+	return ""
+}
+
+func (x *InjectWorkload) GetKind() string {
+	if x != nil {
+		return x.Kind
+	}
+	return ""
+}
+
+func (x *InjectWorkload) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *InjectWorkload) GetReplicas() int32 {
+	if x != nil {
+		return x.Replicas
+	}
+	return 0
+}
+
+func (x *InjectWorkload) GetInjected() bool {
+	if x != nil {
+		return x.Injected
+	}
+	return false
+}
+
+func (x *InjectWorkload) GetWorkspace() string {
+	if x != nil {
+		return x.Workspace
+	}
+	return ""
+}
+
+func (x *InjectWorkload) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *InjectWorkload) GetOrganization() string {
+	if x != nil {
+		return x.Organization
+	}
+	return ""
+}
+
+func (x *InjectWorkload) GetBlueprint() string {
+	if x != nil {
+		return x.Blueprint
+	}
+	return ""
+}
+
+func (x *InjectWorkload) GetRepoSource() string {
+	if x != nil {
+		return x.RepoSource
+	}
+	return ""
+}
+
+func (x *InjectWorkload) GetRepoRevision() string {
+	if x != nil {
+		return x.RepoRevision
+	}
+	return ""
+}
+
+// ListInjectWorkloadsResponse lists the injectable workloads found.
+type ListInjectWorkloadsResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// workloads are the matching workloads, ordered by namespace, then kind,
+	// then name.
+	Workloads     []*InjectWorkload `protobuf:"bytes,1,rep,name=workloads,proto3" json:"workloads,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListInjectWorkloadsResponse) Reset() {
+	*x = ListInjectWorkloadsResponse{}
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListInjectWorkloadsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListInjectWorkloadsResponse) ProtoMessage() {}
+
+func (x *ListInjectWorkloadsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListInjectWorkloadsResponse.ProtoReflect.Descriptor instead.
+func (*ListInjectWorkloadsResponse) Descriptor() ([]byte, []int) {
+	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *ListInjectWorkloadsResponse) GetWorkloads() []*InjectWorkload {
+	if x != nil {
+		return x.Workloads
+	}
+	return nil
+}
+
 var File_provisioner_v1_provisioner_proto protoreflect.FileDescriptor
 
 const file_provisioner_v1_provisioner_proto_rawDesc = "" +
@@ -1337,7 +1693,32 @@ const file_provisioner_v1_provisioner_proto_rawDesc = "" +
 	"\rworkload_name\x18\x04 \x01(\tR\fworkloadName\x12'\n" +
 	"\x0ftimeout_seconds\x18\x05 \x01(\x05R\x0etimeoutSeconds\"6\n" +
 	"\x16EjectWorkspaceResponse\x12\x1c\n" +
-	"\tworkspace\x18\x01 \x01(\tR\tworkspace2\xd1\t\n" +
+	"\tworkspace\x18\x01 \x01(\tR\tworkspace\"\x1d\n" +
+	"\x1bListInjectNamespacesRequest\"a\n" +
+	"\x1cListInjectNamespacesResponse\x12\x1e\n" +
+	"\n" +
+	"namespaces\x18\x01 \x03(\tR\n" +
+	"namespaces\x12!\n" +
+	"\fcluster_wide\x18\x02 \x01(\bR\vclusterWide\"P\n" +
+	"\x1aListInjectWorkloadsRequest\x12\x1c\n" +
+	"\tnamespace\x18\x01 \x01(\tR\tnamespace\x12\x14\n" +
+	"\x05kinds\x18\x02 \x03(\tR\x05kinds\"\xd0\x02\n" +
+	"\x0eInjectWorkload\x12\x1c\n" +
+	"\tnamespace\x18\x01 \x01(\tR\tnamespace\x12\x12\n" +
+	"\x04kind\x18\x02 \x01(\tR\x04kind\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12\x1a\n" +
+	"\breplicas\x18\x04 \x01(\x05R\breplicas\x12\x1a\n" +
+	"\binjected\x18\x05 \x01(\bR\binjected\x12\x1c\n" +
+	"\tworkspace\x18\x06 \x01(\tR\tworkspace\x12\x1a\n" +
+	"\busername\x18\a \x01(\tR\busername\x12\"\n" +
+	"\forganization\x18\b \x01(\tR\forganization\x12\x1c\n" +
+	"\tblueprint\x18\t \x01(\tR\tblueprint\x12\x1f\n" +
+	"\vrepo_source\x18\n" +
+	" \x01(\tR\n" +
+	"repoSource\x12#\n" +
+	"\rrepo_revision\x18\v \x01(\tR\frepoRevision\"[\n" +
+	"\x1bListInjectWorkloadsResponse\x12<\n" +
+	"\tworkloads\x18\x01 \x03(\v2\x1e.provisioner.v1.InjectWorkloadR\tworkloads2\xb4\v\n" +
 	"\x12ProvisionerService\x12\\\n" +
 	"\rGetWorkspaces\x12$.provisioner.v1.GetWorkspacesRequest\x1a%.provisioner.v1.GetWorkspacesResponse\x12R\n" +
 	"\rFindWorkspace\x12$.provisioner.v1.FindWorkspaceRequest\x1a\x1b.common.v1.WorkspaceDetails\x12n\n" +
@@ -1350,7 +1731,9 @@ const file_provisioner_v1_provisioner_proto_rawDesc = "" +
 	"\x14DeleteUserWorkspaces\x12+.provisioner.v1.DeleteUserWorkspacesRequest\x1a,.provisioner.v1.DeleteUserWorkspacesResponse\x12\\\n" +
 	"\rStopWorkspace\x12$.provisioner.v1.StopWorkspaceRequest\x1a%.provisioner.v1.StopWorkspaceResponse\x12k\n" +
 	"\x14StartWorkspaceStream\x12%.provisioner.v1.StartWorkspaceRequest\x1a*.provisioner.v1.ProvisionWorkspaceResponse0\x01\x12_\n" +
-	"\x0eEjectWorkspace\x12%.provisioner.v1.EjectWorkspaceRequest\x1a&.provisioner.v1.EjectWorkspaceResponseBJZHgithub.com/k8shell-io/common/pkg/api/gen/go/provisioner/v1;provisionerv1b\x06proto3"
+	"\x0eEjectWorkspace\x12%.provisioner.v1.EjectWorkspaceRequest\x1a&.provisioner.v1.EjectWorkspaceResponse\x12q\n" +
+	"\x14ListInjectNamespaces\x12+.provisioner.v1.ListInjectNamespacesRequest\x1a,.provisioner.v1.ListInjectNamespacesResponse\x12n\n" +
+	"\x13ListInjectWorkloads\x12*.provisioner.v1.ListInjectWorkloadsRequest\x1a+.provisioner.v1.ListInjectWorkloadsResponseBJZHgithub.com/k8shell-io/common/pkg/api/gen/go/provisioner/v1;provisionerv1b\x06proto3"
 
 var (
 	file_provisioner_v1_provisioner_proto_rawDescOnce sync.Once
@@ -1364,7 +1747,7 @@ func file_provisioner_v1_provisioner_proto_rawDescGZIP() []byte {
 	return file_provisioner_v1_provisioner_proto_rawDescData
 }
 
-var file_provisioner_v1_provisioner_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_provisioner_v1_provisioner_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
 var file_provisioner_v1_provisioner_proto_goTypes = []any{
 	(*FindWorkspaceRequest)(nil),            // 0: provisioner.v1.FindWorkspaceRequest
 	(*GetWorkspacesRequest)(nil),            // 1: provisioner.v1.GetWorkspacesRequest
@@ -1387,46 +1770,56 @@ var file_provisioner_v1_provisioner_proto_goTypes = []any{
 	(*StartWorkspaceRequest)(nil),           // 18: provisioner.v1.StartWorkspaceRequest
 	(*EjectWorkspaceRequest)(nil),           // 19: provisioner.v1.EjectWorkspaceRequest
 	(*EjectWorkspaceResponse)(nil),          // 20: provisioner.v1.EjectWorkspaceResponse
-	(*v1.WorkspaceDetails)(nil),             // 21: common.v1.WorkspaceDetails
-	(*v11.Payload)(nil),                     // 22: query.v1.Payload
-	(*v1.BlueprintSummary)(nil),             // 23: common.v1.BlueprintSummary
-	(*v11.Descriptor)(nil),                  // 24: query.v1.Descriptor
+	(*ListInjectNamespacesRequest)(nil),     // 21: provisioner.v1.ListInjectNamespacesRequest
+	(*ListInjectNamespacesResponse)(nil),    // 22: provisioner.v1.ListInjectNamespacesResponse
+	(*ListInjectWorkloadsRequest)(nil),      // 23: provisioner.v1.ListInjectWorkloadsRequest
+	(*InjectWorkload)(nil),                  // 24: provisioner.v1.InjectWorkload
+	(*ListInjectWorkloadsResponse)(nil),     // 25: provisioner.v1.ListInjectWorkloadsResponse
+	(*v1.WorkspaceDetails)(nil),             // 26: common.v1.WorkspaceDetails
+	(*v11.Payload)(nil),                     // 27: query.v1.Payload
+	(*v1.BlueprintSummary)(nil),             // 28: common.v1.BlueprintSummary
+	(*v11.Descriptor)(nil),                  // 29: query.v1.Descriptor
 }
 var file_provisioner_v1_provisioner_proto_depIdxs = []int32{
-	21, // 0: provisioner.v1.GetWorkspacesResponse.workspaces:type_name -> common.v1.WorkspaceDetails
-	22, // 1: provisioner.v1.QueryWorkspacesRequest.query:type_name -> query.v1.Payload
-	23, // 2: provisioner.v1.GetBlueprintsResponse.blueprints:type_name -> common.v1.BlueprintSummary
+	26, // 0: provisioner.v1.GetWorkspacesResponse.workspaces:type_name -> common.v1.WorkspaceDetails
+	27, // 1: provisioner.v1.QueryWorkspacesRequest.query:type_name -> query.v1.Payload
+	28, // 2: provisioner.v1.GetBlueprintsResponse.blueprints:type_name -> common.v1.BlueprintSummary
 	10, // 3: provisioner.v1.ProvisionWorkspaceResponse.handshake:type_name -> provisioner.v1.HandshakeResponse
 	11, // 4: provisioner.v1.ProvisionWorkspaceResponse.event:type_name -> provisioner.v1.ProvisionEvent
-	1,  // 5: provisioner.v1.ProvisionerService.GetWorkspaces:input_type -> provisioner.v1.GetWorkspacesRequest
-	0,  // 6: provisioner.v1.ProvisionerService.FindWorkspace:input_type -> provisioner.v1.FindWorkspaceRequest
-	2,  // 7: provisioner.v1.ProvisionerService.GetWorkspacesByUserStr:input_type -> provisioner.v1.GetWorkspacesByUserStrRequest
-	4,  // 8: provisioner.v1.ProvisionerService.GetWorkspacesQuerySchema:input_type -> provisioner.v1.GetWorkspacesQuerySchemaRequest
-	5,  // 9: provisioner.v1.ProvisionerService.QueryWorkspaces:input_type -> provisioner.v1.QueryWorkspacesRequest
-	6,  // 10: provisioner.v1.ProvisionerService.GetBlueprints:input_type -> provisioner.v1.GetBlueprintsRequest
-	8,  // 11: provisioner.v1.ProvisionerService.ProvisionWorkspaceStream:input_type -> provisioner.v1.ProvisionWorkspaceRequest
-	12, // 12: provisioner.v1.ProvisionerService.DeleteWorkspace:input_type -> provisioner.v1.DeleteWorkspaceRequest
-	14, // 13: provisioner.v1.ProvisionerService.DeleteUserWorkspaces:input_type -> provisioner.v1.DeleteUserWorkspacesRequest
-	16, // 14: provisioner.v1.ProvisionerService.StopWorkspace:input_type -> provisioner.v1.StopWorkspaceRequest
-	18, // 15: provisioner.v1.ProvisionerService.StartWorkspaceStream:input_type -> provisioner.v1.StartWorkspaceRequest
-	19, // 16: provisioner.v1.ProvisionerService.EjectWorkspace:input_type -> provisioner.v1.EjectWorkspaceRequest
-	3,  // 17: provisioner.v1.ProvisionerService.GetWorkspaces:output_type -> provisioner.v1.GetWorkspacesResponse
-	21, // 18: provisioner.v1.ProvisionerService.FindWorkspace:output_type -> common.v1.WorkspaceDetails
-	3,  // 19: provisioner.v1.ProvisionerService.GetWorkspacesByUserStr:output_type -> provisioner.v1.GetWorkspacesResponse
-	24, // 20: provisioner.v1.ProvisionerService.GetWorkspacesQuerySchema:output_type -> query.v1.Descriptor
-	3,  // 21: provisioner.v1.ProvisionerService.QueryWorkspaces:output_type -> provisioner.v1.GetWorkspacesResponse
-	7,  // 22: provisioner.v1.ProvisionerService.GetBlueprints:output_type -> provisioner.v1.GetBlueprintsResponse
-	9,  // 23: provisioner.v1.ProvisionerService.ProvisionWorkspaceStream:output_type -> provisioner.v1.ProvisionWorkspaceResponse
-	13, // 24: provisioner.v1.ProvisionerService.DeleteWorkspace:output_type -> provisioner.v1.DeleteWorkspaceResponse
-	15, // 25: provisioner.v1.ProvisionerService.DeleteUserWorkspaces:output_type -> provisioner.v1.DeleteUserWorkspacesResponse
-	17, // 26: provisioner.v1.ProvisionerService.StopWorkspace:output_type -> provisioner.v1.StopWorkspaceResponse
-	9,  // 27: provisioner.v1.ProvisionerService.StartWorkspaceStream:output_type -> provisioner.v1.ProvisionWorkspaceResponse
-	20, // 28: provisioner.v1.ProvisionerService.EjectWorkspace:output_type -> provisioner.v1.EjectWorkspaceResponse
-	17, // [17:29] is the sub-list for method output_type
-	5,  // [5:17] is the sub-list for method input_type
-	5,  // [5:5] is the sub-list for extension type_name
-	5,  // [5:5] is the sub-list for extension extendee
-	0,  // [0:5] is the sub-list for field type_name
+	24, // 5: provisioner.v1.ListInjectWorkloadsResponse.workloads:type_name -> provisioner.v1.InjectWorkload
+	1,  // 6: provisioner.v1.ProvisionerService.GetWorkspaces:input_type -> provisioner.v1.GetWorkspacesRequest
+	0,  // 7: provisioner.v1.ProvisionerService.FindWorkspace:input_type -> provisioner.v1.FindWorkspaceRequest
+	2,  // 8: provisioner.v1.ProvisionerService.GetWorkspacesByUserStr:input_type -> provisioner.v1.GetWorkspacesByUserStrRequest
+	4,  // 9: provisioner.v1.ProvisionerService.GetWorkspacesQuerySchema:input_type -> provisioner.v1.GetWorkspacesQuerySchemaRequest
+	5,  // 10: provisioner.v1.ProvisionerService.QueryWorkspaces:input_type -> provisioner.v1.QueryWorkspacesRequest
+	6,  // 11: provisioner.v1.ProvisionerService.GetBlueprints:input_type -> provisioner.v1.GetBlueprintsRequest
+	8,  // 12: provisioner.v1.ProvisionerService.ProvisionWorkspaceStream:input_type -> provisioner.v1.ProvisionWorkspaceRequest
+	12, // 13: provisioner.v1.ProvisionerService.DeleteWorkspace:input_type -> provisioner.v1.DeleteWorkspaceRequest
+	14, // 14: provisioner.v1.ProvisionerService.DeleteUserWorkspaces:input_type -> provisioner.v1.DeleteUserWorkspacesRequest
+	16, // 15: provisioner.v1.ProvisionerService.StopWorkspace:input_type -> provisioner.v1.StopWorkspaceRequest
+	18, // 16: provisioner.v1.ProvisionerService.StartWorkspaceStream:input_type -> provisioner.v1.StartWorkspaceRequest
+	19, // 17: provisioner.v1.ProvisionerService.EjectWorkspace:input_type -> provisioner.v1.EjectWorkspaceRequest
+	21, // 18: provisioner.v1.ProvisionerService.ListInjectNamespaces:input_type -> provisioner.v1.ListInjectNamespacesRequest
+	23, // 19: provisioner.v1.ProvisionerService.ListInjectWorkloads:input_type -> provisioner.v1.ListInjectWorkloadsRequest
+	3,  // 20: provisioner.v1.ProvisionerService.GetWorkspaces:output_type -> provisioner.v1.GetWorkspacesResponse
+	26, // 21: provisioner.v1.ProvisionerService.FindWorkspace:output_type -> common.v1.WorkspaceDetails
+	3,  // 22: provisioner.v1.ProvisionerService.GetWorkspacesByUserStr:output_type -> provisioner.v1.GetWorkspacesResponse
+	29, // 23: provisioner.v1.ProvisionerService.GetWorkspacesQuerySchema:output_type -> query.v1.Descriptor
+	3,  // 24: provisioner.v1.ProvisionerService.QueryWorkspaces:output_type -> provisioner.v1.GetWorkspacesResponse
+	7,  // 25: provisioner.v1.ProvisionerService.GetBlueprints:output_type -> provisioner.v1.GetBlueprintsResponse
+	9,  // 26: provisioner.v1.ProvisionerService.ProvisionWorkspaceStream:output_type -> provisioner.v1.ProvisionWorkspaceResponse
+	13, // 27: provisioner.v1.ProvisionerService.DeleteWorkspace:output_type -> provisioner.v1.DeleteWorkspaceResponse
+	15, // 28: provisioner.v1.ProvisionerService.DeleteUserWorkspaces:output_type -> provisioner.v1.DeleteUserWorkspacesResponse
+	17, // 29: provisioner.v1.ProvisionerService.StopWorkspace:output_type -> provisioner.v1.StopWorkspaceResponse
+	9,  // 30: provisioner.v1.ProvisionerService.StartWorkspaceStream:output_type -> provisioner.v1.ProvisionWorkspaceResponse
+	20, // 31: provisioner.v1.ProvisionerService.EjectWorkspace:output_type -> provisioner.v1.EjectWorkspaceResponse
+	22, // 32: provisioner.v1.ProvisionerService.ListInjectNamespaces:output_type -> provisioner.v1.ListInjectNamespacesResponse
+	25, // 33: provisioner.v1.ProvisionerService.ListInjectWorkloads:output_type -> provisioner.v1.ListInjectWorkloadsResponse
+	20, // [20:34] is the sub-list for method output_type
+	6,  // [6:20] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_provisioner_v1_provisioner_proto_init() }
@@ -1444,7 +1837,7 @@ func file_provisioner_v1_provisioner_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_provisioner_v1_provisioner_proto_rawDesc), len(file_provisioner_v1_provisioner_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   21,
+			NumMessages:   26,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -34,6 +34,8 @@ const (
 	IdentityProviderService_GetBlueprintByUserStr_FullMethodName   = "/identity.v1.IdentityProviderService/GetBlueprintByUserStr"
 	IdentityProviderService_ListUserAuthKeys_FullMethodName        = "/identity.v1.IdentityProviderService/ListUserAuthKeys"
 	IdentityProviderService_ResolvePullRequestToRef_FullMethodName = "/identity.v1.IdentityProviderService/ResolvePullRequestToRef"
+	IdentityProviderService_ListRepoOwners_FullMethodName          = "/identity.v1.IdentityProviderService/ListRepoOwners"
+	IdentityProviderService_ListRepos_FullMethodName               = "/identity.v1.IdentityProviderService/ListRepos"
 )
 
 // IdentityProviderServiceClient is the client API for IdentityProviderService service.
@@ -65,6 +67,13 @@ type IdentityProviderServiceClient interface {
 	ListUserAuthKeys(ctx context.Context, in *Username, opts ...grpc.CallOption) (*ListUserAuthKeysResponse, error)
 	// ResolvePullRequestToRef resolves a pull request to a repository reference (e.g., branch or commit).
 	ResolvePullRequestToRef(ctx context.Context, in *RepoPullRequestRequest, opts ...grpc.CallOption) (*RepoRefResponse, error)
+	// ListRepoOwners lists the repository owners (the user's personal account plus any
+	// organizations) that the user has access to on the provider. It is the first step
+	// in browsing repositories: the login chosen here becomes the repo_owner of a
+	// subsequent ListRepos call.
+	ListRepoOwners(ctx context.Context, in *Username, opts ...grpc.CallOption) (*RepoOwnerList, error)
+	// ListRepos lists the repositories under the given owner that the user can access.
+	ListRepos(ctx context.Context, in *ListReposRequest, opts ...grpc.CallOption) (*RepoList, error)
 }
 
 type identityProviderServiceClient struct {
@@ -185,6 +194,26 @@ func (c *identityProviderServiceClient) ResolvePullRequestToRef(ctx context.Cont
 	return out, nil
 }
 
+func (c *identityProviderServiceClient) ListRepoOwners(ctx context.Context, in *Username, opts ...grpc.CallOption) (*RepoOwnerList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RepoOwnerList)
+	err := c.cc.Invoke(ctx, IdentityProviderService_ListRepoOwners_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityProviderServiceClient) ListRepos(ctx context.Context, in *ListReposRequest, opts ...grpc.CallOption) (*RepoList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RepoList)
+	err := c.cc.Invoke(ctx, IdentityProviderService_ListRepos_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // IdentityProviderServiceServer is the server API for IdentityProviderService service.
 // All implementations must embed UnimplementedIdentityProviderServiceServer
 // for forward compatibility.
@@ -214,6 +243,13 @@ type IdentityProviderServiceServer interface {
 	ListUserAuthKeys(context.Context, *Username) (*ListUserAuthKeysResponse, error)
 	// ResolvePullRequestToRef resolves a pull request to a repository reference (e.g., branch or commit).
 	ResolvePullRequestToRef(context.Context, *RepoPullRequestRequest) (*RepoRefResponse, error)
+	// ListRepoOwners lists the repository owners (the user's personal account plus any
+	// organizations) that the user has access to on the provider. It is the first step
+	// in browsing repositories: the login chosen here becomes the repo_owner of a
+	// subsequent ListRepos call.
+	ListRepoOwners(context.Context, *Username) (*RepoOwnerList, error)
+	// ListRepos lists the repositories under the given owner that the user can access.
+	ListRepos(context.Context, *ListReposRequest) (*RepoList, error)
 	mustEmbedUnimplementedIdentityProviderServiceServer()
 }
 
@@ -256,6 +292,12 @@ func (UnimplementedIdentityProviderServiceServer) ListUserAuthKeys(context.Conte
 }
 func (UnimplementedIdentityProviderServiceServer) ResolvePullRequestToRef(context.Context, *RepoPullRequestRequest) (*RepoRefResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ResolvePullRequestToRef not implemented")
+}
+func (UnimplementedIdentityProviderServiceServer) ListRepoOwners(context.Context, *Username) (*RepoOwnerList, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListRepoOwners not implemented")
+}
+func (UnimplementedIdentityProviderServiceServer) ListRepos(context.Context, *ListReposRequest) (*RepoList, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListRepos not implemented")
 }
 func (UnimplementedIdentityProviderServiceServer) mustEmbedUnimplementedIdentityProviderServiceServer() {
 }
@@ -477,6 +519,42 @@ func _IdentityProviderService_ResolvePullRequestToRef_Handler(srv interface{}, c
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IdentityProviderService_ListRepoOwners_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Username)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityProviderServiceServer).ListRepoOwners(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityProviderService_ListRepoOwners_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityProviderServiceServer).ListRepoOwners(ctx, req.(*Username))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityProviderService_ListRepos_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListReposRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityProviderServiceServer).ListRepos(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityProviderService_ListRepos_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityProviderServiceServer).ListRepos(ctx, req.(*ListReposRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // IdentityProviderService_ServiceDesc is the grpc.ServiceDesc for IdentityProviderService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -527,6 +605,14 @@ var IdentityProviderService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ResolvePullRequestToRef",
 			Handler:    _IdentityProviderService_ResolvePullRequestToRef_Handler,
+		},
+		{
+			MethodName: "ListRepoOwners",
+			Handler:    _IdentityProviderService_ListRepoOwners_Handler,
+		},
+		{
+			MethodName: "ListRepos",
+			Handler:    _IdentityProviderService_ListRepos_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

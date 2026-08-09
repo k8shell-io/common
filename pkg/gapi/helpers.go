@@ -4,6 +4,8 @@ import (
 	"time"
 
 	commonv1 "github.com/k8shell-io/common/pkg/api/gen/go/common/v1"
+	identityv1 "github.com/k8shell-io/common/pkg/api/gen/go/identity/v1"
+	provisionerv1 "github.com/k8shell-io/common/pkg/api/gen/go/provisioner/v1"
 	"github.com/k8shell-io/common/pkg/models"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -309,7 +311,19 @@ func WorkspaceDetailsToProto(m *models.WorkspaceDetails) *commonv1.WorkspaceDeta
 		WorkspaceType:   string(m.WorkspaceType),
 		WorkloadKind:    m.WorkloadKind,
 		WorkloadName:    m.WorkloadName,
+		ReplicaIndex:    copyInt32(m.ReplicaIndex),
+		ReplicaCount:    copyInt32(m.ReplicaCount),
 	}
+}
+
+// copyInt32 duplicates an optional int32 so that the model and the protobuf
+// message never share the same pointer.
+func copyInt32(v *int32) *int32 {
+	if v == nil {
+		return nil
+	}
+	c := *v
+	return &c
 }
 
 // ProtoToWorkspaceDetails converts a protobuf WorkspaceDetails message to its Go model.
@@ -341,6 +355,8 @@ func ProtoToWorkspaceDetails(pb *commonv1.WorkspaceDetails) *models.WorkspaceDet
 		WorkspaceType:   models.WorkspaceType(pb.GetWorkspaceType()),
 		WorkloadKind:    pb.GetWorkloadKind(),
 		WorkloadName:    pb.GetWorkloadName(),
+		ReplicaIndex:    copyInt32(pb.ReplicaIndex),
+		ReplicaCount:    copyInt32(pb.ReplicaCount),
 	}
 }
 
@@ -365,5 +381,63 @@ func ProtoToBlueprintSummary(pb *commonv1.BlueprintSummary) *models.BlueprintSum
 		Name:        pb.GetName(),
 		Description: pb.GetDescription(),
 		IsTemplate:  pb.GetIsTemplate(),
+	}
+}
+
+// ProtoToInjectNamespaces converts a protobuf ListInjectNamespacesResponse
+// message to its Go model.
+func ProtoToInjectNamespaces(pb *provisionerv1.ListInjectNamespacesResponse) *models.InjectNamespaces {
+	if pb == nil {
+		return nil
+	}
+	return &models.InjectNamespaces{
+		Namespaces:  pb.GetNamespaces(),
+		ClusterWide: pb.GetClusterWide(),
+	}
+}
+
+// ProtoToInjectWorkload converts a protobuf InjectWorkload message to its Go model.
+func ProtoToInjectWorkload(pb *provisionerv1.InjectWorkload) *models.InjectWorkload {
+	if pb == nil {
+		return nil
+	}
+	return &models.InjectWorkload{
+		Namespace:    pb.GetNamespace(),
+		Kind:         pb.GetKind(),
+		Name:         pb.GetName(),
+		Replicas:     pb.GetReplicas(),
+		Injected:     pb.GetInjected(),
+		Workspace:    pb.GetWorkspace(),
+		Username:     pb.GetUsername(),
+		Organization: pb.GetOrganization(),
+		Blueprint:    pb.GetBlueprint(),
+	}
+}
+
+// ProtoToRepoOwner converts a protobuf RepoOwner message to its Go model.
+func ProtoToRepoOwner(pb *identityv1.RepoOwner) *models.RepoOwner {
+	if pb == nil {
+		return nil
+	}
+	return &models.RepoOwner{
+		Login:       pb.GetLogin(),
+		Kind:        pb.GetKind(),
+		Description: pb.GetDescription(),
+		AvatarURL:   pb.GetAvatarUrl(),
+	}
+}
+
+// ProtoToRepo converts a protobuf Repo message to its Go model.
+func ProtoToRepo(pb *identityv1.Repo) *models.Repo {
+	if pb == nil {
+		return nil
+	}
+	return &models.Repo{
+		Name:          pb.GetName(),
+		FullName:      pb.GetFullName(),
+		Description:   pb.GetDescription(),
+		Private:       pb.GetPrivate(),
+		DefaultBranch: pb.GetDefaultBranch(),
+		HTMLURL:       pb.GetHtmlUrl(),
 	}
 }

@@ -235,6 +235,17 @@ service IdentityService {
   // GetAvailableIdentityProviders returns a list of available identity providers.
   rpc GetAvailableIdentityProviders (GetAvailableIdentityProvidersRequest) returns (GetAvailableIdentityProvidersResponse);
 
+  // ListRepoOwners lists the repository owners — the user's own account plus any
+  // organizations they belong to — available to the user on their identity provider.
+  // It is the first step in browsing repositories: the login of a returned owner
+  // becomes the repo_owner of a subsequent ListRepos call. Delegates to the
+  // provider that sourced the user.
+  rpc ListRepoOwners (Username) returns (RepoOwnerList);
+
+  // ListRepos lists the repositories under the given owner that the user can access
+  // on their identity provider. Delegates to the provider that sourced the user.
+  rpc ListRepos (ListReposRequest) returns (RepoList);
+
   // CreateAccessToken issues a new Personal Access Token for a user. The raw token is
   // returned once in the response and is not recoverable after that.
   rpc CreateAccessToken (CreateAccessTokenRequest) returns (CreateAccessTokenResponse);

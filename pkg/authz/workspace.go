@@ -60,7 +60,10 @@ package authz
 //   id     (empty — no specific workspace yet)
 //   owner  owner username  (required)
 //
-// Context   (none)
+// Context
+//   mode  standalone | inject  (required) — lets the policy grant standalone
+//         creation without also granting the ability to inject into an
+//         existing workload, or vice versa.
 //
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
@@ -433,12 +436,21 @@ const (
 
 // --- workspace:list and workspace:create ---
 
+// WorkspaceOwnerContext holds the context fields for workspace:create.
+// Unused for workspace:list.
+type WorkspaceOwnerContext struct {
+	// Mode is which kind of workspace is being created: standalone or
+	// inject. Required for workspace:create.
+	Mode WorkspaceProvisionMode
+}
+
 // WorkspaceOwnerEvalRequest is the validated, typed model for workspace:list
 // and workspace:create. Resource.ID is empty — there is no specific workspace;
 // Resource.Owner identifies whose workspace collection is being accessed or extended.
 type WorkspaceOwnerEvalRequest struct {
 	Action   WorkspaceAction
 	Resource WorkspaceResource
+	Context  WorkspaceOwnerContext
 }
 
 var validWorkspaceOwnerActions = map[WorkspaceAction]struct{}{
@@ -452,6 +464,12 @@ var _ EvalRequest = (*WorkspaceOwnerEvalRequest)(nil)
 // the given action and owner username.
 func NewWorkspaceOwnerEvalRequest(action WorkspaceAction, owner string) *WorkspaceOwnerEvalRequest {
 	return &WorkspaceOwnerEvalRequest{Action: action, Resource: WorkspaceResource{Owner: owner}}
+}
+
+// WithMode sets the provisioning mode; required for workspace:create.
+func (r *WorkspaceOwnerEvalRequest) WithMode(mode WorkspaceProvisionMode) *WorkspaceOwnerEvalRequest {
+	r.Context.Mode = mode
+	return r
 }
 
 // Build validates the request and returns it if all constraints are satisfied.
@@ -469,6 +487,10 @@ func (r *WorkspaceOwnerEvalRequest) ToProto(token string) *authzv1.EvaluateReque
 	if r.Resource.Owner != "" {
 		attrs["owner"] = r.Resource.Owner
 	}
+	var ctx map[string]string
+	if r.Context.Mode != "" {
+		ctx = map[string]string{"mode": string(r.Context.Mode)}
+	}
 	return &authzv1.EvaluateRequest{
 		Token:  token,
 		Action: string(r.Action),
@@ -477,6 +499,7 @@ func (r *WorkspaceOwnerEvalRequest) ToProto(token string) *authzv1.EvaluateReque
 			Id:         r.Resource.ID,
 			Attributes: attrs,
 		},
+		Context: ctx,
 	}
 }
 
@@ -498,6 +521,9 @@ func WorkspaceOwnerEvalRequestFromProto(req *authzv1.EvaluateRequest) (*Workspac
 			ID:    req.Resource.Id,
 			Owner: req.Resource.Attributes["owner"],
 		},
+		Context: WorkspaceOwnerContext{
+			Mode: WorkspaceProvisionMode(req.Context["mode"]),
+		},
 	}
 	if err := r.Validate(); err != nil {
 		return nil, err
@@ -511,8 +537,14 @@ func (r *WorkspaceOwnerEvalRequest) Validate() error {
 	if _, ok := validWorkspaceOwnerActions[r.Action]; !ok {
 		return fmt.Errorf("workspace: unknown owner action %q", r.Action)
 	}
-	if r.Action == WorkspaceActionCreate && r.Resource.Owner == "" {
-		return fmt.Errorf("workspace: resource attribute \"owner\" is required")
+	if r.Action == WorkspaceActionCreate {
+		if r.Resource.Owner == "" {
+			return fmt.Errorf("workspace: resource attribute \"owner\" is required")
+		}
+		if _, ok := validWorkspaceProvisionModes[r.Context.Mode]; !ok {
+			return fmt.Errorf("workspace: context \"mode\" must be %q or %q, got %q",
+				WorkspaceProvisionModeStandalone, WorkspaceProvisionModeInject, r.Context.Mode)
+		}
 	}
 	return nil
 }
@@ -1078,9 +1110,25 @@ func init() {
 		},
 	})
 	registerCapabilityCheck(CapabilityCheck{
-		Action: string(WorkspaceActionCreate), Package: "workspace", Scope: string(WorkspaceActionCreate),
+		// Scope stays the flat action (not action:mode) — a PAT scoped for
+		// workspace:create covers both modes; only the Action display label
+		// here is split for a more informative report, same convention as
+		// workspace:files' download/upload split below.
+		Action:  string(WorkspaceActionCreate) + ":" + string(WorkspaceProvisionModeStandalone),
+		Package: "workspace",
+		Scope:   string(WorkspaceActionCreate),
 		Build: func(ctx CapabilityContext) (EvalRequest, error) {
-			return NewWorkspaceOwnerEvalRequest(WorkspaceActionCreate, ctx.ResourceOwner).Build()
+			return NewWorkspaceOwnerEvalRequest(WorkspaceActionCreate, ctx.ResourceOwner).
+				WithMode(WorkspaceProvisionModeStandalone).Build()
+		},
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		Action:  string(WorkspaceActionCreate) + ":" + string(WorkspaceProvisionModeInject),
+		Package: "workspace",
+		Scope:   string(WorkspaceActionCreate),
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewWorkspaceOwnerEvalRequest(WorkspaceActionCreate, ctx.ResourceOwner).
+				WithMode(WorkspaceProvisionModeInject).Build()
 		},
 	})
 	registerCapabilityCheck(CapabilityCheck{
