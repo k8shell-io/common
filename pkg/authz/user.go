@@ -80,6 +80,11 @@ package authz
 //              repos covers browsing the user's identity-provider repository
 //              catalog (repo owners and repos under an owner) — used by the
 //              inject-mode workspace-creation picker, not stored user data.
+//   credential_type  kubernetes | git | registry — required when data_type is
+//              credentials, ignored otherwise. Lets policy grant read access
+//              to one credential type without granting it to the other two
+//              (e.g. a role may read git credentials but not kubeconfig
+//              service-account credentials).
 //
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
@@ -173,6 +178,11 @@ package authz
 //              sudo, locked, org, and posix) must issue one user:write check
 //              per group actually present in the request, and apply none of
 //              the changes unless every required check passes.
+//   credential_type  kubernetes | git | registry — required when data_type is
+//              credentials, ignored otherwise. Lets policy grant write access
+//              to one credential type without granting it to the other two
+//              (e.g. a role may create/update/delete git credentials but not
+//              container registry credentials).
 //
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
@@ -638,12 +648,47 @@ func (r *UserAuthEvalRequest) Validate() error {
 	return validateAuthSurface(r.Context.Surface)
 }
 
+// UserCredentialType identifies which external service a stored user
+// credential authenticates to. It is required in context whenever
+// user:read/user:write's data_type is UserDataTypeCredentials, so policy can
+// grant access to one credential type (e.g. "dev may write git credentials")
+// without implicitly granting it to the other two.
+type UserCredentialType string
+
+const (
+	UserCredentialTypeKubernetes UserCredentialType = "kubernetes"
+	UserCredentialTypeGit        UserCredentialType = "git"
+	UserCredentialTypeRegistry   UserCredentialType = "registry"
+)
+
+// validateUserCredentialType checks the credential type valid for
+// user:read/user:write when data_type is credentials.
+func validateUserCredentialType(t UserCredentialType) error {
+	switch t {
+	case UserCredentialTypeKubernetes, UserCredentialTypeGit, UserCredentialTypeRegistry:
+		return nil
+	default:
+		return fmt.Errorf("context \"credential_type\" must be %q, %q, or %q, got %q",
+			UserCredentialTypeKubernetes, UserCredentialTypeGit, UserCredentialTypeRegistry, t)
+	}
+}
+
+// UserCredentialContext holds the credential_type context qualifier shared by
+// user:read and user:write when their data_type is UserDataTypeCredentials.
+type UserCredentialContext struct {
+	// CredentialType is the external service the credential authenticates to
+	// (context["credential_type"]). Required when DataType is
+	// UserDataTypeCredentials, ignored otherwise.
+	CredentialType UserCredentialType
+}
+
 // UserReadEvalRequest is the validated, typed model for user:read policy
 // evaluation. Use NewUserReadEvalRequest to start building, then call Build
 // to get a validated instance.
 type UserReadEvalRequest struct {
 	Resource UserResource
 	DataType UserDataType
+	Context  UserCredentialContext
 }
 
 var _ EvalRequest = (*UserReadEvalRequest)(nil)
@@ -660,6 +705,13 @@ func (r *UserReadEvalRequest) WithDataType(dt UserDataType) *UserReadEvalRequest
 	return r
 }
 
+// WithCredentialType sets the credential type being accessed; required when
+// DataType is UserDataTypeCredentials.
+func (r *UserReadEvalRequest) WithCredentialType(t UserCredentialType) *UserReadEvalRequest {
+	r.Context.CredentialType = t
+	return r
+}
+
 // Build validates the request and returns it if all constraints are satisfied.
 // It is the required terminator for the builder chain.
 func (r *UserReadEvalRequest) Build() (*UserReadEvalRequest, error) {
@@ -673,6 +725,10 @@ func (r *UserReadEvalRequest) Build() (*UserReadEvalRequest, error) {
 // the supplied JWT token.
 // Implements EvalRequest.
 func (r *UserReadEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
+	ctx := map[string]string{"data_type": string(r.DataType)}
+	if r.Context.CredentialType != "" {
+		ctx["credential_type"] = string(r.Context.CredentialType)
+	}
 	return &authzv1.EvaluateRequest{
 		Token:  token,
 		Action: "user:read",
@@ -680,7 +736,7 @@ func (r *UserReadEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
 			Type: "user",
 			Id:   r.Resource.ID,
 		},
-		Context: map[string]string{"data_type": string(r.DataType)},
+		Context: ctx,
 	}
 }
 
@@ -702,6 +758,7 @@ func UserReadEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserReadEvalRe
 	r := &UserReadEvalRequest{
 		Resource: UserResource{ID: req.Resource.Id},
 		DataType: UserDataType(req.Context["data_type"]),
+		Context:  UserCredentialContext{CredentialType: UserCredentialType(req.Context["credential_type"])},
 	}
 	if err := r.Validate(); err != nil {
 		return nil, err
@@ -717,6 +774,11 @@ func (r *UserReadEvalRequest) Validate() error {
 	}
 	if err := validateUserDataType(r.DataType); err != nil {
 		return fmt.Errorf("user:read: %w", err)
+	}
+	if r.DataType == UserDataTypeCredentials {
+		if err := validateUserCredentialType(r.Context.CredentialType); err != nil {
+			return fmt.Errorf("user:read: %w", err)
+		}
 	}
 	return nil
 }
@@ -1184,6 +1246,7 @@ func (r *UserTokenDeleteEvalRequest) Validate() error {
 type UserWriteEvalRequest struct {
 	Resource UserResource
 	DataType UserDataType
+	Context  UserCredentialContext
 }
 
 var _ EvalRequest = (*UserWriteEvalRequest)(nil)
@@ -1201,6 +1264,13 @@ func (r *UserWriteEvalRequest) WithDataType(dt UserDataType) *UserWriteEvalReque
 	return r
 }
 
+// WithCredentialType sets the credential type being mutated; required when
+// DataType is UserDataTypeCredentials.
+func (r *UserWriteEvalRequest) WithCredentialType(t UserCredentialType) *UserWriteEvalRequest {
+	r.Context.CredentialType = t
+	return r
+}
+
 // Build validates the request and returns it if all constraints are satisfied.
 // It is the required terminator for the builder chain.
 func (r *UserWriteEvalRequest) Build() (*UserWriteEvalRequest, error) {
@@ -1214,6 +1284,10 @@ func (r *UserWriteEvalRequest) Build() (*UserWriteEvalRequest, error) {
 // the supplied JWT token.
 // Implements EvalRequest.
 func (r *UserWriteEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
+	ctx := map[string]string{"data_type": string(r.DataType)}
+	if r.Context.CredentialType != "" {
+		ctx["credential_type"] = string(r.Context.CredentialType)
+	}
 	return &authzv1.EvaluateRequest{
 		Token:  token,
 		Action: "user:write",
@@ -1221,7 +1295,7 @@ func (r *UserWriteEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
 			Type: "user",
 			Id:   r.Resource.ID,
 		},
-		Context: map[string]string{"data_type": string(r.DataType)},
+		Context: ctx,
 	}
 }
 
@@ -1243,6 +1317,7 @@ func UserWriteEvalRequestFromProto(req *authzv1.EvaluateRequest) (*UserWriteEval
 	r := &UserWriteEvalRequest{
 		Resource: UserResource{ID: req.Resource.Id},
 		DataType: UserDataType(req.Context["data_type"]),
+		Context:  UserCredentialContext{CredentialType: UserCredentialType(req.Context["credential_type"])},
 	}
 	if err := r.Validate(); err != nil {
 		return nil, err
@@ -1258,6 +1333,11 @@ func (r *UserWriteEvalRequest) Validate() error {
 	}
 	if err := validateUserWriteDataType(r.DataType); err != nil {
 		return fmt.Errorf("user:write: %w", err)
+	}
+	if r.DataType == UserDataTypeCredentials {
+		if err := validateUserCredentialType(r.Context.CredentialType); err != nil {
+			return fmt.Errorf("user:write: %w", err)
+		}
 	}
 	return nil
 }
@@ -1579,7 +1659,7 @@ func init() {
 	})
 
 	for _, dt := range []UserDataType{
-		UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys, UserDataTypeRepos,
+		UserDataTypeProfile, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys, UserDataTypeRepos,
 	} {
 		action := "user:read:" + string(dt)
 		registerCapabilityCheck(CapabilityCheck{
@@ -1591,7 +1671,7 @@ func init() {
 	}
 
 	for _, dt := range []UserDataType{
-		UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeRoles, UserDataTypeKeys,
+		UserDataTypeProfile, UserDataTypeRoles, UserDataTypeKeys,
 		UserDataTypeSudo, UserDataTypeLocked, UserDataTypeOrg, UserDataTypePosix, UserDataTypePassword,
 	} {
 		action := "user:write:" + string(dt)
@@ -1599,6 +1679,29 @@ func init() {
 			Action: action, Package: "user", Scope: action,
 			Build: func(ctx CapabilityContext) (EvalRequest, error) {
 				return NewUserWriteEvalRequest(ctx.ResourceOwner).WithDataType(dt).Build()
+			},
+		})
+	}
+
+	// user:read:credentials / user:write:credentials — one entry per
+	// credential type (kubernetes | git | registry) instead of a single
+	// generic "credentials" entry, so the capability report (and the PAT
+	// scope catalog, see scope.go) can distinguish them.
+	for _, ct := range []UserCredentialType{UserCredentialTypeKubernetes, UserCredentialTypeGit, UserCredentialTypeRegistry} {
+		readAction := "user:read:" + string(UserDataTypeCredentials) + ":" + string(ct)
+		registerCapabilityCheck(CapabilityCheck{
+			Action: readAction, Package: "user", Scope: readAction,
+			Build: func(ctx CapabilityContext) (EvalRequest, error) {
+				return NewUserReadEvalRequest(ctx.ResourceOwner).
+					WithDataType(UserDataTypeCredentials).WithCredentialType(ct).Build()
+			},
+		})
+		writeAction := "user:write:" + string(UserDataTypeCredentials) + ":" + string(ct)
+		registerCapabilityCheck(CapabilityCheck{
+			Action: writeAction, Package: "user", Scope: writeAction,
+			Build: func(ctx CapabilityContext) (EvalRequest, error) {
+				return NewUserWriteEvalRequest(ctx.ResourceOwner).
+					WithDataType(UserDataTypeCredentials).WithCredentialType(ct).Build()
 			},
 		})
 	}

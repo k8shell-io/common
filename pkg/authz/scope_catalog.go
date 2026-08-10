@@ -130,15 +130,18 @@ var scopeCatalogSource = []domainSpec{
 			}},
 			{action: "user:read", label: "Read", wildcard: &entrySpec{scope: "user:read:*", label: "Any data type"}, entries: []entrySpec{
 				{scope: "user:read:profile", label: "Profile", description: "Read a user's profile."},
-				{scope: "user:read:credentials", label: "Credentials", description: "Read a user's stored credentials (git, registry, kubeconfig)."},
 				{scope: "user:read:blueprints", label: "Blueprints", description: "Read a user's assigned workspace blueprints."},
 				{scope: "user:read:roles", label: "Roles", description: "Read a user's assigned roles."},
 				{scope: "user:read:keys", label: "Keys", description: "Read a user's SSH/API keys."},
 				{scope: "user:read:repos", label: "Repos", description: "Browse a user's identity-provider repository owners and repos."},
 			}},
+			{action: "user:read:credentials", label: "Credentials (read)", wildcard: &entrySpec{scope: "user:read:credentials:*", label: "Any credential type"}, entries: []entrySpec{
+				{scope: "user:read:credentials:kubernetes", label: "Kubernetes", description: "Read a user's stored Kubernetes service-account credentials."},
+				{scope: "user:read:credentials:git", label: "Git", description: "Read a user's stored Git credentials."},
+				{scope: "user:read:credentials:registry", label: "Registry", description: "Read a user's stored container registry credentials."},
+			}},
 			{action: "user:write", label: "Write", wildcard: &entrySpec{scope: "user:write:*", label: "Any data type", description: "Any data type (including sensitive ones)"}, entries: []entrySpec{
 				{scope: "user:write:profile", label: "Profile", description: "Update a user's profile."},
-				{scope: "user:write:credentials", label: "Credentials", description: "Add or remove a user's stored credentials."},
 				{scope: "user:write:roles", label: "Roles", description: "Grant or revoke a user's roles."},
 				{scope: "user:write:keys", label: "Keys", description: "Add or remove a user's SSH/API keys."},
 				{scope: "user:write:password", label: "Password", description: "Change a user's password."},
@@ -146,6 +149,11 @@ var scopeCatalogSource = []domainSpec{
 				{scope: "user:write:locked", label: "Locked", description: "Lock or unlock a user account."},
 				{scope: "user:write:org", label: "Organization", description: "Change a user's organization membership."},
 				{scope: "user:write:posix", label: "POSIX", description: "Update a user's POSIX (uid/gid/shell) attributes."},
+			}},
+			{action: "user:write:credentials", label: "Credentials (write)", wildcard: &entrySpec{scope: "user:write:credentials:*", label: "Any credential type"}, entries: []entrySpec{
+				{scope: "user:write:credentials:kubernetes", label: "Kubernetes", description: "Add or remove a user's stored Kubernetes service-account credentials."},
+				{scope: "user:write:credentials:git", label: "Git", description: "Add or remove a user's stored Git credentials."},
+				{scope: "user:write:credentials:registry", label: "Registry", description: "Add or remove a user's stored container registry credentials."},
 			}},
 		},
 	},

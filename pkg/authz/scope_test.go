@@ -16,12 +16,16 @@ func TestValidateScope(t *testing.T) {
 		"workspace:connect:webshell",
 		"workspace:connect:*",
 		"user:read:profile:self",
-		"user:read:credentials:self",
+		"user:read:credentials:kubernetes:self",
+		"user:read:credentials:git:self",
+		"user:read:credentials:registry:self",
 		"user:read:*:self",
 		// user:write — self-eligible data types, individually and via the
 		// qualifier wildcard.
 		"user:write:profile:self",
-		"user:write:credentials:self",
+		"user:write:credentials:kubernetes:self",
+		"user:write:credentials:git:self",
+		"user:write:credentials:registry:self",
 		"user:write:roles:self",
 		"user:write:keys:self",
 		"user:write:password:self",

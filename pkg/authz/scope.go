@@ -83,12 +83,20 @@ var scopeConstrainablePrefixes = map[string]struct{}{
 	// locked, org, and posix: the user:write contract (see user.go) forbids
 	// self writes to those groups unconditionally, so a ":self" scope for
 	// them would validate a token that could never do anything.
-	"user:write:profile":     {},
-	"user:write:credentials": {},
-	"user:write:blueprints":  {},
-	"user:write:roles":       {},
-	"user:write:keys":        {},
-	"user:write:password":    {},
+	"user:write:profile":    {},
+	"user:write:blueprints": {},
+	"user:write:roles":      {},
+	"user:write:keys":       {},
+	"user:write:password":   {},
+
+	// user:write:credentials — one entry per credential type, since the
+	// action string carries the type as a fourth segment
+	// ("user:write:credentials:<type>", see validExactScopes); the
+	// "domain:action" fallback in scopeConstrainable only strips to two
+	// segments, so each type needs its own entry here.
+	"user:write:credentials:kubernetes": {},
+	"user:write:credentials:git":        {},
+	"user:write:credentials:registry":   {},
 
 	// workspace — every action, including "list", addresses a resource with
 	// an owner attribute the API server sets to the actual target of the
@@ -187,25 +195,35 @@ var validExactScopes = map[string]struct{}{
 	"user:list": {},
 
 	// user:read — one entry per data type
-	"user:read:" + string(UserDataTypeProfile):     {},
-	"user:read:" + string(UserDataTypeCredentials): {},
-	"user:read:" + string(UserDataTypeBlueprints):  {},
-	"user:read:" + string(UserDataTypeRoles):       {},
-	"user:read:" + string(UserDataTypeKeys):        {},
-	"user:read:" + string(UserDataTypeRepos):       {},
+	"user:read:" + string(UserDataTypeProfile):    {},
+	"user:read:" + string(UserDataTypeBlueprints): {},
+	"user:read:" + string(UserDataTypeRoles):      {},
+	"user:read:" + string(UserDataTypeKeys):       {},
+	"user:read:" + string(UserDataTypeRepos):      {},
+
+	// user:read:credentials / user:write:credentials — one entry per
+	// credential type (kubernetes | git | registry) instead of a single
+	// generic "credentials" entry, so a PAT can be scoped to e.g. write
+	// access on git credentials without also covering kubernetes/registry.
+	"user:read:" + string(UserDataTypeCredentials) + ":kubernetes": {},
+	"user:read:" + string(UserDataTypeCredentials) + ":git":        {},
+	"user:read:" + string(UserDataTypeCredentials) + ":registry":   {},
 
 	// user:write — one entry per data type
 	// (no UserDataTypeBlueprints entry — blueprint access is granted only via
 	// roles, see role:update; there is no direct user:write path for it.)
-	"user:write:" + string(UserDataTypeProfile):     {},
-	"user:write:" + string(UserDataTypeCredentials): {},
-	"user:write:" + string(UserDataTypeRoles):       {},
-	"user:write:" + string(UserDataTypeKeys):        {},
-	"user:write:" + string(UserDataTypeSudo):        {},
-	"user:write:" + string(UserDataTypeLocked):      {},
-	"user:write:" + string(UserDataTypeOrg):         {},
-	"user:write:" + string(UserDataTypePosix):       {},
-	"user:write:" + string(UserDataTypePassword):    {},
+	"user:write:" + string(UserDataTypeProfile):  {},
+	"user:write:" + string(UserDataTypeRoles):    {},
+	"user:write:" + string(UserDataTypeKeys):     {},
+	"user:write:" + string(UserDataTypeSudo):     {},
+	"user:write:" + string(UserDataTypeLocked):   {},
+	"user:write:" + string(UserDataTypeOrg):      {},
+	"user:write:" + string(UserDataTypePosix):    {},
+	"user:write:" + string(UserDataTypePassword): {},
+
+	"user:write:" + string(UserDataTypeCredentials) + ":kubernetes": {},
+	"user:write:" + string(UserDataTypeCredentials) + ":git":        {},
+	"user:write:" + string(UserDataTypeCredentials) + ":registry":   {},
 
 	// token — flat
 	"token:read":   {},
@@ -233,16 +251,18 @@ var validExactScopes = map[string]struct{}{
 // Only prefixes that have at least two concrete qualifiers are listed — there
 // is no value in "workspace:provision:*" when there are no qualifiers.
 var validWildcardPrefixes = map[string]struct{}{
-	"workspace":         {}, // all workspace actions
-	"workspace:connect": {}, // webshell | webfiles | portforward
-	"workspace:app":     {}, // install | start | stop
-	"session":           {}, // all session actions
-	"user":              {}, // all user actions
-	"user:read":         {}, // profile | credentials | blueprints | roles | keys | repos
-	"user:write":        {}, // profile | credentials | roles | keys | sudo | locked | org | posix | password
-	"token":             {}, // read | create | write | delete
-	"role":              {}, // list | create | delete
-	"org":               {}, // list | create | delete
+	"workspace":              {}, // all workspace actions
+	"workspace:connect":      {}, // webshell | webfiles | portforward
+	"workspace:app":          {}, // install | start | stop
+	"session":                {}, // all session actions
+	"user":                   {}, // all user actions
+	"user:read":              {}, // profile | credentials:* | blueprints | roles | keys | repos
+	"user:read:credentials":  {}, // kubernetes | git | registry
+	"user:write":             {}, // profile | credentials:* | roles | keys | sudo | locked | org | posix | password
+	"user:write:credentials": {}, // kubernetes | git | registry
+	"token":                  {}, // read | create | write | delete
+	"role":                   {}, // list | create | delete
+	"org":                    {}, // list | create | delete
 }
 
 // ValidateScope reports whether s is a well-formed, recognized scope string.
