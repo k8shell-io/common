@@ -11,6 +11,7 @@ package authzv1
 
 import (
 	context "context"
+	v1 "github.com/k8shell-io/common/pkg/api/gen/go/query/v1"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -22,8 +23,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthzService_Evaluate_FullMethodName      = "/authz.v1.AuthzService/Evaluate"
-	AuthzService_BatchEvaluate_FullMethodName = "/authz.v1.AuthzService/BatchEvaluate"
+	AuthzService_Evaluate_FullMethodName            = "/authz.v1.AuthzService/Evaluate"
+	AuthzService_BatchEvaluate_FullMethodName       = "/authz.v1.AuthzService/BatchEvaluate"
+	AuthzService_GetAuditQuerySchema_FullMethodName = "/authz.v1.AuthzService/GetAuditQuerySchema"
+	AuthzService_QueryAudit_FullMethodName          = "/authz.v1.AuthzService/QueryAudit"
 )
 
 // AuthzServiceClient is the client API for AuthzService service.
@@ -41,6 +44,16 @@ type AuthzServiceClient interface {
 	// round-trip. Responses are returned in the same order as the requests.
 	// Useful for filtering a list (e.g. which blueprints the user may launch).
 	BatchEvaluate(ctx context.Context, in *BatchEvaluateRequest, opts ...grpc.CallOption) (*BatchEvaluateResponse, error)
+	// GetAuditQuerySchema returns the query.v1.Descriptor advertising which
+	// recorded audit fields are queryable/sortable via QueryAudit, and which
+	// operators are valid on each.
+	GetAuditQuerySchema(ctx context.Context, in *GetAuditQuerySchemaRequest, opts ...grpc.CallOption) (*v1.Descriptor, error)
+	// QueryAudit retrieves recorded policy-evaluation audit entries matching a
+	// generic query.v1.Payload, as advertised by GetAuditQuerySchema. Callers
+	// are responsible for authorizing who may query the audit trail before
+	// calling this RPC — like the identity service's admin-only mutations,
+	// there is no per-call authz check here.
+	QueryAudit(ctx context.Context, in *QueryAuditRequest, opts ...grpc.CallOption) (*AuditList, error)
 }
 
 type authzServiceClient struct {
@@ -71,6 +84,26 @@ func (c *authzServiceClient) BatchEvaluate(ctx context.Context, in *BatchEvaluat
 	return out, nil
 }
 
+func (c *authzServiceClient) GetAuditQuerySchema(ctx context.Context, in *GetAuditQuerySchemaRequest, opts ...grpc.CallOption) (*v1.Descriptor, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(v1.Descriptor)
+	err := c.cc.Invoke(ctx, AuthzService_GetAuditQuerySchema_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authzServiceClient) QueryAudit(ctx context.Context, in *QueryAuditRequest, opts ...grpc.CallOption) (*AuditList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AuditList)
+	err := c.cc.Invoke(ctx, AuthzService_QueryAudit_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthzServiceServer is the server API for AuthzService service.
 // All implementations must embed UnimplementedAuthzServiceServer
 // for forward compatibility.
@@ -86,6 +119,16 @@ type AuthzServiceServer interface {
 	// round-trip. Responses are returned in the same order as the requests.
 	// Useful for filtering a list (e.g. which blueprints the user may launch).
 	BatchEvaluate(context.Context, *BatchEvaluateRequest) (*BatchEvaluateResponse, error)
+	// GetAuditQuerySchema returns the query.v1.Descriptor advertising which
+	// recorded audit fields are queryable/sortable via QueryAudit, and which
+	// operators are valid on each.
+	GetAuditQuerySchema(context.Context, *GetAuditQuerySchemaRequest) (*v1.Descriptor, error)
+	// QueryAudit retrieves recorded policy-evaluation audit entries matching a
+	// generic query.v1.Payload, as advertised by GetAuditQuerySchema. Callers
+	// are responsible for authorizing who may query the audit trail before
+	// calling this RPC — like the identity service's admin-only mutations,
+	// there is no per-call authz check here.
+	QueryAudit(context.Context, *QueryAuditRequest) (*AuditList, error)
 	mustEmbedUnimplementedAuthzServiceServer()
 }
 
@@ -101,6 +144,12 @@ func (UnimplementedAuthzServiceServer) Evaluate(context.Context, *EvaluateReques
 }
 func (UnimplementedAuthzServiceServer) BatchEvaluate(context.Context, *BatchEvaluateRequest) (*BatchEvaluateResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method BatchEvaluate not implemented")
+}
+func (UnimplementedAuthzServiceServer) GetAuditQuerySchema(context.Context, *GetAuditQuerySchemaRequest) (*v1.Descriptor, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetAuditQuerySchema not implemented")
+}
+func (UnimplementedAuthzServiceServer) QueryAudit(context.Context, *QueryAuditRequest) (*AuditList, error) {
+	return nil, status.Error(codes.Unimplemented, "method QueryAudit not implemented")
 }
 func (UnimplementedAuthzServiceServer) mustEmbedUnimplementedAuthzServiceServer() {}
 func (UnimplementedAuthzServiceServer) testEmbeddedByValue()                      {}
@@ -159,6 +208,42 @@ func _AuthzService_BatchEvaluate_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthzService_GetAuditQuerySchema_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAuditQuerySchemaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthzServiceServer).GetAuditQuerySchema(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthzService_GetAuditQuerySchema_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthzServiceServer).GetAuditQuerySchema(ctx, req.(*GetAuditQuerySchemaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthzService_QueryAudit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryAuditRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthzServiceServer).QueryAudit(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthzService_QueryAudit_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthzServiceServer).QueryAudit(ctx, req.(*QueryAuditRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthzService_ServiceDesc is the grpc.ServiceDesc for AuthzService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -173,6 +258,14 @@ var AuthzService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "BatchEvaluate",
 			Handler:    _AuthzService_BatchEvaluate_Handler,
+		},
+		{
+			MethodName: "GetAuditQuerySchema",
+			Handler:    _AuthzService_GetAuditQuerySchema_Handler,
+		},
+		{
+			MethodName: "QueryAudit",
+			Handler:    _AuthzService_QueryAudit_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

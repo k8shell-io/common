@@ -23,6 +23,23 @@ type PolicyInput struct {
 	Context   map[string]string
 	Blueprint map[string]any // non-nil for workspace:* actions; decoded from context["blueprint"]
 
+	// Scope is the compound "domain:action[:qualifier]" display form of
+	// Action for actions whose qualifier (auth surface, credential type,
+	// connect type, ...) is folded in for display — the same convention
+	// CapabilityCheck.Action uses for the synthetic probe registry (see
+	// capability.go), computed here from this request's actual context
+	// instead of a fixed representative value. Equal to Action for actions
+	// with no such qualifier.
+	//
+	// This is a display/audit convenience only — it must never be used for
+	// policy routing or PAT scope matching, both of which stay keyed on the
+	// base Action. The two can legitimately diverge: workspace:create's PAT
+	// Scope stays "workspace:create" regardless of provision mode (a token
+	// scoped for it may create either), while Scope here still distinguishes
+	// "workspace:create:inject" from "workspace:create:standalone" so a
+	// capability listing or audit trail can show which was actually used.
+	Scope string
+
 	// CapabilityCheck marks this evaluation as a synthetic "what can I do"
 	// probe rather than a real access attempt. It is not set by
 	// BuildPolicyInput — since capability_check is a BatchEvaluateRequest-level
@@ -68,7 +85,52 @@ func BuildPolicyInput(req *authzv1.EvaluateRequest) (*PolicyInput, error) {
 		return nil, err
 	}
 
-	return policyInputFromProto(normalized, claims.GetUsername(), roles), nil
+	input := policyInputFromProto(normalized, claims.GetUsername(), roles)
+	input.Scope = scopeForRequest(normalized)
+	return input, nil
+}
+
+// scopeForRequest computes PolicyInput.Scope for req: the compound
+// "domain:action[:qualifier]" display form CapabilityCheck.Action uses for
+// the synthetic probe registry (capability.go), derived here from a real
+// request's actual context rather than a fixed representative value.
+// Actions with no qualifier — including ones normalizeByDomain doesn't
+// route through a typed contract at all, like user:create/delete — return
+// their base action unchanged. See PolicyInput.Scope's doc for why this must
+// never be used for policy routing or PAT scope matching.
+func scopeForRequest(req *authzv1.EvaluateRequest) string {
+	action := req.GetAction()
+	ctx := req.GetContext()
+
+	fold := func(qualifier string) string {
+		if qualifier == "" {
+			return action
+		}
+		return action + ":" + qualifier
+	}
+
+	switch action {
+	case "user:auth":
+		return fold(ctx["surface"])
+	case "user:exists":
+		return fold(ctx["field"])
+	case "user:read", "user:write":
+		dataType := ctx["data_type"]
+		if dataType == "credentials" {
+			if credType := ctx["credential_type"]; credType != "" {
+				return action + ":" + dataType + ":" + credType
+			}
+		}
+		return fold(dataType)
+	case "workspace:create":
+		return fold(ctx["mode"])
+	case "workspace:connect":
+		return fold(ctx["type"])
+	case "workspace:files", "workspace:app":
+		return fold(ctx["op"])
+	default:
+		return action
+	}
 }
 
 // normalizeByDomain routes req to its domain contract for validation, then

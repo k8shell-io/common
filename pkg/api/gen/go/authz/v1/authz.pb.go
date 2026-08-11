@@ -10,8 +10,10 @@
 package authzv1
 
 import (
+	v1 "github.com/k8shell-io/common/pkg/api/gen/go/query/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -362,11 +364,370 @@ func (x *BatchEvaluateResponse) GetResponses() []*EvaluateResponse {
 	return nil
 }
 
+// AuditRecord is a single recorded policy-evaluation decision. Repeated
+// calls that resolved to the identical decision within a short window are
+// folded server-side into one AuditRecord rather than returned as separate
+// entries — see dup_count/last_occurred_at.
+type AuditRecord struct {
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	Id         int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	ReqId      string                 `protobuf:"bytes,2,opt,name=req_id,json=reqId,proto3" json:"req_id,omitempty"`
+	OccurredAt *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=occurred_at,json=occurredAt,proto3" json:"occurred_at,omitempty"`
+	Package    string                 `protobuf:"bytes,4,opt,name=package,proto3" json:"package,omitempty"`
+	Action     string                 `protobuf:"bytes,5,opt,name=action,proto3" json:"action,omitempty"`
+	// scope is the compound "domain:action[:qualifier]" display form of
+	// action — e.g. "user:auth:ssh", "user:read:credentials:git" — the same
+	// convention CapabilityCheck.Action uses (see capability.go). Equal to
+	// action for actions with no such qualifier. Display/audit convenience
+	// only; never used for policy routing or PAT scope matching, both of
+	// which stay keyed on action.
+	Scope    string   `protobuf:"bytes,20,opt,name=scope,proto3" json:"scope,omitempty"`
+	Username string   `protobuf:"bytes,6,opt,name=username,proto3" json:"username,omitempty"`
+	Roles    []string `protobuf:"bytes,7,rep,name=roles,proto3" json:"roles,omitempty"`
+	Org      string   `protobuf:"bytes,8,opt,name=org,proto3" json:"org,omitempty"`
+	// pat_preview is the display prefix of the Personal Access Token
+	// exchanged for the caller's JWT, when the request came in that way.
+	PatPreview         string            `protobuf:"bytes,9,opt,name=pat_preview,json=patPreview,proto3" json:"pat_preview,omitempty"`
+	ResourceType       string            `protobuf:"bytes,10,opt,name=resource_type,json=resourceType,proto3" json:"resource_type,omitempty"`
+	ResourceId         string            `protobuf:"bytes,11,opt,name=resource_id,json=resourceId,proto3" json:"resource_id,omitempty"`
+	ResourceOwner      string            `protobuf:"bytes,12,opt,name=resource_owner,json=resourceOwner,proto3" json:"resource_owner,omitempty"`
+	ResourceAttributes map[string]string `protobuf:"bytes,13,rep,name=resource_attributes,json=resourceAttributes,proto3" json:"resource_attributes,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// context carries ambient attributes not present in the JWT or resource —
+	// the same map passed to Evaluate/BatchEvaluate as EvaluateRequest.context
+	// (auth surface, credential type, connect type, ...). scope (above) is
+	// derived from a subset of these keys for display; context itself is
+	// returned in full for investigative completeness.
+	Context     map[string]string `protobuf:"bytes,21,rep,name=context,proto3" json:"context,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Allowed     bool              `protobuf:"varint,14,opt,name=allowed,proto3" json:"allowed,omitempty"`
+	Obligations map[string]string `protobuf:"bytes,15,rep,name=obligations,proto3" json:"obligations,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// error is populated when policy evaluation itself failed (compile/eval
+	// error, no result returned), rather than reflecting a normal deny.
+	Error string `protobuf:"bytes,16,opt,name=error,proto3" json:"error,omitempty"`
+	// duration_us is how long the OPA evaluation itself took, in microseconds.
+	DurationUs int64 `protobuf:"varint,17,opt,name=duration_us,json=durationUs,proto3" json:"duration_us,omitempty"`
+	// dup_count is how many identical decisions were folded into this row
+	// within its dedup window, including the one that created it.
+	DupCount int32 `protobuf:"varint,18,opt,name=dup_count,json=dupCount,proto3" json:"dup_count,omitempty"`
+	// last_occurred_at is the most recent occurrence folded into this row.
+	// occurred_at remains the first occurrence.
+	LastOccurredAt *timestamppb.Timestamp `protobuf:"bytes,19,opt,name=last_occurred_at,json=lastOccurredAt,proto3" json:"last_occurred_at,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *AuditRecord) Reset() {
+	*x = AuditRecord{}
+	mi := &file_authz_v1_authz_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AuditRecord) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AuditRecord) ProtoMessage() {}
+
+func (x *AuditRecord) ProtoReflect() protoreflect.Message {
+	mi := &file_authz_v1_authz_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AuditRecord.ProtoReflect.Descriptor instead.
+func (*AuditRecord) Descriptor() ([]byte, []int) {
+	return file_authz_v1_authz_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *AuditRecord) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *AuditRecord) GetReqId() string {
+	if x != nil {
+		return x.ReqId
+	}
+	return ""
+}
+
+func (x *AuditRecord) GetOccurredAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.OccurredAt
+	}
+	return nil
+}
+
+func (x *AuditRecord) GetPackage() string {
+	if x != nil {
+		return x.Package
+	}
+	return ""
+}
+
+func (x *AuditRecord) GetAction() string {
+	if x != nil {
+		return x.Action
+	}
+	return ""
+}
+
+func (x *AuditRecord) GetScope() string {
+	if x != nil {
+		return x.Scope
+	}
+	return ""
+}
+
+func (x *AuditRecord) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *AuditRecord) GetRoles() []string {
+	if x != nil {
+		return x.Roles
+	}
+	return nil
+}
+
+func (x *AuditRecord) GetOrg() string {
+	if x != nil {
+		return x.Org
+	}
+	return ""
+}
+
+func (x *AuditRecord) GetPatPreview() string {
+	if x != nil {
+		return x.PatPreview
+	}
+	return ""
+}
+
+func (x *AuditRecord) GetResourceType() string {
+	if x != nil {
+		return x.ResourceType
+	}
+	return ""
+}
+
+func (x *AuditRecord) GetResourceId() string {
+	if x != nil {
+		return x.ResourceId
+	}
+	return ""
+}
+
+func (x *AuditRecord) GetResourceOwner() string {
+	if x != nil {
+		return x.ResourceOwner
+	}
+	return ""
+}
+
+func (x *AuditRecord) GetResourceAttributes() map[string]string {
+	if x != nil {
+		return x.ResourceAttributes
+	}
+	return nil
+}
+
+func (x *AuditRecord) GetContext() map[string]string {
+	if x != nil {
+		return x.Context
+	}
+	return nil
+}
+
+func (x *AuditRecord) GetAllowed() bool {
+	if x != nil {
+		return x.Allowed
+	}
+	return false
+}
+
+func (x *AuditRecord) GetObligations() map[string]string {
+	if x != nil {
+		return x.Obligations
+	}
+	return nil
+}
+
+func (x *AuditRecord) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
+func (x *AuditRecord) GetDurationUs() int64 {
+	if x != nil {
+		return x.DurationUs
+	}
+	return 0
+}
+
+func (x *AuditRecord) GetDupCount() int32 {
+	if x != nil {
+		return x.DupCount
+	}
+	return 0
+}
+
+func (x *AuditRecord) GetLastOccurredAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.LastOccurredAt
+	}
+	return nil
+}
+
+// AuditList holds a paginated list of audit records.
+type AuditList struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Records       []*AuditRecord         `protobuf:"bytes,1,rep,name=records,proto3" json:"records,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AuditList) Reset() {
+	*x = AuditList{}
+	mi := &file_authz_v1_authz_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AuditList) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AuditList) ProtoMessage() {}
+
+func (x *AuditList) ProtoReflect() protoreflect.Message {
+	mi := &file_authz_v1_authz_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AuditList.ProtoReflect.Descriptor instead.
+func (*AuditList) Descriptor() ([]byte, []int) {
+	return file_authz_v1_authz_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *AuditList) GetRecords() []*AuditRecord {
+	if x != nil {
+		return x.Records
+	}
+	return nil
+}
+
+// GetAuditQuerySchemaRequest requests the query.v1.Descriptor for the audit
+// resource. It carries no fields today; left as a message rather than
+// google.protobuf.Empty so parameters (e.g. org-scoping) can be added later
+// without changing the RPC signature.
+type GetAuditQuerySchemaRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetAuditQuerySchemaRequest) Reset() {
+	*x = GetAuditQuerySchemaRequest{}
+	mi := &file_authz_v1_authz_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetAuditQuerySchemaRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetAuditQuerySchemaRequest) ProtoMessage() {}
+
+func (x *GetAuditQuerySchemaRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_authz_v1_authz_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetAuditQuerySchemaRequest.ProtoReflect.Descriptor instead.
+func (*GetAuditQuerySchemaRequest) Descriptor() ([]byte, []int) {
+	return file_authz_v1_authz_proto_rawDescGZIP(), []int{7}
+}
+
+// QueryAuditRequest carries a generic query against the fields advertised
+// by GetAuditQuerySchema.
+type QueryAuditRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Query         *v1.Payload            `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *QueryAuditRequest) Reset() {
+	*x = QueryAuditRequest{}
+	mi := &file_authz_v1_authz_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QueryAuditRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QueryAuditRequest) ProtoMessage() {}
+
+func (x *QueryAuditRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_authz_v1_authz_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QueryAuditRequest.ProtoReflect.Descriptor instead.
+func (*QueryAuditRequest) Descriptor() ([]byte, []int) {
+	return file_authz_v1_authz_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *QueryAuditRequest) GetQuery() *v1.Payload {
+	if x != nil {
+		return x.Query
+	}
+	return nil
+}
+
 var File_authz_v1_authz_proto protoreflect.FileDescriptor
 
 const file_authz_v1_authz_proto_rawDesc = "" +
 	"\n" +
-	"\x14authz/v1/authz.proto\x12\bauthz.v1\"\xb1\x01\n" +
+	"\x14authz/v1/authz.proto\x12\bauthz.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14query/v1/query.proto\"\xb1\x01\n" +
 	"\bResource\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x12\x0e\n" +
 	"\x02id\x18\x02 \x01(\tR\x02id\x12B\n" +
@@ -398,10 +759,54 @@ const file_authz_v1_authz_proto_rawDesc = "" +
 	"\brequests\x18\x01 \x03(\v2\x19.authz.v1.EvaluateRequestR\brequests\x12)\n" +
 	"\x10capability_check\x18\x02 \x01(\bR\x0fcapabilityCheck\"Q\n" +
 	"\x15BatchEvaluateResponse\x128\n" +
-	"\tresponses\x18\x01 \x03(\v2\x1a.authz.v1.EvaluateResponseR\tresponses2\xa3\x01\n" +
+	"\tresponses\x18\x01 \x03(\v2\x1a.authz.v1.EvaluateResponseR\tresponses\"\xea\a\n" +
+	"\vAuditRecord\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x15\n" +
+	"\x06req_id\x18\x02 \x01(\tR\x05reqId\x12;\n" +
+	"\voccurred_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"occurredAt\x12\x18\n" +
+	"\apackage\x18\x04 \x01(\tR\apackage\x12\x16\n" +
+	"\x06action\x18\x05 \x01(\tR\x06action\x12\x14\n" +
+	"\x05scope\x18\x14 \x01(\tR\x05scope\x12\x1a\n" +
+	"\busername\x18\x06 \x01(\tR\busername\x12\x14\n" +
+	"\x05roles\x18\a \x03(\tR\x05roles\x12\x10\n" +
+	"\x03org\x18\b \x01(\tR\x03org\x12\x1f\n" +
+	"\vpat_preview\x18\t \x01(\tR\n" +
+	"patPreview\x12#\n" +
+	"\rresource_type\x18\n" +
+	" \x01(\tR\fresourceType\x12\x1f\n" +
+	"\vresource_id\x18\v \x01(\tR\n" +
+	"resourceId\x12%\n" +
+	"\x0eresource_owner\x18\f \x01(\tR\rresourceOwner\x12^\n" +
+	"\x13resource_attributes\x18\r \x03(\v2-.authz.v1.AuditRecord.ResourceAttributesEntryR\x12resourceAttributes\x12<\n" +
+	"\acontext\x18\x15 \x03(\v2\".authz.v1.AuditRecord.ContextEntryR\acontext\x12\x18\n" +
+	"\aallowed\x18\x0e \x01(\bR\aallowed\x12H\n" +
+	"\vobligations\x18\x0f \x03(\v2&.authz.v1.AuditRecord.ObligationsEntryR\vobligations\x12\x14\n" +
+	"\x05error\x18\x10 \x01(\tR\x05error\x12\x1f\n" +
+	"\vduration_us\x18\x11 \x01(\x03R\n" +
+	"durationUs\x12\x1b\n" +
+	"\tdup_count\x18\x12 \x01(\x05R\bdupCount\x12D\n" +
+	"\x10last_occurred_at\x18\x13 \x01(\v2\x1a.google.protobuf.TimestampR\x0elastOccurredAt\x1aE\n" +
+	"\x17ResourceAttributesEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a:\n" +
+	"\fContextEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a>\n" +
+	"\x10ObligationsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"<\n" +
+	"\tAuditList\x12/\n" +
+	"\arecords\x18\x01 \x03(\v2\x15.authz.v1.AuditRecordR\arecords\"\x1c\n" +
+	"\x1aGetAuditQuerySchemaRequest\"<\n" +
+	"\x11QueryAuditRequest\x12'\n" +
+	"\x05query\x18\x01 \x01(\v2\x11.query.v1.PayloadR\x05query2\xb6\x02\n" +
 	"\fAuthzService\x12A\n" +
 	"\bEvaluate\x12\x19.authz.v1.EvaluateRequest\x1a\x1a.authz.v1.EvaluateResponse\x12P\n" +
-	"\rBatchEvaluate\x12\x1e.authz.v1.BatchEvaluateRequest\x1a\x1f.authz.v1.BatchEvaluateResponseB>Z<github.com/k8shell-io/common/pkg/api/gen/go/authz/v1;authzv1b\x06proto3"
+	"\rBatchEvaluate\x12\x1e.authz.v1.BatchEvaluateRequest\x1a\x1f.authz.v1.BatchEvaluateResponse\x12Q\n" +
+	"\x13GetAuditQuerySchema\x12$.authz.v1.GetAuditQuerySchemaRequest\x1a\x14.query.v1.Descriptor\x12>\n" +
+	"\n" +
+	"QueryAudit\x12\x1b.authz.v1.QueryAuditRequest\x1a\x13.authz.v1.AuditListB>Z<github.com/k8shell-io/common/pkg/api/gen/go/authz/v1;authzv1b\x06proto3"
 
 var (
 	file_authz_v1_authz_proto_rawDescOnce sync.Once
@@ -415,33 +820,54 @@ func file_authz_v1_authz_proto_rawDescGZIP() []byte {
 	return file_authz_v1_authz_proto_rawDescData
 }
 
-var file_authz_v1_authz_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_authz_v1_authz_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_authz_v1_authz_proto_goTypes = []any{
-	(*Resource)(nil),              // 0: authz.v1.Resource
-	(*EvaluateRequest)(nil),       // 1: authz.v1.EvaluateRequest
-	(*EvaluateResponse)(nil),      // 2: authz.v1.EvaluateResponse
-	(*BatchEvaluateRequest)(nil),  // 3: authz.v1.BatchEvaluateRequest
-	(*BatchEvaluateResponse)(nil), // 4: authz.v1.BatchEvaluateResponse
-	nil,                           // 5: authz.v1.Resource.AttributesEntry
-	nil,                           // 6: authz.v1.EvaluateRequest.ContextEntry
-	nil,                           // 7: authz.v1.EvaluateResponse.ObligationsEntry
+	(*Resource)(nil),                   // 0: authz.v1.Resource
+	(*EvaluateRequest)(nil),            // 1: authz.v1.EvaluateRequest
+	(*EvaluateResponse)(nil),           // 2: authz.v1.EvaluateResponse
+	(*BatchEvaluateRequest)(nil),       // 3: authz.v1.BatchEvaluateRequest
+	(*BatchEvaluateResponse)(nil),      // 4: authz.v1.BatchEvaluateResponse
+	(*AuditRecord)(nil),                // 5: authz.v1.AuditRecord
+	(*AuditList)(nil),                  // 6: authz.v1.AuditList
+	(*GetAuditQuerySchemaRequest)(nil), // 7: authz.v1.GetAuditQuerySchemaRequest
+	(*QueryAuditRequest)(nil),          // 8: authz.v1.QueryAuditRequest
+	nil,                                // 9: authz.v1.Resource.AttributesEntry
+	nil,                                // 10: authz.v1.EvaluateRequest.ContextEntry
+	nil,                                // 11: authz.v1.EvaluateResponse.ObligationsEntry
+	nil,                                // 12: authz.v1.AuditRecord.ResourceAttributesEntry
+	nil,                                // 13: authz.v1.AuditRecord.ContextEntry
+	nil,                                // 14: authz.v1.AuditRecord.ObligationsEntry
+	(*timestamppb.Timestamp)(nil),      // 15: google.protobuf.Timestamp
+	(*v1.Payload)(nil),                 // 16: query.v1.Payload
+	(*v1.Descriptor)(nil),              // 17: query.v1.Descriptor
 }
 var file_authz_v1_authz_proto_depIdxs = []int32{
-	5, // 0: authz.v1.Resource.attributes:type_name -> authz.v1.Resource.AttributesEntry
-	0, // 1: authz.v1.EvaluateRequest.resource:type_name -> authz.v1.Resource
-	6, // 2: authz.v1.EvaluateRequest.context:type_name -> authz.v1.EvaluateRequest.ContextEntry
-	7, // 3: authz.v1.EvaluateResponse.obligations:type_name -> authz.v1.EvaluateResponse.ObligationsEntry
-	1, // 4: authz.v1.BatchEvaluateRequest.requests:type_name -> authz.v1.EvaluateRequest
-	2, // 5: authz.v1.BatchEvaluateResponse.responses:type_name -> authz.v1.EvaluateResponse
-	1, // 6: authz.v1.AuthzService.Evaluate:input_type -> authz.v1.EvaluateRequest
-	3, // 7: authz.v1.AuthzService.BatchEvaluate:input_type -> authz.v1.BatchEvaluateRequest
-	2, // 8: authz.v1.AuthzService.Evaluate:output_type -> authz.v1.EvaluateResponse
-	4, // 9: authz.v1.AuthzService.BatchEvaluate:output_type -> authz.v1.BatchEvaluateResponse
-	8, // [8:10] is the sub-list for method output_type
-	6, // [6:8] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	9,  // 0: authz.v1.Resource.attributes:type_name -> authz.v1.Resource.AttributesEntry
+	0,  // 1: authz.v1.EvaluateRequest.resource:type_name -> authz.v1.Resource
+	10, // 2: authz.v1.EvaluateRequest.context:type_name -> authz.v1.EvaluateRequest.ContextEntry
+	11, // 3: authz.v1.EvaluateResponse.obligations:type_name -> authz.v1.EvaluateResponse.ObligationsEntry
+	1,  // 4: authz.v1.BatchEvaluateRequest.requests:type_name -> authz.v1.EvaluateRequest
+	2,  // 5: authz.v1.BatchEvaluateResponse.responses:type_name -> authz.v1.EvaluateResponse
+	15, // 6: authz.v1.AuditRecord.occurred_at:type_name -> google.protobuf.Timestamp
+	12, // 7: authz.v1.AuditRecord.resource_attributes:type_name -> authz.v1.AuditRecord.ResourceAttributesEntry
+	13, // 8: authz.v1.AuditRecord.context:type_name -> authz.v1.AuditRecord.ContextEntry
+	14, // 9: authz.v1.AuditRecord.obligations:type_name -> authz.v1.AuditRecord.ObligationsEntry
+	15, // 10: authz.v1.AuditRecord.last_occurred_at:type_name -> google.protobuf.Timestamp
+	5,  // 11: authz.v1.AuditList.records:type_name -> authz.v1.AuditRecord
+	16, // 12: authz.v1.QueryAuditRequest.query:type_name -> query.v1.Payload
+	1,  // 13: authz.v1.AuthzService.Evaluate:input_type -> authz.v1.EvaluateRequest
+	3,  // 14: authz.v1.AuthzService.BatchEvaluate:input_type -> authz.v1.BatchEvaluateRequest
+	7,  // 15: authz.v1.AuthzService.GetAuditQuerySchema:input_type -> authz.v1.GetAuditQuerySchemaRequest
+	8,  // 16: authz.v1.AuthzService.QueryAudit:input_type -> authz.v1.QueryAuditRequest
+	2,  // 17: authz.v1.AuthzService.Evaluate:output_type -> authz.v1.EvaluateResponse
+	4,  // 18: authz.v1.AuthzService.BatchEvaluate:output_type -> authz.v1.BatchEvaluateResponse
+	17, // 19: authz.v1.AuthzService.GetAuditQuerySchema:output_type -> query.v1.Descriptor
+	6,  // 20: authz.v1.AuthzService.QueryAudit:output_type -> authz.v1.AuditList
+	17, // [17:21] is the sub-list for method output_type
+	13, // [13:17] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_authz_v1_authz_proto_init() }
@@ -455,7 +881,7 @@ func file_authz_v1_authz_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_authz_v1_authz_proto_rawDesc), len(file_authz_v1_authz_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

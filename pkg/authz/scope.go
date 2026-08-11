@@ -245,6 +245,9 @@ var validExactScopes = map[string]struct{}{
 
 	// blueprint — flat
 	"blueprints:read": {},
+
+	// audit — flat
+	"audit:list": {},
 }
 
 // validWildcardPrefixes is the set of prefixes that may appear before ":*".

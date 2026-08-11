@@ -7,6 +7,9 @@ package authz.v1;
 
 option go_package = "github.com/k8shell-io/common/pkg/api/gen/go/authz/v1;authzv1";
 
+import "google/protobuf/timestamp.proto";
+import "query/v1/query.proto";
+
 // AuthzService evaluates authorization requests against an OPA Rego policy
 // stored on the server. The caller must supply a signed JWT; the service
 // verifies the token and extracts subject claims before policy evaluation.
@@ -20,6 +23,18 @@ service AuthzService {
   // round-trip. Responses are returned in the same order as the requests.
   // Useful for filtering a list (e.g. which blueprints the user may launch).
   rpc BatchEvaluate(BatchEvaluateRequest) returns (BatchEvaluateResponse);
+
+  // GetAuditQuerySchema returns the query.v1.Descriptor advertising which
+  // recorded audit fields are queryable/sortable via QueryAudit, and which
+  // operators are valid on each.
+  rpc GetAuditQuerySchema(GetAuditQuerySchemaRequest) returns (query.v1.Descriptor);
+
+  // QueryAudit retrieves recorded policy-evaluation audit entries matching a
+  // generic query.v1.Payload, as advertised by GetAuditQuerySchema. Callers
+  // are responsible for authorizing who may query the audit trail before
+  // calling this RPC — like the identity service's admin-only mutations,
+  // there is no per-call authz check here.
+  rpc QueryAudit(QueryAuditRequest) returns (AuditList);
 }
 
 // Resource identifies the object being acted upon.
@@ -97,4 +112,80 @@ message BatchEvaluateRequest {
 // BatchEvaluateResponse carries one response per request, in the same order.
 message BatchEvaluateResponse {
   repeated EvaluateResponse responses = 1;
+}
+
+// AuditRecord is a single recorded policy-evaluation decision. Repeated
+// calls that resolved to the identical decision within a short window are
+// folded server-side into one AuditRecord rather than returned as separate
+// entries — see dup_count/last_occurred_at.
+message AuditRecord {
+  int64 id = 1;
+  string req_id = 2;
+  google.protobuf.Timestamp occurred_at = 3;
+
+  string package = 4;
+  string action = 5;
+
+  // scope is the compound "domain:action[:qualifier]" display form of
+  // action — e.g. "user:auth:ssh", "user:read:credentials:git" — the same
+  // convention CapabilityCheck.Action uses (see capability.go). Equal to
+  // action for actions with no such qualifier. Display/audit convenience
+  // only; never used for policy routing or PAT scope matching, both of
+  // which stay keyed on action.
+  string scope = 20;
+
+  string username = 6;
+  repeated string roles = 7;
+  string org = 8;
+
+  // pat_preview is the display prefix of the Personal Access Token
+  // exchanged for the caller's JWT, when the request came in that way.
+  string pat_preview = 9;
+
+  string resource_type = 10;
+  string resource_id = 11;
+  string resource_owner = 12;
+  map<string, string> resource_attributes = 13;
+
+  // context carries ambient attributes not present in the JWT or resource —
+  // the same map passed to Evaluate/BatchEvaluate as EvaluateRequest.context
+  // (auth surface, credential type, connect type, ...). scope (above) is
+  // derived from a subset of these keys for display; context itself is
+  // returned in full for investigative completeness.
+  map<string, string> context = 21;
+
+  bool allowed = 14;
+  map<string, string> obligations = 15;
+
+  // error is populated when policy evaluation itself failed (compile/eval
+  // error, no result returned), rather than reflecting a normal deny.
+  string error = 16;
+
+  // duration_us is how long the OPA evaluation itself took, in microseconds.
+  int64 duration_us = 17;
+
+  // dup_count is how many identical decisions were folded into this row
+  // within its dedup window, including the one that created it.
+  int32 dup_count = 18;
+
+  // last_occurred_at is the most recent occurrence folded into this row.
+  // occurred_at remains the first occurrence.
+  google.protobuf.Timestamp last_occurred_at = 19;
+}
+
+// AuditList holds a paginated list of audit records.
+message AuditList {
+  repeated AuditRecord records = 1;
+}
+
+// GetAuditQuerySchemaRequest requests the query.v1.Descriptor for the audit
+// resource. It carries no fields today; left as a message rather than
+// google.protobuf.Empty so parameters (e.g. org-scoping) can be added later
+// without changing the RPC signature.
+message GetAuditQuerySchemaRequest {}
+
+// QueryAuditRequest carries a generic query against the fields advertised
+// by GetAuditQuerySchema.
+message QueryAuditRequest {
+  query.v1.Payload query = 1;
 }

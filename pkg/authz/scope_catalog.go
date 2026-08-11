@@ -227,6 +227,16 @@ var scopeCatalogSource = []domainSpec{
 			}},
 		},
 	},
+	{
+		domain:      "audit",
+		label:       "Audit",
+		description: "Recorded policy-evaluation audit entries.",
+		actions: []actionSpec{
+			{action: "audit:list", label: "List", entries: []entrySpec{
+				{scope: "audit:list", label: "List", description: "Query the policy-evaluation audit trail."},
+			}},
+		},
+	},
 }
 
 // buildEntry converts spec into a ScopeCatalogEntry, deriving Wildcard and
