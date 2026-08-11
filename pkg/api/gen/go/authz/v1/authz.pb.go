@@ -107,7 +107,15 @@ type EvaluateRequest struct {
 	// e.g. "namespace", "environment", "team".
 	Context map[string]string `protobuf:"bytes,4,rep,name=context,proto3" json:"context,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	// package is the OPA policy package to evaluate the request against
-	Package       string `protobuf:"bytes,5,opt,name=package,proto3" json:"package,omitempty"`
+	Package string `protobuf:"bytes,5,opt,name=package,proto3" json:"package,omitempty"`
+	// pat_preview is the display prefix (identity.access_tokens.token_preview)
+	// of the Personal Access Token that was exchanged for this request's JWT,
+	// set by the caller that performed the exchange (e.g. an API gateway).
+	// Empty when the request was not authenticated via a PAT. This is
+	// caller-asserted, not cryptographically verified — it must only be used
+	// for audit/observability, never as an input to the authorization
+	// decision itself.
+	PatPreview    string `protobuf:"bytes,6,opt,name=pat_preview,json=patPreview,proto3" json:"pat_preview,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -173,6 +181,13 @@ func (x *EvaluateRequest) GetContext() map[string]string {
 func (x *EvaluateRequest) GetPackage() string {
 	if x != nil {
 		return x.Package
+	}
+	return ""
+}
+
+func (x *EvaluateRequest) GetPatPreview() string {
+	if x != nil {
+		return x.PatPreview
 	}
 	return ""
 }
@@ -360,13 +375,15 @@ const file_authz_v1_authz_proto_rawDesc = "" +
 	"attributes\x1a=\n" +
 	"\x0fAttributesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x87\x02\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xa8\x02\n" +
 	"\x0fEvaluateRequest\x12\x14\n" +
 	"\x05token\x18\x01 \x01(\tR\x05token\x12\x16\n" +
 	"\x06action\x18\x02 \x01(\tR\x06action\x12.\n" +
 	"\bresource\x18\x03 \x01(\v2\x12.authz.v1.ResourceR\bresource\x12@\n" +
 	"\acontext\x18\x04 \x03(\v2&.authz.v1.EvaluateRequest.ContextEntryR\acontext\x12\x18\n" +
-	"\apackage\x18\x05 \x01(\tR\apackage\x1a:\n" +
+	"\apackage\x18\x05 \x01(\tR\apackage\x12\x1f\n" +
+	"\vpat_preview\x18\x06 \x01(\tR\n" +
+	"patPreview\x1a:\n" +
 	"\fContextEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xd3\x01\n" +

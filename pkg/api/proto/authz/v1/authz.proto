@@ -56,6 +56,15 @@ message EvaluateRequest {
 
   // package is the OPA policy package to evaluate the request against
   string package = 5;
+
+  // pat_preview is the display prefix (identity.access_tokens.token_preview)
+  // of the Personal Access Token that was exchanged for this request's JWT,
+  // set by the caller that performed the exchange (e.g. an API gateway).
+  // Empty when the request was not authenticated via a PAT. This is
+  // caller-asserted, not cryptographically verified — it must only be used
+  // for audit/observability, never as an input to the authorization
+  // decision itself.
+  string pat_preview = 6;
 }
 
 // EvaluateResponse is the result of a single authorization check.
