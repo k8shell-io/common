@@ -33,7 +33,6 @@ type K8shelld struct {
 	log                *zerolog.Logger
 	systemClient       k8shelldv1.SystemServiceClient
 	sshClient          k8shelldv1.SshServiceClient
-	commandClient      k8shelldv1.CommandServiceClient
 	app                k8shelldv1.AppServiceClient
 	counters           *ConnCounters
 	connectionID       string
@@ -82,7 +81,6 @@ func NewClient(
 		connectionID:  connectionID,
 		systemClient:  k8shelldv1.NewSystemServiceClient(gapiClient.Conn),
 		sshClient:     k8shelldv1.NewSshServiceClient(gapiClient.Conn),
-		commandClient: k8shelldv1.NewCommandServiceClient(gapiClient.Conn),
 		app:           k8shelldv1.NewAppServiceClient(gapiClient.Conn),
 		sessionClient: sessionClient,
 	}, nil
@@ -953,70 +951,6 @@ func (c *K8shelld) RunSFTP(
 		return exitCode, readerErr
 	}
 	return exitCode, nil
-}
-
-// CommandHandler defines the signature for processing incoming commands.
-// It receives the command string and returns the reply string (or an error).
-type CommandHandler func(ctx context.Context, command string) (string, error)
-
-// RunCommandProcessor subscribes to the server-side command stream and dispatches each
-// incoming command to handler, sending the reply back on the same stream. Blocks until
-// ctx is cancelled, the stream closes, or a transport error occurs.
-func (k *K8shelld) RunCommandProcessor(ctx context.Context, handler CommandHandler) error {
-	if handler == nil {
-		return fmt.Errorf("nil command handler")
-	}
-
-	stream, err := k.commandClient.CommandListener(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to create command listener stream: %w", err)
-	}
-
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-		}
-
-		in, err := stream.Recv()
-		if err != nil {
-			if isEOFErrorOrCanceled(err) {
-				return nil
-			}
-			return fmt.Errorf("failed to receive command from server: %w", err)
-		}
-
-		cmdID := in.GetCommandId()
-		payload, ok := in.Payload.(*k8shelldv1.CommandMessage_Command)
-		if !ok {
-			k.log.Warn().Str("command_id", cmdID).Msg("received non-command payload; ignoring")
-			continue
-		}
-
-		cmdStr := payload.Command
-		cmdCtx, cancel := context.WithCancel(ctx)
-		replyStr, hErr := handler(cmdCtx, cmdStr)
-		cancel()
-
-		if hErr != nil {
-			k.log.Error().Err(hErr).Str("command_id", cmdID).Msg("command handler returned error")
-			if replyStr == "" {
-				replyStr = fmt.Sprintf("error: %v", hErr)
-			}
-		}
-
-		out := &k8shelldv1.CommandMessage{
-			CommandId: cmdID,
-			Payload: &k8shelldv1.CommandMessage_Reply{
-				Reply: replyStr,
-			},
-		}
-
-		if err := stream.Send(out); err != nil {
-			return fmt.Errorf("failed to send command reply to server: %w", err)
-		}
-	}
 }
 
 // ListApps returns all applications known to the k8shelld agent.
