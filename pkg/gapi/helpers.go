@@ -240,6 +240,90 @@ func ProtoToUserOnboardCapability(pb *commonv1.UserOnboardCapability) *models.On
 	}
 }
 
+// OnboardUserRuleToProto converts a Go model to a protobuf message.
+func OnboardUserRuleToProto(m *models.OnboardUserRule) *commonv1.OnboardUserRule {
+	if m == nil {
+		return nil
+	}
+	return &commonv1.OnboardUserRule{
+		Username: m.Username,
+		Fullname: m.Fullname,
+		Email:    m.Email,
+		Sudo:     copyBool(m.Sudo),
+		Action:   string(m.Action),
+		Roles:    m.Roles,
+	}
+}
+
+// ProtoToOnboardUserRule converts a protobuf message to a Go model.
+func ProtoToOnboardUserRule(pb *commonv1.OnboardUserRule) *models.OnboardUserRule {
+	if pb == nil {
+		return nil
+	}
+	return &models.OnboardUserRule{
+		Username: pb.GetUsername(),
+		Fullname: pb.GetFullname(),
+		Email:    pb.GetEmail(),
+		Sudo:     copyBool(pb.Sudo),
+		Action:   models.OnboardAction(pb.GetAction()),
+		Roles:    pb.GetRoles(),
+	}
+}
+
+// copyBool duplicates an optional bool so that the model and the protobuf
+// message never share the same pointer.
+func copyBool(v *bool) *bool {
+	if v == nil {
+		return nil
+	}
+	c := *v
+	return &c
+}
+
+// OnboardFollowUpToProto converts a Go model to a protobuf message.
+func OnboardFollowUpToProto(m *models.OnboardFollowUp) *commonv1.OnboardFollowUp {
+	if m == nil {
+		return nil
+	}
+	return &commonv1.OnboardFollowUp{
+		Url:         m.URL,
+		Description: m.Description,
+	}
+}
+
+// ProtoToOnboardFollowUp converts a protobuf message to a Go model.
+func ProtoToOnboardFollowUp(pb *commonv1.OnboardFollowUp) *models.OnboardFollowUp {
+	if pb == nil {
+		return nil
+	}
+	return &models.OnboardFollowUp{
+		URL:         pb.GetUrl(),
+		Description: pb.GetDescription(),
+	}
+}
+
+// CompleteUserWebFlowResultToProto converts a Go model to a protobuf message.
+func CompleteUserWebFlowResultToProto(m *models.CompleteUserWebFlowResult) *commonv1.CompleteUserWebFlowResult {
+	if m == nil {
+		return nil
+	}
+	return &commonv1.CompleteUserWebFlowResult{
+		OnboardRule: OnboardUserRuleToProto(&m.OnboardRule),
+		FollowUp:    OnboardFollowUpToProto(m.FollowUp),
+	}
+}
+
+// ProtoToCompleteUserWebFlowResult converts a protobuf message to a Go model.
+func ProtoToCompleteUserWebFlowResult(pb *commonv1.CompleteUserWebFlowResult) *models.CompleteUserWebFlowResult {
+	if pb == nil {
+		return nil
+	}
+	return &models.CompleteUserWebFlowResult{
+		OnboardRule: *ProtoToOnboardUserRule(pb.GetOnboardRule()),
+		FollowUp:    ProtoToOnboardFollowUp(pb.GetFollowUp()),
+	}
+}
+
 // *** Workspace and related models
 
 // WorkspaceStatusToProto converts a Go WorkspaceStatus model to its protobuf message.

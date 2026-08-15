@@ -12,6 +12,10 @@ const (
 	OnboardActionAllow    OnboardAction = "allow"
 	OnboardActionReject   OnboardAction = "reject"
 	OnboardActionWaitlist OnboardAction = "waitlist"
+
+	// OnboardActionNotDefined means no rule resolved to a concrete decision
+	// for the user, e.g. an OnboardUserRule CEL template did not set one.
+	OnboardActionNotDefined OnboardAction = "not-defined"
 )
 
 // OnboardStatus tracks the outcome of an actual onboarding attempt against
@@ -26,6 +30,12 @@ const (
 	// OnboardStatusPending means a user hit this row as a "waitlist"
 	// decision and no admin decision has been made yet.
 	OnboardStatusPending OnboardStatus = "pending"
+	// OnboardStatusApproved means an admin approved a previously-waitlisted
+	// request (Action is now "allow"), but the user has not yet actually
+	// onboarded — they haven't logged in / completed a web flow since being
+	// approved, so no identity.users row exists for them yet. Transitions to
+	// OnboardStatusOnboarded the moment they do.
+	OnboardStatusApproved OnboardStatus = "approved"
 	// OnboardStatusRejected means a user was rejected, either directly by
 	// an OnboardActionReject rule at attempt time, or by an admin
 	// rejecting a previously-waitlisted request.
@@ -78,4 +88,35 @@ type OnboardRule struct {
 
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+// OnboardUserRule is the onboarding decision an identity provider computes
+// for a single user, typically by evaluating a CEL template against the
+// identity data it holds for that user (see models.User, built the same
+// way). Unlike OnboardRule, it is not a persisted policy row: it is the
+// provider's proposed disposition for this one user, returned inline from a
+// flow such as CompleteUserWebFlow.
+type OnboardUserRule struct {
+	Username string        `json:"username"`
+	Fullname string        `json:"fullname,omitempty"`
+	Email    string        `json:"email,omitempty"`
+	Sudo     *bool         `json:"sudo,omitempty"` // nil when the template made no determination
+	Action   OnboardAction `json:"action"`
+	Roles    []string      `json:"roles,omitempty"`
+}
+
+// OnboardFollowUp describes an optional next step a client should present to
+// the user after an onboarding flow completes, e.g. prompting a GitHub user
+// to install the GitHub App now that they've authorized it.
+type OnboardFollowUp struct {
+	URL         string `json:"url"`
+	Description string `json:"description"`
+}
+
+// CompleteUserWebFlowResult is returned by an identity provider's
+// CompleteUserWebFlow flow: the onboarding rule computed for the user who
+// completed it, plus an optional follow-up action for the client to present.
+type CompleteUserWebFlowResult struct {
+	OnboardRule OnboardUserRule  `json:"onboardRule"`
+	FollowUp    *OnboardFollowUp `json:"followUp,omitempty"`
 }

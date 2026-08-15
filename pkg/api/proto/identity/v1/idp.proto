@@ -28,8 +28,10 @@ service IdentityProviderService {
   // OnboardUserWebFlow initiates the web flow onboarding process for a user.
   rpc OnboardUserWebFlow(OnboardUserWebFlowRequest) returns (common.v1.OnboardUserWebFlow);
 
-  // CompleteUserWebFlow completes the web flow onboarding process using the provided state and code.
-  rpc CompleteUserWebFlow(CompleteUserWebFlowRequest) returns (common.v1.User);
+  // CompleteUserWebFlow completes the web flow onboarding process using the
+  // provided state and code, returning the onboarding decision computed for
+  // the user plus an optional follow-up action for the client to present.
+  rpc CompleteUserWebFlow(CompleteUserWebFlowRequest) returns (common.v1.CompleteUserWebFlowResult);
 
   // AuthUserPublicKey authenticates a user using a public key and returns the authentication result
   rpc AuthUserPublicKey(AuthUserPublicKeyRequest) returns (AuthUserResponse);
