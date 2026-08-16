@@ -378,14 +378,14 @@ message CompleteUserDeviceFlowResponse {}
 
 // CompleteUserWebFlowResponse carries the user token issued upon successful completion of the web flow onboarding process.
 // pat and cli_state are only populated when create_pat=true was set in the originating OnboardUserWebFlowRequest.
-// follow_up is only populated the one time the user is freshly onboarded (created) by this call — a follow_up
-// returned by the provider on a subsequent, already-onboarded completion is not repeated here.
+// new_user reports whether this call created the user account (first-time onboarding) as opposed to logging in an
+// account that already existed
 message CompleteUserWebFlowResponse {
   string user_token = 1;
   string pat        = 2;
   string cli_state  = 3;
   string pat_error  = 4;
-  optional common.v1.OnboardFollowUp follow_up = 5;
+  bool new_user     = 5;
 }
 
 // ListUserCredentialsRequest lists credentials for a user, optionally

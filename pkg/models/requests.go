@@ -239,6 +239,10 @@ type UserProfile struct {
 	// (e.g. SSH publickey) keep working while this is true.
 	PasswordLocked      bool   `json:"password_locked"`
 	PasswordLockedUntil string `json:"password_locked_until,omitempty"`
+
+	// ManageInfoURL is an optional management link to present to the user,
+	// e.g. prompting a GitHub user to install the GitHub App.
+	ManageInfoURL string `json:"manage_info_url,omitempty"`
 }
 
 // UserKubernetesCredentialRequest is the HTTP request body for POST

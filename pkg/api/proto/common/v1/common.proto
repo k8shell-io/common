@@ -148,10 +148,11 @@ message OnboardUserRule {
   repeated string roles = 6;
 }
 
-// OnboardFollowUp describes an optional next step the client should present
-// to the user after completing a provider onboarding flow, e.g. prompting a
-// GitHub user to install the GitHub App now that they've authorized it.
-message OnboardFollowUp {
+// OnboardManageInfo describes an optional management link the client should
+// present to the user after completing a provider onboarding flow, e.g.
+// prompting a GitHub user to install the GitHub App now that they've
+// authorized it.
+message OnboardManageInfo {
   // url is the link the client should present to the user.
   string url = 1;
   // description explains, in human-readable text, what visiting url does.
@@ -159,11 +160,11 @@ message OnboardFollowUp {
 }
 
 // CompleteUserWebFlowResult carries the onboarding decision produced for the
-// user who completed a provider's web onboarding flow, plus an optional
-// follow-up action for the client to present.
+// user who completed a provider's web onboarding flow, plus optional
+// management info for the client to present.
 message CompleteUserWebFlowResult {
   OnboardUserRule onboard_rule = 1;
-  optional OnboardFollowUp follow_up = 2;
+  optional OnboardManageInfo manage_info = 2;
 }
 
 // WorkspaceStatus represents the observed status of a workspace.

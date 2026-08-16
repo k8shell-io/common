@@ -69,6 +69,12 @@ type User struct {
 	Source       string    `yaml:"source" json:"source"`
 	Shell        string    `yaml:"shell" json:"shell"`
 	Sudo         bool      `yaml:"sudo" json:"sudo"`
+
+	// ManageInfoURL carries the management link an identity provider returned
+	// alongside this user's onboarding decision (e.g. prompting a GitHub user
+	// to install the GitHub App), recorded once at the time the user was
+	// freshly onboarded via CompleteUserWebFlow.
+	ManageInfoURL string `yaml:"manageInfoUrl,omitempty" json:"manageInfoUrl,omitempty"`
 }
 
 func (u *User) HasBlueprint(blueprintName string) bool {

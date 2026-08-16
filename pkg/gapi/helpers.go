@@ -280,23 +280,23 @@ func copyBool(v *bool) *bool {
 	return &c
 }
 
-// OnboardFollowUpToProto converts a Go model to a protobuf message.
-func OnboardFollowUpToProto(m *models.OnboardFollowUp) *commonv1.OnboardFollowUp {
+// OnboardManageInfoToProto converts a Go model to a protobuf message.
+func OnboardManageInfoToProto(m *models.OnboardManageInfo) *commonv1.OnboardManageInfo {
 	if m == nil {
 		return nil
 	}
-	return &commonv1.OnboardFollowUp{
+	return &commonv1.OnboardManageInfo{
 		Url:         m.URL,
 		Description: m.Description,
 	}
 }
 
-// ProtoToOnboardFollowUp converts a protobuf message to a Go model.
-func ProtoToOnboardFollowUp(pb *commonv1.OnboardFollowUp) *models.OnboardFollowUp {
+// ProtoToOnboardManageInfo converts a protobuf message to a Go model.
+func ProtoToOnboardManageInfo(pb *commonv1.OnboardManageInfo) *models.OnboardManageInfo {
 	if pb == nil {
 		return nil
 	}
-	return &models.OnboardFollowUp{
+	return &models.OnboardManageInfo{
 		URL:         pb.GetUrl(),
 		Description: pb.GetDescription(),
 	}
@@ -309,7 +309,7 @@ func CompleteUserWebFlowResultToProto(m *models.CompleteUserWebFlowResult) *comm
 	}
 	return &commonv1.CompleteUserWebFlowResult{
 		OnboardRule: OnboardUserRuleToProto(&m.OnboardRule),
-		FollowUp:    OnboardFollowUpToProto(m.FollowUp),
+		ManageInfo:  OnboardManageInfoToProto(m.ManageInfo),
 	}
 }
 
@@ -320,7 +320,7 @@ func ProtoToCompleteUserWebFlowResult(pb *commonv1.CompleteUserWebFlowResult) *m
 	}
 	return &models.CompleteUserWebFlowResult{
 		OnboardRule: *ProtoToOnboardUserRule(pb.GetOnboardRule()),
-		FollowUp:    ProtoToOnboardFollowUp(pb.GetFollowUp()),
+		ManageInfo:  ProtoToOnboardManageInfo(pb.GetManageInfo()),
 	}
 }
 
