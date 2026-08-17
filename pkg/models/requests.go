@@ -135,6 +135,11 @@ type OnboardRuleUpdateRequest struct {
 	Roles    []string `json:"roles,omitempty"`
 	Sudo     bool     `json:"sudo,omitempty"`
 	Note     string   `json:"note,omitempty"`
+
+	// Fullname/Email let an admin correct the display metadata recorded for
+	// system-inserted (waitlist-hit) rows; see OnboardRule.Fullname/Email.
+	Fullname string `json:"fullname,omitempty"`
+	Email    string `json:"email,omitempty"`
 }
 
 // OnboardRuleRejectRequest is the optional HTTP request body for POST

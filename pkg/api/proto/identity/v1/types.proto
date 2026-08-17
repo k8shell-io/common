@@ -432,6 +432,11 @@ message UpdateOnboardRuleRequest {
   repeated string roles    = 4;
   bool            sudo     = 5;
   string          note     = 6;
+
+  // fullname/email let an admin correct the display metadata recorded for
+  // system-inserted (waitlist-hit) rows; see OnboardRule.fullname/email.
+  string fullname = 7;
+  string email    = 8;
 }
 
 // DeleteOnboardRuleRequest identifies the onboard rule to remove by id.

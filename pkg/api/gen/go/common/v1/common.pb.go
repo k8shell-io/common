@@ -61,7 +61,10 @@ type User struct {
 	// shell is the user's preferred shell environment (e.g. "bash", "zsh").
 	Shell string `protobuf:"bytes,20,opt,name=shell,proto3" json:"shell,omitempty"`
 	// sudo indicates whether the user has permission to use sudo in their workspace.
-	Sudo          bool `protobuf:"varint,21,opt,name=sudo,proto3" json:"sudo,omitempty"`
+	Sudo bool `protobuf:"varint,21,opt,name=sudo,proto3" json:"sudo,omitempty"`
+	// manage_info_url is an optional management link to present to the user,
+	// e.g. prompting a GitHub user to install the GitHub App.
+	ManageInfoUrl string `protobuf:"bytes,22,opt,name=manage_info_url,json=manageInfoUrl,proto3" json:"manage_info_url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -199,6 +202,13 @@ func (x *User) GetSudo() bool {
 		return x.Sudo
 	}
 	return false
+}
+
+func (x *User) GetManageInfoUrl() string {
+	if x != nil {
+		return x.ManageInfoUrl
+	}
+	return ""
 }
 
 // UserCredential stores a token or credential issued by an external
@@ -1253,7 +1263,7 @@ var File_common_v1_common_proto protoreflect.FileDescriptor
 
 const file_common_v1_common_proto_rawDesc = "" +
 	"\n" +
-	"\x16common/v1/common.proto\x12\tcommon.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xab\x03\n" +
+	"\x16common/v1/common.proto\x12\tcommon.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd3\x03\n" +
 	"\x04User\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\"\n" +
 	"\forganization\x18\x02 \x01(\tR\forganization\x12\x19\n" +
@@ -1273,7 +1283,8 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"blueprints\x12\x16\n" +
 	"\x06source\x18\x13 \x01(\tR\x06source\x12\x14\n" +
 	"\x05shell\x18\x14 \x01(\tR\x05shell\x12\x12\n" +
-	"\x04sudo\x18\x15 \x01(\bR\x04sudoJ\x04\b\v\x10\fR\x05auths\"\xef\x03\n" +
+	"\x04sudo\x18\x15 \x01(\bR\x04sudo\x12&\n" +
+	"\x0fmanage_info_url\x18\x16 \x01(\tR\rmanageInfoUrlJ\x04\b\v\x10\fR\x05auths\"\xef\x03\n" +
 	"\x0eUserCredential\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\rR\x02id\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12!\n" +

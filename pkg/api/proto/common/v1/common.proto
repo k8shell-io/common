@@ -47,6 +47,9 @@ message User {
   string shell = 20;
   // sudo indicates whether the user has permission to use sudo in their workspace.
   bool sudo = 21;
+  // manage_info_url is an optional management link to present to the user,
+  // e.g. prompting a GitHub user to install the GitHub App.
+  string manage_info_url = 22;
 }
 
 // UserCredential stores a token or credential issued by an external

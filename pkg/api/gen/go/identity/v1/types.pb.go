@@ -2828,13 +2828,17 @@ func (x *CreateOnboardRuleRequest) GetNote() string {
 // rule identified by id. idp/username_pattern/org are immutable — delete
 // and recreate the rule to change them.
 type UpdateOnboardRuleRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Action        string                 `protobuf:"bytes,2,opt,name=action,proto3" json:"action,omitempty"`
-	Priority      int32                  `protobuf:"varint,3,opt,name=priority,proto3" json:"priority,omitempty"`
-	Roles         []string               `protobuf:"bytes,4,rep,name=roles,proto3" json:"roles,omitempty"`
-	Sudo          bool                   `protobuf:"varint,5,opt,name=sudo,proto3" json:"sudo,omitempty"`
-	Note          string                 `protobuf:"bytes,6,opt,name=note,proto3" json:"note,omitempty"`
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Id       int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Action   string                 `protobuf:"bytes,2,opt,name=action,proto3" json:"action,omitempty"`
+	Priority int32                  `protobuf:"varint,3,opt,name=priority,proto3" json:"priority,omitempty"`
+	Roles    []string               `protobuf:"bytes,4,rep,name=roles,proto3" json:"roles,omitempty"`
+	Sudo     bool                   `protobuf:"varint,5,opt,name=sudo,proto3" json:"sudo,omitempty"`
+	Note     string                 `protobuf:"bytes,6,opt,name=note,proto3" json:"note,omitempty"`
+	// fullname/email let an admin correct the display metadata recorded for
+	// system-inserted (waitlist-hit) rows; see OnboardRule.fullname/email.
+	Fullname      string `protobuf:"bytes,7,opt,name=fullname,proto3" json:"fullname,omitempty"`
+	Email         string `protobuf:"bytes,8,opt,name=email,proto3" json:"email,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2907,6 +2911,20 @@ func (x *UpdateOnboardRuleRequest) GetSudo() bool {
 func (x *UpdateOnboardRuleRequest) GetNote() string {
 	if x != nil {
 		return x.Note
+	}
+	return ""
+}
+
+func (x *UpdateOnboardRuleRequest) GetFullname() string {
+	if x != nil {
+		return x.Fullname
+	}
+	return ""
+}
+
+func (x *UpdateOnboardRuleRequest) GetEmail() string {
+	if x != nil {
+		return x.Email
 	}
 	return ""
 }
@@ -3661,14 +3679,16 @@ const file_identity_v1_types_proto_rawDesc = "" +
 	"\bpriority\x18\x05 \x01(\x05R\bpriority\x12\x14\n" +
 	"\x05roles\x18\x06 \x03(\tR\x05roles\x12\x12\n" +
 	"\x04sudo\x18\a \x01(\bR\x04sudo\x12\x12\n" +
-	"\x04note\x18\b \x01(\tR\x04note\"\x9c\x01\n" +
+	"\x04note\x18\b \x01(\tR\x04note\"\xce\x01\n" +
 	"\x18UpdateOnboardRuleRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x16\n" +
 	"\x06action\x18\x02 \x01(\tR\x06action\x12\x1a\n" +
 	"\bpriority\x18\x03 \x01(\x05R\bpriority\x12\x14\n" +
 	"\x05roles\x18\x04 \x03(\tR\x05roles\x12\x12\n" +
 	"\x04sudo\x18\x05 \x01(\bR\x04sudo\x12\x12\n" +
-	"\x04note\x18\x06 \x01(\tR\x04note\"*\n" +
+	"\x04note\x18\x06 \x01(\tR\x04note\x12\x1a\n" +
+	"\bfullname\x18\a \x01(\tR\bfullname\x12\x14\n" +
+	"\x05email\x18\b \x01(\tR\x05email\"*\n" +
 	"\x18DeleteOnboardRuleRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\"5\n" +
 	"\x19DeleteOnboardRuleResponse\x12\x18\n" +

@@ -36,12 +36,13 @@ func UserToProto(u *models.User) *commonv1.User {
 		Fullname:     u.Fullname,
 		Email:        u.Email,
 		// Password is intentionally omitted: it is never populated in read responses.
-		Locked:     u.Locked,
-		Roles:      roles,
-		Blueprints: u.Blueprints,
-		Source:     u.Source,
-		Shell:      u.Shell,
-		Sudo:       u.Sudo,
+		Locked:        u.Locked,
+		Roles:         roles,
+		Blueprints:    u.Blueprints,
+		Source:        u.Source,
+		Shell:         u.Shell,
+		Sudo:          u.Sudo,
+		ManageInfoUrl: u.ManageInfoURL,
 	}
 }
 
@@ -77,6 +78,8 @@ func ProtoToUser(pb *commonv1.User) *models.User {
 		Source:     pb.GetSource(),
 		Shell:      pb.GetShell(),
 		Sudo:       pb.GetSudo(),
+
+		ManageInfoURL: pb.GetManageInfoUrl(),
 	}
 }
 
