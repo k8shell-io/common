@@ -62,9 +62,12 @@ type User struct {
 	Shell string `protobuf:"bytes,20,opt,name=shell,proto3" json:"shell,omitempty"`
 	// sudo indicates whether the user has permission to use sudo in their workspace.
 	Sudo bool `protobuf:"varint,21,opt,name=sudo,proto3" json:"sudo,omitempty"`
-	// manage_info_url is an optional management link to present to the user,
+	// manage_repos is an optional management link to present to the user,
 	// e.g. prompting a GitHub user to install the GitHub App.
-	ManageInfoUrl string `protobuf:"bytes,22,opt,name=manage_info_url,json=manageInfoUrl,proto3" json:"manage_info_url,omitempty"`
+	ManageRepos string `protobuf:"bytes,22,opt,name=manage_repos,json=manageRepos,proto3" json:"manage_repos,omitempty"`
+	// git_address is the address the identity provider has defined for git
+	// operations, e.g. "https://github.com".
+	GitAddress    string `protobuf:"bytes,23,opt,name=git_address,json=gitAddress,proto3" json:"git_address,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -204,9 +207,16 @@ func (x *User) GetSudo() bool {
 	return false
 }
 
-func (x *User) GetManageInfoUrl() string {
+func (x *User) GetManageRepos() string {
 	if x != nil {
-		return x.ManageInfoUrl
+		return x.ManageRepos
+	}
+	return ""
+}
+
+func (x *User) GetGitAddress() string {
+	if x != nil {
+		return x.GitAddress
 	}
 	return ""
 }
@@ -655,7 +665,9 @@ type OnboardUserRule struct {
 	// action is one of "allow", "reject", "waitlist", "not-defined".
 	Action string `protobuf:"bytes,5,opt,name=action,proto3" json:"action,omitempty"`
 	// roles lists the RBAC roles to assign the user when action is "allow".
-	Roles         []string `protobuf:"bytes,6,rep,name=roles,proto3" json:"roles,omitempty"`
+	Roles []string `protobuf:"bytes,6,rep,name=roles,proto3" json:"roles,omitempty"`
+	// organization is the tenant the user should be placed into, if known.
+	Organization  string `protobuf:"bytes,7,opt,name=organization,proto3" json:"organization,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -732,34 +744,47 @@ func (x *OnboardUserRule) GetRoles() []string {
 	return nil
 }
 
-// OnboardManageInfo describes an optional management link the client should
-// present to the user after completing a provider onboarding flow, e.g.
-// prompting a GitHub user to install the GitHub App now that they've
-// authorized it.
-type OnboardManageInfo struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// url is the link the client should present to the user.
-	Url string `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
-	// description explains, in human-readable text, what visiting url does.
-	Description   string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+func (x *OnboardUserRule) GetOrganization() string {
+	if x != nil {
+		return x.Organization
+	}
+	return ""
+}
+
+// UserResult carries an identity provider's onboarding decision for a user —
+// returned by FindUser (re-evaluated for an already-onboarded user) and by
+// CompleteUserWebFlow (evaluated for a user who just completed a provider's
+// web onboarding flow) — plus a repo management link for the client to
+// present and the provider's git address.
+type UserResult struct {
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	OnboardRule *OnboardUserRule       `protobuf:"bytes,1,opt,name=onboard_rule,json=onboardRule,proto3" json:"onboard_rule,omitempty"`
+	// manage_repos is a link the client should present to the user for
+	// managing their repository access on the provider, e.g. prompting a
+	// GitHub user to install the GitHub App now that they've authorized it.
+	// Empty when the provider has no such link.
+	ManageRepos string `protobuf:"bytes,2,opt,name=manage_repos,json=manageRepos,proto3" json:"manage_repos,omitempty"`
+	// git_address is the address the identity provider has defined for git
+	// operations, e.g. "https://github.com".
+	GitAddress    string `protobuf:"bytes,3,opt,name=git_address,json=gitAddress,proto3" json:"git_address,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *OnboardManageInfo) Reset() {
-	*x = OnboardManageInfo{}
+func (x *UserResult) Reset() {
+	*x = UserResult{}
 	mi := &file_common_v1_common_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *OnboardManageInfo) String() string {
+func (x *UserResult) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*OnboardManageInfo) ProtoMessage() {}
+func (*UserResult) ProtoMessage() {}
 
-func (x *OnboardManageInfo) ProtoReflect() protoreflect.Message {
+func (x *UserResult) ProtoReflect() protoreflect.Message {
 	mi := &file_common_v1_common_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -771,78 +796,30 @@ func (x *OnboardManageInfo) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use OnboardManageInfo.ProtoReflect.Descriptor instead.
-func (*OnboardManageInfo) Descriptor() ([]byte, []int) {
+// Deprecated: Use UserResult.ProtoReflect.Descriptor instead.
+func (*UserResult) Descriptor() ([]byte, []int) {
 	return file_common_v1_common_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *OnboardManageInfo) GetUrl() string {
-	if x != nil {
-		return x.Url
-	}
-	return ""
-}
-
-func (x *OnboardManageInfo) GetDescription() string {
-	if x != nil {
-		return x.Description
-	}
-	return ""
-}
-
-// CompleteUserWebFlowResult carries the onboarding decision produced for the
-// user who completed a provider's web onboarding flow, plus optional
-// management info for the client to present.
-type CompleteUserWebFlowResult struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	OnboardRule   *OnboardUserRule       `protobuf:"bytes,1,opt,name=onboard_rule,json=onboardRule,proto3" json:"onboard_rule,omitempty"`
-	ManageInfo    *OnboardManageInfo     `protobuf:"bytes,2,opt,name=manage_info,json=manageInfo,proto3,oneof" json:"manage_info,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CompleteUserWebFlowResult) Reset() {
-	*x = CompleteUserWebFlowResult{}
-	mi := &file_common_v1_common_proto_msgTypes[8]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CompleteUserWebFlowResult) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CompleteUserWebFlowResult) ProtoMessage() {}
-
-func (x *CompleteUserWebFlowResult) ProtoReflect() protoreflect.Message {
-	mi := &file_common_v1_common_proto_msgTypes[8]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CompleteUserWebFlowResult.ProtoReflect.Descriptor instead.
-func (*CompleteUserWebFlowResult) Descriptor() ([]byte, []int) {
-	return file_common_v1_common_proto_rawDescGZIP(), []int{8}
-}
-
-func (x *CompleteUserWebFlowResult) GetOnboardRule() *OnboardUserRule {
+func (x *UserResult) GetOnboardRule() *OnboardUserRule {
 	if x != nil {
 		return x.OnboardRule
 	}
 	return nil
 }
 
-func (x *CompleteUserWebFlowResult) GetManageInfo() *OnboardManageInfo {
+func (x *UserResult) GetManageRepos() string {
 	if x != nil {
-		return x.ManageInfo
+		return x.ManageRepos
 	}
-	return nil
+	return ""
+}
+
+func (x *UserResult) GetGitAddress() string {
+	if x != nil {
+		return x.GitAddress
+	}
+	return ""
 }
 
 // WorkspaceStatus represents the observed status of a workspace.
@@ -865,7 +842,7 @@ type WorkspaceStatus struct {
 
 func (x *WorkspaceStatus) Reset() {
 	*x = WorkspaceStatus{}
-	mi := &file_common_v1_common_proto_msgTypes[9]
+	mi := &file_common_v1_common_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -877,7 +854,7 @@ func (x *WorkspaceStatus) String() string {
 func (*WorkspaceStatus) ProtoMessage() {}
 
 func (x *WorkspaceStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_common_v1_common_proto_msgTypes[9]
+	mi := &file_common_v1_common_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -890,7 +867,7 @@ func (x *WorkspaceStatus) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WorkspaceStatus.ProtoReflect.Descriptor instead.
 func (*WorkspaceStatus) Descriptor() ([]byte, []int) {
-	return file_common_v1_common_proto_rawDescGZIP(), []int{9}
+	return file_common_v1_common_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *WorkspaceStatus) GetCreated() *timestamppb.Timestamp {
@@ -997,7 +974,7 @@ type WorkspaceDetails struct {
 
 func (x *WorkspaceDetails) Reset() {
 	*x = WorkspaceDetails{}
-	mi := &file_common_v1_common_proto_msgTypes[10]
+	mi := &file_common_v1_common_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1009,7 +986,7 @@ func (x *WorkspaceDetails) String() string {
 func (*WorkspaceDetails) ProtoMessage() {}
 
 func (x *WorkspaceDetails) ProtoReflect() protoreflect.Message {
-	mi := &file_common_v1_common_proto_msgTypes[10]
+	mi := &file_common_v1_common_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1022,7 +999,7 @@ func (x *WorkspaceDetails) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WorkspaceDetails.ProtoReflect.Descriptor instead.
 func (*WorkspaceDetails) Descriptor() ([]byte, []int) {
-	return file_common_v1_common_proto_rawDescGZIP(), []int{10}
+	return file_common_v1_common_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *WorkspaceDetails) GetWorkspaceStatus() *WorkspaceStatus {
@@ -1210,7 +1187,7 @@ type BlueprintSummary struct {
 
 func (x *BlueprintSummary) Reset() {
 	*x = BlueprintSummary{}
-	mi := &file_common_v1_common_proto_msgTypes[11]
+	mi := &file_common_v1_common_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1222,7 +1199,7 @@ func (x *BlueprintSummary) String() string {
 func (*BlueprintSummary) ProtoMessage() {}
 
 func (x *BlueprintSummary) ProtoReflect() protoreflect.Message {
-	mi := &file_common_v1_common_proto_msgTypes[11]
+	mi := &file_common_v1_common_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1235,7 +1212,7 @@ func (x *BlueprintSummary) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BlueprintSummary.ProtoReflect.Descriptor instead.
 func (*BlueprintSummary) Descriptor() ([]byte, []int) {
-	return file_common_v1_common_proto_rawDescGZIP(), []int{11}
+	return file_common_v1_common_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *BlueprintSummary) GetName() string {
@@ -1263,7 +1240,7 @@ var File_common_v1_common_proto protoreflect.FileDescriptor
 
 const file_common_v1_common_proto_rawDesc = "" +
 	"\n" +
-	"\x16common/v1/common.proto\x12\tcommon.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd3\x03\n" +
+	"\x16common/v1/common.proto\x12\tcommon.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xef\x03\n" +
 	"\x04User\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\"\n" +
 	"\forganization\x18\x02 \x01(\tR\forganization\x12\x19\n" +
@@ -1283,8 +1260,10 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"blueprints\x12\x16\n" +
 	"\x06source\x18\x13 \x01(\tR\x06source\x12\x14\n" +
 	"\x05shell\x18\x14 \x01(\tR\x05shell\x12\x12\n" +
-	"\x04sudo\x18\x15 \x01(\bR\x04sudo\x12&\n" +
-	"\x0fmanage_info_url\x18\x16 \x01(\tR\rmanageInfoUrlJ\x04\b\v\x10\fR\x05auths\"\xef\x03\n" +
+	"\x04sudo\x18\x15 \x01(\bR\x04sudo\x12!\n" +
+	"\fmanage_repos\x18\x16 \x01(\tR\vmanageRepos\x12\x1f\n" +
+	"\vgit_address\x18\x17 \x01(\tR\n" +
+	"gitAddressJ\x04\b\v\x10\fR\x05auths\"\xef\x03\n" +
 	"\x0eUserCredential\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\rR\x02id\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12!\n" +
@@ -1323,23 +1302,22 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"\bprovider\x18\x01 \x01(\tR\bprovider\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x1f\n" +
 	"\vcan_onboard\x18\x03 \x01(\bR\n" +
-	"canOnboard\"\xaf\x01\n" +
+	"canOnboard\"\xd3\x01\n" +
 	"\x0fOnboardUserRule\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\x1a\n" +
 	"\bfullname\x18\x02 \x01(\tR\bfullname\x12\x14\n" +
 	"\x05email\x18\x03 \x01(\tR\x05email\x12\x17\n" +
 	"\x04sudo\x18\x04 \x01(\bH\x00R\x04sudo\x88\x01\x01\x12\x16\n" +
 	"\x06action\x18\x05 \x01(\tR\x06action\x12\x14\n" +
-	"\x05roles\x18\x06 \x03(\tR\x05rolesB\a\n" +
-	"\x05_sudo\"G\n" +
-	"\x11OnboardManageInfo\x12\x10\n" +
-	"\x03url\x18\x01 \x01(\tR\x03url\x12 \n" +
-	"\vdescription\x18\x02 \x01(\tR\vdescription\"\xae\x01\n" +
-	"\x19CompleteUserWebFlowResult\x12=\n" +
-	"\fonboard_rule\x18\x01 \x01(\v2\x1a.common.v1.OnboardUserRuleR\vonboardRule\x12B\n" +
-	"\vmanage_info\x18\x02 \x01(\v2\x1c.common.v1.OnboardManageInfoH\x00R\n" +
-	"manageInfo\x88\x01\x01B\x0e\n" +
-	"\f_manage_info\"\xc1\x01\n" +
+	"\x05roles\x18\x06 \x03(\tR\x05roles\x12\"\n" +
+	"\forganization\x18\a \x01(\tR\forganizationB\a\n" +
+	"\x05_sudo\"\x8f\x01\n" +
+	"\n" +
+	"UserResult\x12=\n" +
+	"\fonboard_rule\x18\x01 \x01(\v2\x1a.common.v1.OnboardUserRuleR\vonboardRule\x12!\n" +
+	"\fmanage_repos\x18\x02 \x01(\tR\vmanageRepos\x12\x1f\n" +
+	"\vgit_address\x18\x03 \x01(\tR\n" +
+	"gitAddress\"\xc1\x01\n" +
 	"\x0fWorkspaceStatus\x124\n" +
 	"\acreated\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\acreated\x12\x16\n" +
 	"\x06status\x18\x02 \x01(\tR\x06status\x12\x18\n" +
@@ -1396,37 +1374,35 @@ func file_common_v1_common_proto_rawDescGZIP() []byte {
 	return file_common_v1_common_proto_rawDescData
 }
 
-var file_common_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_common_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_common_v1_common_proto_goTypes = []any{
-	(*User)(nil),                      // 0: common.v1.User
-	(*UserCredential)(nil),            // 1: common.v1.UserCredential
-	(*OnboardUserDeviceFlow)(nil),     // 2: common.v1.OnboardUserDeviceFlow
-	(*OnboardUserWebFlow)(nil),        // 3: common.v1.OnboardUserWebFlow
-	(*CompleteUserWebFlow)(nil),       // 4: common.v1.CompleteUserWebFlow
-	(*UserOnboardCapability)(nil),     // 5: common.v1.UserOnboardCapability
-	(*OnboardUserRule)(nil),           // 6: common.v1.OnboardUserRule
-	(*OnboardManageInfo)(nil),         // 7: common.v1.OnboardManageInfo
-	(*CompleteUserWebFlowResult)(nil), // 8: common.v1.CompleteUserWebFlowResult
-	(*WorkspaceStatus)(nil),           // 9: common.v1.WorkspaceStatus
-	(*WorkspaceDetails)(nil),          // 10: common.v1.WorkspaceDetails
-	(*BlueprintSummary)(nil),          // 11: common.v1.BlueprintSummary
-	(*timestamppb.Timestamp)(nil),     // 12: google.protobuf.Timestamp
+	(*User)(nil),                  // 0: common.v1.User
+	(*UserCredential)(nil),        // 1: common.v1.UserCredential
+	(*OnboardUserDeviceFlow)(nil), // 2: common.v1.OnboardUserDeviceFlow
+	(*OnboardUserWebFlow)(nil),    // 3: common.v1.OnboardUserWebFlow
+	(*CompleteUserWebFlow)(nil),   // 4: common.v1.CompleteUserWebFlow
+	(*UserOnboardCapability)(nil), // 5: common.v1.UserOnboardCapability
+	(*OnboardUserRule)(nil),       // 6: common.v1.OnboardUserRule
+	(*UserResult)(nil),            // 7: common.v1.UserResult
+	(*WorkspaceStatus)(nil),       // 8: common.v1.WorkspaceStatus
+	(*WorkspaceDetails)(nil),      // 9: common.v1.WorkspaceDetails
+	(*BlueprintSummary)(nil),      // 10: common.v1.BlueprintSummary
+	(*timestamppb.Timestamp)(nil), // 11: google.protobuf.Timestamp
 }
 var file_common_v1_common_proto_depIdxs = []int32{
-	12, // 0: common.v1.User.expires_at:type_name -> google.protobuf.Timestamp
-	12, // 1: common.v1.UserCredential.created_at:type_name -> google.protobuf.Timestamp
-	12, // 2: common.v1.UserCredential.updated_at:type_name -> google.protobuf.Timestamp
-	12, // 3: common.v1.UserCredential.expires_at:type_name -> google.protobuf.Timestamp
-	12, // 4: common.v1.UserCredential.last_used_at:type_name -> google.protobuf.Timestamp
-	6,  // 5: common.v1.CompleteUserWebFlowResult.onboard_rule:type_name -> common.v1.OnboardUserRule
-	7,  // 6: common.v1.CompleteUserWebFlowResult.manage_info:type_name -> common.v1.OnboardManageInfo
-	12, // 7: common.v1.WorkspaceStatus.created:type_name -> google.protobuf.Timestamp
-	9,  // 8: common.v1.WorkspaceDetails.workspace_status:type_name -> common.v1.WorkspaceStatus
-	9,  // [9:9] is the sub-list for method output_type
-	9,  // [9:9] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	11, // 0: common.v1.User.expires_at:type_name -> google.protobuf.Timestamp
+	11, // 1: common.v1.UserCredential.created_at:type_name -> google.protobuf.Timestamp
+	11, // 2: common.v1.UserCredential.updated_at:type_name -> google.protobuf.Timestamp
+	11, // 3: common.v1.UserCredential.expires_at:type_name -> google.protobuf.Timestamp
+	11, // 4: common.v1.UserCredential.last_used_at:type_name -> google.protobuf.Timestamp
+	6,  // 5: common.v1.UserResult.onboard_rule:type_name -> common.v1.OnboardUserRule
+	11, // 6: common.v1.WorkspaceStatus.created:type_name -> google.protobuf.Timestamp
+	8,  // 7: common.v1.WorkspaceDetails.workspace_status:type_name -> common.v1.WorkspaceStatus
+	8,  // [8:8] is the sub-list for method output_type
+	8,  // [8:8] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_common_v1_common_proto_init() }
@@ -1435,15 +1411,14 @@ func file_common_v1_common_proto_init() {
 		return
 	}
 	file_common_v1_common_proto_msgTypes[6].OneofWrappers = []any{}
-	file_common_v1_common_proto_msgTypes[8].OneofWrappers = []any{}
-	file_common_v1_common_proto_msgTypes[10].OneofWrappers = []any{}
+	file_common_v1_common_proto_msgTypes[9].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_common_v1_common_proto_rawDesc), len(file_common_v1_common_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   12,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

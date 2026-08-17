@@ -36,13 +36,14 @@ func UserToProto(u *models.User) *commonv1.User {
 		Fullname:     u.Fullname,
 		Email:        u.Email,
 		// Password is intentionally omitted: it is never populated in read responses.
-		Locked:        u.Locked,
-		Roles:         roles,
-		Blueprints:    u.Blueprints,
-		Source:        u.Source,
-		Shell:         u.Shell,
-		Sudo:          u.Sudo,
-		ManageInfoUrl: u.ManageInfoURL,
+		Locked:      u.Locked,
+		Roles:       roles,
+		Blueprints:  u.Blueprints,
+		Source:      u.Source,
+		Shell:       u.Shell,
+		Sudo:        u.Sudo,
+		ManageRepos: u.ManageRepos,
+		GitAddress:  u.GitAddress,
 	}
 }
 
@@ -79,7 +80,8 @@ func ProtoToUser(pb *commonv1.User) *models.User {
 		Shell:      pb.GetShell(),
 		Sudo:       pb.GetSudo(),
 
-		ManageInfoURL: pb.GetManageInfoUrl(),
+		ManageRepos: pb.GetManageRepos(),
+		GitAddress:  pb.GetGitAddress(),
 	}
 }
 
@@ -249,12 +251,13 @@ func OnboardUserRuleToProto(m *models.OnboardUserRule) *commonv1.OnboardUserRule
 		return nil
 	}
 	return &commonv1.OnboardUserRule{
-		Username: m.Username,
-		Fullname: m.Fullname,
-		Email:    m.Email,
-		Sudo:     copyBool(m.Sudo),
-		Action:   string(m.Action),
-		Roles:    m.Roles,
+		Username:     m.Username,
+		Fullname:     m.Fullname,
+		Email:        m.Email,
+		Organization: m.Organization,
+		Sudo:         copyBool(m.Sudo),
+		Action:       string(m.Action),
+		Roles:        m.Roles,
 	}
 }
 
@@ -264,12 +267,13 @@ func ProtoToOnboardUserRule(pb *commonv1.OnboardUserRule) *models.OnboardUserRul
 		return nil
 	}
 	return &models.OnboardUserRule{
-		Username: pb.GetUsername(),
-		Fullname: pb.GetFullname(),
-		Email:    pb.GetEmail(),
-		Sudo:     copyBool(pb.Sudo),
-		Action:   models.OnboardAction(pb.GetAction()),
-		Roles:    pb.GetRoles(),
+		Username:     pb.GetUsername(),
+		Fullname:     pb.GetFullname(),
+		Email:        pb.GetEmail(),
+		Organization: pb.GetOrganization(),
+		Sudo:         copyBool(pb.Sudo),
+		Action:       models.OnboardAction(pb.GetAction()),
+		Roles:        pb.GetRoles(),
 	}
 }
 
@@ -283,47 +287,27 @@ func copyBool(v *bool) *bool {
 	return &c
 }
 
-// OnboardManageInfoToProto converts a Go model to a protobuf message.
-func OnboardManageInfoToProto(m *models.OnboardManageInfo) *commonv1.OnboardManageInfo {
+// UserResultToProto converts a Go model to a protobuf message.
+func UserResultToProto(m *models.UserResult) *commonv1.UserResult {
 	if m == nil {
 		return nil
 	}
-	return &commonv1.OnboardManageInfo{
-		Url:         m.URL,
-		Description: m.Description,
-	}
-}
-
-// ProtoToOnboardManageInfo converts a protobuf message to a Go model.
-func ProtoToOnboardManageInfo(pb *commonv1.OnboardManageInfo) *models.OnboardManageInfo {
-	if pb == nil {
-		return nil
-	}
-	return &models.OnboardManageInfo{
-		URL:         pb.GetUrl(),
-		Description: pb.GetDescription(),
-	}
-}
-
-// CompleteUserWebFlowResultToProto converts a Go model to a protobuf message.
-func CompleteUserWebFlowResultToProto(m *models.CompleteUserWebFlowResult) *commonv1.CompleteUserWebFlowResult {
-	if m == nil {
-		return nil
-	}
-	return &commonv1.CompleteUserWebFlowResult{
+	return &commonv1.UserResult{
 		OnboardRule: OnboardUserRuleToProto(&m.OnboardRule),
-		ManageInfo:  OnboardManageInfoToProto(m.ManageInfo),
+		ManageRepos: m.ManageRepos,
+		GitAddress:  m.GitAddress,
 	}
 }
 
-// ProtoToCompleteUserWebFlowResult converts a protobuf message to a Go model.
-func ProtoToCompleteUserWebFlowResult(pb *commonv1.CompleteUserWebFlowResult) *models.CompleteUserWebFlowResult {
+// ProtoToUserResult converts a protobuf message to a Go model.
+func ProtoToUserResult(pb *commonv1.UserResult) *models.UserResult {
 	if pb == nil {
 		return nil
 	}
-	return &models.CompleteUserWebFlowResult{
+	return &models.UserResult{
 		OnboardRule: *ProtoToOnboardUserRule(pb.GetOnboardRule()),
-		ManageInfo:  ProtoToOnboardManageInfo(pb.GetManageInfo()),
+		ManageRepos: pb.GetManageRepos(),
+		GitAddress:  pb.GetGitAddress(),
 	}
 }
 

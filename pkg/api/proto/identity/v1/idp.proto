@@ -16,8 +16,10 @@ service IdentityProviderService {
   // capabilities, user max age, and address.
   rpc ProviderInfo(ProviderInfoRequest) returns (ProviderInfoResponse);
 
-  // FindUser retrieves a user by username. It can be used for authentication and user lookup.
-  rpc FindUser(FindUserRequest) returns (common.v1.User);
+  // FindUser retrieves a user by username, re-evaluating the provider's
+  // onboarding decision for them. It can be used for authentication and user
+  // lookup.
+  rpc FindUser(FindUserRequest) returns (common.v1.UserResult);
 
   // OnboardCapability returns the onboarding capability details for a user.
   rpc OnboardUserCapability(Username) returns (common.v1.UserOnboardCapability);
@@ -31,7 +33,7 @@ service IdentityProviderService {
   // CompleteUserWebFlow completes the web flow onboarding process using the
   // provided state and code, returning the onboarding decision computed for
   // the user plus optional management info for the client to present.
-  rpc CompleteUserWebFlow(CompleteUserWebFlowRequest) returns (common.v1.CompleteUserWebFlowResult);
+  rpc CompleteUserWebFlow(CompleteUserWebFlowRequest) returns (common.v1.UserResult);
 
   // AuthUserPublicKey authenticates a user using a public key and returns the authentication result
   rpc AuthUserPublicKey(AuthUserPublicKeyRequest) returns (AuthUserResponse);

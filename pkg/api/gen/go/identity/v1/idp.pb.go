@@ -198,14 +198,14 @@ const file_identity_v1_idp_proto_rawDesc = "" +
 	"\aaddress\x18\x04 \x01(\tR\aaddress\"D\n" +
 	"\tUserToken\x12\x14\n" +
 	"\x05token\x18\x01 \x01(\tR\x05token\x12!\n" +
-	"\fservice_name\x18\x02 \x01(\tR\vserviceName2\xc0\b\n" +
+	"\fservice_name\x18\x02 \x01(\tR\vserviceName2\xb7\b\n" +
 	"\x17IdentityProviderService\x12S\n" +
-	"\fProviderInfo\x12 .identity.v1.ProviderInfoRequest\x1a!.identity.v1.ProviderInfoResponse\x129\n" +
-	"\bFindUser\x12\x1c.identity.v1.FindUserRequest\x1a\x0f.common.v1.User\x12P\n" +
+	"\fProviderInfo\x12 .identity.v1.ProviderInfoRequest\x1a!.identity.v1.ProviderInfoResponse\x12?\n" +
+	"\bFindUser\x12\x1c.identity.v1.FindUserRequest\x1a\x15.common.v1.UserResult\x12P\n" +
 	"\x15OnboardUserCapability\x12\x15.identity.v1.Username\x1a .common.v1.UserOnboardCapability\x12d\n" +
 	"\x15OnboardUserDeviceFlow\x12).identity.v1.OnboardUserDeviceFlowRequest\x1a .common.v1.OnboardUserDeviceFlow\x12[\n" +
-	"\x12OnboardUserWebFlow\x12&.identity.v1.OnboardUserWebFlowRequest\x1a\x1d.common.v1.OnboardUserWebFlow\x12d\n" +
-	"\x13CompleteUserWebFlow\x12'.identity.v1.CompleteUserWebFlowRequest\x1a$.common.v1.CompleteUserWebFlowResult\x12Y\n" +
+	"\x12OnboardUserWebFlow\x12&.identity.v1.OnboardUserWebFlowRequest\x1a\x1d.common.v1.OnboardUserWebFlow\x12U\n" +
+	"\x13CompleteUserWebFlow\x12'.identity.v1.CompleteUserWebFlowRequest\x1a\x15.common.v1.UserResult\x12Y\n" +
 	"\x11AuthUserPublicKey\x12%.identity.v1.AuthUserPublicKeyRequest\x1a\x1d.identity.v1.AuthUserResponse\x12@\n" +
 	"\x0fGetUserGitToken\x12\x15.identity.v1.Username\x1a\x16.identity.v1.UserToken\x12E\n" +
 	"\x15GetBlueprintByUserStr\x12\x14.identity.v1.UserStr\x1a\x16.identity.v1.Blueprint\x12P\n" +
@@ -240,17 +240,16 @@ var file_identity_v1_idp_proto_goTypes = []any{
 	(*UserStr)(nil),                      // 9: identity.v1.UserStr
 	(*RepoPullRequestRequest)(nil),       // 10: identity.v1.RepoPullRequestRequest
 	(*ListReposRequest)(nil),             // 11: identity.v1.ListReposRequest
-	(*v1.User)(nil),                      // 12: common.v1.User
+	(*v1.UserResult)(nil),                // 12: common.v1.UserResult
 	(*v1.UserOnboardCapability)(nil),     // 13: common.v1.UserOnboardCapability
 	(*v1.OnboardUserDeviceFlow)(nil),     // 14: common.v1.OnboardUserDeviceFlow
 	(*v1.OnboardUserWebFlow)(nil),        // 15: common.v1.OnboardUserWebFlow
-	(*v1.CompleteUserWebFlowResult)(nil), // 16: common.v1.CompleteUserWebFlowResult
-	(*AuthUserResponse)(nil),             // 17: identity.v1.AuthUserResponse
-	(*Blueprint)(nil),                    // 18: identity.v1.Blueprint
-	(*ListUserAuthKeysResponse)(nil),     // 19: identity.v1.ListUserAuthKeysResponse
-	(*RepoRefResponse)(nil),              // 20: identity.v1.RepoRefResponse
-	(*RepoOwnerList)(nil),                // 21: identity.v1.RepoOwnerList
-	(*RepoList)(nil),                     // 22: identity.v1.RepoList
+	(*AuthUserResponse)(nil),             // 16: identity.v1.AuthUserResponse
+	(*Blueprint)(nil),                    // 17: identity.v1.Blueprint
+	(*ListUserAuthKeysResponse)(nil),     // 18: identity.v1.ListUserAuthKeysResponse
+	(*RepoRefResponse)(nil),              // 19: identity.v1.RepoRefResponse
+	(*RepoOwnerList)(nil),                // 20: identity.v1.RepoOwnerList
+	(*RepoList)(nil),                     // 21: identity.v1.RepoList
 }
 var file_identity_v1_idp_proto_depIdxs = []int32{
 	0,  // 0: identity.v1.IdentityProviderService.ProviderInfo:input_type -> identity.v1.ProviderInfoRequest
@@ -267,18 +266,18 @@ var file_identity_v1_idp_proto_depIdxs = []int32{
 	4,  // 11: identity.v1.IdentityProviderService.ListRepoOwners:input_type -> identity.v1.Username
 	11, // 12: identity.v1.IdentityProviderService.ListRepos:input_type -> identity.v1.ListReposRequest
 	1,  // 13: identity.v1.IdentityProviderService.ProviderInfo:output_type -> identity.v1.ProviderInfoResponse
-	12, // 14: identity.v1.IdentityProviderService.FindUser:output_type -> common.v1.User
+	12, // 14: identity.v1.IdentityProviderService.FindUser:output_type -> common.v1.UserResult
 	13, // 15: identity.v1.IdentityProviderService.OnboardUserCapability:output_type -> common.v1.UserOnboardCapability
 	14, // 16: identity.v1.IdentityProviderService.OnboardUserDeviceFlow:output_type -> common.v1.OnboardUserDeviceFlow
 	15, // 17: identity.v1.IdentityProviderService.OnboardUserWebFlow:output_type -> common.v1.OnboardUserWebFlow
-	16, // 18: identity.v1.IdentityProviderService.CompleteUserWebFlow:output_type -> common.v1.CompleteUserWebFlowResult
-	17, // 19: identity.v1.IdentityProviderService.AuthUserPublicKey:output_type -> identity.v1.AuthUserResponse
+	12, // 18: identity.v1.IdentityProviderService.CompleteUserWebFlow:output_type -> common.v1.UserResult
+	16, // 19: identity.v1.IdentityProviderService.AuthUserPublicKey:output_type -> identity.v1.AuthUserResponse
 	2,  // 20: identity.v1.IdentityProviderService.GetUserGitToken:output_type -> identity.v1.UserToken
-	18, // 21: identity.v1.IdentityProviderService.GetBlueprintByUserStr:output_type -> identity.v1.Blueprint
-	19, // 22: identity.v1.IdentityProviderService.ListUserAuthKeys:output_type -> identity.v1.ListUserAuthKeysResponse
-	20, // 23: identity.v1.IdentityProviderService.ResolvePullRequestToRef:output_type -> identity.v1.RepoRefResponse
-	21, // 24: identity.v1.IdentityProviderService.ListRepoOwners:output_type -> identity.v1.RepoOwnerList
-	22, // 25: identity.v1.IdentityProviderService.ListRepos:output_type -> identity.v1.RepoList
+	17, // 21: identity.v1.IdentityProviderService.GetBlueprintByUserStr:output_type -> identity.v1.Blueprint
+	18, // 22: identity.v1.IdentityProviderService.ListUserAuthKeys:output_type -> identity.v1.ListUserAuthKeysResponse
+	19, // 23: identity.v1.IdentityProviderService.ResolvePullRequestToRef:output_type -> identity.v1.RepoRefResponse
+	20, // 24: identity.v1.IdentityProviderService.ListRepoOwners:output_type -> identity.v1.RepoOwnerList
+	21, // 25: identity.v1.IdentityProviderService.ListRepos:output_type -> identity.v1.RepoList
 	13, // [13:26] is the sub-list for method output_type
 	0,  // [0:13] is the sub-list for method input_type
 	0,  // [0:0] is the sub-list for extension type_name

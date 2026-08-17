@@ -64,7 +64,7 @@ type OnboardRule struct {
 	Org string `json:"org"`
 
 	Action   OnboardAction `json:"action"`
-	Status   OnboardStatus `json:"status"` // outcome of an actual onboarding attempt; see OnboardStatus*
+	Status   OnboardStatus `json:"status"`   // outcome of an actual onboarding attempt; see OnboardStatus*
 	Priority int32         `json:"priority"` // lower wins among matching rows of the same specificity
 
 	// Roles/Sudo are the attributes applied to the user when this row
@@ -97,26 +97,27 @@ type OnboardRule struct {
 // provider's proposed disposition for this one user, returned inline from a
 // flow such as CompleteUserWebFlow.
 type OnboardUserRule struct {
-	Username string        `json:"username"`
-	Fullname string        `json:"fullname,omitempty"`
-	Email    string        `json:"email,omitempty"`
-	Sudo     *bool         `json:"sudo,omitempty"` // nil when the template made no determination
-	Action   OnboardAction `json:"action"`
-	Roles    []string      `json:"roles,omitempty"`
+	Username     string        `json:"username"`
+	Fullname     string        `json:"fullname,omitempty"`
+	Email        string        `json:"email,omitempty"`
+	Organization string        `json:"organization,omitempty"`
+	Sudo         *bool         `json:"sudo,omitempty"`
+	Action       OnboardAction `json:"action"`
+	Roles        []string      `json:"roles,omitempty"`
 }
 
-// OnboardManageInfo describes an optional management link a client should
-// present to the user after an onboarding flow completes, e.g. prompting a
-// GitHub user to install the GitHub App now that they've authorized it.
-type OnboardManageInfo struct {
-	URL         string `json:"url"`
-	Description string `json:"description"`
-}
-
-// CompleteUserWebFlowResult is returned by an identity provider's
-// CompleteUserWebFlow flow: the onboarding rule computed for the user who
-// completed it, plus optional management info for the client to present.
-type CompleteUserWebFlowResult struct {
-	OnboardRule OnboardUserRule    `json:"onboardRule"`
-	ManageInfo  *OnboardManageInfo `json:"manageInfo,omitempty"`
+// UserResult is an identity provider's onboarding decision for a user,
+// returned by FindUser (re-evaluated for an already-onboarded user) and by
+// CompleteUserWebFlow (evaluated for a user who just completed the
+// provider's web onboarding flow).
+type UserResult struct {
+	OnboardRule OnboardUserRule `json:"onboardRule"`
+	// ManageRepos is a link the client should present to the user for
+	// managing their repository access on the provider, e.g. prompting a
+	// GitHub user to install the GitHub App now that they've authorized it.
+	// Empty when the provider has no such link.
+	ManageRepos string `json:"manageRepos,omitempty"`
+	// GitAddress is the address the identity provider has defined for git
+	// operations, e.g. "https://github.com".
+	GitAddress string `json:"gitAddress"`
 }

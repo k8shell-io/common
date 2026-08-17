@@ -151,7 +151,7 @@ var scopeCatalogSource = []domainSpec{
 				{scope: "user:write:posix", label: "POSIX", description: "Update a user's POSIX (uid/gid/shell) attributes."},
 			}},
 			{action: "user:write:credentials", label: "Credentials (write)", wildcard: &entrySpec{scope: "user:write:credentials:*", label: "Any credential type"}, entries: []entrySpec{
-				{scope: "user:write:credentials:kubernetes", label: "Kubernetes", description: "Add or remove a user's stored Kubernetes service-account credentials."},
+				{scope: "user:write:credentials:kubernetes", label: "Kubernetes", description: "Add or remove a user's stored Kubernetes credentials."},
 				{scope: "user:write:credentials:git", label: "Git", description: "Add or remove a user's stored Git credentials."},
 				{scope: "user:write:credentials:registry", label: "Registry", description: "Add or remove a user's stored container registry credentials."},
 			}},

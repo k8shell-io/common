@@ -47,9 +47,12 @@ message User {
   string shell = 20;
   // sudo indicates whether the user has permission to use sudo in their workspace.
   bool sudo = 21;
-  // manage_info_url is an optional management link to present to the user,
+  // manage_repos is an optional management link to present to the user,
   // e.g. prompting a GitHub user to install the GitHub App.
-  string manage_info_url = 22;
+  string manage_repos = 22;
+  // git_address is the address the identity provider has defined for git
+  // operations, e.g. "https://github.com".
+  string git_address = 23;
 }
 
 // UserCredential stores a token or credential issued by an external
@@ -149,25 +152,25 @@ message OnboardUserRule {
   string action = 5;
   // roles lists the RBAC roles to assign the user when action is "allow".
   repeated string roles = 6;
+  // organization is the tenant the user should be placed into, if known.
+  string organization = 7;
 }
 
-// OnboardManageInfo describes an optional management link the client should
-// present to the user after completing a provider onboarding flow, e.g.
-// prompting a GitHub user to install the GitHub App now that they've
-// authorized it.
-message OnboardManageInfo {
-  // url is the link the client should present to the user.
-  string url = 1;
-  // description explains, in human-readable text, what visiting url does.
-  string description = 2;
-}
-
-// CompleteUserWebFlowResult carries the onboarding decision produced for the
-// user who completed a provider's web onboarding flow, plus optional
-// management info for the client to present.
-message CompleteUserWebFlowResult {
+// UserResult carries an identity provider's onboarding decision for a user —
+// returned by FindUser (re-evaluated for an already-onboarded user) and by
+// CompleteUserWebFlow (evaluated for a user who just completed a provider's
+// web onboarding flow) — plus a repo management link for the client to
+// present and the provider's git address.
+message UserResult {
   OnboardUserRule onboard_rule = 1;
-  optional OnboardManageInfo manage_info = 2;
+  // manage_repos is a link the client should present to the user for
+  // managing their repository access on the provider, e.g. prompting a
+  // GitHub user to install the GitHub App now that they've authorized it.
+  // Empty when the provider has no such link.
+  string manage_repos = 2;
+  // git_address is the address the identity provider has defined for git
+  // operations, e.g. "https://github.com".
+  string git_address = 3;
 }
 
 // WorkspaceStatus represents the observed status of a workspace.
