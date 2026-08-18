@@ -258,6 +258,8 @@ func OnboardUserRuleToProto(m *models.OnboardUserRule) *commonv1.OnboardUserRule
 		Sudo:         copyBool(m.Sudo),
 		Action:       string(m.Action),
 		Roles:        m.Roles,
+		Uid:          m.UID,
+		Gid:          m.GID,
 	}
 }
 
@@ -274,6 +276,8 @@ func ProtoToOnboardUserRule(pb *commonv1.OnboardUserRule) *models.OnboardUserRul
 		Sudo:         copyBool(pb.Sudo),
 		Action:       models.OnboardAction(pb.GetAction()),
 		Roles:        pb.GetRoles(),
+		UID:          pb.GetUid(),
+		GID:          pb.GetGid(),
 	}
 }
 

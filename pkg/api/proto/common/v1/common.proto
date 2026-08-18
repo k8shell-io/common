@@ -154,6 +154,13 @@ message OnboardUserRule {
   repeated string roles = 6;
   // organization is the tenant the user should be placed into, if known.
   string organization = 7;
+  // uid, when non-zero, pins the onboarded user to a specific unix uid
+  // instead of letting the identity service auto-allocate the next
+  // available one.
+  uint32 uid = 8;
+  // gid, when non-zero, pins the onboarded user to a specific unix gid.
+  // Defaults to uid when uid is set but gid is not.
+  uint32 gid = 9;
 }
 
 // UserResult carries an identity provider's onboarding decision for a user —

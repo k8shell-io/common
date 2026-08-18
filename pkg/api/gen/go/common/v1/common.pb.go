@@ -667,7 +667,14 @@ type OnboardUserRule struct {
 	// roles lists the RBAC roles to assign the user when action is "allow".
 	Roles []string `protobuf:"bytes,6,rep,name=roles,proto3" json:"roles,omitempty"`
 	// organization is the tenant the user should be placed into, if known.
-	Organization  string `protobuf:"bytes,7,opt,name=organization,proto3" json:"organization,omitempty"`
+	Organization string `protobuf:"bytes,7,opt,name=organization,proto3" json:"organization,omitempty"`
+	// uid, when non-zero, pins the onboarded user to a specific unix uid
+	// instead of letting the identity service auto-allocate the next
+	// available one.
+	Uid uint32 `protobuf:"varint,8,opt,name=uid,proto3" json:"uid,omitempty"`
+	// gid, when non-zero, pins the onboarded user to a specific unix gid.
+	// Defaults to uid when uid is set but gid is not.
+	Gid           uint32 `protobuf:"varint,9,opt,name=gid,proto3" json:"gid,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -749,6 +756,20 @@ func (x *OnboardUserRule) GetOrganization() string {
 		return x.Organization
 	}
 	return ""
+}
+
+func (x *OnboardUserRule) GetUid() uint32 {
+	if x != nil {
+		return x.Uid
+	}
+	return 0
+}
+
+func (x *OnboardUserRule) GetGid() uint32 {
+	if x != nil {
+		return x.Gid
+	}
+	return 0
 }
 
 // UserResult carries an identity provider's onboarding decision for a user —
@@ -1302,7 +1323,7 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"\bprovider\x18\x01 \x01(\tR\bprovider\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x1f\n" +
 	"\vcan_onboard\x18\x03 \x01(\bR\n" +
-	"canOnboard\"\xd3\x01\n" +
+	"canOnboard\"\xf7\x01\n" +
 	"\x0fOnboardUserRule\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\x1a\n" +
 	"\bfullname\x18\x02 \x01(\tR\bfullname\x12\x14\n" +
@@ -1310,7 +1331,9 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"\x04sudo\x18\x04 \x01(\bH\x00R\x04sudo\x88\x01\x01\x12\x16\n" +
 	"\x06action\x18\x05 \x01(\tR\x06action\x12\x14\n" +
 	"\x05roles\x18\x06 \x03(\tR\x05roles\x12\"\n" +
-	"\forganization\x18\a \x01(\tR\forganizationB\a\n" +
+	"\forganization\x18\a \x01(\tR\forganization\x12\x10\n" +
+	"\x03uid\x18\b \x01(\rR\x03uid\x12\x10\n" +
+	"\x03gid\x18\t \x01(\rR\x03gidB\a\n" +
 	"\x05_sudo\"\x8f\x01\n" +
 	"\n" +
 	"UserResult\x12=\n" +

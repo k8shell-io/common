@@ -101,6 +101,8 @@ type OnboardUserRule struct {
 	Fullname     string        `json:"fullname,omitempty"`
 	Email        string        `json:"email,omitempty"`
 	Organization string        `json:"organization,omitempty"`
+	UID          uint32        `json:"uid,omitempty"`
+	GID          uint32        `json:"gid,omitempty"`
 	Sudo         *bool         `json:"sudo,omitempty"`
 	Action       OnboardAction `json:"action"`
 	Roles        []string      `json:"roles,omitempty"`
