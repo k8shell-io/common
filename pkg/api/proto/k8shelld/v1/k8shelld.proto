@@ -105,6 +105,11 @@ service SshService {
   // or is already acquired.
   rpc AcquireSession (AcquireSessionRequest) returns (AcquireSessionResponse);
 
+  // ListSessions lists shell sessions that are currently available to be
+  // acquired for attachment (see AcquireSession), along with the OS user
+  // that owns each one.
+  rpc ListSessions (ListSessionsRequest) returns (ListSessionsResponse);
+
 }
 
 // ShellRequest message
@@ -180,6 +185,25 @@ message AcquireSessionResponse {
   bool    success       = 1; // True if the session was acquired
   string  lock_id       = 2; // Lock ID to use when attaching (only set on success)
   AcquireSessionFailureReason failure_reason = 3; // Reason for failure (only set on failure)
+}
+
+// AcquirableSession describes a shell session that is currently eligible to
+// be acquired for attachment, and the OS user that owns it.
+message AcquirableSession {
+  string session_id  = 1; // ID of the shell session
+  string owner        = 2; // OS username the session runs as (workspace user or "root")
+  string cmd_shell    = 3; // Shell binary the session was started with
+  int32  pid          = 4; // PID of the shell process
+  string created      = 5; // RFC3339 creation timestamp
+  string detached_at  = 6; // RFC3339 timestamp of when the session was detached
+}
+
+// ListSessionsRequest message
+message ListSessionsRequest {}
+
+// ListSessionsResponse message
+message ListSessionsResponse {
+  repeated AcquirableSession sessions = 1; // Sessions available for acquisition
 }
 
 // Request for the PortForward operation
