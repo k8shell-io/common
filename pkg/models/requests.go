@@ -235,6 +235,13 @@ type UserProfile struct {
 	Roles        []Role   `json:"roles"`
 	Blueprints   []string `json:"blueprints"`
 
+	// IsValid mirrors models.User.IsValid: false means the backing identity
+	// provider (Source) no longer confirms this account exists, or its
+	// session couldn't be freshly re-verified (e.g. an expired OAuth
+	// refresh token) — distinct from AccountLocked, which is an explicit
+	// admin action rather than a provider-driven state.
+	IsValid bool `json:"is_valid"`
+
 	// AccountLocked is the administrative lock an admin sets explicitly; it
 	// blocks all auth surfaces (SSH, PAT, session, password).
 	AccountLocked bool `json:"account_locked"`
