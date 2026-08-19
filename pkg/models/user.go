@@ -127,17 +127,26 @@ type Organization struct {
 
 // ProviderInfo holds information about a identity provider
 type ProviderInfo struct {
-	Status          string     `yaml:"status" json:"status"`
-	CreatedAt       time.Time  `yaml:"createdAt" json:"createdAt"`
-	UpdatedAt       time.Time  `yaml:"updatedAt" json:"updatedAt"`
-	Username        string     `yaml:"username" json:"username"`
-	Provider        string     `yaml:"provider" json:"provider"`
-	UserCode        string     `yaml:"userCode" json:"userCode"`
-	DeviceCode      string     `yaml:"deviceCode" json:"deviceCode"`
-	ExpiresAt       *time.Time `yaml:"expiresAt" json:"expiresAt"`
-	VerificationURI string     `yaml:"verificationURI" json:"verificationURI"`
-	AccessToken     string     `yaml:"accessToken" json:"accessToken"`
-	RefreshToken    string     `yaml:"refreshToken" json:"refreshToken"`
+	Status     string    `yaml:"status" json:"status"`
+	CreatedAt  time.Time `yaml:"createdAt" json:"createdAt"`
+	UpdatedAt  time.Time `yaml:"updatedAt" json:"updatedAt"`
+	Username   string    `yaml:"username" json:"username"`
+	Provider   string    `yaml:"provider" json:"provider"`
+	UserCode   string    `yaml:"userCode" json:"userCode"`
+	DeviceCode string    `yaml:"deviceCode" json:"deviceCode"`
+	// DeviceCodeExpiresAt is when the device/user code from the OAuth device flow
+	// expires while the record is "pending" — unrelated to token expiry.
+	DeviceCodeExpiresAt *time.Time `yaml:"deviceCodeExpiresAt" json:"deviceCodeExpiresAt"`
+	VerificationURI     string     `yaml:"verificationURI" json:"verificationURI"`
+	AccessToken         string     `yaml:"accessToken" json:"accessToken"`
+	RefreshToken        string     `yaml:"refreshToken" json:"refreshToken"`
+	// TokenExpiresAt is when AccessToken expires, for providers (e.g. GitHub Apps with
+	// expiring user tokens enabled) that issue short-lived tokens. Nil means the
+	// provider did not report an expiry (token does not expire, or is not expiry-tracked).
+	TokenExpiresAt *time.Time `yaml:"tokenExpiresAt" json:"tokenExpiresAt"`
+	// RefreshTokenExpiresAt is when RefreshToken itself expires. Once past this time,
+	// RefreshToken can no longer be used and the user must re-onboard.
+	RefreshTokenExpiresAt *time.Time `yaml:"refreshTokenExpiresAt" json:"refreshTokenExpiresAt"`
 }
 
 // OnboardUserDeviceFlow represents a user being onboarded via OAuth device flow
