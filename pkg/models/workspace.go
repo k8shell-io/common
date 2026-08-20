@@ -127,6 +127,17 @@ type ProvisionJob struct {
 	Events        []WorkspaceStreamEvent `json:"events,omitempty"`
 }
 
+// WorkspaceTerminalSession is the HTTP-facing view of a shell session on a
+// workspace pod that is currently available to be joined (see k8shelld's
+// AcquireSession) rather than started fresh.
+type WorkspaceTerminalSession struct {
+	SessionID  string `json:"session_id"`
+	Owner      string `json:"owner"`
+	Shell      string `json:"shell"`
+	CreatedAt  string `json:"created_at"`
+	DetachedAt string `json:"detached_at,omitempty"`
+}
+
 // ErrWorkspaceNotFound is returned when a workspace is not found
 var ErrWorkspaceNotFound = errors.New("workspace not found")
 

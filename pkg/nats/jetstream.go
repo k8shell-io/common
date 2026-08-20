@@ -226,8 +226,15 @@ func (c *JetStreamKV) AcquireLock(key string, ttl time.Duration) (*JSLock, error
 	return nil, nats.ErrKeyExists
 }
 
-// Release attempts to release the lock by CAS-updating it to empty owner/no expiration.
-// It only releases if we still own the lock; otherwise it is a no-op.
+// Release attempts to release the lock by deleting its key, guarded by a CAS revision
+// check. It only releases if we still own the lock; otherwise it is a no-op.
+//
+// The key is deleted rather than CAS-updated to an empty/zeroed envelope: AcquireLock's
+// takeover check only reclaims an existing key once its ExpireAt has passed
+// (cur.ExpireAt > 0 && now >= cur.ExpireAt), and a zeroed envelope has ExpireAt == 0,
+// which never satisfies that condition. Leaving such an envelope behind would make the
+// key permanently unacquirable — every future AcquireLock on it would fail immediately
+// with nats.ErrKeyExists, even with no other holder in sight.
 func (l *JSLock) Release() error {
 	if l == nil || l.c == nil {
 		return nil
@@ -253,9 +260,8 @@ func (l *JSLock) Release() error {
 		return nil
 	}
 
-	cur.Owner = ""
-	cur.ExpireAt = 0
-	b, _ := json.Marshal(&cur)
-	_, _ = kv.Update(l.key, b, e.Revision())
+	if err := kv.Delete(l.key, nats.LastRevision(e.Revision())); err != nil && !errors.Is(err, nats.ErrKeyNotFound) {
+		return err
+	}
 	return nil
 }

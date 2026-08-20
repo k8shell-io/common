@@ -9,6 +9,38 @@ option go_package = "github.com/k8shell-io/common/pkg/api/gen/go/k8shelld/v1;k8s
 service SystemService {
   rpc Handshake (HandshakeRequest) returns (HandshakeResponse);
   rpc SystemInfo (SystemInfoRequest) returns (SystemInfoResponse);
+
+  // GetLogsStream streams k8shelld daemon logs (the same logs shown by
+  // `kbox logs`). With follow=false it returns the currently buffered
+  // entries and closes the stream; with follow=true it keeps streaming new
+  // entries as they are produced until the client cancels.
+  rpc GetLogsStream (SystemLogsStreamRequest) returns (stream SystemLogsStreamResponse);
+}
+
+// LogLevel identifies a k8shelld daemon log level for filtering.
+enum LogLevel {
+  LOG_LEVEL_UNSPECIFIED = 0; // No filter (all levels)
+  LOG_LEVEL_DEBUG = 1;
+  LOG_LEVEL_INFO = 2;
+  LOG_LEVEL_WARN = 3;
+  LOG_LEVEL_ERROR = 4;
+  LOG_LEVEL_FATAL = 5;
+}
+
+// SystemLogsStreamRequest message
+message SystemLogsStreamRequest {
+  string component = 1;  // Filter by component (empty = all)
+  LogLevel level = 2;    // Filter by level (LOG_LEVEL_UNSPECIFIED = all)
+  bool follow = 3;       // Keep streaming new entries as they arrive
+  int32 last_n = 4;      // Start from the last N buffered entries (0 = from the start of the buffer)
+}
+
+// SystemLogsStreamResponse message
+message SystemLogsStreamResponse {
+  string time = 1;
+  string component = 2;
+  string level = 3;
+  string message = 4;
 }
 
 // SystemInfo messages

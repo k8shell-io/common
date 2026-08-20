@@ -105,6 +105,57 @@ func (c *K8shelld) GetSystemInfo(ctx context.Context) (*SystemInfo, error) {
 	return ProtoToSystemInfo(resp), nil
 }
 
+// LogStreamEntry is a single k8shelld daemon log entry received via StreamSystemLogs.
+type LogStreamEntry struct {
+	Time      string
+	Component string
+	Level     string
+	Message   string
+}
+
+// StreamSystemLogsOptions configures a StreamSystemLogs call.
+type StreamSystemLogsOptions struct {
+	Component string // filter by component (empty = all)
+	Level     string // filter by level (empty = all)
+	Follow    bool   // keep streaming new entries as they arrive
+	LastN     int32  // start from the last N buffered entries (0 = from the start of the buffer)
+}
+
+// StreamSystemLogs streams k8shelld daemon logs (the same logs shown by
+// `kbox logs`), invoking onEntry once per log entry. With Follow=false it
+// returns after the currently buffered entries are delivered; with
+// Follow=true it blocks, delivering new entries as they are produced, until
+// the stream ends or ctx is canceled.
+func (c *K8shelld) StreamSystemLogs(ctx context.Context, opts StreamSystemLogsOptions, onEntry func(LogStreamEntry) error) error {
+	stream, err := c.systemClient.GetLogsStream(ctx, &k8shelldv1.SystemLogsStreamRequest{
+		Component: opts.Component,
+		Level:     LogLevelToProto(opts.Level),
+		Follow:    opts.Follow,
+		LastN:     opts.LastN,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to start system log stream: %w", err)
+	}
+
+	for {
+		resp, err := stream.Recv()
+		if err != nil {
+			if isEOFErrorOrCanceled(err) {
+				return nil
+			}
+			return fmt.Errorf("error receiving system log stream: %w", err)
+		}
+		if err := onEntry(LogStreamEntry{
+			Time:      resp.GetTime(),
+			Component: resp.GetComponent(),
+			Level:     resp.GetLevel(),
+			Message:   resp.GetMessage(),
+		}); err != nil {
+			return err
+		}
+	}
+}
+
 // startShellRecording creates a shell Recorder and returns a (possibly wrapped) BufferedReadWriter.
 // Also returns the session start time for use with ObserveResize offsets.
 func (c *K8shelld) startShellRecording(
@@ -339,6 +390,12 @@ func (c *K8shelld) AcquireSession(ctx context.Context, sessionId string) (*k8she
 		SessionId: sessionId,
 	}
 	return c.sshClient.AcquireSession(ctx, req)
+}
+
+// ListSessions lists shell sessions on the pod that are currently available
+// to be acquired for attachment (see AcquireSession).
+func (c *K8shelld) ListSessions(ctx context.Context) (*k8shelldv1.ListSessionsResponse, error) {
+	return c.sshClient.ListSessions(ctx, &k8shelldv1.ListSessionsRequest{})
 }
 
 // GetCWD retrieves the current working directory for a shell session.

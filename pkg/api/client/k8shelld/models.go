@@ -170,6 +170,46 @@ func LogTypeFromProto(logType k8shelldv1.LogType) string {
 	}
 }
 
+// LogLevelToProto converts a daemon log level string ("debug", "info",
+// "warn", "error", "fatal") to its proto enum value. An empty or
+// unrecognized level maps to LOG_LEVEL_UNSPECIFIED (no filter).
+func LogLevelToProto(level string) k8shelldv1.LogLevel {
+	switch level {
+	case "debug":
+		return k8shelldv1.LogLevel_LOG_LEVEL_DEBUG
+	case "info":
+		return k8shelldv1.LogLevel_LOG_LEVEL_INFO
+	case "warn":
+		return k8shelldv1.LogLevel_LOG_LEVEL_WARN
+	case "error":
+		return k8shelldv1.LogLevel_LOG_LEVEL_ERROR
+	case "fatal":
+		return k8shelldv1.LogLevel_LOG_LEVEL_FATAL
+	default:
+		return k8shelldv1.LogLevel_LOG_LEVEL_UNSPECIFIED
+	}
+}
+
+// LogLevelFromProto converts a proto LogLevel to the daemon's log level
+// string. LOG_LEVEL_UNSPECIFIED (and any unrecognized value) maps to "" (no
+// filter).
+func LogLevelFromProto(level k8shelldv1.LogLevel) string {
+	switch level {
+	case k8shelldv1.LogLevel_LOG_LEVEL_DEBUG:
+		return "debug"
+	case k8shelldv1.LogLevel_LOG_LEVEL_INFO:
+		return "info"
+	case k8shelldv1.LogLevel_LOG_LEVEL_WARN:
+		return "warn"
+	case k8shelldv1.LogLevel_LOG_LEVEL_ERROR:
+		return "error"
+	case k8shelldv1.LogLevel_LOG_LEVEL_FATAL:
+		return "fatal"
+	default:
+		return ""
+	}
+}
+
 // safeIntToInt32 converts int to int32, clamping to int32 max/min.
 func safeIntToInt32(v int) int32 {
 	if v > 2147483647 {

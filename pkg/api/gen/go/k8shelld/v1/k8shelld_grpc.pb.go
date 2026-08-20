@@ -19,8 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SystemService_Handshake_FullMethodName  = "/k8shelld.SystemService/Handshake"
-	SystemService_SystemInfo_FullMethodName = "/k8shelld.SystemService/SystemInfo"
+	SystemService_Handshake_FullMethodName     = "/k8shelld.SystemService/Handshake"
+	SystemService_SystemInfo_FullMethodName    = "/k8shelld.SystemService/SystemInfo"
+	SystemService_GetLogsStream_FullMethodName = "/k8shelld.SystemService/GetLogsStream"
 )
 
 // SystemServiceClient is the client API for SystemService service.
@@ -29,6 +30,11 @@ const (
 type SystemServiceClient interface {
 	Handshake(ctx context.Context, in *HandshakeRequest, opts ...grpc.CallOption) (*HandshakeResponse, error)
 	SystemInfo(ctx context.Context, in *SystemInfoRequest, opts ...grpc.CallOption) (*SystemInfoResponse, error)
+	// GetLogsStream streams k8shelld daemon logs (the same logs shown by
+	// `kbox logs`). With follow=false it returns the currently buffered
+	// entries and closes the stream; with follow=true it keeps streaming new
+	// entries as they are produced until the client cancels.
+	GetLogsStream(ctx context.Context, in *SystemLogsStreamRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[SystemLogsStreamResponse], error)
 }
 
 type systemServiceClient struct {
@@ -59,12 +65,36 @@ func (c *systemServiceClient) SystemInfo(ctx context.Context, in *SystemInfoRequ
 	return out, nil
 }
 
+func (c *systemServiceClient) GetLogsStream(ctx context.Context, in *SystemLogsStreamRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[SystemLogsStreamResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &SystemService_ServiceDesc.Streams[0], SystemService_GetLogsStream_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[SystemLogsStreamRequest, SystemLogsStreamResponse]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type SystemService_GetLogsStreamClient = grpc.ServerStreamingClient[SystemLogsStreamResponse]
+
 // SystemServiceServer is the server API for SystemService service.
 // All implementations must embed UnimplementedSystemServiceServer
 // for forward compatibility.
 type SystemServiceServer interface {
 	Handshake(context.Context, *HandshakeRequest) (*HandshakeResponse, error)
 	SystemInfo(context.Context, *SystemInfoRequest) (*SystemInfoResponse, error)
+	// GetLogsStream streams k8shelld daemon logs (the same logs shown by
+	// `kbox logs`). With follow=false it returns the currently buffered
+	// entries and closes the stream; with follow=true it keeps streaming new
+	// entries as they are produced until the client cancels.
+	GetLogsStream(*SystemLogsStreamRequest, grpc.ServerStreamingServer[SystemLogsStreamResponse]) error
 	mustEmbedUnimplementedSystemServiceServer()
 }
 
@@ -80,6 +110,9 @@ func (UnimplementedSystemServiceServer) Handshake(context.Context, *HandshakeReq
 }
 func (UnimplementedSystemServiceServer) SystemInfo(context.Context, *SystemInfoRequest) (*SystemInfoResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SystemInfo not implemented")
+}
+func (UnimplementedSystemServiceServer) GetLogsStream(*SystemLogsStreamRequest, grpc.ServerStreamingServer[SystemLogsStreamResponse]) error {
+	return status.Error(codes.Unimplemented, "method GetLogsStream not implemented")
 }
 func (UnimplementedSystemServiceServer) mustEmbedUnimplementedSystemServiceServer() {}
 func (UnimplementedSystemServiceServer) testEmbeddedByValue()                       {}
@@ -138,6 +171,17 @@ func _SystemService_SystemInfo_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SystemService_GetLogsStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(SystemLogsStreamRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(SystemServiceServer).GetLogsStream(m, &grpc.GenericServerStream[SystemLogsStreamRequest, SystemLogsStreamResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type SystemService_GetLogsStreamServer = grpc.ServerStreamingServer[SystemLogsStreamResponse]
+
 // SystemService_ServiceDesc is the grpc.ServiceDesc for SystemService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -154,7 +198,13 @@ var SystemService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _SystemService_SystemInfo_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "GetLogsStream",
+			Handler:       _SystemService_GetLogsStream_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "k8shelld/v1/k8shelld.proto",
 }
 
