@@ -86,6 +86,16 @@ const (
 	IdentityService_RevokeAccessToken_FullMethodName             = "/identity.v1.IdentityService/RevokeAccessToken"
 	IdentityService_DeleteAccessToken_FullMethodName             = "/identity.v1.IdentityService/DeleteAccessToken"
 	IdentityService_ResolveAccessToken_FullMethodName            = "/identity.v1.IdentityService/ResolveAccessToken"
+	IdentityService_ListOrganizationEnvVars_FullMethodName       = "/identity.v1.IdentityService/ListOrganizationEnvVars"
+	IdentityService_GetOrganizationEnvVar_FullMethodName         = "/identity.v1.IdentityService/GetOrganizationEnvVar"
+	IdentityService_AddOrganizationEnvVar_FullMethodName         = "/identity.v1.IdentityService/AddOrganizationEnvVar"
+	IdentityService_UpdateOrganizationEnvVar_FullMethodName      = "/identity.v1.IdentityService/UpdateOrganizationEnvVar"
+	IdentityService_DeleteOrganizationEnvVar_FullMethodName      = "/identity.v1.IdentityService/DeleteOrganizationEnvVar"
+	IdentityService_ListUserEnvVars_FullMethodName               = "/identity.v1.IdentityService/ListUserEnvVars"
+	IdentityService_GetUserEnvVar_FullMethodName                 = "/identity.v1.IdentityService/GetUserEnvVar"
+	IdentityService_AddUserEnvVar_FullMethodName                 = "/identity.v1.IdentityService/AddUserEnvVar"
+	IdentityService_UpdateUserEnvVar_FullMethodName              = "/identity.v1.IdentityService/UpdateUserEnvVar"
+	IdentityService_DeleteUserEnvVar_FullMethodName              = "/identity.v1.IdentityService/DeleteUserEnvVar"
 )
 
 // IdentityServiceClient is the client API for IdentityService service.
@@ -284,6 +294,48 @@ type IdentityServiceClient interface {
 	// and returns the owning user plus the token's scopes. Called by API gateways
 	// on every request that carries a k8sh_ token.
 	ResolveAccessToken(ctx context.Context, in *ResolveAccessTokenRequest, opts ...grpc.CallOption) (*ResolveAccessTokenResponse, error)
+	// ListOrganizationEnvVars returns the environment variables defined directly
+	// on an organization. Secret values are redacted; use GetOrganizationEnvVar
+	// to retrieve one in full.
+	ListOrganizationEnvVars(ctx context.Context, in *ListOrganizationEnvVarsRequest, opts ...grpc.CallOption) (*EnvVarList, error)
+	// GetOrganizationEnvVar retrieves a single organization environment
+	// variable by key, including its value in full regardless of is_secret.
+	GetOrganizationEnvVar(ctx context.Context, in *GetOrganizationEnvVarRequest, opts ...grpc.CallOption) (*EnvVar, error)
+	// AddOrganizationEnvVar creates a new environment variable on an
+	// organization. Fails with AlreadyExists if the (normalized) key is
+	// already defined for the org.
+	AddOrganizationEnvVar(ctx context.Context, in *AddOrganizationEnvVarRequest, opts ...grpc.CallOption) (*EnvVar, error)
+	// UpdateOrganizationEnvVar partially updates an existing organization
+	// environment variable's value and/or is_secret flag. The key is
+	// immutable.
+	UpdateOrganizationEnvVar(ctx context.Context, in *UpdateOrganizationEnvVarRequest, opts ...grpc.CallOption) (*EnvVar, error)
+	// DeleteOrganizationEnvVar removes an environment variable from an
+	// organization.
+	DeleteOrganizationEnvVar(ctx context.Context, in *DeleteOrganizationEnvVarRequest, opts ...grpc.CallOption) (*DeleteOrganizationEnvVarResponse, error)
+	// ListUserEnvVars returns the effective environment variables for a user:
+	// the variables defined on the user's organization, overridden by any
+	// variable the user has defined with the same (normalized) key. The
+	// origin field on each entry identifies which table it came from. Secret
+	// values are redacted; use GetUserEnvVar to retrieve one in full.
+	ListUserEnvVars(ctx context.Context, in *ListUserEnvVarsRequest, opts ...grpc.CallOption) (*EnvVarList, error)
+	// GetUserEnvVar retrieves a single effective environment variable for a
+	// user by key — the user's own override if one exists, otherwise the
+	// organization's value — including its value in full regardless of
+	// is_secret.
+	GetUserEnvVar(ctx context.Context, in *GetUserEnvVarRequest, opts ...grpc.CallOption) (*EnvVar, error)
+	// AddUserEnvVar creates a new environment variable owned by the user,
+	// overriding any organization variable with the same (normalized) key.
+	// Fails with AlreadyExists if the user already owns a variable with that
+	// key.
+	AddUserEnvVar(ctx context.Context, in *AddUserEnvVarRequest, opts ...grpc.CallOption) (*EnvVar, error)
+	// UpdateUserEnvVar partially updates an existing user-owned environment
+	// variable's value and/or is_secret flag. The key is immutable. Fails
+	// with NotFound if the key is only defined at the organization level —
+	// AddUserEnvVar must be used to create an override first.
+	UpdateUserEnvVar(ctx context.Context, in *UpdateUserEnvVarRequest, opts ...grpc.CallOption) (*EnvVar, error)
+	// DeleteUserEnvVar removes a user-owned environment variable, restoring
+	// the organization's value (if any) as the effective value for that key.
+	DeleteUserEnvVar(ctx context.Context, in *DeleteUserEnvVarRequest, opts ...grpc.CallOption) (*DeleteUserEnvVarResponse, error)
 }
 
 type identityServiceClient struct {
@@ -914,6 +966,106 @@ func (c *identityServiceClient) ResolveAccessToken(ctx context.Context, in *Reso
 	return out, nil
 }
 
+func (c *identityServiceClient) ListOrganizationEnvVars(ctx context.Context, in *ListOrganizationEnvVarsRequest, opts ...grpc.CallOption) (*EnvVarList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EnvVarList)
+	err := c.cc.Invoke(ctx, IdentityService_ListOrganizationEnvVars_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) GetOrganizationEnvVar(ctx context.Context, in *GetOrganizationEnvVarRequest, opts ...grpc.CallOption) (*EnvVar, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EnvVar)
+	err := c.cc.Invoke(ctx, IdentityService_GetOrganizationEnvVar_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) AddOrganizationEnvVar(ctx context.Context, in *AddOrganizationEnvVarRequest, opts ...grpc.CallOption) (*EnvVar, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EnvVar)
+	err := c.cc.Invoke(ctx, IdentityService_AddOrganizationEnvVar_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) UpdateOrganizationEnvVar(ctx context.Context, in *UpdateOrganizationEnvVarRequest, opts ...grpc.CallOption) (*EnvVar, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EnvVar)
+	err := c.cc.Invoke(ctx, IdentityService_UpdateOrganizationEnvVar_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) DeleteOrganizationEnvVar(ctx context.Context, in *DeleteOrganizationEnvVarRequest, opts ...grpc.CallOption) (*DeleteOrganizationEnvVarResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteOrganizationEnvVarResponse)
+	err := c.cc.Invoke(ctx, IdentityService_DeleteOrganizationEnvVar_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) ListUserEnvVars(ctx context.Context, in *ListUserEnvVarsRequest, opts ...grpc.CallOption) (*EnvVarList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EnvVarList)
+	err := c.cc.Invoke(ctx, IdentityService_ListUserEnvVars_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) GetUserEnvVar(ctx context.Context, in *GetUserEnvVarRequest, opts ...grpc.CallOption) (*EnvVar, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EnvVar)
+	err := c.cc.Invoke(ctx, IdentityService_GetUserEnvVar_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) AddUserEnvVar(ctx context.Context, in *AddUserEnvVarRequest, opts ...grpc.CallOption) (*EnvVar, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EnvVar)
+	err := c.cc.Invoke(ctx, IdentityService_AddUserEnvVar_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) UpdateUserEnvVar(ctx context.Context, in *UpdateUserEnvVarRequest, opts ...grpc.CallOption) (*EnvVar, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EnvVar)
+	err := c.cc.Invoke(ctx, IdentityService_UpdateUserEnvVar_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) DeleteUserEnvVar(ctx context.Context, in *DeleteUserEnvVarRequest, opts ...grpc.CallOption) (*DeleteUserEnvVarResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteUserEnvVarResponse)
+	err := c.cc.Invoke(ctx, IdentityService_DeleteUserEnvVar_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // IdentityServiceServer is the server API for IdentityService service.
 // All implementations must embed UnimplementedIdentityServiceServer
 // for forward compatibility.
@@ -1110,6 +1262,48 @@ type IdentityServiceServer interface {
 	// and returns the owning user plus the token's scopes. Called by API gateways
 	// on every request that carries a k8sh_ token.
 	ResolveAccessToken(context.Context, *ResolveAccessTokenRequest) (*ResolveAccessTokenResponse, error)
+	// ListOrganizationEnvVars returns the environment variables defined directly
+	// on an organization. Secret values are redacted; use GetOrganizationEnvVar
+	// to retrieve one in full.
+	ListOrganizationEnvVars(context.Context, *ListOrganizationEnvVarsRequest) (*EnvVarList, error)
+	// GetOrganizationEnvVar retrieves a single organization environment
+	// variable by key, including its value in full regardless of is_secret.
+	GetOrganizationEnvVar(context.Context, *GetOrganizationEnvVarRequest) (*EnvVar, error)
+	// AddOrganizationEnvVar creates a new environment variable on an
+	// organization. Fails with AlreadyExists if the (normalized) key is
+	// already defined for the org.
+	AddOrganizationEnvVar(context.Context, *AddOrganizationEnvVarRequest) (*EnvVar, error)
+	// UpdateOrganizationEnvVar partially updates an existing organization
+	// environment variable's value and/or is_secret flag. The key is
+	// immutable.
+	UpdateOrganizationEnvVar(context.Context, *UpdateOrganizationEnvVarRequest) (*EnvVar, error)
+	// DeleteOrganizationEnvVar removes an environment variable from an
+	// organization.
+	DeleteOrganizationEnvVar(context.Context, *DeleteOrganizationEnvVarRequest) (*DeleteOrganizationEnvVarResponse, error)
+	// ListUserEnvVars returns the effective environment variables for a user:
+	// the variables defined on the user's organization, overridden by any
+	// variable the user has defined with the same (normalized) key. The
+	// origin field on each entry identifies which table it came from. Secret
+	// values are redacted; use GetUserEnvVar to retrieve one in full.
+	ListUserEnvVars(context.Context, *ListUserEnvVarsRequest) (*EnvVarList, error)
+	// GetUserEnvVar retrieves a single effective environment variable for a
+	// user by key — the user's own override if one exists, otherwise the
+	// organization's value — including its value in full regardless of
+	// is_secret.
+	GetUserEnvVar(context.Context, *GetUserEnvVarRequest) (*EnvVar, error)
+	// AddUserEnvVar creates a new environment variable owned by the user,
+	// overriding any organization variable with the same (normalized) key.
+	// Fails with AlreadyExists if the user already owns a variable with that
+	// key.
+	AddUserEnvVar(context.Context, *AddUserEnvVarRequest) (*EnvVar, error)
+	// UpdateUserEnvVar partially updates an existing user-owned environment
+	// variable's value and/or is_secret flag. The key is immutable. Fails
+	// with NotFound if the key is only defined at the organization level —
+	// AddUserEnvVar must be used to create an override first.
+	UpdateUserEnvVar(context.Context, *UpdateUserEnvVarRequest) (*EnvVar, error)
+	// DeleteUserEnvVar removes a user-owned environment variable, restoring
+	// the organization's value (if any) as the effective value for that key.
+	DeleteUserEnvVar(context.Context, *DeleteUserEnvVarRequest) (*DeleteUserEnvVarResponse, error)
 	mustEmbedUnimplementedIdentityServiceServer()
 }
 
@@ -1305,6 +1499,36 @@ func (UnimplementedIdentityServiceServer) DeleteAccessToken(context.Context, *De
 }
 func (UnimplementedIdentityServiceServer) ResolveAccessToken(context.Context, *ResolveAccessTokenRequest) (*ResolveAccessTokenResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ResolveAccessToken not implemented")
+}
+func (UnimplementedIdentityServiceServer) ListOrganizationEnvVars(context.Context, *ListOrganizationEnvVarsRequest) (*EnvVarList, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListOrganizationEnvVars not implemented")
+}
+func (UnimplementedIdentityServiceServer) GetOrganizationEnvVar(context.Context, *GetOrganizationEnvVarRequest) (*EnvVar, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetOrganizationEnvVar not implemented")
+}
+func (UnimplementedIdentityServiceServer) AddOrganizationEnvVar(context.Context, *AddOrganizationEnvVarRequest) (*EnvVar, error) {
+	return nil, status.Error(codes.Unimplemented, "method AddOrganizationEnvVar not implemented")
+}
+func (UnimplementedIdentityServiceServer) UpdateOrganizationEnvVar(context.Context, *UpdateOrganizationEnvVarRequest) (*EnvVar, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateOrganizationEnvVar not implemented")
+}
+func (UnimplementedIdentityServiceServer) DeleteOrganizationEnvVar(context.Context, *DeleteOrganizationEnvVarRequest) (*DeleteOrganizationEnvVarResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteOrganizationEnvVar not implemented")
+}
+func (UnimplementedIdentityServiceServer) ListUserEnvVars(context.Context, *ListUserEnvVarsRequest) (*EnvVarList, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListUserEnvVars not implemented")
+}
+func (UnimplementedIdentityServiceServer) GetUserEnvVar(context.Context, *GetUserEnvVarRequest) (*EnvVar, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetUserEnvVar not implemented")
+}
+func (UnimplementedIdentityServiceServer) AddUserEnvVar(context.Context, *AddUserEnvVarRequest) (*EnvVar, error) {
+	return nil, status.Error(codes.Unimplemented, "method AddUserEnvVar not implemented")
+}
+func (UnimplementedIdentityServiceServer) UpdateUserEnvVar(context.Context, *UpdateUserEnvVarRequest) (*EnvVar, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateUserEnvVar not implemented")
+}
+func (UnimplementedIdentityServiceServer) DeleteUserEnvVar(context.Context, *DeleteUserEnvVarRequest) (*DeleteUserEnvVarResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteUserEnvVar not implemented")
 }
 func (UnimplementedIdentityServiceServer) mustEmbedUnimplementedIdentityServiceServer() {}
 func (UnimplementedIdentityServiceServer) testEmbeddedByValue()                         {}
@@ -2443,6 +2667,186 @@ func _IdentityService_ResolveAccessToken_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IdentityService_ListOrganizationEnvVars_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListOrganizationEnvVarsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).ListOrganizationEnvVars(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_ListOrganizationEnvVars_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).ListOrganizationEnvVars(ctx, req.(*ListOrganizationEnvVarsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_GetOrganizationEnvVar_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOrganizationEnvVarRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).GetOrganizationEnvVar(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_GetOrganizationEnvVar_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).GetOrganizationEnvVar(ctx, req.(*GetOrganizationEnvVarRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_AddOrganizationEnvVar_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddOrganizationEnvVarRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).AddOrganizationEnvVar(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_AddOrganizationEnvVar_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).AddOrganizationEnvVar(ctx, req.(*AddOrganizationEnvVarRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_UpdateOrganizationEnvVar_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateOrganizationEnvVarRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).UpdateOrganizationEnvVar(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_UpdateOrganizationEnvVar_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).UpdateOrganizationEnvVar(ctx, req.(*UpdateOrganizationEnvVarRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_DeleteOrganizationEnvVar_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteOrganizationEnvVarRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).DeleteOrganizationEnvVar(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_DeleteOrganizationEnvVar_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).DeleteOrganizationEnvVar(ctx, req.(*DeleteOrganizationEnvVarRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_ListUserEnvVars_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListUserEnvVarsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).ListUserEnvVars(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_ListUserEnvVars_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).ListUserEnvVars(ctx, req.(*ListUserEnvVarsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_GetUserEnvVar_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserEnvVarRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).GetUserEnvVar(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_GetUserEnvVar_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).GetUserEnvVar(ctx, req.(*GetUserEnvVarRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_AddUserEnvVar_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddUserEnvVarRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).AddUserEnvVar(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_AddUserEnvVar_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).AddUserEnvVar(ctx, req.(*AddUserEnvVarRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_UpdateUserEnvVar_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateUserEnvVarRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).UpdateUserEnvVar(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_UpdateUserEnvVar_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).UpdateUserEnvVar(ctx, req.(*UpdateUserEnvVarRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_DeleteUserEnvVar_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteUserEnvVarRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).DeleteUserEnvVar(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_DeleteUserEnvVar_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).DeleteUserEnvVar(ctx, req.(*DeleteUserEnvVarRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // IdentityService_ServiceDesc is the grpc.ServiceDesc for IdentityService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -2697,6 +3101,46 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ResolveAccessToken",
 			Handler:    _IdentityService_ResolveAccessToken_Handler,
+		},
+		{
+			MethodName: "ListOrganizationEnvVars",
+			Handler:    _IdentityService_ListOrganizationEnvVars_Handler,
+		},
+		{
+			MethodName: "GetOrganizationEnvVar",
+			Handler:    _IdentityService_GetOrganizationEnvVar_Handler,
+		},
+		{
+			MethodName: "AddOrganizationEnvVar",
+			Handler:    _IdentityService_AddOrganizationEnvVar_Handler,
+		},
+		{
+			MethodName: "UpdateOrganizationEnvVar",
+			Handler:    _IdentityService_UpdateOrganizationEnvVar_Handler,
+		},
+		{
+			MethodName: "DeleteOrganizationEnvVar",
+			Handler:    _IdentityService_DeleteOrganizationEnvVar_Handler,
+		},
+		{
+			MethodName: "ListUserEnvVars",
+			Handler:    _IdentityService_ListUserEnvVars_Handler,
+		},
+		{
+			MethodName: "GetUserEnvVar",
+			Handler:    _IdentityService_GetUserEnvVar_Handler,
+		},
+		{
+			MethodName: "AddUserEnvVar",
+			Handler:    _IdentityService_AddUserEnvVar_Handler,
+		},
+		{
+			MethodName: "UpdateUserEnvVar",
+			Handler:    _IdentityService_UpdateUserEnvVar_Handler,
+		},
+		{
+			MethodName: "DeleteUserEnvVar",
+			Handler:    _IdentityService_DeleteUserEnvVar_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

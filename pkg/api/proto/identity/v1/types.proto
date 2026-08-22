@@ -515,3 +515,31 @@ message AccessTokenInfo {
   // this field existed.
   string                    token_preview  = 9;
 }
+
+// EnvVar is a single environment variable entry belonging to an organization
+// or a user. Keys are case-insensitive and normalized to upper case by the
+// server; only valid POSIX environment variable name characters are accepted
+// ([A-Z_][A-Z0-9_]*).
+message EnvVar {
+  string key       = 1;
+  // value is empty and redacted is true when this entry was returned by a
+  // ListXEnvVars call and is_secret is true — secret values are only ever
+  // returned in full by GetOrganizationEnvVar/GetUserEnvVar, or by the
+  // Add/Update response for the write that just set them.
+  string value     = 2;
+  bool   is_secret = 3;
+  bool   redacted  = 4;
+
+  // origin is "org" or "user", identifying which table this entry's
+  // effective value came from. Only set by ListUserEnvVars/GetUserEnvVar;
+  // empty for organization-scoped calls.
+  string origin = 5;
+
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+// EnvVarList holds a list of environment variables.
+message EnvVarList {
+  repeated EnvVar env_vars = 1;
+}

@@ -83,6 +83,45 @@ package authz
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
 // Obligations  (none) — allow/deny only
+//
+// ---
+//
+// Contract: org:envvar:read
+//
+// Resource  type="org"
+//   id   organization name (required)
+//
+// Context   (none)
+//
+// Subject   injected by the backend from JWT claims (username, roles, email, ...)
+//
+// Obligations  (none) — allow/deny only
+//
+// Deliberately its own action rather than folded into org:read: entries may
+// hold secrets (EnvVar.is_secret), so a role or PAT scoped to read an org's
+// name/description shouldn't automatically also read its environment
+// variables. Mirrors why user:read:credentials is kept off user:read:profile.
+//
+// ---
+//
+// Contract: org:envvar:write
+//
+// Resource  type="org"
+//   id   organization name (required)
+//
+// Context   (none)
+//
+// Subject   injected by the backend from JWT claims (username, roles, email, ...)
+//
+// Obligations  (none) — allow/deny only
+//
+// Covers add, update, and delete — one action per data type, mirroring
+// user:write's per-data-type granularity rather than adding separate
+// create/delete actions the way token:* does. Deliberately its own action
+// rather than folded into org:update: org:update today only ever changes the
+// organization's description, so bundling it with environment-variable
+// writes would let anyone who can redescribe an org also push
+// secrets/values into every workspace in it.
 
 import (
 	"fmt"
@@ -434,6 +473,153 @@ func (r *OrganizationUpdateEvalRequest) Validate() error {
 	return nil
 }
 
+// OrganizationEnvVarReadEvalRequest is the validated, typed model for
+// org:envvar:read policy evaluation — listing or reading an organization's
+// environment variables. Use NewOrganizationEnvVarReadEvalRequest to start
+// building, then call Build to get a validated instance.
+type OrganizationEnvVarReadEvalRequest struct {
+	Resource OrganizationResource
+}
+
+var _ EvalRequest = (*OrganizationEnvVarReadEvalRequest)(nil)
+
+// NewOrganizationEnvVarReadEvalRequest begins building an
+// OrganizationEnvVarReadEvalRequest for the given organization name. Call
+// Build to validate and obtain the final struct.
+func NewOrganizationEnvVarReadEvalRequest(name string) *OrganizationEnvVarReadEvalRequest {
+	return &OrganizationEnvVarReadEvalRequest{Resource: OrganizationResource{ID: name}}
+}
+
+// Build validates the request and returns it if all constraints are satisfied.
+// It is the required terminator for the builder chain.
+func (r *OrganizationEnvVarReadEvalRequest) Build() (*OrganizationEnvVarReadEvalRequest, error) {
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// ToProto serializes the typed request into a gRPC EvaluateRequest, attaching
+// the supplied JWT token.
+// Implements EvalRequest.
+func (r *OrganizationEnvVarReadEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
+	return &authzv1.EvaluateRequest{
+		Token:  token,
+		Action: "org:envvar:read",
+		Resource: &authzv1.Resource{
+			Type: "org",
+			Id:   r.Resource.ID,
+		},
+	}
+}
+
+// OrganizationEnvVarReadEvalRequestFromProto converts a gRPC EvaluateRequest
+// into a validated OrganizationEnvVarReadEvalRequest.
+func OrganizationEnvVarReadEvalRequestFromProto(req *authzv1.EvaluateRequest) (*OrganizationEnvVarReadEvalRequest, error) {
+	if req == nil {
+		return nil, fmt.Errorf("org:envvar:read: EvaluateRequest is nil")
+	}
+	if req.Action != "org:envvar:read" {
+		return nil, fmt.Errorf("org:envvar:read: action must be \"org:envvar:read\", got %q", req.Action)
+	}
+	if req.Resource == nil {
+		return nil, fmt.Errorf("org:envvar:read: resource is nil")
+	}
+	if req.Resource.Type != "org" {
+		return nil, fmt.Errorf("org:envvar:read: resource type must be \"org\", got %q", req.Resource.Type)
+	}
+	r := &OrganizationEnvVarReadEvalRequest{
+		Resource: OrganizationResource{ID: req.Resource.Id},
+	}
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// Validate checks the request against the org:envvar:read contract.
+// Implements EvalRequest.
+func (r *OrganizationEnvVarReadEvalRequest) Validate() error {
+	if r.Resource.ID == "" {
+		return fmt.Errorf("org:envvar:read: resource ID (organization name) is required")
+	}
+	return nil
+}
+
+// OrganizationEnvVarWriteEvalRequest is the validated, typed model for
+// org:envvar:write policy evaluation — adding, updating, or deleting an
+// organization's environment variables. Use
+// NewOrganizationEnvVarWriteEvalRequest to start building, then call Build to
+// get a validated instance.
+type OrganizationEnvVarWriteEvalRequest struct {
+	Resource OrganizationResource
+}
+
+var _ EvalRequest = (*OrganizationEnvVarWriteEvalRequest)(nil)
+
+// NewOrganizationEnvVarWriteEvalRequest begins building an
+// OrganizationEnvVarWriteEvalRequest for the given organization name. Call
+// Build to validate and obtain the final struct.
+func NewOrganizationEnvVarWriteEvalRequest(name string) *OrganizationEnvVarWriteEvalRequest {
+	return &OrganizationEnvVarWriteEvalRequest{Resource: OrganizationResource{ID: name}}
+}
+
+// Build validates the request and returns it if all constraints are satisfied.
+// It is the required terminator for the builder chain.
+func (r *OrganizationEnvVarWriteEvalRequest) Build() (*OrganizationEnvVarWriteEvalRequest, error) {
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// ToProto serializes the typed request into a gRPC EvaluateRequest, attaching
+// the supplied JWT token.
+// Implements EvalRequest.
+func (r *OrganizationEnvVarWriteEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
+	return &authzv1.EvaluateRequest{
+		Token:  token,
+		Action: "org:envvar:write",
+		Resource: &authzv1.Resource{
+			Type: "org",
+			Id:   r.Resource.ID,
+		},
+	}
+}
+
+// OrganizationEnvVarWriteEvalRequestFromProto converts a gRPC EvaluateRequest
+// into a validated OrganizationEnvVarWriteEvalRequest.
+func OrganizationEnvVarWriteEvalRequestFromProto(req *authzv1.EvaluateRequest) (*OrganizationEnvVarWriteEvalRequest, error) {
+	if req == nil {
+		return nil, fmt.Errorf("org:envvar:write: EvaluateRequest is nil")
+	}
+	if req.Action != "org:envvar:write" {
+		return nil, fmt.Errorf("org:envvar:write: action must be \"org:envvar:write\", got %q", req.Action)
+	}
+	if req.Resource == nil {
+		return nil, fmt.Errorf("org:envvar:write: resource is nil")
+	}
+	if req.Resource.Type != "org" {
+		return nil, fmt.Errorf("org:envvar:write: resource type must be \"org\", got %q", req.Resource.Type)
+	}
+	r := &OrganizationEnvVarWriteEvalRequest{
+		Resource: OrganizationResource{ID: req.Resource.Id},
+	}
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// Validate checks the request against the org:envvar:write contract.
+// Implements EvalRequest.
+func (r *OrganizationEnvVarWriteEvalRequest) Validate() error {
+	if r.Resource.ID == "" {
+		return fmt.Errorf("org:envvar:write: resource ID (organization name) is required")
+	}
+	return nil
+}
+
 // init registers a capability probe for every org domain action. See
 // CapabilityCheck and registerCapabilityCheck in capability.go.
 func init() {
@@ -465,6 +651,18 @@ func init() {
 		Action: "org:update", Package: "org", Scope: "org:update",
 		Build: func(ctx CapabilityContext) (EvalRequest, error) {
 			return NewOrganizationUpdateEvalRequest(capabilityWildcardOrg).Build()
+		},
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		Action: "org:envvar:read", Package: "org", Scope: "org:envvar:read",
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewOrganizationEnvVarReadEvalRequest(capabilityWildcardOrg).Build()
+		},
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		Action: "org:envvar:write", Package: "org", Scope: "org:envvar:write",
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewOrganizationEnvVarWriteEvalRequest(capabilityWildcardOrg).Build()
 		},
 	})
 }

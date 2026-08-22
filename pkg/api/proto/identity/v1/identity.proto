@@ -267,6 +267,58 @@ service IdentityService {
   // and returns the owning user plus the token's scopes. Called by API gateways
   // on every request that carries a k8sh_ token.
   rpc ResolveAccessToken (ResolveAccessTokenRequest) returns (ResolveAccessTokenResponse);
+
+  // ListOrganizationEnvVars returns the environment variables defined directly
+  // on an organization. Secret values are redacted; use GetOrganizationEnvVar
+  // to retrieve one in full.
+  rpc ListOrganizationEnvVars (ListOrganizationEnvVarsRequest) returns (EnvVarList);
+
+  // GetOrganizationEnvVar retrieves a single organization environment
+  // variable by key, including its value in full regardless of is_secret.
+  rpc GetOrganizationEnvVar (GetOrganizationEnvVarRequest) returns (EnvVar);
+
+  // AddOrganizationEnvVar creates a new environment variable on an
+  // organization. Fails with AlreadyExists if the (normalized) key is
+  // already defined for the org.
+  rpc AddOrganizationEnvVar (AddOrganizationEnvVarRequest) returns (EnvVar);
+
+  // UpdateOrganizationEnvVar partially updates an existing organization
+  // environment variable's value and/or is_secret flag. The key is
+  // immutable.
+  rpc UpdateOrganizationEnvVar (UpdateOrganizationEnvVarRequest) returns (EnvVar);
+
+  // DeleteOrganizationEnvVar removes an environment variable from an
+  // organization.
+  rpc DeleteOrganizationEnvVar (DeleteOrganizationEnvVarRequest) returns (DeleteOrganizationEnvVarResponse);
+
+  // ListUserEnvVars returns the effective environment variables for a user:
+  // the variables defined on the user's organization, overridden by any
+  // variable the user has defined with the same (normalized) key. The
+  // origin field on each entry identifies which table it came from. Secret
+  // values are redacted; use GetUserEnvVar to retrieve one in full.
+  rpc ListUserEnvVars (ListUserEnvVarsRequest) returns (EnvVarList);
+
+  // GetUserEnvVar retrieves a single effective environment variable for a
+  // user by key — the user's own override if one exists, otherwise the
+  // organization's value — including its value in full regardless of
+  // is_secret.
+  rpc GetUserEnvVar (GetUserEnvVarRequest) returns (EnvVar);
+
+  // AddUserEnvVar creates a new environment variable owned by the user,
+  // overriding any organization variable with the same (normalized) key.
+  // Fails with AlreadyExists if the user already owns a variable with that
+  // key.
+  rpc AddUserEnvVar (AddUserEnvVarRequest) returns (EnvVar);
+
+  // UpdateUserEnvVar partially updates an existing user-owned environment
+  // variable's value and/or is_secret flag. The key is immutable. Fails
+  // with NotFound if the key is only defined at the organization level —
+  // AddUserEnvVar must be used to create an override first.
+  rpc UpdateUserEnvVar (UpdateUserEnvVarRequest) returns (EnvVar);
+
+  // DeleteUserEnvVar removes a user-owned environment variable, restoring
+  // the organization's value (if any) as the effective value for that key.
+  rpc DeleteUserEnvVar (DeleteUserEnvVarRequest) returns (DeleteUserEnvVarResponse);
 }
 
 // Messages
@@ -581,4 +633,91 @@ message ResolveAccessTokenResponse {
   common.v1.User  user       = 1;
   repeated string scopes     = 2;
   string          user_token = 3;
+}
+
+// ListOrganizationEnvVarsRequest identifies the organization whose
+// environment variables are being listed.
+message ListOrganizationEnvVarsRequest {
+  string org = 1;
+}
+
+// GetOrganizationEnvVarRequest identifies a single organization environment
+// variable by org and key.
+message GetOrganizationEnvVarRequest {
+  string org = 1;
+  string key = 2;
+}
+
+// AddOrganizationEnvVarRequest creates a new environment variable on an
+// organization.
+message AddOrganizationEnvVarRequest {
+  string org       = 1;
+  string key       = 2;
+  string value     = 3;
+  bool   is_secret = 4;
+}
+
+// UpdateOrganizationEnvVarRequest partially updates an organization
+// environment variable identified by org and key. Only fields wrapped in a
+// value type that are set (non-nil) are applied.
+message UpdateOrganizationEnvVarRequest {
+  string                      org       = 1;
+  string                      key       = 2;
+  google.protobuf.StringValue value     = 3;
+  google.protobuf.BoolValue   is_secret = 4;
+}
+
+// DeleteOrganizationEnvVarRequest identifies the organization environment
+// variable to remove by org and key.
+message DeleteOrganizationEnvVarRequest {
+  string org = 1;
+  string key = 2;
+}
+
+// DeleteOrganizationEnvVarResponse indicates whether the deletion was successful.
+message DeleteOrganizationEnvVarResponse {
+  bool success = 1;
+}
+
+// ListUserEnvVarsRequest identifies the user whose effective environment
+// variables are being listed.
+message ListUserEnvVarsRequest {
+  string username = 1;
+}
+
+// GetUserEnvVarRequest identifies a single effective environment variable by
+// username and key.
+message GetUserEnvVarRequest {
+  string username = 1;
+  string key      = 2;
+}
+
+// AddUserEnvVarRequest creates a new environment variable owned by a user.
+message AddUserEnvVarRequest {
+  string username  = 1;
+  string key       = 2;
+  string value     = 3;
+  bool   is_secret = 4;
+}
+
+// UpdateUserEnvVarRequest partially updates a user-owned environment
+// variable identified by username and key. Only fields wrapped in a value
+// type that are set (non-nil) are applied.
+message UpdateUserEnvVarRequest {
+  string                      username  = 1;
+  string                      key       = 2;
+  google.protobuf.StringValue value     = 3;
+  google.protobuf.BoolValue   is_secret = 4;
+}
+
+// DeleteUserEnvVarRequest identifies the user-owned environment variable to
+// remove by username and key.
+message DeleteUserEnvVarRequest {
+  string username = 1;
+  string key      = 2;
+}
+
+// DeleteUserEnvVarResponse indicates whether the deletion was successful.
+message DeleteUserEnvVarResponse {
+  bool success = 1;
 }

@@ -72,7 +72,7 @@ package authz
 //   id   username (required)
 //
 // Context
-//   data_type  profile | credentials | blueprints | roles | keys | repos  (required)
+//   data_type  profile | credentials | blueprints | roles | keys | repos | envvars  (required)
 //              profile returns the full profile view, including the sudo and
 //              locked flags — those are not broken out into their own
 //              data_type for reads, only for writes (see user:write below).
@@ -80,6 +80,11 @@ package authz
 //              repos covers browsing the user's identity-provider repository
 //              catalog (repo owners and repos under an owner) — used by the
 //              inject-mode workspace-creation picker, not stored user data.
+//              envvars covers the user's effective environment variables —
+//              their organization's variables, overridden key-by-key by any
+//              the user has defined themselves — gated separately from
+//              profile since entries may hold secrets (EnvVar.is_secret),
+//              the same reasoning that keeps credentials off profile.
 //   credential_type  kubernetes | git | registry — required when data_type is
 //              credentials, ignored otherwise. Lets policy grant read access
 //              to one credential type without granting it to the other two
@@ -158,7 +163,7 @@ package authz
 //   id   username (required) — the user record being mutated
 //
 // Context
-//   data_type  profile | credentials | blueprints | roles | keys | sudo | locked | org | posix  (required)
+//   data_type  profile | credentials | blueprints | roles | keys | sudo | locked | org | posix | envvars  (required)
 //              profile     — self-editable identity fields (e.g. fullname,
 //                            shell, email); subject may write its own record.
 //              credentials — auth credentials.
@@ -172,6 +177,11 @@ package authz
 //              org         — organization membership; admin-managed only,
 //                            never self.
 //              ´posix       — POSIX uid/gid; admin-managed only, never self.
+//              envvars     — user-owned environment variable overrides
+//                            (create/update/delete); subject may write its
+//                            own record, mirroring profile. Gated separately
+//                            from profile for the same reason as the read
+//                            side: entries may hold secrets.
 //
 //              A single mutating RPC that touches fields from more than one
 //              group (e.g. UpdateUser, which carries fullname/email alongside
@@ -258,16 +268,17 @@ const (
 	UserDataTypeOrg         UserDataType = "org"
 	UserDataTypePosix       UserDataType = "posix"
 	UserDataTypePassword    UserDataType = "password"
+	UserDataTypeEnvVars     UserDataType = "envvars"
 )
 
 // validateUserDataType checks the data types valid for user:read.
 func validateUserDataType(dt UserDataType) error {
 	switch dt {
-	case UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys, UserDataTypeRepos:
+	case UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys, UserDataTypeRepos, UserDataTypeEnvVars:
 		return nil
 	default:
-		return fmt.Errorf("context \"data_type\" must be %q, %q, %q, %q, %q, or %q, got %q",
-			UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys, UserDataTypeRepos, dt)
+		return fmt.Errorf("context \"data_type\" must be %q, %q, %q, %q, %q, %q, or %q, got %q",
+			UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys, UserDataTypeRepos, UserDataTypeEnvVars, dt)
 	}
 }
 
@@ -278,12 +289,12 @@ func validateUserDataType(dt UserDataType) error {
 // path for it.
 func validateUserWriteDataType(dt UserDataType) error {
 	switch dt {
-	case UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeRoles, UserDataTypeKeys, UserDataTypeSudo, UserDataTypeLocked, UserDataTypeOrg, UserDataTypePosix, UserDataTypePassword:
+	case UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeRoles, UserDataTypeKeys, UserDataTypeSudo, UserDataTypeLocked, UserDataTypeOrg, UserDataTypePosix, UserDataTypePassword, UserDataTypeEnvVars:
 		return nil
 	default:
-		return fmt.Errorf("context \"data_type\" must be %q, %q, %q, %q, %q, %q, %q, %q, or %q, got %q",
+		return fmt.Errorf("context \"data_type\" must be %q, %q, %q, %q, %q, %q, %q, %q, %q, or %q, got %q",
 			UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeRoles, UserDataTypeKeys,
-			UserDataTypeSudo, UserDataTypeLocked, UserDataTypeOrg, UserDataTypePosix, UserDataTypePassword, dt)
+			UserDataTypeSudo, UserDataTypeLocked, UserDataTypeOrg, UserDataTypePosix, UserDataTypePassword, UserDataTypeEnvVars, dt)
 	}
 }
 
@@ -1659,7 +1670,7 @@ func init() {
 	})
 
 	for _, dt := range []UserDataType{
-		UserDataTypeProfile, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys, UserDataTypeRepos,
+		UserDataTypeProfile, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys, UserDataTypeRepos, UserDataTypeEnvVars,
 	} {
 		action := "user:read:" + string(dt)
 		registerCapabilityCheck(CapabilityCheck{
@@ -1672,7 +1683,7 @@ func init() {
 
 	for _, dt := range []UserDataType{
 		UserDataTypeProfile, UserDataTypeRoles, UserDataTypeKeys,
-		UserDataTypeSudo, UserDataTypeLocked, UserDataTypeOrg, UserDataTypePosix, UserDataTypePassword,
+		UserDataTypeSudo, UserDataTypeLocked, UserDataTypeOrg, UserDataTypePosix, UserDataTypePassword, UserDataTypeEnvVars,
 	} {
 		action := "user:write:" + string(dt)
 		registerCapabilityCheck(CapabilityCheck{

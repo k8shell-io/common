@@ -88,6 +88,7 @@ var scopeConstrainablePrefixes = map[string]struct{}{
 	"user:write:roles":      {},
 	"user:write:keys":       {},
 	"user:write:password":   {},
+	"user:write:envvars":    {},
 
 	// user:write:credentials — one entry per credential type, since the
 	// action string carries the type as a fourth segment
@@ -200,6 +201,7 @@ var validExactScopes = map[string]struct{}{
 	"user:read:" + string(UserDataTypeRoles):      {},
 	"user:read:" + string(UserDataTypeKeys):       {},
 	"user:read:" + string(UserDataTypeRepos):      {},
+	"user:read:" + string(UserDataTypeEnvVars):    {},
 
 	// user:read:credentials / user:write:credentials — one entry per
 	// credential type (kubernetes | git | registry) instead of a single
@@ -220,6 +222,7 @@ var validExactScopes = map[string]struct{}{
 	"user:write:" + string(UserDataTypeOrg):      {},
 	"user:write:" + string(UserDataTypePosix):    {},
 	"user:write:" + string(UserDataTypePassword): {},
+	"user:write:" + string(UserDataTypeEnvVars):  {},
 
 	"user:write:" + string(UserDataTypeCredentials) + ":kubernetes": {},
 	"user:write:" + string(UserDataTypeCredentials) + ":git":        {},
@@ -243,6 +246,12 @@ var validExactScopes = map[string]struct{}{
 	"org:delete": {},
 	"org:update": {},
 
+	// org:envvar — one entry per action (read covers list+get; write covers
+	// add/update/delete, matching the single-action-per-data-type convention
+	// used by user:write)
+	"org:envvar:read":  {},
+	"org:envvar:write": {},
+
 	// blueprint — flat
 	"blueprints:read": {},
 
@@ -265,7 +274,8 @@ var validWildcardPrefixes = map[string]struct{}{
 	"user:write:credentials": {}, // kubernetes | git | registry
 	"token":                  {}, // read | create | write | delete
 	"role":                   {}, // list | create | delete
-	"org":                    {}, // list | create | delete
+	"org":                    {}, // list | create | delete | envvar:*
+	"org:envvar":             {}, // read | write
 }
 
 // ValidateScope reports whether s is a well-formed, recognized scope string.

@@ -330,3 +330,28 @@ type AccessTokenUpdateRequest struct {
 	Active *bool     `json:"active,omitempty"`
 	Scopes *[]string `json:"scopes,omitempty"`
 }
+
+// EnvVarCreateRequest is the HTTP request body for POST
+// /organizations/{name}/envvars, /users/{username}/envvars, and /me/envvars,
+// which creates a new environment variable. Key and Value are required. Key
+// is case-insensitive and normalized to upper case by identity, which also
+// rejects anything but a valid POSIX environment variable name.
+// Note: proto counterpart is identityv1.AddOrganizationEnvVarRequest /
+// identityv1.AddUserEnvVarRequest.
+type EnvVarCreateRequest struct {
+	Key      string `json:"key"`
+	Value    string `json:"value"`
+	IsSecret bool   `json:"isSecret,omitempty"`
+}
+
+// EnvVarUpdateRequest is the HTTP request body for PATCH
+// /organizations/{name}/envvars/{key} (and the /users/{username}/envvars/{key}
+// and /me/envvars/{key} equivalents), which partially updates an environment
+// variable's value and/or is_secret flag. Only non-nil fields are applied
+// (PATCH semantics); the key is immutable.
+// Note: proto counterpart is identityv1.UpdateOrganizationEnvVarRequest /
+// identityv1.UpdateUserEnvVarRequest.
+type EnvVarUpdateRequest struct {
+	Value    *string `json:"value,omitempty"`
+	IsSecret *bool   `json:"isSecret,omitempty"`
+}

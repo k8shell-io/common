@@ -3491,6 +3491,154 @@ func (x *AccessTokenInfo) GetTokenPreview() string {
 	return ""
 }
 
+// EnvVar is a single environment variable entry belonging to an organization
+// or a user. Keys are case-insensitive and normalized to upper case by the
+// server; only valid POSIX environment variable name characters are accepted
+// ([A-Z_][A-Z0-9_]*).
+type EnvVar struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Key   string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	// value is empty and redacted is true when this entry was returned by a
+	// ListXEnvVars call and is_secret is true — secret values are only ever
+	// returned in full by GetOrganizationEnvVar/GetUserEnvVar, or by the
+	// Add/Update response for the write that just set them.
+	Value    string `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	IsSecret bool   `protobuf:"varint,3,opt,name=is_secret,json=isSecret,proto3" json:"is_secret,omitempty"`
+	Redacted bool   `protobuf:"varint,4,opt,name=redacted,proto3" json:"redacted,omitempty"`
+	// origin is "org" or "user", identifying which table this entry's
+	// effective value came from. Only set by ListUserEnvVars/GetUserEnvVar;
+	// empty for organization-scoped calls.
+	Origin        string                 `protobuf:"bytes,5,opt,name=origin,proto3" json:"origin,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EnvVar) Reset() {
+	*x = EnvVar{}
+	mi := &file_identity_v1_types_proto_msgTypes[59]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EnvVar) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EnvVar) ProtoMessage() {}
+
+func (x *EnvVar) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_types_proto_msgTypes[59]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EnvVar.ProtoReflect.Descriptor instead.
+func (*EnvVar) Descriptor() ([]byte, []int) {
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{59}
+}
+
+func (x *EnvVar) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *EnvVar) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+func (x *EnvVar) GetIsSecret() bool {
+	if x != nil {
+		return x.IsSecret
+	}
+	return false
+}
+
+func (x *EnvVar) GetRedacted() bool {
+	if x != nil {
+		return x.Redacted
+	}
+	return false
+}
+
+func (x *EnvVar) GetOrigin() string {
+	if x != nil {
+		return x.Origin
+	}
+	return ""
+}
+
+func (x *EnvVar) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *EnvVar) GetUpdatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.UpdatedAt
+	}
+	return nil
+}
+
+// EnvVarList holds a list of environment variables.
+type EnvVarList struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	EnvVars       []*EnvVar              `protobuf:"bytes,1,rep,name=env_vars,json=envVars,proto3" json:"env_vars,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EnvVarList) Reset() {
+	*x = EnvVarList{}
+	mi := &file_identity_v1_types_proto_msgTypes[60]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EnvVarList) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EnvVarList) ProtoMessage() {}
+
+func (x *EnvVarList) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_types_proto_msgTypes[60]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EnvVarList.ProtoReflect.Descriptor instead.
+func (*EnvVarList) Descriptor() ([]byte, []int) {
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{60}
+}
+
+func (x *EnvVarList) GetEnvVars() []*EnvVar {
+	if x != nil {
+		return x.EnvVars
+	}
+	return nil
+}
+
 var File_identity_v1_types_proto protoreflect.FileDescriptor
 
 const file_identity_v1_types_proto_rawDesc = "" +
@@ -3725,7 +3873,20 @@ const file_identity_v1_types_proto_rawDesc = "" +
 	"\flast_used_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"lastUsedAt\x12\x1b\n" +
 	"\tis_active\x18\b \x01(\bR\bisActive\x12#\n" +
-	"\rtoken_preview\x18\t \x01(\tR\ftokenPreviewBDZBgithub.com/k8shell-io/common/pkg/api/gen/go/identity/v1;identityv1b\x06proto3"
+	"\rtoken_preview\x18\t \x01(\tR\ftokenPreview\"\xf7\x01\n" +
+	"\x06EnvVar\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value\x12\x1b\n" +
+	"\tis_secret\x18\x03 \x01(\bR\bisSecret\x12\x1a\n" +
+	"\bredacted\x18\x04 \x01(\bR\bredacted\x12\x16\n" +
+	"\x06origin\x18\x05 \x01(\tR\x06origin\x129\n" +
+	"\n" +
+	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"\n" +
+	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"<\n" +
+	"\n" +
+	"EnvVarList\x12.\n" +
+	"\benv_vars\x18\x01 \x03(\v2\x13.identity.v1.EnvVarR\aenvVarsBDZBgithub.com/k8shell-io/common/pkg/api/gen/go/identity/v1;identityv1b\x06proto3"
 
 var (
 	file_identity_v1_types_proto_rawDescOnce sync.Once
@@ -3739,7 +3900,7 @@ func file_identity_v1_types_proto_rawDescGZIP() []byte {
 	return file_identity_v1_types_proto_rawDescData
 }
 
-var file_identity_v1_types_proto_msgTypes = make([]protoimpl.MessageInfo, 59)
+var file_identity_v1_types_proto_msgTypes = make([]protoimpl.MessageInfo, 61)
 var file_identity_v1_types_proto_goTypes = []any{
 	(*Username)(nil),                           // 0: identity.v1.Username
 	(*UserStr)(nil),                            // 1: identity.v1.UserStr
@@ -3800,40 +3961,45 @@ var file_identity_v1_types_proto_goTypes = []any{
 	(*UserAuthKey)(nil),                        // 56: identity.v1.UserAuthKey
 	(*ListUserAuthKeysResponse)(nil),           // 57: identity.v1.ListUserAuthKeysResponse
 	(*AccessTokenInfo)(nil),                    // 58: identity.v1.AccessTokenInfo
-	(*v1.User)(nil),                            // 59: common.v1.User
-	(*v11.Payload)(nil),                        // 60: query.v1.Payload
-	(*timestamppb.Timestamp)(nil),              // 61: google.protobuf.Timestamp
-	(*wrapperspb.StringValue)(nil),             // 62: google.protobuf.StringValue
+	(*EnvVar)(nil),                             // 59: identity.v1.EnvVar
+	(*EnvVarList)(nil),                         // 60: identity.v1.EnvVarList
+	(*v1.User)(nil),                            // 61: common.v1.User
+	(*v11.Payload)(nil),                        // 62: query.v1.Payload
+	(*timestamppb.Timestamp)(nil),              // 63: google.protobuf.Timestamp
+	(*wrapperspb.StringValue)(nil),             // 64: google.protobuf.StringValue
 }
 var file_identity_v1_types_proto_depIdxs = []int32{
-	59, // 0: identity.v1.UserList.users:type_name -> common.v1.User
-	60, // 1: identity.v1.QueryUsersRequest.query:type_name -> query.v1.Payload
-	59, // 2: identity.v1.GetUsersResponse.users:type_name -> common.v1.User
-	59, // 3: identity.v1.AuthUserResponse.user:type_name -> common.v1.User
+	61, // 0: identity.v1.UserList.users:type_name -> common.v1.User
+	62, // 1: identity.v1.QueryUsersRequest.query:type_name -> query.v1.Payload
+	61, // 2: identity.v1.GetUsersResponse.users:type_name -> common.v1.User
+	61, // 3: identity.v1.AuthUserResponse.user:type_name -> common.v1.User
 	19, // 4: identity.v1.RepoOwnerList.owners:type_name -> identity.v1.RepoOwner
 	22, // 5: identity.v1.RepoList.repos:type_name -> identity.v1.Repo
-	61, // 6: identity.v1.Role.created_at:type_name -> google.protobuf.Timestamp
+	63, // 6: identity.v1.Role.created_at:type_name -> google.protobuf.Timestamp
 	26, // 7: identity.v1.RoleList.roles:type_name -> identity.v1.Role
-	62, // 8: identity.v1.UpdateRoleRequest.description:type_name -> google.protobuf.StringValue
-	61, // 9: identity.v1.Organization.created_at:type_name -> google.protobuf.Timestamp
+	64, // 8: identity.v1.UpdateRoleRequest.description:type_name -> google.protobuf.StringValue
+	63, // 9: identity.v1.Organization.created_at:type_name -> google.protobuf.Timestamp
 	35, // 10: identity.v1.OrganizationList.organizations:type_name -> identity.v1.Organization
-	60, // 11: identity.v1.QueryOrganizationsRequest.query:type_name -> query.v1.Payload
-	62, // 12: identity.v1.UpdateOrganizationRequest.description:type_name -> google.protobuf.StringValue
-	61, // 13: identity.v1.OnboardRule.requested_at:type_name -> google.protobuf.Timestamp
-	61, // 14: identity.v1.OnboardRule.decided_at:type_name -> google.protobuf.Timestamp
-	61, // 15: identity.v1.OnboardRule.created_at:type_name -> google.protobuf.Timestamp
-	61, // 16: identity.v1.OnboardRule.updated_at:type_name -> google.protobuf.Timestamp
+	62, // 11: identity.v1.QueryOrganizationsRequest.query:type_name -> query.v1.Payload
+	64, // 12: identity.v1.UpdateOrganizationRequest.description:type_name -> google.protobuf.StringValue
+	63, // 13: identity.v1.OnboardRule.requested_at:type_name -> google.protobuf.Timestamp
+	63, // 14: identity.v1.OnboardRule.decided_at:type_name -> google.protobuf.Timestamp
+	63, // 15: identity.v1.OnboardRule.created_at:type_name -> google.protobuf.Timestamp
+	63, // 16: identity.v1.OnboardRule.updated_at:type_name -> google.protobuf.Timestamp
 	45, // 17: identity.v1.OnboardRuleList.rules:type_name -> identity.v1.OnboardRule
-	60, // 18: identity.v1.QueryOnboardRulesRequest.query:type_name -> query.v1.Payload
+	62, // 18: identity.v1.QueryOnboardRulesRequest.query:type_name -> query.v1.Payload
 	56, // 19: identity.v1.ListUserAuthKeysResponse.auth_keys:type_name -> identity.v1.UserAuthKey
-	61, // 20: identity.v1.AccessTokenInfo.expires_at:type_name -> google.protobuf.Timestamp
-	61, // 21: identity.v1.AccessTokenInfo.created_at:type_name -> google.protobuf.Timestamp
-	61, // 22: identity.v1.AccessTokenInfo.last_used_at:type_name -> google.protobuf.Timestamp
-	23, // [23:23] is the sub-list for method output_type
-	23, // [23:23] is the sub-list for method input_type
-	23, // [23:23] is the sub-list for extension type_name
-	23, // [23:23] is the sub-list for extension extendee
-	0,  // [0:23] is the sub-list for field type_name
+	63, // 20: identity.v1.AccessTokenInfo.expires_at:type_name -> google.protobuf.Timestamp
+	63, // 21: identity.v1.AccessTokenInfo.created_at:type_name -> google.protobuf.Timestamp
+	63, // 22: identity.v1.AccessTokenInfo.last_used_at:type_name -> google.protobuf.Timestamp
+	63, // 23: identity.v1.EnvVar.created_at:type_name -> google.protobuf.Timestamp
+	63, // 24: identity.v1.EnvVar.updated_at:type_name -> google.protobuf.Timestamp
+	59, // 25: identity.v1.EnvVarList.env_vars:type_name -> identity.v1.EnvVar
+	26, // [26:26] is the sub-list for method output_type
+	26, // [26:26] is the sub-list for method input_type
+	26, // [26:26] is the sub-list for extension type_name
+	26, // [26:26] is the sub-list for extension extendee
+	0,  // [0:26] is the sub-list for field type_name
 }
 
 func init() { file_identity_v1_types_proto_init() }
@@ -3847,7 +4013,7 @@ func file_identity_v1_types_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_identity_v1_types_proto_rawDesc), len(file_identity_v1_types_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   59,
+			NumMessages:   61,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

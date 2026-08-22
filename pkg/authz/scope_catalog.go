@@ -134,6 +134,7 @@ var scopeCatalogSource = []domainSpec{
 				{scope: "user:read:roles", label: "Roles", description: "Read a user's assigned roles."},
 				{scope: "user:read:keys", label: "Keys", description: "Read a user's SSH/API keys."},
 				{scope: "user:read:repos", label: "Repos", description: "Browse a user's identity-provider repository owners and repos."},
+				{scope: "user:read:envvars", label: "Environment variables", description: "Read a user's effective environment variables (org values plus their own overrides)."},
 			}},
 			{action: "user:read:credentials", label: "Credentials (read)", wildcard: &entrySpec{scope: "user:read:credentials:*", label: "Any credential type"}, entries: []entrySpec{
 				{scope: "user:read:credentials:kubernetes", label: "Kubernetes", description: "Read a user's stored Kubernetes service-account credentials."},
@@ -149,6 +150,7 @@ var scopeCatalogSource = []domainSpec{
 				{scope: "user:write:locked", label: "Locked", description: "Lock or unlock a user account."},
 				{scope: "user:write:org", label: "Organization", description: "Change a user's organization membership."},
 				{scope: "user:write:posix", label: "POSIX", description: "Update a user's POSIX (uid/gid/shell) attributes."},
+				{scope: "user:write:envvars", label: "Environment variables", description: "Add, update, or remove a user's own environment variable overrides."},
 			}},
 			{action: "user:write:credentials", label: "Credentials (write)", wildcard: &entrySpec{scope: "user:write:credentials:*", label: "Any credential type"}, entries: []entrySpec{
 				{scope: "user:write:credentials:kubernetes", label: "Kubernetes", description: "Add or remove a user's stored Kubernetes credentials."},
@@ -214,6 +216,10 @@ var scopeCatalogSource = []domainSpec{
 			}},
 			{action: "org:update", label: "Update", entries: []entrySpec{
 				{scope: "org:update", label: "Update", description: "Update an organization."},
+			}},
+			{action: "org:envvar", label: "Environment variables", wildcard: &entrySpec{scope: "org:envvar:*", label: "Read and write"}, entries: []entrySpec{
+				{scope: "org:envvar:read", label: "Read", description: "List or read an organization's environment variables."},
+				{scope: "org:envvar:write", label: "Write", description: "Add, update, or remove an organization's environment variables."},
 			}},
 		},
 	},
