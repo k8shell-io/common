@@ -15,6 +15,14 @@ service SystemService {
   // entries and closes the stream; with follow=true it keeps streaming new
   // entries as they are produced until the client cancels.
   rpc GetLogsStream (SystemLogsStreamRequest) returns (stream SystemLogsStreamResponse);
+
+  // GetLogsPage returns one page of k8shelld daemon logs strictly older
+  // than before_id, for "load more" / infinite-scroll style backward
+  // pagination independent of GetLogsStream's live tail. Pass the id of
+  // the oldest entry currently held by the caller (from GetLogsStream's
+  // initial backlog, or from the previous GetLogsPage response) as
+  // before_id to fetch the page before it.
+  rpc GetLogsPage (GetLogsPageRequest) returns (GetLogsPageResponse);
 }
 
 // LogLevel identifies a k8shelld daemon log level for filtering.
@@ -41,6 +49,21 @@ message SystemLogsStreamResponse {
   string component = 2;
   string level = 3;
   string message = 4;
+  int64 id = 5; // Stable, monotonically increasing sequence id of this entry
+}
+
+// GetLogsPageRequest message
+message GetLogsPageRequest {
+  string component = 1;  // Filter by component (empty = all)
+  LogLevel level = 2;    // Filter by level (LOG_LEVEL_UNSPECIFIED = all)
+  int64 before_id = 3;   // Return entries older than this id (0 = start from the most recent entry)
+  int32 limit = 4;       // Max entries to return
+}
+
+// GetLogsPageResponse message
+message GetLogsPageResponse {
+  repeated SystemLogsStreamResponse entries = 1; // Oldest matching entry first
+  bool has_more = 2;                             // True if older entries remain in the buffer beyond this page
 }
 
 // SystemInfo messages

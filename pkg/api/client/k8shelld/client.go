@@ -107,6 +107,7 @@ func (c *K8shelld) GetSystemInfo(ctx context.Context) (*SystemInfo, error) {
 
 // LogStreamEntry is a single k8shelld daemon log entry received via StreamSystemLogs.
 type LogStreamEntry struct {
+	ID        int64 // Stable, monotonically increasing sequence id of this entry
 	Time      string
 	Component string
 	Level     string
@@ -146,6 +147,7 @@ func (c *K8shelld) StreamSystemLogs(ctx context.Context, opts StreamSystemLogsOp
 			return fmt.Errorf("error receiving system log stream: %w", err)
 		}
 		if err := onEntry(LogStreamEntry{
+			ID:        resp.GetId(),
 			Time:      resp.GetTime(),
 			Component: resp.GetComponent(),
 			Level:     resp.GetLevel(),
@@ -154,6 +156,54 @@ func (c *K8shelld) StreamSystemLogs(ctx context.Context, opts StreamSystemLogsOp
 			return err
 		}
 	}
+}
+
+// GetLogsPageOptions configures a GetLogsPage call.
+type GetLogsPageOptions struct {
+	Component string // filter by component (empty = all)
+	Level     string // filter by level (empty = all)
+	BeforeID  int64  // return entries older than this id (0 = start from the most recent entry)
+	Limit     int32  // max entries to return
+}
+
+// LogPage is one page of k8shelld daemon logs returned by GetLogsPage.
+type LogPage struct {
+	Entries []LogStreamEntry // oldest matching entry first
+	HasMore bool             // true if older entries remain in the buffer beyond this page
+}
+
+// GetLogsPage returns one page of k8shelld daemon logs strictly older than
+// opts.BeforeID, for "load more" / infinite-scroll style backward
+// pagination independent of StreamSystemLogs's live tail. Pass the ID of
+// the oldest entry currently held by the caller (from StreamSystemLogs's
+// initial backlog, or from the previous GetLogsPage response) as
+// opts.BeforeID to fetch the page before it.
+func (c *K8shelld) GetLogsPage(ctx context.Context, opts GetLogsPageOptions) (*LogPage, error) {
+	resp, err := c.systemClient.GetLogsPage(ctx, &k8shelldv1.GetLogsPageRequest{
+		Component: opts.Component,
+		Level:     LogLevelToProto(opts.Level),
+		BeforeId:  opts.BeforeID,
+		Limit:     opts.Limit,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get system log page: %w", err)
+	}
+
+	entries := make([]LogStreamEntry, 0, len(resp.GetEntries()))
+	for _, e := range resp.GetEntries() {
+		entries = append(entries, LogStreamEntry{
+			ID:        e.GetId(),
+			Time:      e.GetTime(),
+			Component: e.GetComponent(),
+			Level:     e.GetLevel(),
+			Message:   e.GetMessage(),
+		})
+	}
+
+	return &LogPage{
+		Entries: entries,
+		HasMore: resp.GetHasMore(),
+	}, nil
 }
 
 // startShellRecording creates a shell Recorder and returns a (possibly wrapped) BufferedReadWriter.

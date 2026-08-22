@@ -22,6 +22,7 @@ const (
 	SystemService_Handshake_FullMethodName     = "/k8shelld.SystemService/Handshake"
 	SystemService_SystemInfo_FullMethodName    = "/k8shelld.SystemService/SystemInfo"
 	SystemService_GetLogsStream_FullMethodName = "/k8shelld.SystemService/GetLogsStream"
+	SystemService_GetLogsPage_FullMethodName   = "/k8shelld.SystemService/GetLogsPage"
 )
 
 // SystemServiceClient is the client API for SystemService service.
@@ -35,6 +36,13 @@ type SystemServiceClient interface {
 	// entries and closes the stream; with follow=true it keeps streaming new
 	// entries as they are produced until the client cancels.
 	GetLogsStream(ctx context.Context, in *SystemLogsStreamRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[SystemLogsStreamResponse], error)
+	// GetLogsPage returns one page of k8shelld daemon logs strictly older
+	// than before_id, for "load more" / infinite-scroll style backward
+	// pagination independent of GetLogsStream's live tail. Pass the id of
+	// the oldest entry currently held by the caller (from GetLogsStream's
+	// initial backlog, or from the previous GetLogsPage response) as
+	// before_id to fetch the page before it.
+	GetLogsPage(ctx context.Context, in *GetLogsPageRequest, opts ...grpc.CallOption) (*GetLogsPageResponse, error)
 }
 
 type systemServiceClient struct {
@@ -84,6 +92,16 @@ func (c *systemServiceClient) GetLogsStream(ctx context.Context, in *SystemLogsS
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type SystemService_GetLogsStreamClient = grpc.ServerStreamingClient[SystemLogsStreamResponse]
 
+func (c *systemServiceClient) GetLogsPage(ctx context.Context, in *GetLogsPageRequest, opts ...grpc.CallOption) (*GetLogsPageResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetLogsPageResponse)
+	err := c.cc.Invoke(ctx, SystemService_GetLogsPage_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SystemServiceServer is the server API for SystemService service.
 // All implementations must embed UnimplementedSystemServiceServer
 // for forward compatibility.
@@ -95,6 +113,13 @@ type SystemServiceServer interface {
 	// entries and closes the stream; with follow=true it keeps streaming new
 	// entries as they are produced until the client cancels.
 	GetLogsStream(*SystemLogsStreamRequest, grpc.ServerStreamingServer[SystemLogsStreamResponse]) error
+	// GetLogsPage returns one page of k8shelld daemon logs strictly older
+	// than before_id, for "load more" / infinite-scroll style backward
+	// pagination independent of GetLogsStream's live tail. Pass the id of
+	// the oldest entry currently held by the caller (from GetLogsStream's
+	// initial backlog, or from the previous GetLogsPage response) as
+	// before_id to fetch the page before it.
+	GetLogsPage(context.Context, *GetLogsPageRequest) (*GetLogsPageResponse, error)
 	mustEmbedUnimplementedSystemServiceServer()
 }
 
@@ -113,6 +138,9 @@ func (UnimplementedSystemServiceServer) SystemInfo(context.Context, *SystemInfoR
 }
 func (UnimplementedSystemServiceServer) GetLogsStream(*SystemLogsStreamRequest, grpc.ServerStreamingServer[SystemLogsStreamResponse]) error {
 	return status.Error(codes.Unimplemented, "method GetLogsStream not implemented")
+}
+func (UnimplementedSystemServiceServer) GetLogsPage(context.Context, *GetLogsPageRequest) (*GetLogsPageResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetLogsPage not implemented")
 }
 func (UnimplementedSystemServiceServer) mustEmbedUnimplementedSystemServiceServer() {}
 func (UnimplementedSystemServiceServer) testEmbeddedByValue()                       {}
@@ -182,6 +210,24 @@ func _SystemService_GetLogsStream_Handler(srv interface{}, stream grpc.ServerStr
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type SystemService_GetLogsStreamServer = grpc.ServerStreamingServer[SystemLogsStreamResponse]
 
+func _SystemService_GetLogsPage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetLogsPageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SystemServiceServer).GetLogsPage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SystemService_GetLogsPage_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SystemServiceServer).GetLogsPage(ctx, req.(*GetLogsPageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SystemService_ServiceDesc is the grpc.ServiceDesc for SystemService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -196,6 +242,10 @@ var SystemService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SystemInfo",
 			Handler:    _SystemService_SystemInfo_Handler,
+		},
+		{
+			MethodName: "GetLogsPage",
+			Handler:    _SystemService_GetLogsPage_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
