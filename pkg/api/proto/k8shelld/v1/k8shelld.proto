@@ -10,6 +10,12 @@ service SystemService {
   rpc Handshake (HandshakeRequest) returns (HandshakeResponse);
   rpc SystemInfo (SystemInfoRequest) returns (SystemInfoResponse);
 
+  // SystemInfoHistory returns historical system/mount/docker usage samples
+  // for charting. The daemon owns retention, collection resolution, and
+  // coarsening: the caller states its desired window (range, or from/to)
+  // and desired step, and gets back the window and step actually used.
+  rpc SystemInfoHistory (SystemInfoHistoryRequest) returns (SystemInfoHistoryResponse);
+
   // GetLogsStream streams k8shelld daemon logs (the same logs shown by
   // `kbox logs`). With follow=false it returns the currently buffered
   // entries and closes the stream; with follow=true it keeps streaming new
@@ -120,6 +126,65 @@ message DockerUsage {
   uint64 buildCacheBytes = 14;
   uint64 totalBytes = 15;
   uint64 declaredSize = 20;
+}
+
+// SystemInfoHistoryRequest requests historical usage samples over a time
+// window. Set `range` (a shorthand duration back from now, e.g. "30m",
+// "2h", "24h") to request a window ending now, or set both `from` and `to`
+// (RFC3339) for an explicit window; from/to take precedence over range when
+// both are given. `step` is the caller's desired sample interval (e.g.
+// "5m"); the daemon may coarsen it to respect its own point-count cap or
+// native collection resolution and reports the step it actually used in
+// the response.
+message SystemInfoHistoryRequest {
+  string from = 1;  // RFC3339 window start; ignored unless `to` is also set
+  string to = 2;    // RFC3339 window end; ignored unless `from` is also set
+  string range = 3; // shorthand duration back from now; used only when from/to are not both set
+  string step = 4;  // desired sample interval, e.g. "5m"
+}
+
+// SystemInfoHistoryResponse message
+message SystemInfoHistoryResponse {
+  string from = 1;                          // actual window start (RFC3339) after any clamping
+  string to = 2;                            // actual window end (RFC3339) after any clamping
+  string step = 3;                          // actual sample interval used, e.g. "5m"
+  repeated SystemMetricsPoint system = 4;   // one point per sample time, oldest first
+  map<string, MountUsageSeries> mounts = 5; // historical mount usage, keyed by mount path
+  bool docker_available = 6;                // false if Docker isn't available for this workspace; `docker` is meaningless when false
+  repeated DockerUsagePoint docker = 7;     // one point per sample time, oldest first; only meaningful when docker_available is true
+}
+
+// SystemMetricsPoint is a single historical system-usage sample. A numeric
+// field is left unset (rather than zero) when that metric genuinely wasn't
+// collected at this time (e.g. workspace was stopped, agent restarted), so
+// callers can render a gap instead of a false zero.
+message SystemMetricsPoint {
+  string time = 1; // RFC3339 sample timestamp
+  optional double cpuUsageMillicores = 2;
+  optional double cpuLimitMillicores = 3;
+  optional double memoryUsageMiB = 4;
+  optional double memLimitMiB = 5;
+}
+
+// MountUsageSeries is one mount's historical usage samples.
+message MountUsageSeries {
+  repeated MountUsagePoint points = 1;
+}
+
+// MountUsagePoint is a single historical mount-usage sample. See
+// SystemMetricsPoint for the meaning of an unset numeric field.
+message MountUsagePoint {
+  string time = 1;
+  optional uint64 usedBytes = 2;
+  optional uint64 totalBytes = 3;
+}
+
+// DockerUsagePoint is a single historical Docker usage sample. See
+// SystemMetricsPoint for the meaning of an unset numeric field.
+message DockerUsagePoint {
+  string time = 1;
+  optional uint64 totalBytes = 2;
+  optional uint64 declaredSize = 3;
 }
 
 // HandshakeRequest message

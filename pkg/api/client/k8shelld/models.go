@@ -56,6 +56,48 @@ type SystemInfo struct {
 	Repository string       `json:"repository,omitempty"` // full repo URL, e.g. https://github.com/owner/repo
 }
 
+// SystemMetricsPoint is a single historical system-usage sample. A numeric
+// field is nil when that metric genuinely wasn't collected at this time
+// (e.g. workspace was stopped, agent restarted), so callers can render a
+// gap instead of a false zero.
+type SystemMetricsPoint struct {
+	Time               string   `json:"time"`
+	CPUUsageMillicores *float64 `json:"cpuUsageMillicores"`
+	CPULimitMillicores *float64 `json:"cpuLimitMillicores"`
+	MemoryUsageMiB     *float64 `json:"memoryUsageMiB"`
+	MemLimitMiB        *float64 `json:"memLimitMiB"`
+}
+
+// MountUsagePoint is a single historical mount-usage sample. See
+// SystemMetricsPoint for the meaning of a nil numeric field.
+type MountUsagePoint struct {
+	Time       string  `json:"time"`
+	UsedBytes  *uint64 `json:"usedBytes"`
+	TotalBytes *uint64 `json:"totalBytes"`
+}
+
+// DockerUsagePoint is a single historical Docker usage sample. See
+// SystemMetricsPoint for the meaning of a nil numeric field.
+type DockerUsagePoint struct {
+	Time         string  `json:"time"`
+	TotalBytes   *uint64 `json:"totalBytes"`
+	DeclaredSize *uint64 `json:"declaredSize"`
+}
+
+// SystemInfoHistory represents historical system/mount/docker usage
+// samples over a time window. Docker is nil if Docker isn't available for
+// the workspace; it is a non-nil (possibly empty) slice otherwise, so
+// callers can tell "not available" (field omitted) apart from "available,
+// no samples yet" (empty array).
+type SystemInfoHistory struct {
+	From   string                       `json:"from"`
+	To     string                       `json:"to"`
+	Step   string                       `json:"step"`
+	System []SystemMetricsPoint         `json:"system"`
+	Mounts map[string][]MountUsagePoint `json:"mounts"`
+	Docker *[]DockerUsagePoint          `json:"docker,omitempty"`
+}
+
 // SplashInfo contains the rendered splash message text.
 type SplashInfo struct {
 	Text string `json:"text"`
@@ -146,6 +188,140 @@ func AppStatusFromProto(u *k8shelldv1.AppStatus) *AppStatus {
 		Restarts: int(u.GetRestarts()),
 		Protocol: u.GetProtocol(),
 	}
+}
+
+// SystemInfoHistoryQuery are the caller-supplied parameters for
+// GetSystemInfoHistory. See SystemInfoHistoryRequest in the proto for the
+// precedence of Range vs From/To.
+type SystemInfoHistoryQuery struct {
+	From  string
+	To    string
+	Range string
+	Step  string
+}
+
+func SystemInfoHistoryQueryToProto(q SystemInfoHistoryQuery) *k8shelldv1.SystemInfoHistoryRequest {
+	return &k8shelldv1.SystemInfoHistoryRequest{
+		From:  q.From,
+		To:    q.To,
+		Range: q.Range,
+		Step:  q.Step,
+	}
+}
+
+func SystemMetricsPointToProto(p SystemMetricsPoint) *k8shelldv1.SystemMetricsPoint {
+	return &k8shelldv1.SystemMetricsPoint{
+		Time:               p.Time,
+		CpuUsageMillicores: p.CPUUsageMillicores,
+		CpuLimitMillicores: p.CPULimitMillicores,
+		MemoryUsageMiB:     p.MemoryUsageMiB,
+		MemLimitMiB:        p.MemLimitMiB,
+	}
+}
+
+func SystemMetricsPointFromProto(pb *k8shelldv1.SystemMetricsPoint) SystemMetricsPoint {
+	return SystemMetricsPoint{
+		Time:               pb.GetTime(),
+		CPUUsageMillicores: pb.CpuUsageMillicores,
+		CPULimitMillicores: pb.CpuLimitMillicores,
+		MemoryUsageMiB:     pb.MemoryUsageMiB,
+		MemLimitMiB:        pb.MemLimitMiB,
+	}
+}
+
+func MountUsagePointToProto(p MountUsagePoint) *k8shelldv1.MountUsagePoint {
+	return &k8shelldv1.MountUsagePoint{
+		Time:       p.Time,
+		UsedBytes:  p.UsedBytes,
+		TotalBytes: p.TotalBytes,
+	}
+}
+
+func MountUsagePointFromProto(pb *k8shelldv1.MountUsagePoint) MountUsagePoint {
+	return MountUsagePoint{
+		Time:       pb.GetTime(),
+		UsedBytes:  pb.UsedBytes,
+		TotalBytes: pb.TotalBytes,
+	}
+}
+
+func DockerUsagePointToProto(p DockerUsagePoint) *k8shelldv1.DockerUsagePoint {
+	return &k8shelldv1.DockerUsagePoint{
+		Time:         p.Time,
+		TotalBytes:   p.TotalBytes,
+		DeclaredSize: p.DeclaredSize,
+	}
+}
+
+func DockerUsagePointFromProto(pb *k8shelldv1.DockerUsagePoint) DockerUsagePoint {
+	return DockerUsagePoint{
+		Time:         pb.GetTime(),
+		TotalBytes:   pb.TotalBytes,
+		DeclaredSize: pb.DeclaredSize,
+	}
+}
+
+func SystemInfoHistoryToProto(h *SystemInfoHistory) *k8shelldv1.SystemInfoHistoryResponse {
+	pb := &k8shelldv1.SystemInfoHistoryResponse{
+		From: h.From,
+		To:   h.To,
+		Step: h.Step,
+	}
+
+	for _, p := range h.System {
+		pb.System = append(pb.System, SystemMetricsPointToProto(p))
+	}
+
+	if len(h.Mounts) > 0 {
+		pb.Mounts = make(map[string]*k8shelldv1.MountUsageSeries, len(h.Mounts))
+		for mountPoint, points := range h.Mounts {
+			series := &k8shelldv1.MountUsageSeries{}
+			for _, p := range points {
+				series.Points = append(series.Points, MountUsagePointToProto(p))
+			}
+			pb.Mounts[mountPoint] = series
+		}
+	}
+
+	if h.Docker != nil {
+		pb.DockerAvailable = true
+		for _, p := range *h.Docker {
+			pb.Docker = append(pb.Docker, DockerUsagePointToProto(p))
+		}
+	}
+
+	return pb
+}
+
+func ProtoToSystemInfoHistory(pb *k8shelldv1.SystemInfoHistoryResponse) *SystemInfoHistory {
+	h := &SystemInfoHistory{
+		From:   pb.GetFrom(),
+		To:     pb.GetTo(),
+		Step:   pb.GetStep(),
+		Mounts: make(map[string][]MountUsagePoint, len(pb.GetMounts())),
+	}
+
+	for _, p := range pb.GetSystem() {
+		h.System = append(h.System, SystemMetricsPointFromProto(p))
+	}
+
+	for mountPoint, series := range pb.GetMounts() {
+		points := make([]MountUsagePoint, 0, len(series.GetPoints()))
+		for _, p := range series.GetPoints() {
+			points = append(points, MountUsagePointFromProto(p))
+		}
+		h.Mounts[mountPoint] = points
+	}
+
+	if pb.GetDockerAvailable() {
+		points := make([]DockerUsagePoint, 0, len(pb.GetDocker()))
+		for _, p := range pb.GetDocker() {
+			points = append(points, DockerUsagePointFromProto(p))
+		}
+		h.Docker = &points
+	}
+
+	return h
 }
 
 func LogTypeToProto(logType string) k8shelldv1.LogType {

@@ -105,6 +105,17 @@ func (c *K8shelld) GetSystemInfo(ctx context.Context) (*SystemInfo, error) {
 	return ProtoToSystemInfo(resp), nil
 }
 
+// GetSystemInfoHistory returns historical system/mount/docker usage
+// samples from the k8shelld agent for the given window and step. See
+// SystemInfoHistoryQuery for the parameters accepted.
+func (c *K8shelld) GetSystemInfoHistory(ctx context.Context, q SystemInfoHistoryQuery) (*SystemInfoHistory, error) {
+	resp, err := c.systemClient.SystemInfoHistory(ctx, SystemInfoHistoryQueryToProto(q))
+	if err != nil {
+		return nil, err
+	}
+	return ProtoToSystemInfoHistory(resp), nil
+}
+
 // LogStreamEntry is a single k8shelld daemon log entry received via StreamSystemLogs.
 type LogStreamEntry struct {
 	ID        int64 // Stable, monotonically increasing sequence id of this entry

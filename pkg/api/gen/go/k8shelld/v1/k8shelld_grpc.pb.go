@@ -19,10 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SystemService_Handshake_FullMethodName     = "/k8shelld.SystemService/Handshake"
-	SystemService_SystemInfo_FullMethodName    = "/k8shelld.SystemService/SystemInfo"
-	SystemService_GetLogsStream_FullMethodName = "/k8shelld.SystemService/GetLogsStream"
-	SystemService_GetLogsPage_FullMethodName   = "/k8shelld.SystemService/GetLogsPage"
+	SystemService_Handshake_FullMethodName         = "/k8shelld.SystemService/Handshake"
+	SystemService_SystemInfo_FullMethodName        = "/k8shelld.SystemService/SystemInfo"
+	SystemService_SystemInfoHistory_FullMethodName = "/k8shelld.SystemService/SystemInfoHistory"
+	SystemService_GetLogsStream_FullMethodName     = "/k8shelld.SystemService/GetLogsStream"
+	SystemService_GetLogsPage_FullMethodName       = "/k8shelld.SystemService/GetLogsPage"
 )
 
 // SystemServiceClient is the client API for SystemService service.
@@ -31,6 +32,11 @@ const (
 type SystemServiceClient interface {
 	Handshake(ctx context.Context, in *HandshakeRequest, opts ...grpc.CallOption) (*HandshakeResponse, error)
 	SystemInfo(ctx context.Context, in *SystemInfoRequest, opts ...grpc.CallOption) (*SystemInfoResponse, error)
+	// SystemInfoHistory returns historical system/mount/docker usage samples
+	// for charting. The daemon owns retention, collection resolution, and
+	// coarsening: the caller states its desired window (range, or from/to)
+	// and desired step, and gets back the window and step actually used.
+	SystemInfoHistory(ctx context.Context, in *SystemInfoHistoryRequest, opts ...grpc.CallOption) (*SystemInfoHistoryResponse, error)
 	// GetLogsStream streams k8shelld daemon logs (the same logs shown by
 	// `kbox logs`). With follow=false it returns the currently buffered
 	// entries and closes the stream; with follow=true it keeps streaming new
@@ -73,6 +79,16 @@ func (c *systemServiceClient) SystemInfo(ctx context.Context, in *SystemInfoRequ
 	return out, nil
 }
 
+func (c *systemServiceClient) SystemInfoHistory(ctx context.Context, in *SystemInfoHistoryRequest, opts ...grpc.CallOption) (*SystemInfoHistoryResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SystemInfoHistoryResponse)
+	err := c.cc.Invoke(ctx, SystemService_SystemInfoHistory_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *systemServiceClient) GetLogsStream(ctx context.Context, in *SystemLogsStreamRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[SystemLogsStreamResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	stream, err := c.cc.NewStream(ctx, &SystemService_ServiceDesc.Streams[0], SystemService_GetLogsStream_FullMethodName, cOpts...)
@@ -108,6 +124,11 @@ func (c *systemServiceClient) GetLogsPage(ctx context.Context, in *GetLogsPageRe
 type SystemServiceServer interface {
 	Handshake(context.Context, *HandshakeRequest) (*HandshakeResponse, error)
 	SystemInfo(context.Context, *SystemInfoRequest) (*SystemInfoResponse, error)
+	// SystemInfoHistory returns historical system/mount/docker usage samples
+	// for charting. The daemon owns retention, collection resolution, and
+	// coarsening: the caller states its desired window (range, or from/to)
+	// and desired step, and gets back the window and step actually used.
+	SystemInfoHistory(context.Context, *SystemInfoHistoryRequest) (*SystemInfoHistoryResponse, error)
 	// GetLogsStream streams k8shelld daemon logs (the same logs shown by
 	// `kbox logs`). With follow=false it returns the currently buffered
 	// entries and closes the stream; with follow=true it keeps streaming new
@@ -135,6 +156,9 @@ func (UnimplementedSystemServiceServer) Handshake(context.Context, *HandshakeReq
 }
 func (UnimplementedSystemServiceServer) SystemInfo(context.Context, *SystemInfoRequest) (*SystemInfoResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SystemInfo not implemented")
+}
+func (UnimplementedSystemServiceServer) SystemInfoHistory(context.Context, *SystemInfoHistoryRequest) (*SystemInfoHistoryResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SystemInfoHistory not implemented")
 }
 func (UnimplementedSystemServiceServer) GetLogsStream(*SystemLogsStreamRequest, grpc.ServerStreamingServer[SystemLogsStreamResponse]) error {
 	return status.Error(codes.Unimplemented, "method GetLogsStream not implemented")
@@ -199,6 +223,24 @@ func _SystemService_SystemInfo_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SystemService_SystemInfoHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SystemInfoHistoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SystemServiceServer).SystemInfoHistory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SystemService_SystemInfoHistory_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SystemServiceServer).SystemInfoHistory(ctx, req.(*SystemInfoHistoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _SystemService_GetLogsStream_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(SystemLogsStreamRequest)
 	if err := stream.RecvMsg(m); err != nil {
@@ -242,6 +284,10 @@ var SystemService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SystemInfo",
 			Handler:    _SystemService_SystemInfo_Handler,
+		},
+		{
+			MethodName: "SystemInfoHistory",
+			Handler:    _SystemService_SystemInfoHistory_Handler,
 		},
 		{
 			MethodName: "GetLogsPage",
