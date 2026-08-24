@@ -217,6 +217,16 @@ func (c *K8shelld) GetLogsPage(ctx context.Context, opts GetLogsPageOptions) (*L
 	}, nil
 }
 
+// GetBlueprint returns the raw blueprint YAML content the workspace was
+// created from.
+func (c *K8shelld) GetBlueprint(ctx context.Context) ([]byte, error) {
+	resp, err := c.systemClient.GetBlueprint(ctx, &k8shelldv1.GetBlueprintRequest{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get blueprint: %w", err)
+	}
+	return resp.GetBlueprint(), nil
+}
+
 // startShellRecording creates a shell Recorder and returns a (possibly wrapped) BufferedReadWriter.
 // Also returns the session start time for use with ObserveResize offsets.
 func (c *K8shelld) startShellRecording(

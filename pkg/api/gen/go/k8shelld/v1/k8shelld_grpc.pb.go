@@ -24,6 +24,7 @@ const (
 	SystemService_SystemInfoHistory_FullMethodName = "/k8shelld.SystemService/SystemInfoHistory"
 	SystemService_GetLogsStream_FullMethodName     = "/k8shelld.SystemService/GetLogsStream"
 	SystemService_GetLogsPage_FullMethodName       = "/k8shelld.SystemService/GetLogsPage"
+	SystemService_GetBlueprint_FullMethodName      = "/k8shelld.SystemService/GetBlueprint"
 )
 
 // SystemServiceClient is the client API for SystemService service.
@@ -49,6 +50,8 @@ type SystemServiceClient interface {
 	// initial backlog, or from the previous GetLogsPage response) as
 	// before_id to fetch the page before it.
 	GetLogsPage(ctx context.Context, in *GetLogsPageRequest, opts ...grpc.CallOption) (*GetLogsPageResponse, error)
+	// GetBlueprint returns the blueprint this workspace was created from.
+	GetBlueprint(ctx context.Context, in *GetBlueprintRequest, opts ...grpc.CallOption) (*GetBlueprintResponse, error)
 }
 
 type systemServiceClient struct {
@@ -118,6 +121,16 @@ func (c *systemServiceClient) GetLogsPage(ctx context.Context, in *GetLogsPageRe
 	return out, nil
 }
 
+func (c *systemServiceClient) GetBlueprint(ctx context.Context, in *GetBlueprintRequest, opts ...grpc.CallOption) (*GetBlueprintResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetBlueprintResponse)
+	err := c.cc.Invoke(ctx, SystemService_GetBlueprint_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SystemServiceServer is the server API for SystemService service.
 // All implementations must embed UnimplementedSystemServiceServer
 // for forward compatibility.
@@ -141,6 +154,8 @@ type SystemServiceServer interface {
 	// initial backlog, or from the previous GetLogsPage response) as
 	// before_id to fetch the page before it.
 	GetLogsPage(context.Context, *GetLogsPageRequest) (*GetLogsPageResponse, error)
+	// GetBlueprint returns the blueprint this workspace was created from.
+	GetBlueprint(context.Context, *GetBlueprintRequest) (*GetBlueprintResponse, error)
 	mustEmbedUnimplementedSystemServiceServer()
 }
 
@@ -165,6 +180,9 @@ func (UnimplementedSystemServiceServer) GetLogsStream(*SystemLogsStreamRequest, 
 }
 func (UnimplementedSystemServiceServer) GetLogsPage(context.Context, *GetLogsPageRequest) (*GetLogsPageResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetLogsPage not implemented")
+}
+func (UnimplementedSystemServiceServer) GetBlueprint(context.Context, *GetBlueprintRequest) (*GetBlueprintResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetBlueprint not implemented")
 }
 func (UnimplementedSystemServiceServer) mustEmbedUnimplementedSystemServiceServer() {}
 func (UnimplementedSystemServiceServer) testEmbeddedByValue()                       {}
@@ -270,6 +288,24 @@ func _SystemService_GetLogsPage_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SystemService_GetBlueprint_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetBlueprintRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SystemServiceServer).GetBlueprint(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SystemService_GetBlueprint_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SystemServiceServer).GetBlueprint(ctx, req.(*GetBlueprintRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SystemService_ServiceDesc is the grpc.ServiceDesc for SystemService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -292,6 +328,10 @@ var SystemService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetLogsPage",
 			Handler:    _SystemService_GetLogsPage_Handler,
+		},
+		{
+			MethodName: "GetBlueprint",
+			Handler:    _SystemService_GetBlueprint_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

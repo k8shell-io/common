@@ -29,6 +29,9 @@ service SystemService {
   // initial backlog, or from the previous GetLogsPage response) as
   // before_id to fetch the page before it.
   rpc GetLogsPage (GetLogsPageRequest) returns (GetLogsPageResponse);
+
+  // GetBlueprint returns the blueprint this workspace was created from.
+  rpc GetBlueprint (GetBlueprintRequest) returns (GetBlueprintResponse);
 }
 
 // LogLevel identifies a k8shelld daemon log level for filtering.
@@ -185,6 +188,19 @@ message DockerUsagePoint {
   string time = 1;
   optional uint64 totalBytes = 2;
   optional uint64 declaredSize = 3;
+}
+
+// GetBlueprintRequest requests the workspace's blueprint. It carries no
+// fields today; left as a message rather than google.protobuf.Empty so
+// parameters can be added later without changing the RPC signature.
+message GetBlueprintRequest {}
+
+// GetBlueprintResponse carries the raw blueprint content for this
+// workspace, mirroring the raw-bytes shape identity.v1.Blueprint uses
+// (its repo_address is omitted here since the blueprint is already
+// resolved for this specific workspace).
+message GetBlueprintResponse {
+  bytes blueprint = 1; // raw blueprint YAML content
 }
 
 // HandshakeRequest message
