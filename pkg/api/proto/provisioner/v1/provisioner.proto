@@ -39,6 +39,12 @@ service ProvisionerService {
   // regardless of user.
   rpc GetBlueprints(GetBlueprintsRequest) returns (GetBlueprintsResponse);
 
+  // GetBlueprint returns the full raw (unevaluated) spec of a single
+  // blueprint by name. CEL expressions are returned as "!cel:"-prefixed
+  // strings rather than evaluated, mirroring k8shelld.v1's GetBlueprint
+  // shape.
+  rpc GetBlueprint(GetBlueprintRequest) returns (GetBlueprintResponse);
+
   // ProvisionWorkspaceStream provisions a new workspace and streams progress
   // events back to the caller until the workspace is ready or an error occurs.
   rpc ProvisionWorkspaceStream(ProvisionWorkspaceRequest) returns (stream ProvisionWorkspaceResponse);
@@ -133,6 +139,25 @@ message GetBlueprintsRequest {}
 message GetBlueprintsResponse {
   // blueprints is the list of all registered blueprints.
   repeated common.v1.BlueprintSummary blueprints = 1;
+}
+
+// GetBlueprintRequest identifies a single blueprint to look up.
+message GetBlueprintRequest {
+  // name is the unique identifier of the blueprint.
+  string name = 1;
+}
+
+// GetBlueprintResponse carries the raw (unevaluated) YAML content of the
+// requested blueprint, both fully merged with its inherited Template and as
+// defined directly on the blueprint itself. A field present in blueprint but
+// absent from own_blueprint is inherited rather than set on this blueprint;
+// clients editing a blueprint should only write back fields present in
+// own_blueprint (plus whatever the user changed), so unmodified inherited
+// values are not pinned onto the child blueprint.
+message GetBlueprintResponse {
+  bytes blueprint = 1;     // raw blueprint YAML content, merged with Template
+  bytes own_blueprint = 2; // raw YAML content defined directly on this blueprint
+  string template = 3;     // name of the immediate parent Template, if any
 }
 
 // ProvisionWorkspaceRequest initiates provisioning of a new workspace.
