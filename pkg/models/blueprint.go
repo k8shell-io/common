@@ -12,37 +12,37 @@ import (
 
 // Blueprint represents a single blueprint configuration
 type Blueprint struct {
-	Metadata             BlueprintMetadata
-	Name                 string                 `yaml:"name" validate:"required,min=1,max=40"`
-	Description          string                 `yaml:"description,omitempty" validate:"max=500"`
-	IsTemplate           bool                   `yaml:"isTemplate,omitempty" default:"false"`
-	Splash               string                 `yaml:"splash,omitempty"`
-	Template             string                 `yaml:"template"`
-	Hostname             string                 `yaml:"hostname,omitempty" validate:"omitempty,plainhostname"`
-	Subdomain            string                 `yaml:"subdomain,omitempty" validate:"omitempty,plainhostname"`
-	Image                string                 `yaml:"image" validate:"required"`
-	ImagePullPolicy      string                 `yaml:"imagePullPolicy,omitempty" validate:"omitempty,oneof=Always Never IfNotPresent"`
-	K8shelld             K8shelld               `yaml:"k8shelld" validate:"required"`
-	Env                  map[string]string      `yaml:"env,omitempty" default:"{}"`
-	Network              Network                `yaml:"network,omitempty" default:"{networkPolicyClass:workspace}"`
-	Resources            Resources              `yaml:"resources,omitempty" default:"{limits:{cpu:500m,memory:512Mi}}"`
-	Podman               Podman                 `yaml:"podman,omitempty" default:"{enabled:false}"`
-	Storages             map[string]Storage     `yaml:"storages,omitempty" default:"{}"`
-	InitScripts          []InitScript           `yaml:"initScripts,omitempty" default:"[]" validate:"dive"`
-	ShowInitScriptStatus bool                   `yaml:"showInitScriptStatus,omitempty" default:"false"`
-	SecurityContext      map[string]interface{} `yaml:"securityContext,omitempty" default:"{}"`
-	ExtFiles             map[string]string      `yaml:"extFiles,omitempty" default:"{}"`
-	EnableApps           bool                   `yaml:"enableApps,omitempty" default:"false"`
-	Apps                 map[string]AppSpec     `yaml:"apps,omitempty" default:"{}"`
+	Metadata             BlueprintMetadata      `yaml:"metadata" json:"metadata"`
+	Name                 string                 `yaml:"name" json:"name" validate:"required,min=1,max=40" jsonschema:"required"`
+	Description          string                 `yaml:"description,omitempty" json:"description,omitempty" validate:"max=500"`
+	IsTemplate           bool                   `yaml:"isTemplate,omitempty" json:"isTemplate,omitempty" default:"false"`
+	Splash               string                 `yaml:"splash,omitempty" json:"splash,omitempty"`
+	Template             string                 `yaml:"template" json:"template"`
+	Hostname             string                 `yaml:"hostname,omitempty" json:"hostname,omitempty" validate:"omitempty,plainhostname"`
+	Subdomain            string                 `yaml:"subdomain,omitempty" json:"subdomain,omitempty" validate:"omitempty,plainhostname"`
+	Image                string                 `yaml:"image" json:"image" validate:"required" jsonschema:"required"`
+	ImagePullPolicy      string                 `yaml:"imagePullPolicy,omitempty" json:"imagePullPolicy,omitempty" validate:"omitempty,oneof=Always Never IfNotPresent" jsonschema:"enum=Always,enum=Never,enum=IfNotPresent"`
+	K8shelld             K8shelld               `yaml:"k8shelld" json:"k8shelld" validate:"required" jsonschema:"required"`
+	Env                  map[string]string      `yaml:"env,omitempty" json:"env,omitempty" default:"{}"`
+	Network              Network                `yaml:"network,omitempty" json:"network,omitempty" default:"{networkPolicyClass:workspace}"`
+	Resources            Resources              `yaml:"resources,omitempty" json:"resources,omitempty" default:"{limits:{cpu:500m,memory:512Mi}}"`
+	Podman               Podman                 `yaml:"podman,omitempty" json:"podman,omitempty" default:"{enabled:false}"`
+	Storages             map[string]Storage     `yaml:"storages,omitempty" json:"storages,omitempty" default:"{}"`
+	InitScripts          []InitScript           `yaml:"initScripts,omitempty" json:"initScripts,omitempty" default:"[]" validate:"dive"`
+	ShowInitScriptStatus bool                   `yaml:"showInitScriptStatus,omitempty" json:"showInitScriptStatus,omitempty" default:"false"`
+	SecurityContext      map[string]interface{} `yaml:"securityContext,omitempty" json:"securityContext,omitempty" default:"{}"`
+	ExtFiles             map[string]string      `yaml:"extFiles,omitempty" json:"extFiles,omitempty" default:"{}"`
+	EnableApps           bool                   `yaml:"enableApps,omitempty" json:"enableApps,omitempty" default:"false"`
+	Apps                 map[string]AppSpec     `yaml:"apps,omitempty" json:"apps,omitempty" default:"{}"`
 }
 
 // BlueprintMetadata holds metadata information for a blueprint.
 type BlueprintMetadata struct {
-	Name        string `yaml:"name"`
-	RepoName    string `yaml:"repoName"`
-	RepoRef     string `yaml:"repoRef"`
-	RepoOwner   string `yaml:"repoOwner"`
-	RepoAddress string `yaml:"repoAddress"`
+	Name        string `yaml:"name" json:"name"`
+	RepoName    string `yaml:"repoName" json:"repoName"`
+	RepoRef     string `yaml:"repoRef" json:"repoRef"`
+	RepoOwner   string `yaml:"repoOwner" json:"repoOwner"`
+	RepoAddress string `yaml:"repoAddress" json:"repoAddress"`
 }
 
 // K8shellFile represents the overall structure of a k8shell YAML file
@@ -52,19 +52,19 @@ type K8shellFile struct {
 
 // CustomBlueprint represents a custom blueprint configuration
 type CustomBlueprint struct {
-	Metadata             BlueprintMetadata
-	Name                 string             `yaml:"name,omitempty"`
-	Template             string             `yaml:"template" validate:"required"`
-	Splash               string             `yaml:"splash,omitempty"`
-	Image                string             `yaml:"image,omitempty"`
-	Env                  map[string]string  `yaml:"env,omitempty"`
-	Network              Network            `yaml:"network,omitempty"`
-	Resources            Resources          `yaml:"resources,omitempty"`
-	Storages             map[string]Storage `yaml:"storages,omitempty"`
-	InitScripts          []InitScript       `yaml:"initScripts,omitempty"`
-	ShowInitScriptStatus bool               `yaml:"showInitScriptStatus,omitempty"`
-	EnableApps           bool               `yaml:"enableApps,omitempty"`
-	Apps                 map[string]AppSpec `yaml:"apps,omitempty"`
+	Metadata             BlueprintMetadata  `yaml:"metadata" json:"metadata"`
+	Name                 string             `yaml:"name,omitempty" json:"name,omitempty"`
+	Template             string             `yaml:"template" json:"template" validate:"required"`
+	Splash               string             `yaml:"splash,omitempty" json:"splash,omitempty"`
+	Image                string             `yaml:"image,omitempty" json:"image,omitempty"`
+	Env                  map[string]string  `yaml:"env,omitempty" json:"env,omitempty"`
+	Network              Network            `yaml:"network,omitempty" json:"network,omitempty"`
+	Resources            Resources          `yaml:"resources,omitempty" json:"resources,omitempty"`
+	Storages             map[string]Storage `yaml:"storages,omitempty" json:"storages,omitempty"`
+	InitScripts          []InitScript       `yaml:"initScripts,omitempty" json:"initScripts,omitempty"`
+	ShowInitScriptStatus bool               `yaml:"showInitScriptStatus,omitempty" json:"showInitScriptStatus,omitempty"`
+	EnableApps           bool               `yaml:"enableApps,omitempty" json:"enableApps,omitempty"`
+	Apps                 map[string]AppSpec `yaml:"apps,omitempty" json:"apps,omitempty"`
 }
 
 type BlueprintSummary struct {
@@ -75,81 +75,81 @@ type BlueprintSummary struct {
 
 // InitScript represents a named initialization script
 type InitScript struct {
-	Name   string `yaml:"name" validate:"required"`
-	Script string `yaml:"script" validate:"required"`
+	Name   string `yaml:"name" json:"name" validate:"required"`
+	Script string `yaml:"script" json:"script" validate:"required"`
 }
 
 type Conn struct {
-	AllowAnyNS bool `yaml:"allowAnyNS,omitempty"`
-	AllowAnySA bool `yaml:"allowAnySA,omitempty"`
+	AllowAnyNS bool `yaml:"allowAnyNS,omitempty" json:"allowAnyNS,omitempty"`
+	AllowAnySA bool `yaml:"allowAnySA,omitempty" json:"allowAnySA,omitempty"`
 }
 
 // K8shelld represents k8shelld configuration
 type K8shelld struct {
-	Image           string   `yaml:"image" validate:"required"`
-	ImagePullPolicy string   `yaml:"imagePullPolicy,omitempty" validate:"omitempty,oneof=Always Never IfNotPresent"`
-	IgnoreOrphans   []string `yaml:"ignoreOrphans,omitempty" default:"[]"`
-	Connection      Conn     `yaml:"connection,omitempty"`
+	Image           string   `yaml:"image" json:"image" validate:"required" jsonschema:"required"`
+	ImagePullPolicy string   `yaml:"imagePullPolicy,omitempty" json:"imagePullPolicy,omitempty" validate:"omitempty,oneof=Always Never IfNotPresent" jsonschema:"enum=Always,enum=Never,enum=IfNotPresent"`
+	IgnoreOrphans   []string `yaml:"ignoreOrphans,omitempty" json:"ignoreOrphans,omitempty" default:"[]"`
+	Connection      Conn     `yaml:"connection,omitempty" json:"connection,omitempty"`
 }
 
 // Network defines network policy and egress rules for a workspace.
 type Network struct {
 	// NetworkPolicyClass selects a predefined network policy class (workspace, system, isolated, user, organization).
-	NetworkPolicyClass string `yaml:"networkPolicyClass,omitempty" validate:"omitempty,oneof=workspace system isolated user organization"`
+	NetworkPolicyClass string `yaml:"networkPolicyClass,omitempty" json:"networkPolicyClass,omitempty" validate:"omitempty,oneof=workspace system isolated user organization" jsonschema:"enum=workspace,enum=system,enum=isolated,enum=user,enum=organization"`
 	// AllowEgressToCIDRs is a convenience shorthand for permitting egress to specific CIDR ranges.
-	AllowEgressToCIDRs []string `yaml:"allowEgressToCIDRs,omitempty" validate:"dive,cidr"`
+	AllowEgressToCIDRs []string `yaml:"allowEgressToCIDRs,omitempty" json:"allowEgressToCIDRs,omitempty" validate:"dive,cidr"`
 	// AllowEgressToPods is a convenience shorthand for permitting egress to pods matching label selectors.
-	AllowEgressToPods []map[string]string `yaml:"allowEgressToPods,omitempty"`
+	AllowEgressToPods []map[string]string `yaml:"allowEgressToPods,omitempty" json:"allowEgressToPods,omitempty"`
 }
 
 // Resources represents resource limits
 type Resources struct {
-	CPU    string `yaml:"cpu" validate:"required"`
-	Memory string `yaml:"memory" validate:"required"`
+	CPU    string `yaml:"cpu" json:"cpu" validate:"required" jsonschema:"required"`
+	Memory string `yaml:"memory" json:"memory" validate:"required" jsonschema:"required"`
 }
 
 // Podman represents Podman configuration
 type Podman struct {
-	Enabled                 bool                   `yaml:"enabled" default:"false"`
-	Image                   string                 `yaml:"image" validate:"required_if=Enabled true"`
-	Resources               Resources              `yaml:"resources" default:"{cpu:500m,memory:512Mi}"`
-	CreateDockerSockSymlink bool                   `yaml:"createDockerSockSymlink" default:"false"`
-	ParentStorages          bool                   `yaml:"parentStorages" default:"true"`
-	ExtFiles                map[string]string      `yaml:"extFiles,omitempty" default:"{}"`
-	Storages                map[string]Storage     `yaml:"storages,omitempty" default:"{}"`
-	SecurityContext         map[string]interface{} `yaml:"securityContext,omitempty" default:"{}"`
+	Enabled                 bool                   `yaml:"enabled" json:"enabled" default:"false"`
+	Image                   string                 `yaml:"image" json:"image" validate:"required_if=Enabled true"`
+	Resources               Resources              `yaml:"resources" json:"resources" default:"{cpu:500m,memory:512Mi}"`
+	CreateDockerSockSymlink bool                   `yaml:"createDockerSockSymlink" json:"createDockerSockSymlink" default:"false"`
+	ParentStorages          bool                   `yaml:"parentStorages" json:"parentStorages" default:"true"`
+	ExtFiles                map[string]string      `yaml:"extFiles,omitempty" json:"extFiles,omitempty" default:"{}"`
+	Storages                map[string]Storage     `yaml:"storages,omitempty" json:"storages,omitempty" default:"{}"`
+	SecurityContext         map[string]interface{} `yaml:"securityContext,omitempty" json:"securityContext,omitempty" default:"{}"`
 }
 
 // Storage represents storage configuration
 type Storage struct {
-	Enabled  bool   `yaml:"enabled" default:"false"`
-	Id       string `yaml:"id,omitempty" validate:"omitempty,alphanum"`
-	Type     string `yaml:"type,omitempty" validate:"omitempty,oneof=local shared emptyDir memory" default:"local"`
-	Path     string `yaml:"path" validate:"required_if=Enabled true,startswith=/"`
-	Readonly bool   `yaml:"readonly" default:"false"`
+	Enabled  bool   `yaml:"enabled" json:"enabled" default:"false"`
+	Id       string `yaml:"id,omitempty" json:"id,omitempty" validate:"omitempty,alphanum"`
+	Type     string `yaml:"type,omitempty" json:"type,omitempty" validate:"omitempty,oneof=local shared emptyDir memory" default:"local" jsonschema:"enum=local,enum=shared,enum=emptyDir,enum=memory"`
+	Path     string `yaml:"path" json:"path" validate:"required_if=Enabled true,startswith=/"`
+	Readonly bool   `yaml:"readonly" json:"readonly" default:"false"`
 	// SizeLimit applies to emptyDir and memory types (maps to emptyDir.sizeLimit)
-	SizeLimit            string                 `yaml:"sizeLimit,omitempty"`
-	ExistingClaim        string                 `yaml:"existingClaim,omitempty" validate:"required_if=Type shared Enabled true"`
-	FsOwnerUid           *int                   `yaml:"fsOwnerUid,omitempty"`
-	FsOwnerGid           *int                   `yaml:"fsOwnerGid,omitempty"`
-	ClaimSpec            map[string]interface{} `yaml:"claimSpec,omitempty" default:"{}"`
-	ClaimSpecAnnotations map[string]string      `yaml:"claimSpecAnnotations,omitempty" default:"{}"`
+	SizeLimit            string                 `yaml:"sizeLimit,omitempty" json:"sizeLimit,omitempty"`
+	ExistingClaim        string                 `yaml:"existingClaim,omitempty" json:"existingClaim,omitempty" validate:"required_if=Type shared Enabled true"`
+	FsOwnerUid           *int                   `yaml:"fsOwnerUid,omitempty" json:"fsOwnerUid,omitempty"`
+	FsOwnerGid           *int                   `yaml:"fsOwnerGid,omitempty" json:"fsOwnerGid,omitempty"`
+	ClaimSpec            map[string]interface{} `yaml:"claimSpec,omitempty" json:"claimSpec,omitempty" default:"{}"`
+	ClaimSpecAnnotations map[string]string      `yaml:"claimSpecAnnotations,omitempty" json:"claimSpecAnnotations,omitempty" default:"{}"`
 }
 
 type AppSpec struct {
-	Name              string        `yaml:"name" validate:"required_if=Enabled true"`
-	Enabled           bool          `yaml:"enabled" default:"false"`
-	Binary            string        `yaml:"binary" validate:"required_if=Enabled true"`
-	VersionCmd        []string      `yaml:"versionCmd,omitempty"`
-	VersionRegex      string        `yaml:"versionRegex,omitempty"`
-	Install           string        `yaml:"install,omitempty"`
-	Start             []string      `yaml:"start" validate:"required_if=Enabled true"`
-	Listen            int           `yaml:"listen,omitempty"`
-	RestartPolicy     string        `yaml:"restartPolicy,omitempty" validate:"oneof=always on-failure never"`
-	MaxRestartBackoff time.Duration `yaml:"maxRestartBackoff,omitempty"`
-	InstallAsRoot     bool          `yaml:"installAsRoot,omitempty" default:"false"`
-	AutoStart         bool          `yaml:"autoStart,omitempty" default:"false"`
-	Protocol          string        `yaml:"protocol,omitempty" validate:"omitempty,oneof=http https ws wss tcp udp"`
+	Name              string        `yaml:"name" json:"name" validate:"required_if=Enabled true"`
+	Enabled           bool          `yaml:"enabled" json:"enabled" default:"false"`
+	Binary            string        `yaml:"binary" json:"binary" validate:"required_if=Enabled true"`
+	VersionCmd        []string      `yaml:"versionCmd,omitempty" json:"versionCmd,omitempty"`
+	VersionRegex      string        `yaml:"versionRegex,omitempty" json:"versionRegex,omitempty"`
+	Install           string        `yaml:"install,omitempty" json:"install,omitempty"`
+	Start             []string      `yaml:"start" json:"start" validate:"required_if=Enabled true"`
+	Listen            int           `yaml:"listen,omitempty" json:"listen,omitempty"`
+	RestartPolicy     string        `yaml:"restartPolicy,omitempty" json:"restartPolicy,omitempty" validate:"oneof=always on-failure never" jsonschema:"enum=always,enum=on-failure,enum=never"`
+	MaxRestartBackoff time.Duration `yaml:"maxRestartBackoff,omitempty" json:"maxRestartBackoff,omitempty"`
+	InstallAsRoot     bool          `yaml:"installAsRoot,omitempty" json:"installAsRoot,omitempty" default:"false"`
+	AutoStart         bool          `yaml:"autoStart,omitempty" json:"autoStart,omitempty" default:"false"`
+	Protocol          string        `yaml:"protocol,omitempty" json:"protocol,omitempty" validate:"omitempty,oneof=http https ws wss tcp udp" jsonschema:"enum=http,enum=https,enum=ws,enum=wss,enum=tcp,enum=udp"`
 }
 
 // type Repo struct {
