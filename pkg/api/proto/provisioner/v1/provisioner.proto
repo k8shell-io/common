@@ -12,6 +12,8 @@ option go_package = "github.com/k8shell-io/common/pkg/api/gen/go/provisioner/v1;
 
 import "common/v1/common.proto";
 import "query/v1/query.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
 
 // ProvisionerService manages the full lifecycle of user workspaces.
 // Clients interact with this service to provision new workspaces
@@ -44,6 +46,37 @@ service ProvisionerService {
   // strings rather than evaluated, mirroring k8shelld.v1's GetBlueprint
   // shape.
   rpc GetBlueprint(GetBlueprintRequest) returns (GetBlueprintResponse);
+
+  // ValidateBlueprint validates a blueprint YAML document without persisting
+  // or registering it, returning every validation problem found. Problems
+  // include YAML syntax errors, unknown fields, CEL template errors, and
+  // blueprint schema violations, each carrying source line/column
+  // information where the underlying validator provides one.
+  rpc ValidateBlueprint(ValidateBlueprintRequest) returns (ValidateBlueprintResponse);
+
+  // ListOrgBlueprints returns every blueprint stored in the database for a
+  // single organization. Unlike GetBlueprints (file-based, global), these
+  // are persisted per-org and take precedence over a file-based blueprint of
+  // the same name when a user from that org requests it.
+  rpc ListOrgBlueprints(ListOrgBlueprintsRequest) returns (OrgBlueprintList);
+
+  // GetOrgBlueprint retrieves a single org-scoped, database-backed blueprint
+  // by name and org.
+  rpc GetOrgBlueprint(GetOrgBlueprintRequest) returns (OrgBlueprint);
+
+  // CreateOrgBlueprint stores a new org-scoped blueprint in the database.
+  // The submitted YAML is validated exactly as ValidateBlueprint does before
+  // it is persisted.
+  rpc CreateOrgBlueprint(CreateOrgBlueprintRequest) returns (OrgBlueprint);
+
+  // UpdateOrgBlueprint replaces the YAML content (and optionally the
+  // description) of an existing org-scoped blueprint, identified by name and
+  // org. The submitted YAML is validated exactly as ValidateBlueprint does
+  // before it is persisted.
+  rpc UpdateOrgBlueprint(UpdateOrgBlueprintRequest) returns (OrgBlueprint);
+
+  // DeleteOrgBlueprint removes an org-scoped blueprint from the database.
+  rpc DeleteOrgBlueprint(DeleteOrgBlueprintRequest) returns (DeleteOrgBlueprintResponse);
 
   // ProvisionWorkspaceStream provisions a new workspace and streams progress
   // events back to the caller until the workspace is ready or an error occurs.
@@ -158,6 +191,127 @@ message GetBlueprintResponse {
   bytes blueprint = 1;     // raw blueprint YAML content, merged with Template
   bytes own_blueprint = 2; // raw YAML content defined directly on this blueprint
   string template = 3;     // name of the immediate parent Template, if any
+}
+
+// ValidateBlueprintRequest carries a standalone blueprint YAML document to
+// validate. It is not registered in the provisioner and does not need to be
+// named uniquely. If it references an existing template via `template:`,
+// that template's already-registered definition is merged in exactly as it
+// would be for a blueprint loaded from disk.
+message ValidateBlueprintRequest {
+  // yaml is the raw blueprint YAML content: either a bare blueprint document
+  // or one wrapped in a top-level `blueprint:` key.
+  bytes yaml = 1;
+}
+
+// ValidateBlueprintResponse reports every problem found in the submitted
+// blueprint.
+message ValidateBlueprintResponse {
+  // valid is true when errors is empty.
+  bool valid = 1;
+  // errors lists every validation problem found, if any.
+  repeated BlueprintValidationError errors = 2;
+
+  // resolved_blueprint is the raw (unevaluated) content of the submitted
+  // document merged with its referenced Template, if any — the same shape
+  // GetBlueprintResponse.blueprint returns for an already-registered
+  // blueprint, but for this standalone, unregistered document. CEL
+  // expressions are returned as "!cel:"-prefixed strings. Only set when
+  // valid is true: a caller editing an invalid document should fix the
+  // reported errors first rather than being handed a preview built from a
+  // broken one. Empty whenever valid is false, for any reason (malformed
+  // YAML, an unresolvable template, or a schema/CEL validation failure).
+  bytes resolved_blueprint = 3;
+}
+
+// BlueprintValidationError describes a single problem found while validating
+// a blueprint.
+message BlueprintValidationError {
+  // line is the 1-indexed source line the error applies to, or 0 when the
+  // underlying validator does not report a position (e.g. schema checks that
+  // operate on the decoded blueprint rather than the YAML source).
+  int32 line = 1;
+  // column is the 1-indexed source column the error applies to, or 0 when unknown.
+  int32 column = 2;
+  // field is the blueprint field the error applies to, if applicable.
+  string field = 3;
+  // message is a human-readable description of the problem.
+  string message = 4;
+}
+
+// OrgBlueprint is a blueprint definition stored in the database and scoped
+// to a single organization, as opposed to the file-based, global blueprints
+// managed via GetBlueprints/GetBlueprint. name and org together identify the
+// blueprint; a blueprint of the same name may exist independently per org,
+// and takes precedence over a file-based blueprint of that name when a user
+// from this org requests it.
+message OrgBlueprint {
+  string name        = 1;
+  string org         = 2; // required
+  string description = 3;
+
+  // yaml is the raw blueprint YAML content: either a bare blueprint document
+  // or one wrapped in a top-level `blueprint:` key, in the same shape
+  // ValidateBlueprint/GetBlueprintResponse.blueprint accept/return. If it
+  // references an existing file-based Template via `template:`, that
+  // template's already-registered definition is merged in exactly as it
+  // would be for a blueprint loaded from disk. An org blueprint cannot
+  // inherit from another org blueprint, only from a file-based Template.
+  bytes yaml = 4;
+
+  bool is_template = 5;
+
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+// OrgBlueprintList holds every org blueprint returned by ListOrgBlueprints.
+message OrgBlueprintList {
+  repeated OrgBlueprint blueprints = 1;
+}
+
+// ListOrgBlueprintsRequest carries the org whose database-backed blueprints
+// are being listed.
+message ListOrgBlueprintsRequest {
+  string org = 1; // required
+}
+
+// GetOrgBlueprintRequest identifies a single org blueprint by name and org.
+message GetOrgBlueprintRequest {
+  string name = 1;
+  string org  = 2; // required
+}
+
+// CreateOrgBlueprintRequest registers a new org-scoped blueprint.
+message CreateOrgBlueprintRequest {
+  string name        = 1;
+  string org         = 2; // required
+  string description = 3;
+  bytes  yaml         = 4; // required
+  bool   is_template  = 5;
+}
+
+// UpdateOrgBlueprintRequest replaces the yaml content of an existing org
+// blueprint, identified by name and org (both immutable). description is
+// only changed when set; yaml is always replaced wholesale with the
+// submitted content, since it is a full document rather than a small field.
+message UpdateOrgBlueprintRequest {
+  string                      name        = 1;
+  string                      org         = 2; // required
+  google.protobuf.StringValue description = 3;
+  bytes                       yaml        = 4; // required
+}
+
+// DeleteOrgBlueprintRequest identifies the org blueprint to remove, by name
+// and org.
+message DeleteOrgBlueprintRequest {
+  string name = 1;
+  string org  = 2; // required
+}
+
+// DeleteOrgBlueprintResponse indicates whether the deletion was successful.
+message DeleteOrgBlueprintResponse {
+  bool success = 1;
 }
 
 // ProvisionWorkspaceRequest initiates provisioning of a new workspace.

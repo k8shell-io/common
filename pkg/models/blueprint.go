@@ -73,6 +73,43 @@ type BlueprintSummary struct {
 	IsTemplate  bool   `json:"isTemplate,omitempty"`
 }
 
+// BlueprintValidation reports whether a submitted blueprint is valid, lists
+// every problem found, if any, and carries the resolved blueprint document
+// (the submission merged with its referenced Template, if any). Blueprint
+// is decoded generically rather than into Blueprint/CustomBlueprint above,
+// since unresolved CEL expressions may appear in place of their normal
+// field type — mirroring how GetBlueprintResponse's raw content is handled.
+// It's only populated when Valid is true: a caller should fix the reported
+// Errors first rather than preview a document built from an invalid
+// submission.
+type BlueprintValidation struct {
+	Valid     bool                        `yaml:"valid" json:"valid"`
+	Errors    []*BlueprintValidationError `yaml:"errors,omitempty" json:"errors,omitempty"`
+	Blueprint any                         `yaml:"blueprint,omitempty" json:"blueprint,omitempty"`
+}
+
+// BlueprintValidationError describes a single problem found while
+// validating a blueprint.
+type BlueprintValidationError struct {
+	Line    int32  `yaml:"line,omitempty" json:"line,omitempty"`
+	Column  int32  `yaml:"column,omitempty" json:"column,omitempty"`
+	Field   string `yaml:"field,omitempty" json:"field,omitempty"`
+	Message string `yaml:"message" json:"message"`
+}
+
+// OrgBlueprint is a blueprint definition stored in the database and scoped
+// to a single organization, as opposed to the file-based, global blueprints
+// (Blueprint/BlueprintSummary above). Name and Org together identify it.
+type OrgBlueprint struct {
+	Name        string    `json:"name"`
+	Org         string    `json:"org"`
+	Description string    `json:"description,omitempty"`
+	YAML        []byte    `json:"yaml"`
+	IsTemplate  bool      `json:"isTemplate,omitempty"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
+}
+
 // InitScript represents a named initialization script
 type InitScript struct {
 	Name   string `yaml:"name" json:"name" validate:"required"`

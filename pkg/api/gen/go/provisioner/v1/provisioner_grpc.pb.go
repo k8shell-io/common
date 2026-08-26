@@ -35,6 +35,12 @@ const (
 	ProvisionerService_QueryWorkspaces_FullMethodName          = "/provisioner.v1.ProvisionerService/QueryWorkspaces"
 	ProvisionerService_GetBlueprints_FullMethodName            = "/provisioner.v1.ProvisionerService/GetBlueprints"
 	ProvisionerService_GetBlueprint_FullMethodName             = "/provisioner.v1.ProvisionerService/GetBlueprint"
+	ProvisionerService_ValidateBlueprint_FullMethodName        = "/provisioner.v1.ProvisionerService/ValidateBlueprint"
+	ProvisionerService_ListOrgBlueprints_FullMethodName        = "/provisioner.v1.ProvisionerService/ListOrgBlueprints"
+	ProvisionerService_GetOrgBlueprint_FullMethodName          = "/provisioner.v1.ProvisionerService/GetOrgBlueprint"
+	ProvisionerService_CreateOrgBlueprint_FullMethodName       = "/provisioner.v1.ProvisionerService/CreateOrgBlueprint"
+	ProvisionerService_UpdateOrgBlueprint_FullMethodName       = "/provisioner.v1.ProvisionerService/UpdateOrgBlueprint"
+	ProvisionerService_DeleteOrgBlueprint_FullMethodName       = "/provisioner.v1.ProvisionerService/DeleteOrgBlueprint"
 	ProvisionerService_ProvisionWorkspaceStream_FullMethodName = "/provisioner.v1.ProvisionerService/ProvisionWorkspaceStream"
 	ProvisionerService_DeleteWorkspace_FullMethodName          = "/provisioner.v1.ProvisionerService/DeleteWorkspace"
 	ProvisionerService_DeleteUserWorkspaces_FullMethodName     = "/provisioner.v1.ProvisionerService/DeleteUserWorkspaces"
@@ -74,6 +80,31 @@ type ProvisionerServiceClient interface {
 	// strings rather than evaluated, mirroring k8shelld.v1's GetBlueprint
 	// shape.
 	GetBlueprint(ctx context.Context, in *GetBlueprintRequest, opts ...grpc.CallOption) (*GetBlueprintResponse, error)
+	// ValidateBlueprint validates a blueprint YAML document without persisting
+	// or registering it, returning every validation problem found. Problems
+	// include YAML syntax errors, unknown fields, CEL template errors, and
+	// blueprint schema violations, each carrying source line/column
+	// information where the underlying validator provides one.
+	ValidateBlueprint(ctx context.Context, in *ValidateBlueprintRequest, opts ...grpc.CallOption) (*ValidateBlueprintResponse, error)
+	// ListOrgBlueprints returns every blueprint stored in the database for a
+	// single organization. Unlike GetBlueprints (file-based, global), these
+	// are persisted per-org and take precedence over a file-based blueprint of
+	// the same name when a user from that org requests it.
+	ListOrgBlueprints(ctx context.Context, in *ListOrgBlueprintsRequest, opts ...grpc.CallOption) (*OrgBlueprintList, error)
+	// GetOrgBlueprint retrieves a single org-scoped, database-backed blueprint
+	// by name and org.
+	GetOrgBlueprint(ctx context.Context, in *GetOrgBlueprintRequest, opts ...grpc.CallOption) (*OrgBlueprint, error)
+	// CreateOrgBlueprint stores a new org-scoped blueprint in the database.
+	// The submitted YAML is validated exactly as ValidateBlueprint does before
+	// it is persisted.
+	CreateOrgBlueprint(ctx context.Context, in *CreateOrgBlueprintRequest, opts ...grpc.CallOption) (*OrgBlueprint, error)
+	// UpdateOrgBlueprint replaces the YAML content (and optionally the
+	// description) of an existing org-scoped blueprint, identified by name and
+	// org. The submitted YAML is validated exactly as ValidateBlueprint does
+	// before it is persisted.
+	UpdateOrgBlueprint(ctx context.Context, in *UpdateOrgBlueprintRequest, opts ...grpc.CallOption) (*OrgBlueprint, error)
+	// DeleteOrgBlueprint removes an org-scoped blueprint from the database.
+	DeleteOrgBlueprint(ctx context.Context, in *DeleteOrgBlueprintRequest, opts ...grpc.CallOption) (*DeleteOrgBlueprintResponse, error)
 	// ProvisionWorkspaceStream provisions a new workspace and streams progress
 	// events back to the caller until the workspace is ready or an error occurs.
 	ProvisionWorkspaceStream(ctx context.Context, in *ProvisionWorkspaceRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ProvisionWorkspaceResponse], error)
@@ -178,6 +209,66 @@ func (c *provisionerServiceClient) GetBlueprint(ctx context.Context, in *GetBlue
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetBlueprintResponse)
 	err := c.cc.Invoke(ctx, ProvisionerService_GetBlueprint_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *provisionerServiceClient) ValidateBlueprint(ctx context.Context, in *ValidateBlueprintRequest, opts ...grpc.CallOption) (*ValidateBlueprintResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ValidateBlueprintResponse)
+	err := c.cc.Invoke(ctx, ProvisionerService_ValidateBlueprint_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *provisionerServiceClient) ListOrgBlueprints(ctx context.Context, in *ListOrgBlueprintsRequest, opts ...grpc.CallOption) (*OrgBlueprintList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OrgBlueprintList)
+	err := c.cc.Invoke(ctx, ProvisionerService_ListOrgBlueprints_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *provisionerServiceClient) GetOrgBlueprint(ctx context.Context, in *GetOrgBlueprintRequest, opts ...grpc.CallOption) (*OrgBlueprint, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OrgBlueprint)
+	err := c.cc.Invoke(ctx, ProvisionerService_GetOrgBlueprint_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *provisionerServiceClient) CreateOrgBlueprint(ctx context.Context, in *CreateOrgBlueprintRequest, opts ...grpc.CallOption) (*OrgBlueprint, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OrgBlueprint)
+	err := c.cc.Invoke(ctx, ProvisionerService_CreateOrgBlueprint_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *provisionerServiceClient) UpdateOrgBlueprint(ctx context.Context, in *UpdateOrgBlueprintRequest, opts ...grpc.CallOption) (*OrgBlueprint, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OrgBlueprint)
+	err := c.cc.Invoke(ctx, ProvisionerService_UpdateOrgBlueprint_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *provisionerServiceClient) DeleteOrgBlueprint(ctx context.Context, in *DeleteOrgBlueprintRequest, opts ...grpc.CallOption) (*DeleteOrgBlueprintResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteOrgBlueprintResponse)
+	err := c.cc.Invoke(ctx, ProvisionerService_DeleteOrgBlueprint_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -311,6 +402,31 @@ type ProvisionerServiceServer interface {
 	// strings rather than evaluated, mirroring k8shelld.v1's GetBlueprint
 	// shape.
 	GetBlueprint(context.Context, *GetBlueprintRequest) (*GetBlueprintResponse, error)
+	// ValidateBlueprint validates a blueprint YAML document without persisting
+	// or registering it, returning every validation problem found. Problems
+	// include YAML syntax errors, unknown fields, CEL template errors, and
+	// blueprint schema violations, each carrying source line/column
+	// information where the underlying validator provides one.
+	ValidateBlueprint(context.Context, *ValidateBlueprintRequest) (*ValidateBlueprintResponse, error)
+	// ListOrgBlueprints returns every blueprint stored in the database for a
+	// single organization. Unlike GetBlueprints (file-based, global), these
+	// are persisted per-org and take precedence over a file-based blueprint of
+	// the same name when a user from that org requests it.
+	ListOrgBlueprints(context.Context, *ListOrgBlueprintsRequest) (*OrgBlueprintList, error)
+	// GetOrgBlueprint retrieves a single org-scoped, database-backed blueprint
+	// by name and org.
+	GetOrgBlueprint(context.Context, *GetOrgBlueprintRequest) (*OrgBlueprint, error)
+	// CreateOrgBlueprint stores a new org-scoped blueprint in the database.
+	// The submitted YAML is validated exactly as ValidateBlueprint does before
+	// it is persisted.
+	CreateOrgBlueprint(context.Context, *CreateOrgBlueprintRequest) (*OrgBlueprint, error)
+	// UpdateOrgBlueprint replaces the YAML content (and optionally the
+	// description) of an existing org-scoped blueprint, identified by name and
+	// org. The submitted YAML is validated exactly as ValidateBlueprint does
+	// before it is persisted.
+	UpdateOrgBlueprint(context.Context, *UpdateOrgBlueprintRequest) (*OrgBlueprint, error)
+	// DeleteOrgBlueprint removes an org-scoped blueprint from the database.
+	DeleteOrgBlueprint(context.Context, *DeleteOrgBlueprintRequest) (*DeleteOrgBlueprintResponse, error)
 	// ProvisionWorkspaceStream provisions a new workspace and streams progress
 	// events back to the caller until the workspace is ready or an error occurs.
 	ProvisionWorkspaceStream(*ProvisionWorkspaceRequest, grpc.ServerStreamingServer[ProvisionWorkspaceResponse]) error
@@ -371,6 +487,24 @@ func (UnimplementedProvisionerServiceServer) GetBlueprints(context.Context, *Get
 }
 func (UnimplementedProvisionerServiceServer) GetBlueprint(context.Context, *GetBlueprintRequest) (*GetBlueprintResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetBlueprint not implemented")
+}
+func (UnimplementedProvisionerServiceServer) ValidateBlueprint(context.Context, *ValidateBlueprintRequest) (*ValidateBlueprintResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ValidateBlueprint not implemented")
+}
+func (UnimplementedProvisionerServiceServer) ListOrgBlueprints(context.Context, *ListOrgBlueprintsRequest) (*OrgBlueprintList, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListOrgBlueprints not implemented")
+}
+func (UnimplementedProvisionerServiceServer) GetOrgBlueprint(context.Context, *GetOrgBlueprintRequest) (*OrgBlueprint, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetOrgBlueprint not implemented")
+}
+func (UnimplementedProvisionerServiceServer) CreateOrgBlueprint(context.Context, *CreateOrgBlueprintRequest) (*OrgBlueprint, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateOrgBlueprint not implemented")
+}
+func (UnimplementedProvisionerServiceServer) UpdateOrgBlueprint(context.Context, *UpdateOrgBlueprintRequest) (*OrgBlueprint, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateOrgBlueprint not implemented")
+}
+func (UnimplementedProvisionerServiceServer) DeleteOrgBlueprint(context.Context, *DeleteOrgBlueprintRequest) (*DeleteOrgBlueprintResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteOrgBlueprint not implemented")
 }
 func (UnimplementedProvisionerServiceServer) ProvisionWorkspaceStream(*ProvisionWorkspaceRequest, grpc.ServerStreamingServer[ProvisionWorkspaceResponse]) error {
 	return status.Error(codes.Unimplemented, "method ProvisionWorkspaceStream not implemented")
@@ -543,6 +677,114 @@ func _ProvisionerService_GetBlueprint_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProvisionerService_ValidateBlueprint_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ValidateBlueprintRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProvisionerServiceServer).ValidateBlueprint(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProvisionerService_ValidateBlueprint_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProvisionerServiceServer).ValidateBlueprint(ctx, req.(*ValidateBlueprintRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProvisionerService_ListOrgBlueprints_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListOrgBlueprintsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProvisionerServiceServer).ListOrgBlueprints(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProvisionerService_ListOrgBlueprints_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProvisionerServiceServer).ListOrgBlueprints(ctx, req.(*ListOrgBlueprintsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProvisionerService_GetOrgBlueprint_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOrgBlueprintRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProvisionerServiceServer).GetOrgBlueprint(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProvisionerService_GetOrgBlueprint_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProvisionerServiceServer).GetOrgBlueprint(ctx, req.(*GetOrgBlueprintRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProvisionerService_CreateOrgBlueprint_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateOrgBlueprintRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProvisionerServiceServer).CreateOrgBlueprint(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProvisionerService_CreateOrgBlueprint_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProvisionerServiceServer).CreateOrgBlueprint(ctx, req.(*CreateOrgBlueprintRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProvisionerService_UpdateOrgBlueprint_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateOrgBlueprintRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProvisionerServiceServer).UpdateOrgBlueprint(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProvisionerService_UpdateOrgBlueprint_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProvisionerServiceServer).UpdateOrgBlueprint(ctx, req.(*UpdateOrgBlueprintRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProvisionerService_DeleteOrgBlueprint_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteOrgBlueprintRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProvisionerServiceServer).DeleteOrgBlueprint(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProvisionerService_DeleteOrgBlueprint_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProvisionerServiceServer).DeleteOrgBlueprint(ctx, req.(*DeleteOrgBlueprintRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ProvisionerService_ProvisionWorkspaceStream_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(ProvisionWorkspaceRequest)
 	if err := stream.RecvMsg(m); err != nil {
@@ -707,6 +949,30 @@ var ProvisionerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetBlueprint",
 			Handler:    _ProvisionerService_GetBlueprint_Handler,
+		},
+		{
+			MethodName: "ValidateBlueprint",
+			Handler:    _ProvisionerService_ValidateBlueprint_Handler,
+		},
+		{
+			MethodName: "ListOrgBlueprints",
+			Handler:    _ProvisionerService_ListOrgBlueprints_Handler,
+		},
+		{
+			MethodName: "GetOrgBlueprint",
+			Handler:    _ProvisionerService_GetOrgBlueprint_Handler,
+		},
+		{
+			MethodName: "CreateOrgBlueprint",
+			Handler:    _ProvisionerService_CreateOrgBlueprint_Handler,
+		},
+		{
+			MethodName: "UpdateOrgBlueprint",
+			Handler:    _ProvisionerService_UpdateOrgBlueprint_Handler,
+		},
+		{
+			MethodName: "DeleteOrgBlueprint",
+			Handler:    _ProvisionerService_DeleteOrgBlueprint_Handler,
 		},
 		{
 			MethodName: "DeleteWorkspace",

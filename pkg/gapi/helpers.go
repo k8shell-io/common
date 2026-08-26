@@ -8,6 +8,7 @@ import (
 	provisionerv1 "github.com/k8shell-io/common/pkg/api/gen/go/provisioner/v1"
 	"github.com/k8shell-io/common/pkg/models"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"gopkg.in/yaml.v3"
 )
 
 // *** User and related models
@@ -457,6 +458,81 @@ func ProtoToBlueprintSummary(pb *commonv1.BlueprintSummary) *models.BlueprintSum
 		Description: pb.GetDescription(),
 		IsTemplate:  pb.GetIsTemplate(),
 	}
+}
+
+// ProtoToBlueprintValidation converts a protobuf ValidateBlueprintResponse
+// message to its Go model, decoding ResolvedBlueprint generically into
+// Blueprint (see BlueprintValidation). ResolvedBlueprint is only set by the
+// server when Valid is true, so Blueprint is left nil for any invalid
+// submission; returns an error only if a present ResolvedBlueprint fails to
+// parse as YAML.
+func ProtoToBlueprintValidation(pb *provisionerv1.ValidateBlueprintResponse) (*models.BlueprintValidation, error) {
+	if pb == nil {
+		return nil, nil
+	}
+	errs := make([]*models.BlueprintValidationError, 0, len(pb.GetErrors()))
+	for _, e := range pb.GetErrors() {
+		errs = append(errs, &models.BlueprintValidationError{
+			Line:    e.GetLine(),
+			Column:  e.GetColumn(),
+			Field:   e.GetField(),
+			Message: e.GetMessage(),
+		})
+	}
+	v := &models.BlueprintValidation{
+		Valid:  pb.GetValid(),
+		Errors: errs,
+	}
+	if raw := pb.GetResolvedBlueprint(); len(raw) > 0 {
+		if err := yaml.Unmarshal(raw, &v.Blueprint); err != nil {
+			return nil, err
+		}
+	}
+	return v, nil
+}
+
+// OrgBlueprintToProto converts a Go OrgBlueprint model to its protobuf message.
+func OrgBlueprintToProto(m *models.OrgBlueprint) *provisionerv1.OrgBlueprint {
+	if m == nil {
+		return nil
+	}
+	var createdAt, updatedAt *timestamppb.Timestamp
+	if !m.CreatedAt.IsZero() {
+		createdAt = timestamppb.New(m.CreatedAt)
+	}
+	if !m.UpdatedAt.IsZero() {
+		updatedAt = timestamppb.New(m.UpdatedAt)
+	}
+	return &provisionerv1.OrgBlueprint{
+		Name:        m.Name,
+		Org:         m.Org,
+		Description: m.Description,
+		Yaml:        m.YAML,
+		IsTemplate:  m.IsTemplate,
+		CreatedAt:   createdAt,
+		UpdatedAt:   updatedAt,
+	}
+}
+
+// ProtoToOrgBlueprint converts a protobuf OrgBlueprint message to its Go model.
+func ProtoToOrgBlueprint(pb *provisionerv1.OrgBlueprint) *models.OrgBlueprint {
+	if pb == nil {
+		return nil
+	}
+	m := &models.OrgBlueprint{
+		Name:        pb.GetName(),
+		Org:         pb.GetOrg(),
+		Description: pb.GetDescription(),
+		YAML:        pb.GetYaml(),
+		IsTemplate:  pb.GetIsTemplate(),
+	}
+	if pb.GetCreatedAt() != nil {
+		m.CreatedAt = pb.GetCreatedAt().AsTime()
+	}
+	if pb.GetUpdatedAt() != nil {
+		m.UpdatedAt = pb.GetUpdatedAt().AsTime()
+	}
+	return m
 }
 
 // ProtoToInjectNamespaces converts a protobuf ListInjectNamespacesResponse
