@@ -71,6 +71,26 @@ type BlueprintSummary struct {
 	Name        string `json:"name"`
 	Description string `json:"description,omitempty"`
 	IsTemplate  bool   `json:"isTemplate,omitempty"`
+	// Org is the organization the blueprint is scoped to, or empty for a
+	// file-based, global blueprint. Always emitted so a client can rely on
+	// the field being present (paired with IsGlobal).
+	Org string `json:"org"`
+	// IsGlobal is true when the blueprint is not scoped to an organization
+	// (Org is empty) and is therefore available to every organization.
+	IsGlobal bool `json:"isGlobal,omitempty"`
+	// Template is the name of the parent template this blueprint derives from,
+	// or empty when it does not inherit from one.
+	Template string `json:"template,omitempty"`
+	// CreatedAt is when the blueprint was first registered. For an org-scoped
+	// database blueprint this is the row's creation time; for a file-based
+	// blueprint it is the source file's last-modified time (equal to
+	// UpdatedAt), since a file has no separate creation record.
+	CreatedAt time.Time `json:"createdAt"`
+	// UpdatedAt is when the blueprint was last changed. For an org-scoped
+	// database blueprint this is the row's last-update time; for a file-based
+	// blueprint it is the source file's last-modified time (equal to
+	// CreatedAt).
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 // BlueprintValidation reports whether a submitted blueprint is valid, lists
@@ -108,6 +128,38 @@ type OrgBlueprint struct {
 	IsTemplate  bool      `json:"isTemplate,omitempty"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
+}
+
+// OrgBlueprintWriteRequest is the HTTP request body shared by POST /blueprints
+// and PUT /blueprints/{name}, which register or replace an org-scoped
+// blueprint. YAML is the full blueprint document (base64-encoded when the
+// body is sent as JSON); name, description and isTemplate are read from it.
+// Org is optional — it defaults to the caller's own organization (from the
+// JWT claims) when omitted. Proto counterpart is
+// provisionerv1.CreateBlueprintRequest / UpdateBlueprintRequest.
+type OrgBlueprintWriteRequest struct {
+	Org  string `json:"org,omitempty"`
+	YAML []byte `json:"yaml"`
+}
+
+// OrgBlueprintDocument is the API's response shape for a single org blueprint:
+// the fully merged spec (Blueprint), the fields defined directly on the
+// blueprint itself (OwnBlueprint), the name of its immediate parent Template,
+// if any, and the Org the view is scoped to. A field present in Blueprint but
+// absent from OwnBlueprint is inherited rather than set on this blueprint —
+// comparing the two tells the frontend which fields are inherited versus own.
+// Clients editing a blueprint should only write back fields present in
+// OwnBlueprint (plus whatever the user changed), so unmodified inherited
+// values aren't pinned onto the child. Org is metadata of this wrapper, not
+// part of the blueprint spec — the editor carries it into the save request
+// since the blueprint YAML has no org of its own. Blueprint/OwnBlueprint are
+// decoded generically rather than into Blueprint above, since unevaluated
+// "!cel:"-prefixed placeholders may appear in place of a field's normal type.
+type OrgBlueprintDocument struct {
+	Blueprint    any    `json:"blueprint" yaml:"blueprint"`
+	OwnBlueprint any    `json:"ownBlueprint" yaml:"ownBlueprint"`
+	Template     string `json:"template,omitempty" yaml:"template,omitempty"`
+	Org          string `json:"org,omitempty" yaml:"org,omitempty"`
 }
 
 // InitScript represents a named initialization script

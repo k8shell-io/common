@@ -231,6 +231,9 @@ var scopeCatalogSource = []domainSpec{
 			{action: "blueprints:read", label: "Read", entries: []entrySpec{
 				{scope: "blueprints:read", label: "Read", description: "Read blueprint definitions."},
 			}},
+			{action: "blueprints:write", label: "Write", entries: []entrySpec{
+				{scope: "blueprints:write", label: "Write", description: "Create, update, or delete organization-scoped blueprints."},
+			}},
 		},
 	},
 	{

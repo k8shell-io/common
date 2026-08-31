@@ -445,6 +445,11 @@ func BlueprintSummaryToProto(m *models.BlueprintSummary) *commonv1.BlueprintSumm
 		Name:        m.Name,
 		Description: m.Description,
 		IsTemplate:  m.IsTemplate,
+		Org:         m.Org,
+		IsGlobal:    m.IsGlobal,
+		Template:    m.Template,
+		CreatedAt:   timestamppb.New(m.CreatedAt),
+		UpdatedAt:   timestamppb.New(m.UpdatedAt),
 	}
 }
 
@@ -457,6 +462,11 @@ func ProtoToBlueprintSummary(pb *commonv1.BlueprintSummary) *models.BlueprintSum
 		Name:        pb.GetName(),
 		Description: pb.GetDescription(),
 		IsTemplate:  pb.GetIsTemplate(),
+		Org:         pb.GetOrg(),
+		IsGlobal:    pb.GetIsGlobal(),
+		Template:    pb.GetTemplate(),
+		CreatedAt:   pb.GetCreatedAt().AsTime(),
+		UpdatedAt:   pb.GetUpdatedAt().AsTime(),
 	}
 }
 

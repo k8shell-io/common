@@ -13,7 +13,6 @@ option go_package = "github.com/k8shell-io/common/pkg/api/gen/go/provisioner/v1;
 import "common/v1/common.proto";
 import "query/v1/query.proto";
 import "google/protobuf/timestamp.proto";
-import "google/protobuf/wrappers.proto";
 
 // ProvisionerService manages the full lifecycle of user workspaces.
 // Clients interact with this service to provision new workspaces
@@ -37,14 +36,17 @@ service ProvisionerService {
   // as advertised by GetWorkspacesQuerySchema.
   rpc QueryWorkspaces(QueryWorkspacesRequest) returns (GetWorkspacesResponse);
 
-  // GetBlueprints returns every blueprint registered in the provisioner,
-  // regardless of user.
-  rpc GetBlueprints(GetBlueprintsRequest) returns (GetBlueprintsResponse);
+  // ListBlueprints returns a summary of every blueprint the provisioner
+  // knows about, regardless of user: the file-based global blueprints and
+  // every org-scoped database blueprint. Each summary carries its org (empty
+  // when global) and is_global flag so a client can filter by organization.
+  rpc ListBlueprints(ListBlueprintsRequest) returns (ListBlueprintsResponse);
 
   // GetBlueprint returns the full raw (unevaluated) spec of a single
   // blueprint by name. CEL expressions are returned as "!cel:"-prefixed
   // strings rather than evaluated, mirroring k8shelld.v1's GetBlueprint
-  // shape.
+  // shape. When org is set, an org-scoped database blueprint of that name
+  // takes precedence over a file-based blueprint of the same name.
   rpc GetBlueprint(GetBlueprintRequest) returns (GetBlueprintResponse);
 
   // ValidateBlueprint validates a blueprint YAML document without persisting
@@ -54,29 +56,23 @@ service ProvisionerService {
   // information where the underlying validator provides one.
   rpc ValidateBlueprint(ValidateBlueprintRequest) returns (ValidateBlueprintResponse);
 
-  // ListOrgBlueprints returns every blueprint stored in the database for a
-  // single organization. Unlike GetBlueprints (file-based, global), these
-  // are persisted per-org and take precedence over a file-based blueprint of
-  // the same name when a user from that org requests it.
-  rpc ListOrgBlueprints(ListOrgBlueprintsRequest) returns (OrgBlueprintList);
+  // CreateBlueprint stores a new org-scoped blueprint in the database from
+  // the submitted YAML document. name, description and is_template are read
+  // from the document itself; org is the only other input. The YAML is
+  // validated exactly as ValidateBlueprint does before it is persisted.
+  rpc CreateBlueprint(CreateBlueprintRequest) returns (OrgBlueprint);
 
-  // GetOrgBlueprint retrieves a single org-scoped, database-backed blueprint
-  // by name and org.
-  rpc GetOrgBlueprint(GetOrgBlueprintRequest) returns (OrgBlueprint);
+  // UpdateBlueprint replaces an existing org-scoped blueprint's content with
+  // the submitted YAML document, identified by (org, name-from-document).
+  // Fails with FAILED_PRECONDITION when name refers to a file-based
+  // blueprint, which is read-only. The YAML is validated exactly as
+  // ValidateBlueprint does before it is persisted.
+  rpc UpdateBlueprint(UpdateBlueprintRequest) returns (OrgBlueprint);
 
-  // CreateOrgBlueprint stores a new org-scoped blueprint in the database.
-  // The submitted YAML is validated exactly as ValidateBlueprint does before
-  // it is persisted.
-  rpc CreateOrgBlueprint(CreateOrgBlueprintRequest) returns (OrgBlueprint);
-
-  // UpdateOrgBlueprint replaces the YAML content (and optionally the
-  // description) of an existing org-scoped blueprint, identified by name and
-  // org. The submitted YAML is validated exactly as ValidateBlueprint does
-  // before it is persisted.
-  rpc UpdateOrgBlueprint(UpdateOrgBlueprintRequest) returns (OrgBlueprint);
-
-  // DeleteOrgBlueprint removes an org-scoped blueprint from the database.
-  rpc DeleteOrgBlueprint(DeleteOrgBlueprintRequest) returns (DeleteOrgBlueprintResponse);
+  // DeleteBlueprint removes an org-scoped blueprint from the database. Fails
+  // with FAILED_PRECONDITION when name refers to a file-based blueprint,
+  // which is read-only.
+  rpc DeleteBlueprint(DeleteBlueprintRequest) returns (DeleteBlueprintResponse);
 
   // ProvisionWorkspaceStream provisions a new workspace and streams progress
   // events back to the caller until the workspace is ready or an error occurs.
@@ -165,12 +161,13 @@ message QueryWorkspacesRequest {
   query.v1.Payload query = 1;
 }
 
-// GetBlueprintsRequest requests every blueprint registered in the provisioner.
-message GetBlueprintsRequest {}
+// ListBlueprintsRequest requests a summary of every blueprint the
+// provisioner knows about.
+message ListBlueprintsRequest {}
 
-// GetBlueprintsResponse contains all blueprints registered in the provisioner.
-message GetBlueprintsResponse {
-  // blueprints is the list of all registered blueprints.
+// ListBlueprintsResponse carries a summary of every blueprint: the
+// file-based, global blueprints and every org-scoped database blueprint.
+message ListBlueprintsResponse {
   repeated common.v1.BlueprintSummary blueprints = 1;
 }
 
@@ -178,6 +175,12 @@ message GetBlueprintsResponse {
 message GetBlueprintRequest {
   // name is the unique identifier of the blueprint.
   string name = 1;
+
+  // org optionally scopes the lookup to an organization. When set, an
+  // org-scoped database blueprint named `name` in this org is returned in
+  // preference to a file-based blueprint of the same name; when empty, only
+  // file-based global blueprints are considered.
+  string org = 2;
 }
 
 // GetBlueprintResponse carries the raw (unevaluated) YAML content of the
@@ -240,11 +243,11 @@ message BlueprintValidationError {
 }
 
 // OrgBlueprint is a blueprint definition stored in the database and scoped
-// to a single organization, as opposed to the file-based, global blueprints
-// managed via GetBlueprints/GetBlueprint. name and org together identify the
-// blueprint; a blueprint of the same name may exist independently per org,
-// and takes precedence over a file-based blueprint of that name when a user
-// from this org requests it.
+// to a single organization, as opposed to the file-based, global blueprints.
+// name and org together identify the blueprint; a blueprint of the same name
+// may exist independently per org, and takes precedence over a file-based
+// blueprint of that name when a user from this org requests it. Returned by
+// CreateBlueprint and UpdateBlueprint.
 message OrgBlueprint {
   string name        = 1;
   string org         = 2; // required
@@ -265,52 +268,31 @@ message OrgBlueprint {
   google.protobuf.Timestamp updated_at = 7;
 }
 
-// OrgBlueprintList holds every org blueprint returned by ListOrgBlueprints.
-message OrgBlueprintList {
-  repeated OrgBlueprint blueprints = 1;
+// CreateBlueprintRequest registers a new org-scoped blueprint from a YAML
+// document. name, description and is_template are read from the document;
+// org is the only other input.
+message CreateBlueprintRequest {
+  string org  = 1; // required
+  bytes  yaml = 2; // required: a bare blueprint document or one wrapped in a top-level `blueprint:` key
 }
 
-// ListOrgBlueprintsRequest carries the org whose database-backed blueprints
-// are being listed.
-message ListOrgBlueprintsRequest {
-  string org = 1; // required
+// UpdateBlueprintRequest replaces the content of an existing org-scoped
+// blueprint, identified by org plus the name read from the submitted YAML
+// document. yaml is replaced wholesale.
+message UpdateBlueprintRequest {
+  string org  = 1; // required
+  bytes  yaml = 2; // required
 }
 
-// GetOrgBlueprintRequest identifies a single org blueprint by name and org.
-message GetOrgBlueprintRequest {
-  string name = 1;
-  string org  = 2; // required
+// DeleteBlueprintRequest identifies the org-scoped blueprint to remove, by
+// org and name.
+message DeleteBlueprintRequest {
+  string org  = 1; // required
+  string name = 2; // required
 }
 
-// CreateOrgBlueprintRequest registers a new org-scoped blueprint.
-message CreateOrgBlueprintRequest {
-  string name        = 1;
-  string org         = 2; // required
-  string description = 3;
-  bytes  yaml         = 4; // required
-  bool   is_template  = 5;
-}
-
-// UpdateOrgBlueprintRequest replaces the yaml content of an existing org
-// blueprint, identified by name and org (both immutable). description is
-// only changed when set; yaml is always replaced wholesale with the
-// submitted content, since it is a full document rather than a small field.
-message UpdateOrgBlueprintRequest {
-  string                      name        = 1;
-  string                      org         = 2; // required
-  google.protobuf.StringValue description = 3;
-  bytes                       yaml        = 4; // required
-}
-
-// DeleteOrgBlueprintRequest identifies the org blueprint to remove, by name
-// and org.
-message DeleteOrgBlueprintRequest {
-  string name = 1;
-  string org  = 2; // required
-}
-
-// DeleteOrgBlueprintResponse indicates whether the deletion was successful.
-message DeleteOrgBlueprintResponse {
+// DeleteBlueprintResponse indicates whether the deletion was successful.
+message DeleteBlueprintResponse {
   bool success = 1;
 }
 

@@ -269,4 +269,23 @@ message BlueprintSummary {
   // is_template indicates whether this blueprint is a base template that other
   // blueprints may derive from.
   bool is_template = 3;
+  // org is the organization this blueprint is scoped to. Empty for a
+  // file-based, global blueprint that every organization can see.
+  string org = 4;
+  // is_global is true when the blueprint is not scoped to any organization
+  // (org is empty) and is therefore available to every organization.
+  bool is_global = 5;
+  // template is the name of the parent template this blueprint derives from,
+  // or empty when it does not inherit from one.
+  string template = 6;
+  // created_at is when the blueprint was first registered. For an org-scoped
+  // database blueprint this is the row's creation time; for a file-based
+  // blueprint it is the source file's last-modified time (equal to
+  // updated_at), since a file has no separate creation record.
+  google.protobuf.Timestamp created_at = 7;
+  // updated_at is when the blueprint was last changed. For an org-scoped
+  // database blueprint this is the row's last-update time; for a file-based
+  // blueprint it is the source file's last-modified time (equal to
+  // created_at).
+  google.protobuf.Timestamp updated_at = 8;
 }

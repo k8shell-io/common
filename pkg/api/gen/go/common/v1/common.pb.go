@@ -1201,7 +1201,26 @@ type BlueprintSummary struct {
 	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
 	// is_template indicates whether this blueprint is a base template that other
 	// blueprints may derive from.
-	IsTemplate    bool `protobuf:"varint,3,opt,name=is_template,json=isTemplate,proto3" json:"is_template,omitempty"`
+	IsTemplate bool `protobuf:"varint,3,opt,name=is_template,json=isTemplate,proto3" json:"is_template,omitempty"`
+	// org is the organization this blueprint is scoped to. Empty for a
+	// file-based, global blueprint that every organization can see.
+	Org string `protobuf:"bytes,4,opt,name=org,proto3" json:"org,omitempty"`
+	// is_global is true when the blueprint is not scoped to any organization
+	// (org is empty) and is therefore available to every organization.
+	IsGlobal bool `protobuf:"varint,5,opt,name=is_global,json=isGlobal,proto3" json:"is_global,omitempty"`
+	// template is the name of the parent template this blueprint derives from,
+	// or empty when it does not inherit from one.
+	Template string `protobuf:"bytes,6,opt,name=template,proto3" json:"template,omitempty"`
+	// created_at is when the blueprint was first registered. For an org-scoped
+	// database blueprint this is the row's creation time; for a file-based
+	// blueprint it is the source file's last-modified time (equal to
+	// updated_at), since a file has no separate creation record.
+	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	// updated_at is when the blueprint was last changed. For an org-scoped
+	// database blueprint this is the row's last-update time; for a file-based
+	// blueprint it is the source file's last-modified time (equal to
+	// created_at).
+	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1255,6 +1274,41 @@ func (x *BlueprintSummary) GetIsTemplate() bool {
 		return x.IsTemplate
 	}
 	return false
+}
+
+func (x *BlueprintSummary) GetOrg() string {
+	if x != nil {
+		return x.Org
+	}
+	return ""
+}
+
+func (x *BlueprintSummary) GetIsGlobal() bool {
+	if x != nil {
+		return x.IsGlobal
+	}
+	return false
+}
+
+func (x *BlueprintSummary) GetTemplate() string {
+	if x != nil {
+		return x.Template
+	}
+	return ""
+}
+
+func (x *BlueprintSummary) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *BlueprintSummary) GetUpdatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.UpdatedAt
+	}
+	return nil
 }
 
 var File_common_v1_common_proto protoreflect.FileDescriptor
@@ -1378,12 +1432,19 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"\rreplica_index\x18\x18 \x01(\x05H\x00R\freplicaIndex\x88\x01\x01\x12(\n" +
 	"\rreplica_count\x18\x19 \x01(\x05H\x01R\freplicaCount\x88\x01\x01B\x10\n" +
 	"\x0e_replica_indexB\x10\n" +
-	"\x0e_replica_count\"i\n" +
+	"\x0e_replica_count\"\xaa\x02\n" +
 	"\x10BlueprintSummary\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x1f\n" +
 	"\vis_template\x18\x03 \x01(\bR\n" +
-	"isTemplateB@Z>github.com/k8shell-io/common/pkg/api/gen/go/common/v1;commonv1b\x06proto3"
+	"isTemplate\x12\x10\n" +
+	"\x03org\x18\x04 \x01(\tR\x03org\x12\x1b\n" +
+	"\tis_global\x18\x05 \x01(\bR\bisGlobal\x12\x1a\n" +
+	"\btemplate\x18\x06 \x01(\tR\btemplate\x129\n" +
+	"\n" +
+	"created_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"\n" +
+	"updated_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAtB@Z>github.com/k8shell-io/common/pkg/api/gen/go/common/v1;commonv1b\x06proto3"
 
 var (
 	file_common_v1_common_proto_rawDescOnce sync.Once
@@ -1421,11 +1482,13 @@ var file_common_v1_common_proto_depIdxs = []int32{
 	6,  // 5: common.v1.UserResult.onboard_rule:type_name -> common.v1.OnboardUserRule
 	11, // 6: common.v1.WorkspaceStatus.created:type_name -> google.protobuf.Timestamp
 	8,  // 7: common.v1.WorkspaceDetails.workspace_status:type_name -> common.v1.WorkspaceStatus
-	8,  // [8:8] is the sub-list for method output_type
-	8,  // [8:8] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	11, // 8: common.v1.BlueprintSummary.created_at:type_name -> google.protobuf.Timestamp
+	11, // 9: common.v1.BlueprintSummary.updated_at:type_name -> google.protobuf.Timestamp
+	10, // [10:10] is the sub-list for method output_type
+	10, // [10:10] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_common_v1_common_proto_init() }
