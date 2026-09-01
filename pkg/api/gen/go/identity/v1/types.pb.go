@@ -1355,9 +1355,13 @@ func (x *RepoList) GetRepos() []*Repo {
 
 // IdentityProviderInfo carries data about the identity provider
 type IdentityProviderInfo struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Capabilities  []string               `protobuf:"bytes,2,rep,name=capabilities,proto3" json:"capabilities,omitempty"`
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	Name         string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Capabilities []string               `protobuf:"bytes,2,rep,name=capabilities,proto3" json:"capabilities,omitempty"`
+	// version_info is the build and version metadata reported by the provider's
+	// own GetVersionInfo RPC. It is unset for in-process providers (e.g. the
+	// file provider) and for remote providers that could not be reached.
+	VersionInfo   *v1.GetVersionInfoResponse `protobuf:"bytes,3,opt,name=version_info,json=versionInfo,proto3" json:"version_info,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1402,6 +1406,13 @@ func (x *IdentityProviderInfo) GetName() string {
 func (x *IdentityProviderInfo) GetCapabilities() []string {
 	if x != nil {
 		return x.Capabilities
+	}
+	return nil
+}
+
+func (x *IdentityProviderInfo) GetVersionInfo() *v1.GetVersionInfoResponse {
+	if x != nil {
+		return x.VersionInfo
 	}
 	return nil
 }
@@ -3725,10 +3736,11 @@ const file_identity_v1_types_proto_rawDesc = "" +
 	"\x0edefault_branch\x18\x05 \x01(\tR\rdefaultBranch\x12\x19\n" +
 	"\bhtml_url\x18\x06 \x01(\tR\ahtmlUrl\"3\n" +
 	"\bRepoList\x12'\n" +
-	"\x05repos\x18\x01 \x03(\v2\x11.identity.v1.RepoR\x05repos\"N\n" +
+	"\x05repos\x18\x01 \x03(\v2\x11.identity.v1.RepoR\x05repos\"\x94\x01\n" +
 	"\x14IdentityProviderInfo\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\"\n" +
-	"\fcapabilities\x18\x02 \x03(\tR\fcapabilities\"D\n" +
+	"\fcapabilities\x18\x02 \x03(\tR\fcapabilities\x12D\n" +
+	"\fversion_info\x18\x03 \x01(\v2!.common.v1.GetVersionInfoResponseR\vversionInfo\"D\n" +
 	"\x10UserRolesRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\x14\n" +
 	"\x05roles\x18\x02 \x03(\tR\x05roles\"\xc8\x01\n" +
@@ -3965,8 +3977,9 @@ var file_identity_v1_types_proto_goTypes = []any{
 	(*EnvVarList)(nil),                         // 60: identity.v1.EnvVarList
 	(*v1.User)(nil),                            // 61: common.v1.User
 	(*v11.Payload)(nil),                        // 62: query.v1.Payload
-	(*timestamppb.Timestamp)(nil),              // 63: google.protobuf.Timestamp
-	(*wrapperspb.StringValue)(nil),             // 64: google.protobuf.StringValue
+	(*v1.GetVersionInfoResponse)(nil),          // 63: common.v1.GetVersionInfoResponse
+	(*timestamppb.Timestamp)(nil),              // 64: google.protobuf.Timestamp
+	(*wrapperspb.StringValue)(nil),             // 65: google.protobuf.StringValue
 }
 var file_identity_v1_types_proto_depIdxs = []int32{
 	61, // 0: identity.v1.UserList.users:type_name -> common.v1.User
@@ -3975,31 +3988,32 @@ var file_identity_v1_types_proto_depIdxs = []int32{
 	61, // 3: identity.v1.AuthUserResponse.user:type_name -> common.v1.User
 	19, // 4: identity.v1.RepoOwnerList.owners:type_name -> identity.v1.RepoOwner
 	22, // 5: identity.v1.RepoList.repos:type_name -> identity.v1.Repo
-	63, // 6: identity.v1.Role.created_at:type_name -> google.protobuf.Timestamp
-	26, // 7: identity.v1.RoleList.roles:type_name -> identity.v1.Role
-	64, // 8: identity.v1.UpdateRoleRequest.description:type_name -> google.protobuf.StringValue
-	63, // 9: identity.v1.Organization.created_at:type_name -> google.protobuf.Timestamp
-	35, // 10: identity.v1.OrganizationList.organizations:type_name -> identity.v1.Organization
-	62, // 11: identity.v1.QueryOrganizationsRequest.query:type_name -> query.v1.Payload
-	64, // 12: identity.v1.UpdateOrganizationRequest.description:type_name -> google.protobuf.StringValue
-	63, // 13: identity.v1.OnboardRule.requested_at:type_name -> google.protobuf.Timestamp
-	63, // 14: identity.v1.OnboardRule.decided_at:type_name -> google.protobuf.Timestamp
-	63, // 15: identity.v1.OnboardRule.created_at:type_name -> google.protobuf.Timestamp
-	63, // 16: identity.v1.OnboardRule.updated_at:type_name -> google.protobuf.Timestamp
-	45, // 17: identity.v1.OnboardRuleList.rules:type_name -> identity.v1.OnboardRule
-	62, // 18: identity.v1.QueryOnboardRulesRequest.query:type_name -> query.v1.Payload
-	56, // 19: identity.v1.ListUserAuthKeysResponse.auth_keys:type_name -> identity.v1.UserAuthKey
-	63, // 20: identity.v1.AccessTokenInfo.expires_at:type_name -> google.protobuf.Timestamp
-	63, // 21: identity.v1.AccessTokenInfo.created_at:type_name -> google.protobuf.Timestamp
-	63, // 22: identity.v1.AccessTokenInfo.last_used_at:type_name -> google.protobuf.Timestamp
-	63, // 23: identity.v1.EnvVar.created_at:type_name -> google.protobuf.Timestamp
-	63, // 24: identity.v1.EnvVar.updated_at:type_name -> google.protobuf.Timestamp
-	59, // 25: identity.v1.EnvVarList.env_vars:type_name -> identity.v1.EnvVar
-	26, // [26:26] is the sub-list for method output_type
-	26, // [26:26] is the sub-list for method input_type
-	26, // [26:26] is the sub-list for extension type_name
-	26, // [26:26] is the sub-list for extension extendee
-	0,  // [0:26] is the sub-list for field type_name
+	63, // 6: identity.v1.IdentityProviderInfo.version_info:type_name -> common.v1.GetVersionInfoResponse
+	64, // 7: identity.v1.Role.created_at:type_name -> google.protobuf.Timestamp
+	26, // 8: identity.v1.RoleList.roles:type_name -> identity.v1.Role
+	65, // 9: identity.v1.UpdateRoleRequest.description:type_name -> google.protobuf.StringValue
+	64, // 10: identity.v1.Organization.created_at:type_name -> google.protobuf.Timestamp
+	35, // 11: identity.v1.OrganizationList.organizations:type_name -> identity.v1.Organization
+	62, // 12: identity.v1.QueryOrganizationsRequest.query:type_name -> query.v1.Payload
+	65, // 13: identity.v1.UpdateOrganizationRequest.description:type_name -> google.protobuf.StringValue
+	64, // 14: identity.v1.OnboardRule.requested_at:type_name -> google.protobuf.Timestamp
+	64, // 15: identity.v1.OnboardRule.decided_at:type_name -> google.protobuf.Timestamp
+	64, // 16: identity.v1.OnboardRule.created_at:type_name -> google.protobuf.Timestamp
+	64, // 17: identity.v1.OnboardRule.updated_at:type_name -> google.protobuf.Timestamp
+	45, // 18: identity.v1.OnboardRuleList.rules:type_name -> identity.v1.OnboardRule
+	62, // 19: identity.v1.QueryOnboardRulesRequest.query:type_name -> query.v1.Payload
+	56, // 20: identity.v1.ListUserAuthKeysResponse.auth_keys:type_name -> identity.v1.UserAuthKey
+	64, // 21: identity.v1.AccessTokenInfo.expires_at:type_name -> google.protobuf.Timestamp
+	64, // 22: identity.v1.AccessTokenInfo.created_at:type_name -> google.protobuf.Timestamp
+	64, // 23: identity.v1.AccessTokenInfo.last_used_at:type_name -> google.protobuf.Timestamp
+	64, // 24: identity.v1.EnvVar.created_at:type_name -> google.protobuf.Timestamp
+	64, // 25: identity.v1.EnvVar.updated_at:type_name -> google.protobuf.Timestamp
+	59, // 26: identity.v1.EnvVarList.env_vars:type_name -> identity.v1.EnvVar
+	27, // [27:27] is the sub-list for method output_type
+	27, // [27:27] is the sub-list for method input_type
+	27, // [27:27] is the sub-list for extension type_name
+	27, // [27:27] is the sub-list for extension extendee
+	0,  // [0:27] is the sub-list for field type_name
 }
 
 func init() { file_identity_v1_types_proto_init() }

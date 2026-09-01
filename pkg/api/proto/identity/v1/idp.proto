@@ -58,6 +58,11 @@ service IdentityProviderService {
 
   // ListRepos lists the repositories under the given owner that the user can access.
   rpc ListRepos(ListReposRequest) returns (RepoList);
+
+  // GetVersionInfo returns build and version metadata for this service: its
+  // released semantic version, the git commit it was built from, and a short
+  // description of what the service does.
+  rpc GetVersionInfo(common.v1.GetVersionInfoRequest) returns (common.v1.GetVersionInfoResponse);
 }
 
 // ProviderInfoRequest is an empty request message used to query provider metadata.

@@ -11,6 +11,7 @@ package sessionv1
 
 import (
 	context "context"
+	v11 "github.com/k8shell-io/common/pkg/api/gen/go/common/v1"
 	v1 "github.com/k8shell-io/common/pkg/api/gen/go/query/v1"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
@@ -29,6 +30,7 @@ const (
 	SessionService_QuerySessions_FullMethodName          = "/session.v1.SessionService/QuerySessions"
 	SessionService_UpsertSession_FullMethodName          = "/session.v1.SessionService/UpsertSession"
 	SessionService_EndSession_FullMethodName             = "/session.v1.SessionService/EndSession"
+	SessionService_GetVersionInfo_FullMethodName         = "/session.v1.SessionService/GetVersionInfo"
 )
 
 // SessionServiceClient is the client API for SessionService service.
@@ -53,6 +55,10 @@ type SessionServiceClient interface {
 	// EndSession marks a session as ended, recording its final byte counts
 	// and end time.
 	EndSession(ctx context.Context, in *EndSessionRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// GetVersionInfo returns build and version metadata for this service: its
+	// released semantic version, the git commit it was built from, and a short
+	// description of what the service does.
+	GetVersionInfo(ctx context.Context, in *v11.GetVersionInfoRequest, opts ...grpc.CallOption) (*v11.GetVersionInfoResponse, error)
 }
 
 type sessionServiceClient struct {
@@ -113,6 +119,16 @@ func (c *sessionServiceClient) EndSession(ctx context.Context, in *EndSessionReq
 	return out, nil
 }
 
+func (c *sessionServiceClient) GetVersionInfo(ctx context.Context, in *v11.GetVersionInfoRequest, opts ...grpc.CallOption) (*v11.GetVersionInfoResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(v11.GetVersionInfoResponse)
+	err := c.cc.Invoke(ctx, SessionService_GetVersionInfo_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SessionServiceServer is the server API for SessionService service.
 // All implementations must embed UnimplementedSessionServiceServer
 // for forward compatibility.
@@ -135,6 +151,10 @@ type SessionServiceServer interface {
 	// EndSession marks a session as ended, recording its final byte counts
 	// and end time.
 	EndSession(context.Context, *EndSessionRequest) (*emptypb.Empty, error)
+	// GetVersionInfo returns build and version metadata for this service: its
+	// released semantic version, the git commit it was built from, and a short
+	// description of what the service does.
+	GetVersionInfo(context.Context, *v11.GetVersionInfoRequest) (*v11.GetVersionInfoResponse, error)
 	mustEmbedUnimplementedSessionServiceServer()
 }
 
@@ -159,6 +179,9 @@ func (UnimplementedSessionServiceServer) UpsertSession(context.Context, *UpsertS
 }
 func (UnimplementedSessionServiceServer) EndSession(context.Context, *EndSessionRequest) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method EndSession not implemented")
+}
+func (UnimplementedSessionServiceServer) GetVersionInfo(context.Context, *v11.GetVersionInfoRequest) (*v11.GetVersionInfoResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetVersionInfo not implemented")
 }
 func (UnimplementedSessionServiceServer) mustEmbedUnimplementedSessionServiceServer() {}
 func (UnimplementedSessionServiceServer) testEmbeddedByValue()                        {}
@@ -271,6 +294,24 @@ func _SessionService_EndSession_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SessionService_GetVersionInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v11.GetVersionInfoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SessionServiceServer).GetVersionInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SessionService_GetVersionInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SessionServiceServer).GetVersionInfo(ctx, req.(*v11.GetVersionInfoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SessionService_ServiceDesc is the grpc.ServiceDesc for SessionService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -297,6 +338,10 @@ var SessionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "EndSession",
 			Handler:    _SessionService_EndSession_Handler,
+		},
+		{
+			MethodName: "GetVersionInfo",
+			Handler:    _SessionService_GetVersionInfo_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

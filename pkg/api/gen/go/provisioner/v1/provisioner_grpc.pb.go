@@ -50,6 +50,7 @@ const (
 	ProvisionerService_EjectWorkspace_FullMethodName           = "/provisioner.v1.ProvisionerService/EjectWorkspace"
 	ProvisionerService_ListInjectNamespaces_FullMethodName     = "/provisioner.v1.ProvisionerService/ListInjectNamespaces"
 	ProvisionerService_ListInjectWorkloads_FullMethodName      = "/provisioner.v1.ProvisionerService/ListInjectWorkloads"
+	ProvisionerService_GetVersionInfo_FullMethodName           = "/provisioner.v1.ProvisionerService/GetVersionInfo"
 )
 
 // ProvisionerServiceClient is the client API for ProvisionerService service.
@@ -153,6 +154,10 @@ type ProvisionerServiceClient interface {
 	// who owns it. A workload hosts at most one workspace, so an occupied
 	// workload must be ejected before anyone else can inject into it.
 	ListInjectWorkloads(ctx context.Context, in *ListInjectWorkloadsRequest, opts ...grpc.CallOption) (*ListInjectWorkloadsResponse, error)
+	// GetVersionInfo returns build and version metadata for this service: its
+	// released semantic version, the git commit it was built from, and a short
+	// description of what the service does.
+	GetVersionInfo(ctx context.Context, in *v1.GetVersionInfoRequest, opts ...grpc.CallOption) (*v1.GetVersionInfoResponse, error)
 }
 
 type provisionerServiceClient struct {
@@ -401,6 +406,16 @@ func (c *provisionerServiceClient) ListInjectWorkloads(ctx context.Context, in *
 	return out, nil
 }
 
+func (c *provisionerServiceClient) GetVersionInfo(ctx context.Context, in *v1.GetVersionInfoRequest, opts ...grpc.CallOption) (*v1.GetVersionInfoResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(v1.GetVersionInfoResponse)
+	err := c.cc.Invoke(ctx, ProvisionerService_GetVersionInfo_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ProvisionerServiceServer is the server API for ProvisionerService service.
 // All implementations must embed UnimplementedProvisionerServiceServer
 // for forward compatibility.
@@ -502,6 +517,10 @@ type ProvisionerServiceServer interface {
 	// who owns it. A workload hosts at most one workspace, so an occupied
 	// workload must be ejected before anyone else can inject into it.
 	ListInjectWorkloads(context.Context, *ListInjectWorkloadsRequest) (*ListInjectWorkloadsResponse, error)
+	// GetVersionInfo returns build and version metadata for this service: its
+	// released semantic version, the git commit it was built from, and a short
+	// description of what the service does.
+	GetVersionInfo(context.Context, *v1.GetVersionInfoRequest) (*v1.GetVersionInfoResponse, error)
 	mustEmbedUnimplementedProvisionerServiceServer()
 }
 
@@ -577,6 +596,9 @@ func (UnimplementedProvisionerServiceServer) ListInjectNamespaces(context.Contex
 }
 func (UnimplementedProvisionerServiceServer) ListInjectWorkloads(context.Context, *ListInjectWorkloadsRequest) (*ListInjectWorkloadsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListInjectWorkloads not implemented")
+}
+func (UnimplementedProvisionerServiceServer) GetVersionInfo(context.Context, *v1.GetVersionInfoRequest) (*v1.GetVersionInfoResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetVersionInfo not implemented")
 }
 func (UnimplementedProvisionerServiceServer) mustEmbedUnimplementedProvisionerServiceServer() {}
 func (UnimplementedProvisionerServiceServer) testEmbeddedByValue()                            {}
@@ -981,6 +1003,24 @@ func _ProvisionerService_ListInjectWorkloads_Handler(srv interface{}, ctx contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProvisionerService_GetVersionInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1.GetVersionInfoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProvisionerServiceServer).GetVersionInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProvisionerService_GetVersionInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProvisionerServiceServer).GetVersionInfo(ctx, req.(*v1.GetVersionInfoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ProvisionerService_ServiceDesc is the grpc.ServiceDesc for ProvisionerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1067,6 +1107,10 @@ var ProvisionerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListInjectWorkloads",
 			Handler:    _ProvisionerService_ListInjectWorkloads_Handler,
+		},
+		{
+			MethodName: "GetVersionInfo",
+			Handler:    _ProvisionerService_GetVersionInfo_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

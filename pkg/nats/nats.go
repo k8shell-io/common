@@ -99,6 +99,18 @@ func NewNATSClient(cfg NATSClientConfig) (*NATSClient, error) {
 	return c, nil
 }
 
+// ServerVersion returns the version of the NATS server this client is
+// currently connected to, as advertised in the server's INFO protocol
+// (e.g. "2.10.7"). It returns "" when the client is not connected.
+func (c *NATSClient) ServerVersion() string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	if c.nc == nil {
+		return ""
+	}
+	return c.nc.ConnectedServerVersion()
+}
+
 func (c *NATSClient) Close() {
 	c.mu.Lock()
 	defer c.mu.Unlock()

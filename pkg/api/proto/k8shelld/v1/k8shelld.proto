@@ -4,6 +4,8 @@ package k8shelld;
 
 option go_package = "github.com/k8shell-io/common/pkg/api/gen/go/k8shelld/v1;k8shelldv1";
 
+import "common/v1/common.proto";
+
 // *** Handshake service
 
 service SystemService {
@@ -32,6 +34,11 @@ service SystemService {
 
   // GetBlueprint returns the blueprint this workspace was created from.
   rpc GetBlueprint (GetBlueprintRequest) returns (GetBlueprintResponse);
+
+  // GetVersionInfo returns build and version metadata for this service: its
+  // released semantic version, the git commit it was built from, and a short
+  // description of what the service does.
+  rpc GetVersionInfo (common.v1.GetVersionInfoRequest) returns (common.v1.GetVersionInfoResponse);
 }
 
 // LogLevel identifies a k8shelld daemon log level for filtering.

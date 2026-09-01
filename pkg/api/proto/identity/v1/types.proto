@@ -193,6 +193,11 @@ message RepoList {
 message IdentityProviderInfo {
   string          name         = 1;
   repeated string capabilities = 2;
+
+  // version_info is the build and version metadata reported by the provider's
+  // own GetVersionInfo RPC. It is unset for in-process providers (e.g. the
+  // file provider) and for remote providers that could not be reached.
+  common.v1.GetVersionInfoResponse version_info = 3;
 }
 
 // UserRolesRequest carries a username and one or more roles to add or remove.

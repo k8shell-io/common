@@ -10,6 +10,7 @@
 package authzv1
 
 import (
+	v11 "github.com/k8shell-io/common/pkg/api/gen/go/common/v1"
 	v1 "github.com/k8shell-io/common/pkg/api/gen/go/query/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -727,7 +728,7 @@ var File_authz_v1_authz_proto protoreflect.FileDescriptor
 
 const file_authz_v1_authz_proto_rawDesc = "" +
 	"\n" +
-	"\x14authz/v1/authz.proto\x12\bauthz.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14query/v1/query.proto\"\xb1\x01\n" +
+	"\x14authz/v1/authz.proto\x12\bauthz.v1\x1a\x16common/v1/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14query/v1/query.proto\"\xb1\x01\n" +
 	"\bResource\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x12\x0e\n" +
 	"\x02id\x18\x02 \x01(\tR\x02id\x12B\n" +
@@ -800,13 +801,14 @@ const file_authz_v1_authz_proto_rawDesc = "" +
 	"\arecords\x18\x01 \x03(\v2\x15.authz.v1.AuditRecordR\arecords\"\x1c\n" +
 	"\x1aGetAuditQuerySchemaRequest\"<\n" +
 	"\x11QueryAuditRequest\x12'\n" +
-	"\x05query\x18\x01 \x01(\v2\x11.query.v1.PayloadR\x05query2\xb6\x02\n" +
+	"\x05query\x18\x01 \x01(\v2\x11.query.v1.PayloadR\x05query2\x8d\x03\n" +
 	"\fAuthzService\x12A\n" +
 	"\bEvaluate\x12\x19.authz.v1.EvaluateRequest\x1a\x1a.authz.v1.EvaluateResponse\x12P\n" +
 	"\rBatchEvaluate\x12\x1e.authz.v1.BatchEvaluateRequest\x1a\x1f.authz.v1.BatchEvaluateResponse\x12Q\n" +
 	"\x13GetAuditQuerySchema\x12$.authz.v1.GetAuditQuerySchemaRequest\x1a\x14.query.v1.Descriptor\x12>\n" +
 	"\n" +
-	"QueryAudit\x12\x1b.authz.v1.QueryAuditRequest\x1a\x13.authz.v1.AuditListB>Z<github.com/k8shell-io/common/pkg/api/gen/go/authz/v1;authzv1b\x06proto3"
+	"QueryAudit\x12\x1b.authz.v1.QueryAuditRequest\x1a\x13.authz.v1.AuditList\x12U\n" +
+	"\x0eGetVersionInfo\x12 .common.v1.GetVersionInfoRequest\x1a!.common.v1.GetVersionInfoResponseB>Z<github.com/k8shell-io/common/pkg/api/gen/go/authz/v1;authzv1b\x06proto3"
 
 var (
 	file_authz_v1_authz_proto_rawDescOnce sync.Once
@@ -839,7 +841,9 @@ var file_authz_v1_authz_proto_goTypes = []any{
 	nil,                                // 14: authz.v1.AuditRecord.ObligationsEntry
 	(*timestamppb.Timestamp)(nil),      // 15: google.protobuf.Timestamp
 	(*v1.Payload)(nil),                 // 16: query.v1.Payload
-	(*v1.Descriptor)(nil),              // 17: query.v1.Descriptor
+	(*v11.GetVersionInfoRequest)(nil),  // 17: common.v1.GetVersionInfoRequest
+	(*v1.Descriptor)(nil),              // 18: query.v1.Descriptor
+	(*v11.GetVersionInfoResponse)(nil), // 19: common.v1.GetVersionInfoResponse
 }
 var file_authz_v1_authz_proto_depIdxs = []int32{
 	9,  // 0: authz.v1.Resource.attributes:type_name -> authz.v1.Resource.AttributesEntry
@@ -859,12 +863,14 @@ var file_authz_v1_authz_proto_depIdxs = []int32{
 	3,  // 14: authz.v1.AuthzService.BatchEvaluate:input_type -> authz.v1.BatchEvaluateRequest
 	7,  // 15: authz.v1.AuthzService.GetAuditQuerySchema:input_type -> authz.v1.GetAuditQuerySchemaRequest
 	8,  // 16: authz.v1.AuthzService.QueryAudit:input_type -> authz.v1.QueryAuditRequest
-	2,  // 17: authz.v1.AuthzService.Evaluate:output_type -> authz.v1.EvaluateResponse
-	4,  // 18: authz.v1.AuthzService.BatchEvaluate:output_type -> authz.v1.BatchEvaluateResponse
-	17, // 19: authz.v1.AuthzService.GetAuditQuerySchema:output_type -> query.v1.Descriptor
-	6,  // 20: authz.v1.AuthzService.QueryAudit:output_type -> authz.v1.AuditList
-	17, // [17:21] is the sub-list for method output_type
-	13, // [13:17] is the sub-list for method input_type
+	17, // 17: authz.v1.AuthzService.GetVersionInfo:input_type -> common.v1.GetVersionInfoRequest
+	2,  // 18: authz.v1.AuthzService.Evaluate:output_type -> authz.v1.EvaluateResponse
+	4,  // 19: authz.v1.AuthzService.BatchEvaluate:output_type -> authz.v1.BatchEvaluateResponse
+	18, // 20: authz.v1.AuthzService.GetAuditQuerySchema:output_type -> query.v1.Descriptor
+	6,  // 21: authz.v1.AuthzService.QueryAudit:output_type -> authz.v1.AuditList
+	19, // 22: authz.v1.AuthzService.GetVersionInfo:output_type -> common.v1.GetVersionInfoResponse
+	18, // [18:23] is the sub-list for method output_type
+	13, // [13:18] is the sub-list for method input_type
 	13, // [13:13] is the sub-list for extension type_name
 	13, // [13:13] is the sub-list for extension extendee
 	0,  // [0:13] is the sub-list for field type_name

@@ -1391,6 +1391,112 @@ func (x *BlueprintSummary) GetUpdatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+// GetVersionInfoRequest is the input to the GetVersionInfo RPC that every
+// k8Shell gRPC service exposes. It carries no fields today; it is kept as a
+// named message rather than google.protobuf.Empty so parameters can be added
+// later without changing the RPC signature.
+type GetVersionInfoRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetVersionInfoRequest) Reset() {
+	*x = GetVersionInfoRequest{}
+	mi := &file_common_v1_common_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetVersionInfoRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetVersionInfoRequest) ProtoMessage() {}
+
+func (x *GetVersionInfoRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_common_v1_common_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetVersionInfoRequest.ProtoReflect.Descriptor instead.
+func (*GetVersionInfoRequest) Descriptor() ([]byte, []int) {
+	return file_common_v1_common_proto_rawDescGZIP(), []int{12}
+}
+
+// GetVersionInfoResponse reports build and version metadata for a single
+// k8Shell service, as returned by its GetVersionInfo RPC.
+type GetVersionInfoResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// version is the service's released semantic version (e.g. "1.4.2"), or a
+	// development placeholder such as "dev" for an unreleased build.
+	Version string `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
+	// commit_id is the git commit SHA the service binary was built from.
+	CommitId string `protobuf:"bytes,2,opt,name=commit_id,json=commitId,proto3" json:"commit_id,omitempty"`
+	// description is a short human-readable summary of what the service does.
+	Description   string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetVersionInfoResponse) Reset() {
+	*x = GetVersionInfoResponse{}
+	mi := &file_common_v1_common_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetVersionInfoResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetVersionInfoResponse) ProtoMessage() {}
+
+func (x *GetVersionInfoResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_common_v1_common_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetVersionInfoResponse.ProtoReflect.Descriptor instead.
+func (*GetVersionInfoResponse) Descriptor() ([]byte, []int) {
+	return file_common_v1_common_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *GetVersionInfoResponse) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+func (x *GetVersionInfoResponse) GetCommitId() string {
+	if x != nil {
+		return x.CommitId
+	}
+	return ""
+}
+
+func (x *GetVersionInfoResponse) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
 var File_common_v1_common_proto protoreflect.FileDescriptor
 
 const file_common_v1_common_proto_rawDesc = "" +
@@ -1532,7 +1638,12 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAtB@Z>github.com/k8shell-io/common/pkg/api/gen/go/common/v1;commonv1b\x06proto3"
+	"updated_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\x17\n" +
+	"\x15GetVersionInfoRequest\"q\n" +
+	"\x16GetVersionInfoResponse\x12\x18\n" +
+	"\aversion\x18\x01 \x01(\tR\aversion\x12\x1b\n" +
+	"\tcommit_id\x18\x02 \x01(\tR\bcommitId\x12 \n" +
+	"\vdescription\x18\x03 \x01(\tR\vdescriptionB@Z>github.com/k8shell-io/common/pkg/api/gen/go/common/v1;commonv1b\x06proto3"
 
 var (
 	file_common_v1_common_proto_rawDescOnce sync.Once
@@ -1546,36 +1657,38 @@ func file_common_v1_common_proto_rawDescGZIP() []byte {
 	return file_common_v1_common_proto_rawDescData
 }
 
-var file_common_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_common_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_common_v1_common_proto_goTypes = []any{
-	(*User)(nil),                  // 0: common.v1.User
-	(*UserCredential)(nil),        // 1: common.v1.UserCredential
-	(*OnboardUserDeviceFlow)(nil), // 2: common.v1.OnboardUserDeviceFlow
-	(*OnboardUserWebFlow)(nil),    // 3: common.v1.OnboardUserWebFlow
-	(*CompleteUserWebFlow)(nil),   // 4: common.v1.CompleteUserWebFlow
-	(*UserOnboardCapability)(nil), // 5: common.v1.UserOnboardCapability
-	(*OnboardUserRule)(nil),       // 6: common.v1.OnboardUserRule
-	(*UserResult)(nil),            // 7: common.v1.UserResult
-	(*WorkspaceStatus)(nil),       // 8: common.v1.WorkspaceStatus
-	(*PodLabelSelector)(nil),      // 9: common.v1.PodLabelSelector
-	(*WorkspaceDetails)(nil),      // 10: common.v1.WorkspaceDetails
-	(*BlueprintSummary)(nil),      // 11: common.v1.BlueprintSummary
-	nil,                           // 12: common.v1.PodLabelSelector.MatchLabelsEntry
-	(*timestamppb.Timestamp)(nil), // 13: google.protobuf.Timestamp
+	(*User)(nil),                   // 0: common.v1.User
+	(*UserCredential)(nil),         // 1: common.v1.UserCredential
+	(*OnboardUserDeviceFlow)(nil),  // 2: common.v1.OnboardUserDeviceFlow
+	(*OnboardUserWebFlow)(nil),     // 3: common.v1.OnboardUserWebFlow
+	(*CompleteUserWebFlow)(nil),    // 4: common.v1.CompleteUserWebFlow
+	(*UserOnboardCapability)(nil),  // 5: common.v1.UserOnboardCapability
+	(*OnboardUserRule)(nil),        // 6: common.v1.OnboardUserRule
+	(*UserResult)(nil),             // 7: common.v1.UserResult
+	(*WorkspaceStatus)(nil),        // 8: common.v1.WorkspaceStatus
+	(*PodLabelSelector)(nil),       // 9: common.v1.PodLabelSelector
+	(*WorkspaceDetails)(nil),       // 10: common.v1.WorkspaceDetails
+	(*BlueprintSummary)(nil),       // 11: common.v1.BlueprintSummary
+	(*GetVersionInfoRequest)(nil),  // 12: common.v1.GetVersionInfoRequest
+	(*GetVersionInfoResponse)(nil), // 13: common.v1.GetVersionInfoResponse
+	nil,                            // 14: common.v1.PodLabelSelector.MatchLabelsEntry
+	(*timestamppb.Timestamp)(nil),  // 15: google.protobuf.Timestamp
 }
 var file_common_v1_common_proto_depIdxs = []int32{
-	13, // 0: common.v1.User.expires_at:type_name -> google.protobuf.Timestamp
-	13, // 1: common.v1.UserCredential.created_at:type_name -> google.protobuf.Timestamp
-	13, // 2: common.v1.UserCredential.updated_at:type_name -> google.protobuf.Timestamp
-	13, // 3: common.v1.UserCredential.expires_at:type_name -> google.protobuf.Timestamp
-	13, // 4: common.v1.UserCredential.last_used_at:type_name -> google.protobuf.Timestamp
+	15, // 0: common.v1.User.expires_at:type_name -> google.protobuf.Timestamp
+	15, // 1: common.v1.UserCredential.created_at:type_name -> google.protobuf.Timestamp
+	15, // 2: common.v1.UserCredential.updated_at:type_name -> google.protobuf.Timestamp
+	15, // 3: common.v1.UserCredential.expires_at:type_name -> google.protobuf.Timestamp
+	15, // 4: common.v1.UserCredential.last_used_at:type_name -> google.protobuf.Timestamp
 	6,  // 5: common.v1.UserResult.onboard_rule:type_name -> common.v1.OnboardUserRule
-	13, // 6: common.v1.WorkspaceStatus.created:type_name -> google.protobuf.Timestamp
-	12, // 7: common.v1.PodLabelSelector.match_labels:type_name -> common.v1.PodLabelSelector.MatchLabelsEntry
+	15, // 6: common.v1.WorkspaceStatus.created:type_name -> google.protobuf.Timestamp
+	14, // 7: common.v1.PodLabelSelector.match_labels:type_name -> common.v1.PodLabelSelector.MatchLabelsEntry
 	8,  // 8: common.v1.WorkspaceDetails.workspace_status:type_name -> common.v1.WorkspaceStatus
 	9,  // 9: common.v1.WorkspaceDetails.allow_egress_to_pods:type_name -> common.v1.PodLabelSelector
-	13, // 10: common.v1.BlueprintSummary.created_at:type_name -> google.protobuf.Timestamp
-	13, // 11: common.v1.BlueprintSummary.updated_at:type_name -> google.protobuf.Timestamp
+	15, // 10: common.v1.BlueprintSummary.created_at:type_name -> google.protobuf.Timestamp
+	15, // 11: common.v1.BlueprintSummary.updated_at:type_name -> google.protobuf.Timestamp
 	12, // [12:12] is the sub-list for method output_type
 	12, // [12:12] is the sub-list for method input_type
 	12, // [12:12] is the sub-list for extension type_name
@@ -1596,7 +1709,7 @@ func file_common_v1_common_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_common_v1_common_proto_rawDesc), len(file_common_v1_common_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

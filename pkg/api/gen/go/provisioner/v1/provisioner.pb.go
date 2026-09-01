@@ -2887,7 +2887,7 @@ const file_provisioner_v1_provisioner_proto_rawDesc = "" +
 	"repoSource\x12#\n" +
 	"\rrepo_revision\x18\v \x01(\tR\frepoRevision\"[\n" +
 	"\x1bListInjectWorkloadsResponse\x12<\n" +
-	"\tworkloads\x18\x01 \x03(\v2\x1e.provisioner.v1.InjectWorkloadR\tworkloads2\xd8\x11\n" +
+	"\tworkloads\x18\x01 \x03(\v2\x1e.provisioner.v1.InjectWorkloadR\tworkloads2\xaf\x12\n" +
 	"\x12ProvisionerService\x12\\\n" +
 	"\rGetWorkspaces\x12$.provisioner.v1.GetWorkspacesRequest\x1a%.provisioner.v1.GetWorkspacesResponse\x12R\n" +
 	"\rFindWorkspace\x12$.provisioner.v1.FindWorkspaceRequest\x1a\x1b.common.v1.WorkspaceDetails\x12n\n" +
@@ -2910,7 +2910,8 @@ const file_provisioner_v1_provisioner_proto_rawDesc = "" +
 	"\x14StartWorkspaceStream\x12%.provisioner.v1.StartWorkspaceRequest\x1a*.provisioner.v1.ProvisionWorkspaceResponse0\x01\x12_\n" +
 	"\x0eEjectWorkspace\x12%.provisioner.v1.EjectWorkspaceRequest\x1a&.provisioner.v1.EjectWorkspaceResponse\x12q\n" +
 	"\x14ListInjectNamespaces\x12+.provisioner.v1.ListInjectNamespacesRequest\x1a,.provisioner.v1.ListInjectNamespacesResponse\x12n\n" +
-	"\x13ListInjectWorkloads\x12*.provisioner.v1.ListInjectWorkloadsRequest\x1a+.provisioner.v1.ListInjectWorkloadsResponseBJZHgithub.com/k8shell-io/common/pkg/api/gen/go/provisioner/v1;provisionerv1b\x06proto3"
+	"\x13ListInjectWorkloads\x12*.provisioner.v1.ListInjectWorkloadsRequest\x1a+.provisioner.v1.ListInjectWorkloadsResponse\x12U\n" +
+	"\x0eGetVersionInfo\x12 .common.v1.GetVersionInfoRequest\x1a!.common.v1.GetVersionInfoResponseBJZHgithub.com/k8shell-io/common/pkg/api/gen/go/provisioner/v1;provisionerv1b\x06proto3"
 
 var (
 	file_provisioner_v1_provisioner_proto_rawDescOnce sync.Once
@@ -2975,7 +2976,9 @@ var file_provisioner_v1_provisioner_proto_goTypes = []any{
 	(*v11.Payload)(nil),                      // 46: query.v1.Payload
 	(*v1.BlueprintSummary)(nil),              // 47: common.v1.BlueprintSummary
 	(*timestamppb.Timestamp)(nil),            // 48: google.protobuf.Timestamp
-	(*v11.Descriptor)(nil),                   // 49: query.v1.Descriptor
+	(*v1.GetVersionInfoRequest)(nil),         // 49: common.v1.GetVersionInfoRequest
+	(*v11.Descriptor)(nil),                   // 50: query.v1.Descriptor
+	(*v1.GetVersionInfoResponse)(nil),        // 51: common.v1.GetVersionInfoResponse
 }
 var file_provisioner_v1_provisioner_proto_depIdxs = []int32{
 	45, // 0: provisioner.v1.GetWorkspacesResponse.workspaces:type_name -> common.v1.WorkspaceDetails
@@ -3015,30 +3018,32 @@ var file_provisioner_v1_provisioner_proto_depIdxs = []int32{
 	37, // 34: provisioner.v1.ProvisionerService.EjectWorkspace:input_type -> provisioner.v1.EjectWorkspaceRequest
 	39, // 35: provisioner.v1.ProvisionerService.ListInjectNamespaces:input_type -> provisioner.v1.ListInjectNamespacesRequest
 	41, // 36: provisioner.v1.ProvisionerService.ListInjectWorkloads:input_type -> provisioner.v1.ListInjectWorkloadsRequest
-	3,  // 37: provisioner.v1.ProvisionerService.GetWorkspaces:output_type -> provisioner.v1.GetWorkspacesResponse
-	45, // 38: provisioner.v1.ProvisionerService.FindWorkspace:output_type -> common.v1.WorkspaceDetails
-	3,  // 39: provisioner.v1.ProvisionerService.GetWorkspacesByUserStr:output_type -> provisioner.v1.GetWorkspacesResponse
-	49, // 40: provisioner.v1.ProvisionerService.GetWorkspacesQuerySchema:output_type -> query.v1.Descriptor
-	3,  // 41: provisioner.v1.ProvisionerService.QueryWorkspaces:output_type -> provisioner.v1.GetWorkspacesResponse
-	7,  // 42: provisioner.v1.ProvisionerService.ListBlueprints:output_type -> provisioner.v1.ListBlueprintsResponse
-	49, // 43: provisioner.v1.ProvisionerService.GetBlueprintsQuerySchema:output_type -> query.v1.Descriptor
-	10, // 44: provisioner.v1.ProvisionerService.QueryBlueprints:output_type -> provisioner.v1.QueryBlueprintsResponse
-	12, // 45: provisioner.v1.ProvisionerService.GetBlueprint:output_type -> provisioner.v1.GetBlueprintResponse
-	14, // 46: provisioner.v1.ProvisionerService.ValidateBlueprint:output_type -> provisioner.v1.ValidateBlueprintResponse
-	16, // 47: provisioner.v1.ProvisionerService.CreateBlueprint:output_type -> provisioner.v1.OrgBlueprint
-	16, // 48: provisioner.v1.ProvisionerService.UpdateBlueprint:output_type -> provisioner.v1.OrgBlueprint
-	20, // 49: provisioner.v1.ProvisionerService.DeleteBlueprint:output_type -> provisioner.v1.DeleteBlueprintResponse
-	22, // 50: provisioner.v1.ProvisionerService.ProvisionWorkspaceStream:output_type -> provisioner.v1.ProvisionWorkspaceResponse
-	26, // 51: provisioner.v1.ProvisionerService.DeleteWorkspace:output_type -> provisioner.v1.DeleteWorkspaceResponse
-	28, // 52: provisioner.v1.ProvisionerService.DeleteUserWorkspaces:output_type -> provisioner.v1.DeleteUserWorkspacesResponse
-	30, // 53: provisioner.v1.ProvisionerService.StopWorkspace:output_type -> provisioner.v1.StopWorkspaceResponse
-	35, // 54: provisioner.v1.ProvisionerService.UpdateWorkspaceResources:output_type -> provisioner.v1.UpdateWorkspaceResourcesResponse
-	22, // 55: provisioner.v1.ProvisionerService.StartWorkspaceStream:output_type -> provisioner.v1.ProvisionWorkspaceResponse
-	38, // 56: provisioner.v1.ProvisionerService.EjectWorkspace:output_type -> provisioner.v1.EjectWorkspaceResponse
-	40, // 57: provisioner.v1.ProvisionerService.ListInjectNamespaces:output_type -> provisioner.v1.ListInjectNamespacesResponse
-	43, // 58: provisioner.v1.ProvisionerService.ListInjectWorkloads:output_type -> provisioner.v1.ListInjectWorkloadsResponse
-	37, // [37:59] is the sub-list for method output_type
-	15, // [15:37] is the sub-list for method input_type
+	49, // 37: provisioner.v1.ProvisionerService.GetVersionInfo:input_type -> common.v1.GetVersionInfoRequest
+	3,  // 38: provisioner.v1.ProvisionerService.GetWorkspaces:output_type -> provisioner.v1.GetWorkspacesResponse
+	45, // 39: provisioner.v1.ProvisionerService.FindWorkspace:output_type -> common.v1.WorkspaceDetails
+	3,  // 40: provisioner.v1.ProvisionerService.GetWorkspacesByUserStr:output_type -> provisioner.v1.GetWorkspacesResponse
+	50, // 41: provisioner.v1.ProvisionerService.GetWorkspacesQuerySchema:output_type -> query.v1.Descriptor
+	3,  // 42: provisioner.v1.ProvisionerService.QueryWorkspaces:output_type -> provisioner.v1.GetWorkspacesResponse
+	7,  // 43: provisioner.v1.ProvisionerService.ListBlueprints:output_type -> provisioner.v1.ListBlueprintsResponse
+	50, // 44: provisioner.v1.ProvisionerService.GetBlueprintsQuerySchema:output_type -> query.v1.Descriptor
+	10, // 45: provisioner.v1.ProvisionerService.QueryBlueprints:output_type -> provisioner.v1.QueryBlueprintsResponse
+	12, // 46: provisioner.v1.ProvisionerService.GetBlueprint:output_type -> provisioner.v1.GetBlueprintResponse
+	14, // 47: provisioner.v1.ProvisionerService.ValidateBlueprint:output_type -> provisioner.v1.ValidateBlueprintResponse
+	16, // 48: provisioner.v1.ProvisionerService.CreateBlueprint:output_type -> provisioner.v1.OrgBlueprint
+	16, // 49: provisioner.v1.ProvisionerService.UpdateBlueprint:output_type -> provisioner.v1.OrgBlueprint
+	20, // 50: provisioner.v1.ProvisionerService.DeleteBlueprint:output_type -> provisioner.v1.DeleteBlueprintResponse
+	22, // 51: provisioner.v1.ProvisionerService.ProvisionWorkspaceStream:output_type -> provisioner.v1.ProvisionWorkspaceResponse
+	26, // 52: provisioner.v1.ProvisionerService.DeleteWorkspace:output_type -> provisioner.v1.DeleteWorkspaceResponse
+	28, // 53: provisioner.v1.ProvisionerService.DeleteUserWorkspaces:output_type -> provisioner.v1.DeleteUserWorkspacesResponse
+	30, // 54: provisioner.v1.ProvisionerService.StopWorkspace:output_type -> provisioner.v1.StopWorkspaceResponse
+	35, // 55: provisioner.v1.ProvisionerService.UpdateWorkspaceResources:output_type -> provisioner.v1.UpdateWorkspaceResourcesResponse
+	22, // 56: provisioner.v1.ProvisionerService.StartWorkspaceStream:output_type -> provisioner.v1.ProvisionWorkspaceResponse
+	38, // 57: provisioner.v1.ProvisionerService.EjectWorkspace:output_type -> provisioner.v1.EjectWorkspaceResponse
+	40, // 58: provisioner.v1.ProvisionerService.ListInjectNamespaces:output_type -> provisioner.v1.ListInjectNamespacesResponse
+	43, // 59: provisioner.v1.ProvisionerService.ListInjectWorkloads:output_type -> provisioner.v1.ListInjectWorkloadsResponse
+	51, // 60: provisioner.v1.ProvisionerService.GetVersionInfo:output_type -> common.v1.GetVersionInfoResponse
+	38, // [38:61] is the sub-list for method output_type
+	15, // [15:38] is the sub-list for method input_type
 	15, // [15:15] is the sub-list for extension type_name
 	15, // [15:15] is the sub-list for extension extendee
 	0,  // [0:15] is the sub-list for field type_name

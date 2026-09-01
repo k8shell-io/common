@@ -308,3 +308,21 @@ message BlueprintSummary {
   // created_at).
   google.protobuf.Timestamp updated_at = 8;
 }
+
+// GetVersionInfoRequest is the input to the GetVersionInfo RPC that every
+// k8Shell gRPC service exposes. It carries no fields today; it is kept as a
+// named message rather than google.protobuf.Empty so parameters can be added
+// later without changing the RPC signature.
+message GetVersionInfoRequest {}
+
+// GetVersionInfoResponse reports build and version metadata for a single
+// k8Shell service, as returned by its GetVersionInfo RPC.
+message GetVersionInfoResponse {
+  // version is the service's released semantic version (e.g. "1.4.2"), or a
+  // development placeholder such as "dev" for an unreleased build.
+  string version = 1;
+  // commit_id is the git commit SHA the service binary was built from.
+  string commit_id = 2;
+  // description is a short human-readable summary of what the service does.
+  string description = 3;
+}

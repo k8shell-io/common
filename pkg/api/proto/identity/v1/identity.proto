@@ -319,6 +319,11 @@ service IdentityService {
   // DeleteUserEnvVar removes a user-owned environment variable, restoring
   // the organization's value (if any) as the effective value for that key.
   rpc DeleteUserEnvVar (DeleteUserEnvVarRequest) returns (DeleteUserEnvVarResponse);
+
+  // GetVersionInfo returns build and version metadata for this service: its
+  // released semantic version, the git commit it was built from, and a short
+  // description of what the service does.
+  rpc GetVersionInfo (common.v1.GetVersionInfoRequest) returns (common.v1.GetVersionInfoResponse);
 }
 
 // Messages

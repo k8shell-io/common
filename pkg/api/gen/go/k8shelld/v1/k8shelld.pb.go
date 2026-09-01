@@ -7,6 +7,7 @@
 package k8shelldv1
 
 import (
+	v1 "github.com/k8shell-io/common/pkg/api/gen/go/common/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -3635,7 +3636,7 @@ var File_k8shelld_v1_k8shelld_proto protoreflect.FileDescriptor
 
 const file_k8shelld_v1_k8shelld_proto_rawDesc = "" +
 	"\n" +
-	"\x1ak8shelld/v1/k8shelld.proto\x12\bk8shelld\"\x90\x01\n" +
+	"\x1ak8shelld/v1/k8shelld.proto\x12\bk8shelld\x1a\x16common/v1/common.proto\"\x90\x01\n" +
 	"\x17SystemLogsStreamRequest\x12\x1c\n" +
 	"\tcomponent\x18\x01 \x01(\tR\tcomponent\x12(\n" +
 	"\x05level\x18\x02 \x01(\x0e2\x12.k8shelld.LogLevelR\x05level\x12\x16\n" +
@@ -3909,7 +3910,7 @@ const file_k8shelld_v1_k8shelld_proto_rawDesc = "" +
 	"\x15UNIX_SOCKET_MODE_DIAL\x10\x01*1\n" +
 	"\aLogType\x12\x10\n" +
 	"\fLOG_TYPE_APP\x10\x00\x12\x14\n" +
-	"\x10LOG_TYPE_INSTALL\x10\x012\xf1\x03\n" +
+	"\x10LOG_TYPE_INSTALL\x10\x012\xc8\x04\n" +
 	"\rSystemService\x12D\n" +
 	"\tHandshake\x12\x1a.k8shelld.HandshakeRequest\x1a\x1b.k8shelld.HandshakeResponse\x12G\n" +
 	"\n" +
@@ -3917,7 +3918,8 @@ const file_k8shelld_v1_k8shelld_proto_rawDesc = "" +
 	"\x11SystemInfoHistory\x12\".k8shelld.SystemInfoHistoryRequest\x1a#.k8shelld.SystemInfoHistoryResponse\x12X\n" +
 	"\rGetLogsStream\x12!.k8shelld.SystemLogsStreamRequest\x1a\".k8shelld.SystemLogsStreamResponse0\x01\x12J\n" +
 	"\vGetLogsPage\x12\x1c.k8shelld.GetLogsPageRequest\x1a\x1d.k8shelld.GetLogsPageResponse\x12M\n" +
-	"\fGetBlueprint\x12\x1d.k8shelld.GetBlueprintRequest\x1a\x1e.k8shelld.GetBlueprintResponse2\xd8\x04\n" +
+	"\fGetBlueprint\x12\x1d.k8shelld.GetBlueprintRequest\x1a\x1e.k8shelld.GetBlueprintResponse\x12U\n" +
+	"\x0eGetVersionInfo\x12 .common.v1.GetVersionInfoRequest\x1a!.common.v1.GetVersionInfoResponse2\xd8\x04\n" +
 	"\n" +
 	"SshService\x12<\n" +
 	"\x05Shell\x12\x16.k8shelld.ShellRequest\x1a\x17.k8shelld.ShellResponse(\x010\x01\x12S\n" +
@@ -4013,6 +4015,8 @@ var file_k8shelld_v1_k8shelld_proto_goTypes = []any{
 	(*GetLogsStreamRequest)(nil),      // 56: k8shelld.GetLogsStreamRequest
 	(*GetLogsStreamResponse)(nil),     // 57: k8shelld.GetLogsStreamResponse
 	nil,                               // 58: k8shelld.SystemInfoHistoryResponse.MountsEntry
+	(*v1.GetVersionInfoRequest)(nil),  // 59: common.v1.GetVersionInfoRequest
+	(*v1.GetVersionInfoResponse)(nil), // 60: common.v1.GetVersionInfoResponse
 }
 var file_k8shelld_v1_k8shelld_proto_depIdxs = []int32{
 	0,  // 0: k8shelld.SystemLogsStreamRequest.level:type_name -> k8shelld.LogLevel
@@ -4043,42 +4047,44 @@ var file_k8shelld_v1_k8shelld_proto_depIdxs = []int32{
 	4,  // 25: k8shelld.SystemService.GetLogsStream:input_type -> k8shelld.SystemLogsStreamRequest
 	6,  // 26: k8shelld.SystemService.GetLogsPage:input_type -> k8shelld.GetLogsPageRequest
 	19, // 27: k8shelld.SystemService.GetBlueprint:input_type -> k8shelld.GetBlueprintRequest
-	23, // 28: k8shelld.SshService.Shell:input_type -> k8shelld.ShellRequest
-	27, // 29: k8shelld.SshService.ResizeTerminal:input_type -> k8shelld.ResizeTerminalRequest
-	36, // 30: k8shelld.SshService.PortForward:input_type -> k8shelld.PortForwardRequest
-	39, // 31: k8shelld.SshService.Exec:input_type -> k8shelld.ExecRequest
-	42, // 32: k8shelld.SshService.UnixSocket:input_type -> k8shelld.UnixSocketRequest
-	29, // 33: k8shelld.SshService.GetCWD:input_type -> k8shelld.GetCWDRequest
-	31, // 34: k8shelld.SshService.AcquireSession:input_type -> k8shelld.AcquireSessionRequest
-	34, // 35: k8shelld.SshService.ListSessions:input_type -> k8shelld.ListSessionsRequest
-	45, // 36: k8shelld.AppService.ListApps:input_type -> k8shelld.ListAppsRequest
-	48, // 37: k8shelld.AppService.InstallApp:input_type -> k8shelld.InstallAppRequest
-	50, // 38: k8shelld.AppService.StartApp:input_type -> k8shelld.StartAppRequest
-	52, // 39: k8shelld.AppService.StopApp:input_type -> k8shelld.StopAppRequest
-	54, // 40: k8shelld.AppService.GetLogs:input_type -> k8shelld.GetLogsRequest
-	56, // 41: k8shelld.AppService.GetLogsStream:input_type -> k8shelld.GetLogsStreamRequest
-	22, // 42: k8shelld.SystemService.Handshake:output_type -> k8shelld.HandshakeResponse
-	9,  // 43: k8shelld.SystemService.SystemInfo:output_type -> k8shelld.SystemInfoResponse
-	14, // 44: k8shelld.SystemService.SystemInfoHistory:output_type -> k8shelld.SystemInfoHistoryResponse
-	5,  // 45: k8shelld.SystemService.GetLogsStream:output_type -> k8shelld.SystemLogsStreamResponse
-	7,  // 46: k8shelld.SystemService.GetLogsPage:output_type -> k8shelld.GetLogsPageResponse
-	20, // 47: k8shelld.SystemService.GetBlueprint:output_type -> k8shelld.GetBlueprintResponse
-	24, // 48: k8shelld.SshService.Shell:output_type -> k8shelld.ShellResponse
-	28, // 49: k8shelld.SshService.ResizeTerminal:output_type -> k8shelld.ResizeTerminalResponse
-	38, // 50: k8shelld.SshService.PortForward:output_type -> k8shelld.PortForwardResponse
-	40, // 51: k8shelld.SshService.Exec:output_type -> k8shelld.ExecResponse
-	43, // 52: k8shelld.SshService.UnixSocket:output_type -> k8shelld.UnixSocketResponse
-	30, // 53: k8shelld.SshService.GetCWD:output_type -> k8shelld.GetCWDResponse
-	32, // 54: k8shelld.SshService.AcquireSession:output_type -> k8shelld.AcquireSessionResponse
-	35, // 55: k8shelld.SshService.ListSessions:output_type -> k8shelld.ListSessionsResponse
-	46, // 56: k8shelld.AppService.ListApps:output_type -> k8shelld.ListAppsResponse
-	49, // 57: k8shelld.AppService.InstallApp:output_type -> k8shelld.InstallAppResponse
-	51, // 58: k8shelld.AppService.StartApp:output_type -> k8shelld.StartAppResponse
-	53, // 59: k8shelld.AppService.StopApp:output_type -> k8shelld.StopAppResponse
-	55, // 60: k8shelld.AppService.GetLogs:output_type -> k8shelld.GetLogsResponse
-	57, // 61: k8shelld.AppService.GetLogsStream:output_type -> k8shelld.GetLogsStreamResponse
-	42, // [42:62] is the sub-list for method output_type
-	22, // [22:42] is the sub-list for method input_type
+	59, // 28: k8shelld.SystemService.GetVersionInfo:input_type -> common.v1.GetVersionInfoRequest
+	23, // 29: k8shelld.SshService.Shell:input_type -> k8shelld.ShellRequest
+	27, // 30: k8shelld.SshService.ResizeTerminal:input_type -> k8shelld.ResizeTerminalRequest
+	36, // 31: k8shelld.SshService.PortForward:input_type -> k8shelld.PortForwardRequest
+	39, // 32: k8shelld.SshService.Exec:input_type -> k8shelld.ExecRequest
+	42, // 33: k8shelld.SshService.UnixSocket:input_type -> k8shelld.UnixSocketRequest
+	29, // 34: k8shelld.SshService.GetCWD:input_type -> k8shelld.GetCWDRequest
+	31, // 35: k8shelld.SshService.AcquireSession:input_type -> k8shelld.AcquireSessionRequest
+	34, // 36: k8shelld.SshService.ListSessions:input_type -> k8shelld.ListSessionsRequest
+	45, // 37: k8shelld.AppService.ListApps:input_type -> k8shelld.ListAppsRequest
+	48, // 38: k8shelld.AppService.InstallApp:input_type -> k8shelld.InstallAppRequest
+	50, // 39: k8shelld.AppService.StartApp:input_type -> k8shelld.StartAppRequest
+	52, // 40: k8shelld.AppService.StopApp:input_type -> k8shelld.StopAppRequest
+	54, // 41: k8shelld.AppService.GetLogs:input_type -> k8shelld.GetLogsRequest
+	56, // 42: k8shelld.AppService.GetLogsStream:input_type -> k8shelld.GetLogsStreamRequest
+	22, // 43: k8shelld.SystemService.Handshake:output_type -> k8shelld.HandshakeResponse
+	9,  // 44: k8shelld.SystemService.SystemInfo:output_type -> k8shelld.SystemInfoResponse
+	14, // 45: k8shelld.SystemService.SystemInfoHistory:output_type -> k8shelld.SystemInfoHistoryResponse
+	5,  // 46: k8shelld.SystemService.GetLogsStream:output_type -> k8shelld.SystemLogsStreamResponse
+	7,  // 47: k8shelld.SystemService.GetLogsPage:output_type -> k8shelld.GetLogsPageResponse
+	20, // 48: k8shelld.SystemService.GetBlueprint:output_type -> k8shelld.GetBlueprintResponse
+	60, // 49: k8shelld.SystemService.GetVersionInfo:output_type -> common.v1.GetVersionInfoResponse
+	24, // 50: k8shelld.SshService.Shell:output_type -> k8shelld.ShellResponse
+	28, // 51: k8shelld.SshService.ResizeTerminal:output_type -> k8shelld.ResizeTerminalResponse
+	38, // 52: k8shelld.SshService.PortForward:output_type -> k8shelld.PortForwardResponse
+	40, // 53: k8shelld.SshService.Exec:output_type -> k8shelld.ExecResponse
+	43, // 54: k8shelld.SshService.UnixSocket:output_type -> k8shelld.UnixSocketResponse
+	30, // 55: k8shelld.SshService.GetCWD:output_type -> k8shelld.GetCWDResponse
+	32, // 56: k8shelld.SshService.AcquireSession:output_type -> k8shelld.AcquireSessionResponse
+	35, // 57: k8shelld.SshService.ListSessions:output_type -> k8shelld.ListSessionsResponse
+	46, // 58: k8shelld.AppService.ListApps:output_type -> k8shelld.ListAppsResponse
+	49, // 59: k8shelld.AppService.InstallApp:output_type -> k8shelld.InstallAppResponse
+	51, // 60: k8shelld.AppService.StartApp:output_type -> k8shelld.StartAppResponse
+	53, // 61: k8shelld.AppService.StopApp:output_type -> k8shelld.StopAppResponse
+	55, // 62: k8shelld.AppService.GetLogs:output_type -> k8shelld.GetLogsResponse
+	57, // 63: k8shelld.AppService.GetLogsStream:output_type -> k8shelld.GetLogsStreamResponse
+	43, // [43:64] is the sub-list for method output_type
+	22, // [22:43] is the sub-list for method input_type
 	22, // [22:22] is the sub-list for extension type_name
 	22, // [22:22] is the sub-list for extension extendee
 	0,  // [0:22] is the sub-list for field type_name

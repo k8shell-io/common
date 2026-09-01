@@ -10,6 +10,7 @@
 package sessionv1
 
 import (
+	v11 "github.com/k8shell-io/common/pkg/api/gen/go/common/v1"
 	v1 "github.com/k8shell-io/common/pkg/api/gen/go/query/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -1554,7 +1555,7 @@ var File_session_v1_session_proto protoreflect.FileDescriptor
 const file_session_v1_session_proto_rawDesc = "" +
 	"\n" +
 	"\x18session/v1/session.proto\x12\n" +
-	"session.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a\x14query/v1/query.proto\"\xf4\x01\n" +
+	"session.v1\x1a\x16common/v1/common.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x14query/v1/query.proto\"\xf4\x01\n" +
 	"\x12GetSessionsRequest\x12\x1d\n" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1a\n" +
@@ -1670,14 +1671,15 @@ const file_session_v1_session_proto_rawDesc = "" +
 	"\apayload*6\n" +
 	"\tDirection\x12\x14\n" +
 	"\x10DIRECTION_OUTPUT\x10\x00\x12\x13\n" +
-	"\x0fDIRECTION_INPUT\x10\x012\x94\x03\n" +
+	"\x0fDIRECTION_INPUT\x10\x012\xeb\x03\n" +
 	"\x0eSessionService\x12C\n" +
 	"\vGetSessions\x12\x1e.session.v1.GetSessionsRequest\x1a\x14.session.v1.Sessions\x12Y\n" +
 	"\x16GetSessionsQuerySchema\x12).session.v1.GetSessionsQuerySchemaRequest\x1a\x14.query.v1.Descriptor\x12G\n" +
 	"\rQuerySessions\x12 .session.v1.QuerySessionsRequest\x1a\x14.session.v1.Sessions\x12T\n" +
 	"\rUpsertSession\x12 .session.v1.UpsertSessionRequest\x1a!.session.v1.UpsertSessionResponse\x12C\n" +
 	"\n" +
-	"EndSession\x12\x1d.session.v1.EndSessionRequest\x1a\x16.google.protobuf.Empty2\xb1\x03\n" +
+	"EndSession\x12\x1d.session.v1.EndSessionRequest\x1a\x16.google.protobuf.Empty\x12U\n" +
+	"\x0eGetVersionInfo\x12 .common.v1.GetVersionInfoRequest\x1a!.common.v1.GetVersionInfoResponse2\xb1\x03\n" +
 	"\x10RecordingService\x12Q\n" +
 	"\x14StreamShellRecording\x12\x1f.session.v1.ShellRecordingFrame\x1a\x16.google.protobuf.Empty(\x01\x12O\n" +
 	"\x13StreamExecRecording\x12\x1e.session.v1.ExecRecordingFrame\x1a\x16.google.protobuf.Empty(\x01\x12Q\n" +
@@ -1721,8 +1723,10 @@ var file_session_v1_session_proto_goTypes = []any{
 	(*SftpRecordingHeader)(nil),           // 18: session.v1.SftpRecordingHeader
 	(*SftpRecordingFrame)(nil),            // 19: session.v1.SftpRecordingFrame
 	(*v1.Payload)(nil),                    // 20: query.v1.Payload
-	(*v1.Descriptor)(nil),                 // 21: query.v1.Descriptor
-	(*emptypb.Empty)(nil),                 // 22: google.protobuf.Empty
+	(*v11.GetVersionInfoRequest)(nil),     // 21: common.v1.GetVersionInfoRequest
+	(*v1.Descriptor)(nil),                 // 22: query.v1.Descriptor
+	(*emptypb.Empty)(nil),                 // 23: google.protobuf.Empty
+	(*v11.GetVersionInfoResponse)(nil),    // 24: common.v1.GetVersionInfoResponse
 }
 var file_session_v1_session_proto_depIdxs = []int32{
 	2,  // 0: session.v1.Sessions.sessions:type_name -> session.v1.Session
@@ -1744,23 +1748,25 @@ var file_session_v1_session_proto_depIdxs = []int32{
 	5,  // 16: session.v1.SessionService.QuerySessions:input_type -> session.v1.QuerySessionsRequest
 	6,  // 17: session.v1.SessionService.UpsertSession:input_type -> session.v1.UpsertSessionRequest
 	8,  // 18: session.v1.SessionService.EndSession:input_type -> session.v1.EndSessionRequest
-	13, // 19: session.v1.RecordingService.StreamShellRecording:input_type -> session.v1.ShellRecordingFrame
-	15, // 20: session.v1.RecordingService.StreamExecRecording:input_type -> session.v1.ExecRecordingFrame
-	17, // 21: session.v1.RecordingService.StreamTcpipRecording:input_type -> session.v1.TcpipRecordingFrame
-	19, // 22: session.v1.RecordingService.StreamSftpRecording:input_type -> session.v1.SftpRecordingFrame
-	9,  // 23: session.v1.RecordingService.EndRecordingSession:input_type -> session.v1.EndRecordingSessionRequest
-	3,  // 24: session.v1.SessionService.GetSessions:output_type -> session.v1.Sessions
-	21, // 25: session.v1.SessionService.GetSessionsQuerySchema:output_type -> query.v1.Descriptor
-	3,  // 26: session.v1.SessionService.QuerySessions:output_type -> session.v1.Sessions
-	7,  // 27: session.v1.SessionService.UpsertSession:output_type -> session.v1.UpsertSessionResponse
-	22, // 28: session.v1.SessionService.EndSession:output_type -> google.protobuf.Empty
-	22, // 29: session.v1.RecordingService.StreamShellRecording:output_type -> google.protobuf.Empty
-	22, // 30: session.v1.RecordingService.StreamExecRecording:output_type -> google.protobuf.Empty
-	22, // 31: session.v1.RecordingService.StreamTcpipRecording:output_type -> google.protobuf.Empty
-	22, // 32: session.v1.RecordingService.StreamSftpRecording:output_type -> google.protobuf.Empty
-	22, // 33: session.v1.RecordingService.EndRecordingSession:output_type -> google.protobuf.Empty
-	24, // [24:34] is the sub-list for method output_type
-	14, // [14:24] is the sub-list for method input_type
+	21, // 19: session.v1.SessionService.GetVersionInfo:input_type -> common.v1.GetVersionInfoRequest
+	13, // 20: session.v1.RecordingService.StreamShellRecording:input_type -> session.v1.ShellRecordingFrame
+	15, // 21: session.v1.RecordingService.StreamExecRecording:input_type -> session.v1.ExecRecordingFrame
+	17, // 22: session.v1.RecordingService.StreamTcpipRecording:input_type -> session.v1.TcpipRecordingFrame
+	19, // 23: session.v1.RecordingService.StreamSftpRecording:input_type -> session.v1.SftpRecordingFrame
+	9,  // 24: session.v1.RecordingService.EndRecordingSession:input_type -> session.v1.EndRecordingSessionRequest
+	3,  // 25: session.v1.SessionService.GetSessions:output_type -> session.v1.Sessions
+	22, // 26: session.v1.SessionService.GetSessionsQuerySchema:output_type -> query.v1.Descriptor
+	3,  // 27: session.v1.SessionService.QuerySessions:output_type -> session.v1.Sessions
+	7,  // 28: session.v1.SessionService.UpsertSession:output_type -> session.v1.UpsertSessionResponse
+	23, // 29: session.v1.SessionService.EndSession:output_type -> google.protobuf.Empty
+	24, // 30: session.v1.SessionService.GetVersionInfo:output_type -> common.v1.GetVersionInfoResponse
+	23, // 31: session.v1.RecordingService.StreamShellRecording:output_type -> google.protobuf.Empty
+	23, // 32: session.v1.RecordingService.StreamExecRecording:output_type -> google.protobuf.Empty
+	23, // 33: session.v1.RecordingService.StreamTcpipRecording:output_type -> google.protobuf.Empty
+	23, // 34: session.v1.RecordingService.StreamSftpRecording:output_type -> google.protobuf.Empty
+	23, // 35: session.v1.RecordingService.EndRecordingSession:output_type -> google.protobuf.Empty
+	25, // [25:36] is the sub-list for method output_type
+	14, // [14:25] is the sub-list for method input_type
 	14, // [14:14] is the sub-list for extension type_name
 	14, // [14:14] is the sub-list for extension extendee
 	0,  // [0:14] is the sub-list for field type_name

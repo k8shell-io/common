@@ -7,6 +7,7 @@ package authz.v1;
 
 option go_package = "github.com/k8shell-io/common/pkg/api/gen/go/authz/v1;authzv1";
 
+import "common/v1/common.proto";
 import "google/protobuf/timestamp.proto";
 import "query/v1/query.proto";
 
@@ -35,6 +36,11 @@ service AuthzService {
   // calling this RPC — like the identity service's admin-only mutations,
   // there is no per-call authz check here.
   rpc QueryAudit(QueryAuditRequest) returns (AuditList);
+
+  // GetVersionInfo returns build and version metadata for this service: its
+  // released semantic version, the git commit it was built from, and a short
+  // description of what the service does.
+  rpc GetVersionInfo(common.v1.GetVersionInfoRequest) returns (common.v1.GetVersionInfoResponse);
 }
 
 // Resource identifies the object being acted upon.

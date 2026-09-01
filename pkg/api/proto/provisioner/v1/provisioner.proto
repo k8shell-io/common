@@ -132,6 +132,11 @@ service ProvisionerService {
   // who owns it. A workload hosts at most one workspace, so an occupied
   // workload must be ejected before anyone else can inject into it.
   rpc ListInjectWorkloads(ListInjectWorkloadsRequest) returns (ListInjectWorkloadsResponse);
+
+  // GetVersionInfo returns build and version metadata for this service: its
+  // released semantic version, the git commit it was built from, and a short
+  // description of what the service does.
+  rpc GetVersionInfo(common.v1.GetVersionInfoRequest) returns (common.v1.GetVersionInfoResponse);
 }
 
 // FindWorkspaceRequest identifies a single workspace to look up.

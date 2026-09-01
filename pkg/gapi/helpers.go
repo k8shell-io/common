@@ -641,3 +641,17 @@ func ProtoToRepo(pb *identityv1.Repo) *models.Repo {
 		HTMLURL:       pb.GetHtmlUrl(),
 	}
 }
+
+// ProtoToServiceVersionInfo converts a protobuf GetVersionInfoResponse
+// message to its Go model. It maps only the fields the RPC carries; the
+// model's Error and any Version fallback are set by the caller.
+func ProtoToServiceVersionInfo(pb *commonv1.GetVersionInfoResponse) *models.ServiceVersionInfo {
+	if pb == nil {
+		return nil
+	}
+	return &models.ServiceVersionInfo{
+		Version:     pb.GetVersion(),
+		CommitID:    pb.GetCommitId(),
+		Description: pb.GetDescription(),
+	}
+}

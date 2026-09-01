@@ -36,6 +36,7 @@ const (
 	IdentityProviderService_ResolvePullRequestToRef_FullMethodName = "/identity.v1.IdentityProviderService/ResolvePullRequestToRef"
 	IdentityProviderService_ListRepoOwners_FullMethodName          = "/identity.v1.IdentityProviderService/ListRepoOwners"
 	IdentityProviderService_ListRepos_FullMethodName               = "/identity.v1.IdentityProviderService/ListRepos"
+	IdentityProviderService_GetVersionInfo_FullMethodName          = "/identity.v1.IdentityProviderService/GetVersionInfo"
 )
 
 // IdentityProviderServiceClient is the client API for IdentityProviderService service.
@@ -78,6 +79,10 @@ type IdentityProviderServiceClient interface {
 	ListRepoOwners(ctx context.Context, in *Username, opts ...grpc.CallOption) (*RepoOwnerList, error)
 	// ListRepos lists the repositories under the given owner that the user can access.
 	ListRepos(ctx context.Context, in *ListReposRequest, opts ...grpc.CallOption) (*RepoList, error)
+	// GetVersionInfo returns build and version metadata for this service: its
+	// released semantic version, the git commit it was built from, and a short
+	// description of what the service does.
+	GetVersionInfo(ctx context.Context, in *v1.GetVersionInfoRequest, opts ...grpc.CallOption) (*v1.GetVersionInfoResponse, error)
 }
 
 type identityProviderServiceClient struct {
@@ -218,6 +223,16 @@ func (c *identityProviderServiceClient) ListRepos(ctx context.Context, in *ListR
 	return out, nil
 }
 
+func (c *identityProviderServiceClient) GetVersionInfo(ctx context.Context, in *v1.GetVersionInfoRequest, opts ...grpc.CallOption) (*v1.GetVersionInfoResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(v1.GetVersionInfoResponse)
+	err := c.cc.Invoke(ctx, IdentityProviderService_GetVersionInfo_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // IdentityProviderServiceServer is the server API for IdentityProviderService service.
 // All implementations must embed UnimplementedIdentityProviderServiceServer
 // for forward compatibility.
@@ -258,6 +273,10 @@ type IdentityProviderServiceServer interface {
 	ListRepoOwners(context.Context, *Username) (*RepoOwnerList, error)
 	// ListRepos lists the repositories under the given owner that the user can access.
 	ListRepos(context.Context, *ListReposRequest) (*RepoList, error)
+	// GetVersionInfo returns build and version metadata for this service: its
+	// released semantic version, the git commit it was built from, and a short
+	// description of what the service does.
+	GetVersionInfo(context.Context, *v1.GetVersionInfoRequest) (*v1.GetVersionInfoResponse, error)
 	mustEmbedUnimplementedIdentityProviderServiceServer()
 }
 
@@ -306,6 +325,9 @@ func (UnimplementedIdentityProviderServiceServer) ListRepoOwners(context.Context
 }
 func (UnimplementedIdentityProviderServiceServer) ListRepos(context.Context, *ListReposRequest) (*RepoList, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListRepos not implemented")
+}
+func (UnimplementedIdentityProviderServiceServer) GetVersionInfo(context.Context, *v1.GetVersionInfoRequest) (*v1.GetVersionInfoResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetVersionInfo not implemented")
 }
 func (UnimplementedIdentityProviderServiceServer) mustEmbedUnimplementedIdentityProviderServiceServer() {
 }
@@ -563,6 +585,24 @@ func _IdentityProviderService_ListRepos_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IdentityProviderService_GetVersionInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1.GetVersionInfoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityProviderServiceServer).GetVersionInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityProviderService_GetVersionInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityProviderServiceServer).GetVersionInfo(ctx, req.(*v1.GetVersionInfoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // IdentityProviderService_ServiceDesc is the grpc.ServiceDesc for IdentityProviderService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -621,6 +661,10 @@ var IdentityProviderService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListRepos",
 			Handler:    _IdentityProviderService_ListRepos_Handler,
+		},
+		{
+			MethodName: "GetVersionInfo",
+			Handler:    _IdentityProviderService_GetVersionInfo_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

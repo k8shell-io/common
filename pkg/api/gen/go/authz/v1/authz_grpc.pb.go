@@ -11,6 +11,7 @@ package authzv1
 
 import (
 	context "context"
+	v11 "github.com/k8shell-io/common/pkg/api/gen/go/common/v1"
 	v1 "github.com/k8shell-io/common/pkg/api/gen/go/query/v1"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
@@ -27,6 +28,7 @@ const (
 	AuthzService_BatchEvaluate_FullMethodName       = "/authz.v1.AuthzService/BatchEvaluate"
 	AuthzService_GetAuditQuerySchema_FullMethodName = "/authz.v1.AuthzService/GetAuditQuerySchema"
 	AuthzService_QueryAudit_FullMethodName          = "/authz.v1.AuthzService/QueryAudit"
+	AuthzService_GetVersionInfo_FullMethodName      = "/authz.v1.AuthzService/GetVersionInfo"
 )
 
 // AuthzServiceClient is the client API for AuthzService service.
@@ -54,6 +56,10 @@ type AuthzServiceClient interface {
 	// calling this RPC — like the identity service's admin-only mutations,
 	// there is no per-call authz check here.
 	QueryAudit(ctx context.Context, in *QueryAuditRequest, opts ...grpc.CallOption) (*AuditList, error)
+	// GetVersionInfo returns build and version metadata for this service: its
+	// released semantic version, the git commit it was built from, and a short
+	// description of what the service does.
+	GetVersionInfo(ctx context.Context, in *v11.GetVersionInfoRequest, opts ...grpc.CallOption) (*v11.GetVersionInfoResponse, error)
 }
 
 type authzServiceClient struct {
@@ -104,6 +110,16 @@ func (c *authzServiceClient) QueryAudit(ctx context.Context, in *QueryAuditReque
 	return out, nil
 }
 
+func (c *authzServiceClient) GetVersionInfo(ctx context.Context, in *v11.GetVersionInfoRequest, opts ...grpc.CallOption) (*v11.GetVersionInfoResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(v11.GetVersionInfoResponse)
+	err := c.cc.Invoke(ctx, AuthzService_GetVersionInfo_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthzServiceServer is the server API for AuthzService service.
 // All implementations must embed UnimplementedAuthzServiceServer
 // for forward compatibility.
@@ -129,6 +145,10 @@ type AuthzServiceServer interface {
 	// calling this RPC — like the identity service's admin-only mutations,
 	// there is no per-call authz check here.
 	QueryAudit(context.Context, *QueryAuditRequest) (*AuditList, error)
+	// GetVersionInfo returns build and version metadata for this service: its
+	// released semantic version, the git commit it was built from, and a short
+	// description of what the service does.
+	GetVersionInfo(context.Context, *v11.GetVersionInfoRequest) (*v11.GetVersionInfoResponse, error)
 	mustEmbedUnimplementedAuthzServiceServer()
 }
 
@@ -150,6 +170,9 @@ func (UnimplementedAuthzServiceServer) GetAuditQuerySchema(context.Context, *Get
 }
 func (UnimplementedAuthzServiceServer) QueryAudit(context.Context, *QueryAuditRequest) (*AuditList, error) {
 	return nil, status.Error(codes.Unimplemented, "method QueryAudit not implemented")
+}
+func (UnimplementedAuthzServiceServer) GetVersionInfo(context.Context, *v11.GetVersionInfoRequest) (*v11.GetVersionInfoResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetVersionInfo not implemented")
 }
 func (UnimplementedAuthzServiceServer) mustEmbedUnimplementedAuthzServiceServer() {}
 func (UnimplementedAuthzServiceServer) testEmbeddedByValue()                      {}
@@ -244,6 +267,24 @@ func _AuthzService_QueryAudit_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthzService_GetVersionInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v11.GetVersionInfoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthzServiceServer).GetVersionInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthzService_GetVersionInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthzServiceServer).GetVersionInfo(ctx, req.(*v11.GetVersionInfoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthzService_ServiceDesc is the grpc.ServiceDesc for AuthzService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -266,6 +307,10 @@ var AuthzService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "QueryAudit",
 			Handler:    _AuthzService_QueryAudit_Handler,
+		},
+		{
+			MethodName: "GetVersionInfo",
+			Handler:    _AuthzService_GetVersionInfo_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

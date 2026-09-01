@@ -96,6 +96,7 @@ const (
 	IdentityService_AddUserEnvVar_FullMethodName                 = "/identity.v1.IdentityService/AddUserEnvVar"
 	IdentityService_UpdateUserEnvVar_FullMethodName              = "/identity.v1.IdentityService/UpdateUserEnvVar"
 	IdentityService_DeleteUserEnvVar_FullMethodName              = "/identity.v1.IdentityService/DeleteUserEnvVar"
+	IdentityService_GetVersionInfo_FullMethodName                = "/identity.v1.IdentityService/GetVersionInfo"
 )
 
 // IdentityServiceClient is the client API for IdentityService service.
@@ -336,6 +337,10 @@ type IdentityServiceClient interface {
 	// DeleteUserEnvVar removes a user-owned environment variable, restoring
 	// the organization's value (if any) as the effective value for that key.
 	DeleteUserEnvVar(ctx context.Context, in *DeleteUserEnvVarRequest, opts ...grpc.CallOption) (*DeleteUserEnvVarResponse, error)
+	// GetVersionInfo returns build and version metadata for this service: its
+	// released semantic version, the git commit it was built from, and a short
+	// description of what the service does.
+	GetVersionInfo(ctx context.Context, in *v1.GetVersionInfoRequest, opts ...grpc.CallOption) (*v1.GetVersionInfoResponse, error)
 }
 
 type identityServiceClient struct {
@@ -1066,6 +1071,16 @@ func (c *identityServiceClient) DeleteUserEnvVar(ctx context.Context, in *Delete
 	return out, nil
 }
 
+func (c *identityServiceClient) GetVersionInfo(ctx context.Context, in *v1.GetVersionInfoRequest, opts ...grpc.CallOption) (*v1.GetVersionInfoResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(v1.GetVersionInfoResponse)
+	err := c.cc.Invoke(ctx, IdentityService_GetVersionInfo_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // IdentityServiceServer is the server API for IdentityService service.
 // All implementations must embed UnimplementedIdentityServiceServer
 // for forward compatibility.
@@ -1304,6 +1319,10 @@ type IdentityServiceServer interface {
 	// DeleteUserEnvVar removes a user-owned environment variable, restoring
 	// the organization's value (if any) as the effective value for that key.
 	DeleteUserEnvVar(context.Context, *DeleteUserEnvVarRequest) (*DeleteUserEnvVarResponse, error)
+	// GetVersionInfo returns build and version metadata for this service: its
+	// released semantic version, the git commit it was built from, and a short
+	// description of what the service does.
+	GetVersionInfo(context.Context, *v1.GetVersionInfoRequest) (*v1.GetVersionInfoResponse, error)
 	mustEmbedUnimplementedIdentityServiceServer()
 }
 
@@ -1529,6 +1548,9 @@ func (UnimplementedIdentityServiceServer) UpdateUserEnvVar(context.Context, *Upd
 }
 func (UnimplementedIdentityServiceServer) DeleteUserEnvVar(context.Context, *DeleteUserEnvVarRequest) (*DeleteUserEnvVarResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteUserEnvVar not implemented")
+}
+func (UnimplementedIdentityServiceServer) GetVersionInfo(context.Context, *v1.GetVersionInfoRequest) (*v1.GetVersionInfoResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetVersionInfo not implemented")
 }
 func (UnimplementedIdentityServiceServer) mustEmbedUnimplementedIdentityServiceServer() {}
 func (UnimplementedIdentityServiceServer) testEmbeddedByValue()                         {}
@@ -2847,6 +2869,24 @@ func _IdentityService_DeleteUserEnvVar_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IdentityService_GetVersionInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1.GetVersionInfoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).GetVersionInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_GetVersionInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).GetVersionInfo(ctx, req.(*v1.GetVersionInfoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // IdentityService_ServiceDesc is the grpc.ServiceDesc for IdentityService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -3141,6 +3181,10 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteUserEnvVar",
 			Handler:    _IdentityService_DeleteUserEnvVar_Handler,
+		},
+		{
+			MethodName: "GetVersionInfo",
+			Handler:    _IdentityService_GetVersionInfo_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
