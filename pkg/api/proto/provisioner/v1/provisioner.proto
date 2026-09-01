@@ -102,6 +102,16 @@ service ProvisionerService {
   // StopWorkspace suspends a running workspace without removing its state.
   rpc StopWorkspace(StopWorkspaceRequest) returns (StopWorkspaceResponse);
 
+  // UpdateWorkspaceResources changes the CPU/memory limits and/or the network
+  // policy class and egress rules of an existing workspace. The changes are
+  // applied directly to the live Kubernetes objects, independently of the
+  // workspace's Helm release: the pod is resized in place via the pods/resize
+  // subresource and its NetworkPolicies are re-rendered and re-applied. The
+  // Helm release is left untouched, so any later operation that re-applies it
+  // (a re-provision, or a stop followed by a start) reverts the workspace to
+  // the CPU/memory and network settings from its blueprint.
+  rpc UpdateWorkspaceResources(UpdateWorkspaceResourcesRequest) returns (UpdateWorkspaceResourcesResponse);
+
   // StartWorkspaceStream resumes a previously stopped workspace, recreating
   // its pod from the existing Helm release, and streams progress events back
   // to the caller until the workspace is ready or an error occurs.
@@ -420,6 +430,70 @@ message StopWorkspaceRequest {
 message StopWorkspaceResponse {
   // message provides a human-readable description of the result.
   string message = 1;
+}
+
+// WorkspaceResourceLimits carries the desired CPU and memory limits for a
+// workspace's main container. An empty field leaves that limit unchanged.
+message WorkspaceResourceLimits {
+  // cpu is the CPU limit as a Kubernetes resource quantity, e.g. "500m" or "2".
+  string cpu = 1;
+  // memory is the memory limit as a Kubernetes resource quantity, e.g. "512Mi" or "2Gi".
+  string memory = 2;
+}
+
+// WorkspacePodSelector is a set of pod labels an egress rule is allowed to
+// reach, matching the shorthand entries of a blueprint's
+// network.allowEgressToPods list.
+message WorkspacePodSelector {
+  map<string, string> match_labels = 1;
+}
+
+// WorkspaceNetworkRules carries the desired network policy class and egress
+// rules for a workspace.
+message WorkspaceNetworkRules {
+  // network_policy_class selects a predefined network policy class: one of
+  // "workspace", "system", "isolated", "user", "organization". Empty leaves
+  // the current class unchanged.
+  string network_policy_class = 1;
+  // replace_egress must be true for allow_egress_to_cidrs and
+  // allow_egress_to_pods to take effect. When true they replace the
+  // workspace's egress rules wholesale, so passing them empty clears every
+  // custom egress rule. When false both fields are ignored and only
+  // network_policy_class is considered.
+  bool replace_egress = 2;
+  // allow_egress_to_cidrs is the set of CIDR ranges the workspace may reach.
+  // Applied only when replace_egress is true.
+  repeated string allow_egress_to_cidrs = 3;
+  // allow_egress_to_pods is the set of pod label selectors the workspace may
+  // reach. Applied only when replace_egress is true.
+  repeated WorkspacePodSelector allow_egress_to_pods = 4;
+}
+
+// UpdateWorkspaceResourcesRequest identifies the workspace to update and
+// carries the resource and/or network changes to apply. At least one of
+// resources or network must be set.
+message UpdateWorkspaceResourcesRequest {
+  // workspace is the name of the workspace to update.
+  string workspace = 1;
+  // resources, when set, changes the workspace's CPU/memory limits.
+  WorkspaceResourceLimits resources = 2;
+  // network, when set, changes the workspace's network policy class and/or
+  // egress rules.
+  WorkspaceNetworkRules network = 3;
+}
+
+// UpdateWorkspaceResourcesResponse reports the settings in effect after the
+// update.
+message UpdateWorkspaceResourcesResponse {
+  // message is a human-readable summary of what was changed.
+  string message = 1;
+  // applied_cpu and applied_memory are the workspace's CPU and memory limits
+  // after the update.
+  string applied_cpu = 2;
+  string applied_memory = 3;
+  // applied_network_policy_class is the network policy class in effect after
+  // the update. Empty when the network was not changed.
+  string applied_network_policy_class = 4;
 }
 
 // StartWorkspaceRequest identifies the stopped workspace to start.

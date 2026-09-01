@@ -85,6 +85,25 @@ package authz
 //
 // ---
 //
+// Contract: workspace:update
+//
+// Resource  type="workspace"
+//   id     workspace name (required)
+//   owner  owner username (required)
+//
+// Context
+//   data_type  cpu | memory | network  (required) — which mutable slice of
+//              the workspace's runtime configuration this request changes.
+//              A request that touches several slices at once (e.g. a resize
+//              that changes both CPU and memory) is evaluated once per
+//              data_type and applied only if every evaluation allows it.
+//
+// Subject   injected by the backend from JWT claims (username, roles, email, ...)
+//
+// Obligations  (none) — allow/deny only
+//
+// ---
+//
 // Contract: workspace:delete
 //
 // Resource  type="workspace"
@@ -167,11 +186,40 @@ const (
 	WorkspaceActionList    WorkspaceAction = "workspace:list"
 	WorkspaceActionCreate  WorkspaceAction = "workspace:create"
 	WorkspaceActionRead    WorkspaceAction = "workspace:read"
+	WorkspaceActionUpdate  WorkspaceAction = "workspace:update"
 	WorkspaceActionDelete  WorkspaceAction = "workspace:delete"
 	WorkspaceActionConnect WorkspaceAction = "workspace:connect"
 	WorkspaceActionFiles   WorkspaceAction = "workspace:files"
 	WorkspaceActionApp     WorkspaceAction = "workspace:app"
 )
+
+// WorkspaceDataType identifies which mutable slice of a workspace's runtime
+// configuration is being changed in workspace:update. Each value is folded
+// into the PAT scope string as a fourth segment
+// ("workspace:update:<data_type>", see scope.go), so a role or token can be
+// scoped to e.g. resize CPU without also being able to rewrite egress rules.
+type WorkspaceDataType string
+
+const (
+	// WorkspaceDataTypeCPU covers a change to the workspace's CPU limit.
+	WorkspaceDataTypeCPU WorkspaceDataType = "cpu"
+	// WorkspaceDataTypeMemory covers a change to the workspace's memory limit.
+	WorkspaceDataTypeMemory WorkspaceDataType = "memory"
+	// WorkspaceDataTypeNetwork covers a change to the workspace's network
+	// policy class and/or egress rules.
+	WorkspaceDataTypeNetwork WorkspaceDataType = "network"
+)
+
+// validateWorkspaceDataType checks dt against the workspace:update data types.
+func validateWorkspaceDataType(dt WorkspaceDataType) error {
+	switch dt {
+	case WorkspaceDataTypeCPU, WorkspaceDataTypeMemory, WorkspaceDataTypeNetwork:
+		return nil
+	default:
+		return fmt.Errorf("workspace:update: context \"data_type\" must be %q, %q, or %q, got %q",
+			WorkspaceDataTypeCPU, WorkspaceDataTypeMemory, WorkspaceDataTypeNetwork, dt)
+	}
+}
 
 // validWorkspaceProvisionActions is the set of recognized workspace:provision actions.
 var validWorkspaceProvisionActions = map[WorkspaceAction]struct{}{
@@ -640,6 +688,103 @@ func (r *WorkspaceAccessEvalRequest) Validate() error {
 		return fmt.Errorf("workspace: resource attribute \"owner\" is required")
 	}
 	return nil
+}
+
+// --- workspace:update ---
+
+// WorkspaceUpdateEvalRequest is the validated, typed model for
+// workspace:update. The resource id is the workspace name; the owner
+// attribute identifies who owns it; the data_type context says which slice
+// of the workspace's runtime configuration (cpu | memory | network) is being
+// changed.
+type WorkspaceUpdateEvalRequest struct {
+	Resource WorkspaceResource
+	DataType WorkspaceDataType
+}
+
+var _ EvalRequest = (*WorkspaceUpdateEvalRequest)(nil)
+
+// NewWorkspaceUpdateEvalRequest begins building a WorkspaceUpdateEvalRequest
+// for the given workspace name.
+func NewWorkspaceUpdateEvalRequest(workspaceName string) *WorkspaceUpdateEvalRequest {
+	return &WorkspaceUpdateEvalRequest{
+		Resource: WorkspaceResource{ID: workspaceName},
+	}
+}
+
+// WithOwner sets the owner username on the resource.
+func (r *WorkspaceUpdateEvalRequest) WithOwner(owner string) *WorkspaceUpdateEvalRequest {
+	r.Resource.Owner = owner
+	return r
+}
+
+// WithDataType sets which slice of the workspace configuration is changing.
+func (r *WorkspaceUpdateEvalRequest) WithDataType(dt WorkspaceDataType) *WorkspaceUpdateEvalRequest {
+	r.DataType = dt
+	return r
+}
+
+// Build validates the request and returns it if all constraints are satisfied.
+func (r *WorkspaceUpdateEvalRequest) Build() (*WorkspaceUpdateEvalRequest, error) {
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// ToProto serializes the typed request into a gRPC EvaluateRequest.
+// Implements EvalRequest.
+func (r *WorkspaceUpdateEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
+	return &authzv1.EvaluateRequest{
+		Token:  token,
+		Action: "workspace:update",
+		Resource: &authzv1.Resource{
+			Type:       "workspace",
+			Id:         r.Resource.ID,
+			Attributes: map[string]string{"owner": r.Resource.Owner},
+		},
+		Context: map[string]string{"data_type": string(r.DataType)},
+	}
+}
+
+// WorkspaceUpdateEvalRequestFromProto converts a gRPC EvaluateRequest into a
+// validated WorkspaceUpdateEvalRequest.
+func WorkspaceUpdateEvalRequestFromProto(req *authzv1.EvaluateRequest) (*WorkspaceUpdateEvalRequest, error) {
+	if req == nil {
+		return nil, fmt.Errorf("workspace:update: EvaluateRequest is nil")
+	}
+	if req.Action != "workspace:update" {
+		return nil, fmt.Errorf("workspace:update: action must be \"workspace:update\", got %q", req.Action)
+	}
+	if req.Resource == nil {
+		return nil, fmt.Errorf("workspace:update: resource is nil")
+	}
+	if req.Resource.Type != "workspace" {
+		return nil, fmt.Errorf("workspace:update: resource type must be \"workspace\", got %q", req.Resource.Type)
+	}
+	r := &WorkspaceUpdateEvalRequest{
+		Resource: WorkspaceResource{
+			ID:    req.Resource.Id,
+			Owner: req.Resource.Attributes["owner"],
+		},
+		DataType: WorkspaceDataType(req.Context["data_type"]),
+	}
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// Validate checks the request against the workspace:update contract.
+// Implements EvalRequest.
+func (r *WorkspaceUpdateEvalRequest) Validate() error {
+	if r.Resource.ID == "" {
+		return fmt.Errorf("workspace:update: resource ID (workspace name) is required")
+	}
+	if r.Resource.Owner == "" {
+		return fmt.Errorf("workspace:update: resource attribute \"owner\" is required")
+	}
+	return validateWorkspaceDataType(r.DataType)
 }
 
 // --- workspace:connect ---
@@ -1151,6 +1296,20 @@ func init() {
 			return NewWorkspaceAccessEvalRequest(WorkspaceActionRead, capabilityWildcardWorkspace).WithOwner(ctx.ResourceOwner).Build()
 		},
 	})
+	for _, dt := range []WorkspaceDataType{
+		WorkspaceDataTypeCPU, WorkspaceDataTypeMemory, WorkspaceDataTypeNetwork,
+	} {
+		dt := dt
+		registerCapabilityCheck(CapabilityCheck{
+			Action:  string(WorkspaceActionUpdate) + ":" + string(dt),
+			Package: "workspace",
+			Scope:   string(WorkspaceActionUpdate) + ":" + string(dt),
+			Build: func(ctx CapabilityContext) (EvalRequest, error) {
+				return NewWorkspaceUpdateEvalRequest(capabilityWildcardWorkspace).
+					WithOwner(ctx.ResourceOwner).WithDataType(dt).Build()
+			},
+		})
+	}
 	registerCapabilityCheck(CapabilityCheck{
 		Action: string(WorkspaceActionDelete), Package: "workspace", Scope: string(WorkspaceActionDelete),
 		Build: func(ctx CapabilityContext) (EvalRequest, error) {

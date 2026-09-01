@@ -365,30 +365,33 @@ func WorkspaceDetailsToProto(m *models.WorkspaceDetails) *commonv1.WorkspaceDeta
 	}
 
 	return &commonv1.WorkspaceDetails{
-		WorkspaceStatus: WorkspaceStatusToProto(&m.WorkspaceStatus),
-		Name:            m.Name,
-		Username:        m.Username,
-		Blueprint:       m.Blueprint,
-		Origin:          m.Origin,
-		Organization:    m.Organization,
-		RepoOwner:       m.RepoOwner,
-		RepoName:        m.RepoName,
-		RepoRef:         m.RepoRef,
-		ServerName:      m.ServerName,
-		PodIp:           m.PodIP,
-		Port:            int32(m.Port),
-		TlsEnabled:      m.TLSEnabled,
-		AppVersion:      m.AppVersion,
-		Cpu:             m.CPU,
-		Memory:          m.Memory,
-		Hostname:        m.Hostname,
-		JobId:           m.JobId,
-		Namespace:       m.Namespace,
-		WorkspaceType:   string(m.WorkspaceType),
-		WorkloadKind:    m.WorkloadKind,
-		WorkloadName:    m.WorkloadName,
-		ReplicaIndex:    copyInt32(m.ReplicaIndex),
-		ReplicaCount:    copyInt32(m.ReplicaCount),
+		WorkspaceStatus:    WorkspaceStatusToProto(&m.WorkspaceStatus),
+		Name:               m.Name,
+		Username:           m.Username,
+		Blueprint:          m.Blueprint,
+		Origin:             m.Origin,
+		Organization:       m.Organization,
+		RepoOwner:          m.RepoOwner,
+		RepoName:           m.RepoName,
+		RepoRef:            m.RepoRef,
+		ServerName:         m.ServerName,
+		PodIp:              m.PodIP,
+		Port:               int32(m.Port),
+		TlsEnabled:         m.TLSEnabled,
+		AppVersion:         m.AppVersion,
+		Cpu:                m.CPU,
+		Memory:             m.Memory,
+		Hostname:           m.Hostname,
+		JobId:              m.JobId,
+		Namespace:          m.Namespace,
+		NetworkPolicyClass: m.NetworkPolicyClass,
+		AllowEgressToCidrs: append([]string(nil), m.AllowEgressToCIDRs...),
+		AllowEgressToPods:  podSelectorsToProto(m.AllowEgressToPods),
+		WorkspaceType:      string(m.WorkspaceType),
+		WorkloadKind:       m.WorkloadKind,
+		WorkloadName:       m.WorkloadName,
+		ReplicaIndex:       copyInt32(m.ReplicaIndex),
+		ReplicaCount:       copyInt32(m.ReplicaCount),
 	}
 }
 
@@ -402,6 +405,39 @@ func copyInt32(v *int32) *int32 {
 	return &c
 }
 
+// podSelectorsToProto converts the []map[string]string egress-to-pods shorthand
+// into its repeated-message protobuf form, copying every map.
+func podSelectorsToProto(sels []map[string]string) []*commonv1.PodLabelSelector {
+	if sels == nil {
+		return nil
+	}
+	out := make([]*commonv1.PodLabelSelector, 0, len(sels))
+	for _, s := range sels {
+		labels := make(map[string]string, len(s))
+		for k, v := range s {
+			labels[k] = v
+		}
+		out = append(out, &commonv1.PodLabelSelector{MatchLabels: labels})
+	}
+	return out
+}
+
+// protoToPodSelectors is the inverse of podSelectorsToProto.
+func protoToPodSelectors(sels []*commonv1.PodLabelSelector) []map[string]string {
+	if sels == nil {
+		return nil
+	}
+	out := make([]map[string]string, 0, len(sels))
+	for _, s := range sels {
+		labels := make(map[string]string, len(s.GetMatchLabels()))
+		for k, v := range s.GetMatchLabels() {
+			labels[k] = v
+		}
+		out = append(out, labels)
+	}
+	return out
+}
+
 // ProtoToWorkspaceDetails converts a protobuf WorkspaceDetails message to its Go model.
 func ProtoToWorkspaceDetails(pb *commonv1.WorkspaceDetails) *models.WorkspaceDetails {
 	if pb == nil {
@@ -409,30 +445,33 @@ func ProtoToWorkspaceDetails(pb *commonv1.WorkspaceDetails) *models.WorkspaceDet
 	}
 
 	return &models.WorkspaceDetails{
-		WorkspaceStatus: *ProtoToWorkspaceStatus(pb.GetWorkspaceStatus()),
-		Name:            pb.GetName(),
-		Username:        pb.GetUsername(),
-		Organization:    pb.GetOrganization(),
-		RepoOwner:       pb.GetRepoOwner(),
-		RepoName:        pb.GetRepoName(),
-		RepoRef:         pb.GetRepoRef(),
-		Blueprint:       pb.GetBlueprint(),
-		Origin:          pb.GetOrigin(),
-		ServerName:      pb.GetServerName(),
-		PodIP:           pb.GetPodIp(),
-		Port:            int(pb.GetPort()),
-		TLSEnabled:      pb.GetTlsEnabled(),
-		AppVersion:      pb.GetAppVersion(),
-		CPU:             pb.GetCpu(),
-		Memory:          pb.GetMemory(),
-		Hostname:        pb.GetHostname(),
-		JobId:           pb.GetJobId(),
-		Namespace:       pb.GetNamespace(),
-		WorkspaceType:   models.WorkspaceType(pb.GetWorkspaceType()),
-		WorkloadKind:    pb.GetWorkloadKind(),
-		WorkloadName:    pb.GetWorkloadName(),
-		ReplicaIndex:    copyInt32(pb.ReplicaIndex),
-		ReplicaCount:    copyInt32(pb.ReplicaCount),
+		WorkspaceStatus:    *ProtoToWorkspaceStatus(pb.GetWorkspaceStatus()),
+		Name:               pb.GetName(),
+		Username:           pb.GetUsername(),
+		Organization:       pb.GetOrganization(),
+		RepoOwner:          pb.GetRepoOwner(),
+		RepoName:           pb.GetRepoName(),
+		RepoRef:            pb.GetRepoRef(),
+		Blueprint:          pb.GetBlueprint(),
+		Origin:             pb.GetOrigin(),
+		ServerName:         pb.GetServerName(),
+		PodIP:              pb.GetPodIp(),
+		Port:               int(pb.GetPort()),
+		TLSEnabled:         pb.GetTlsEnabled(),
+		AppVersion:         pb.GetAppVersion(),
+		CPU:                pb.GetCpu(),
+		Memory:             pb.GetMemory(),
+		Hostname:           pb.GetHostname(),
+		JobId:              pb.GetJobId(),
+		Namespace:          pb.GetNamespace(),
+		NetworkPolicyClass: pb.GetNetworkPolicyClass(),
+		AllowEgressToCIDRs: append([]string(nil), pb.GetAllowEgressToCidrs()...),
+		AllowEgressToPods:  protoToPodSelectors(pb.GetAllowEgressToPods()),
+		WorkspaceType:      models.WorkspaceType(pb.GetWorkspaceType()),
+		WorkloadKind:       pb.GetWorkloadKind(),
+		WorkloadName:       pb.GetWorkloadName(),
+		ReplicaIndex:       copyInt32(pb.ReplicaIndex),
+		ReplicaCount:       copyInt32(pb.ReplicaCount),
 	}
 }
 

@@ -108,6 +108,41 @@ type UserKeysRequest struct {
 	Keys []string `json:"keys"`
 }
 
+// WorkspaceResourcesUpdateRequest is the HTTP request body for PATCH
+// /workspaces/{workspace_name}/resources, which changes a running workspace's
+// CPU and/or memory limits. Both fields are pointers for PATCH semantics (nil
+// means "leave unchanged"); at least one must be set. Each present field is
+// gated by its own workspace:update data type — cpu, memory — so a caller
+// authorized only to bump memory can't also change the CPU limit.
+// Note: proto counterpart is provisionerv1.WorkspaceResourceLimits (no json
+// tags, no pointers).
+type WorkspaceResourcesUpdateRequest struct {
+	CPU    *string `json:"cpu,omitempty" example:"500m"`
+	Memory *string `json:"memory,omitempty" example:"256Mi"`
+}
+
+// WorkspaceNetworkUpdateRequest is the HTTP request body for PATCH
+// /workspaces/{workspace_name}/network, which changes a workspace's network
+// policy class and/or egress rules. Gated by the workspace:update:network
+// data type. AllowEgressToCidrs and AllowEgressToPods take effect only when
+// ReplaceEgress is true, in which case they replace the workspace's egress
+// rules wholesale (passing them empty clears every custom rule); when
+// ReplaceEgress is false only NetworkPolicyClass is considered.
+// Note: proto counterpart is provisionerv1.WorkspaceNetworkRules.
+type WorkspaceNetworkUpdateRequest struct {
+	NetworkPolicyClass string                 `json:"networkPolicyClass,omitempty"`
+	ReplaceEgress      bool                   `json:"replaceEgress,omitempty"`
+	AllowEgressToCidrs []string               `json:"allowEgressToCidrs,omitempty"`
+	AllowEgressToPods  []WorkspacePodSelector `json:"allowEgressToPods,omitempty"`
+}
+
+// WorkspacePodSelector is a set of pod labels a workspace egress rule is
+// allowed to reach, used in WorkspaceNetworkUpdateRequest.
+// Note: proto counterpart is provisionerv1.WorkspacePodSelector.
+type WorkspacePodSelector struct {
+	MatchLabels map[string]string `json:"matchLabels,omitempty"`
+}
+
 // OnboardRuleCreateRequest is the HTTP request body for POST
 // /organizations/{org}/onboard-rules, which registers a new onboard rule (a
 // standing pattern policy, or a one-off decision for a specific username).

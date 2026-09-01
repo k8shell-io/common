@@ -926,6 +926,52 @@ func (x *WorkspaceStatus) GetLastFailMessage() string {
 	return ""
 }
 
+// PodLabelSelector is a set of pod labels an egress rule targets, matching one
+// entry of a blueprint's network.allowEgressToPods shorthand list.
+type PodLabelSelector struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	MatchLabels   map[string]string      `protobuf:"bytes,1,rep,name=match_labels,json=matchLabels,proto3" json:"match_labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PodLabelSelector) Reset() {
+	*x = PodLabelSelector{}
+	mi := &file_common_v1_common_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PodLabelSelector) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PodLabelSelector) ProtoMessage() {}
+
+func (x *PodLabelSelector) ProtoReflect() protoreflect.Message {
+	mi := &file_common_v1_common_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PodLabelSelector.ProtoReflect.Descriptor instead.
+func (*PodLabelSelector) Descriptor() ([]byte, []int) {
+	return file_common_v1_common_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *PodLabelSelector) GetMatchLabels() map[string]string {
+	if x != nil {
+		return x.MatchLabels
+	}
+	return nil
+}
+
 // WorkspaceDetails describes a user workspace and its current runtime state.
 type WorkspaceDetails struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -955,6 +1001,10 @@ type WorkspaceDetails struct {
 	Port int32 `protobuf:"varint,12,opt,name=port,proto3" json:"port,omitempty"`
 	// tls_enabled indicates whether TLS is enabled for the workspace endpoint.
 	TlsEnabled bool `protobuf:"varint,13,opt,name=tls_enabled,json=tlsEnabled,proto3" json:"tls_enabled,omitempty"`
+	// network_policy_class is the predefined network policy class the workspace
+	// pod belongs to: one of "workspace", "system", "isolated", "user",
+	// "organization". Empty when the workspace has no network policy class.
+	NetworkPolicyClass string `protobuf:"bytes,14,opt,name=network_policy_class,json=networkPolicyClass,proto3" json:"network_policy_class,omitempty"`
 	// cpu is the CPU resource allocation in Kubernetes quantity format (e.g. "500m").
 	Cpu string `protobuf:"bytes,15,opt,name=cpu,proto3" json:"cpu,omitempty"`
 	// memory is the memory resource allocation in Kubernetes quantity format (e.g. "1Gi").
@@ -988,14 +1038,23 @@ type WorkspaceDetails struct {
 	// replica_count is the workload's desired replica count: spec.replicas for a
 	// Deployment or StatefulSet, status.desiredNumberScheduled for a DaemonSet.
 	// Set only when workspace_type is "injected".
-	ReplicaCount  *int32 `protobuf:"varint,25,opt,name=replica_count,json=replicaCount,proto3,oneof" json:"replica_count,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	ReplicaCount *int32 `protobuf:"varint,25,opt,name=replica_count,json=replicaCount,proto3,oneof" json:"replica_count,omitempty"`
+	// allow_egress_to_cidrs is the set of CIDR egress shortcuts in force on the
+	// workspace pod. It reports the settings live on the pod now, which a call to
+	// UpdateWorkspaceResources can change and which revert to the blueprint on
+	// the next re-provision.
+	AllowEgressToCidrs []string `protobuf:"bytes,26,rep,name=allow_egress_to_cidrs,json=allowEgressToCidrs,proto3" json:"allow_egress_to_cidrs,omitempty"`
+	// allow_egress_to_pods is the set of pod-label egress shortcuts in force on
+	// the workspace pod, with the same live-view and revert semantics as
+	// allow_egress_to_cidrs.
+	AllowEgressToPods []*PodLabelSelector `protobuf:"bytes,27,rep,name=allow_egress_to_pods,json=allowEgressToPods,proto3" json:"allow_egress_to_pods,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *WorkspaceDetails) Reset() {
 	*x = WorkspaceDetails{}
-	mi := &file_common_v1_common_proto_msgTypes[9]
+	mi := &file_common_v1_common_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1007,7 +1066,7 @@ func (x *WorkspaceDetails) String() string {
 func (*WorkspaceDetails) ProtoMessage() {}
 
 func (x *WorkspaceDetails) ProtoReflect() protoreflect.Message {
-	mi := &file_common_v1_common_proto_msgTypes[9]
+	mi := &file_common_v1_common_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1020,7 +1079,7 @@ func (x *WorkspaceDetails) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WorkspaceDetails.ProtoReflect.Descriptor instead.
 func (*WorkspaceDetails) Descriptor() ([]byte, []int) {
-	return file_common_v1_common_proto_rawDescGZIP(), []int{9}
+	return file_common_v1_common_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *WorkspaceDetails) GetWorkspaceStatus() *WorkspaceStatus {
@@ -1114,6 +1173,13 @@ func (x *WorkspaceDetails) GetTlsEnabled() bool {
 	return false
 }
 
+func (x *WorkspaceDetails) GetNetworkPolicyClass() string {
+	if x != nil {
+		return x.NetworkPolicyClass
+	}
+	return ""
+}
+
 func (x *WorkspaceDetails) GetCpu() string {
 	if x != nil {
 		return x.Cpu
@@ -1191,6 +1257,20 @@ func (x *WorkspaceDetails) GetReplicaCount() int32 {
 	return 0
 }
 
+func (x *WorkspaceDetails) GetAllowEgressToCidrs() []string {
+	if x != nil {
+		return x.AllowEgressToCidrs
+	}
+	return nil
+}
+
+func (x *WorkspaceDetails) GetAllowEgressToPods() []*PodLabelSelector {
+	if x != nil {
+		return x.AllowEgressToPods
+	}
+	return nil
+}
+
 // BlueprintSummary is a lightweight representation of a blueprint used in
 // listing responses.
 type BlueprintSummary struct {
@@ -1227,7 +1307,7 @@ type BlueprintSummary struct {
 
 func (x *BlueprintSummary) Reset() {
 	*x = BlueprintSummary{}
-	mi := &file_common_v1_common_proto_msgTypes[10]
+	mi := &file_common_v1_common_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1239,7 +1319,7 @@ func (x *BlueprintSummary) String() string {
 func (*BlueprintSummary) ProtoMessage() {}
 
 func (x *BlueprintSummary) ProtoReflect() protoreflect.Message {
-	mi := &file_common_v1_common_proto_msgTypes[10]
+	mi := &file_common_v1_common_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1252,7 +1332,7 @@ func (x *BlueprintSummary) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BlueprintSummary.ProtoReflect.Descriptor instead.
 func (*BlueprintSummary) Descriptor() ([]byte, []int) {
-	return file_common_v1_common_proto_rawDescGZIP(), []int{10}
+	return file_common_v1_common_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *BlueprintSummary) GetName() string {
@@ -1400,7 +1480,12 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"\x06status\x18\x02 \x01(\tR\x06status\x12\x18\n" +
 	"\amessage\x18\x03 \x01(\tR\amessage\x12\x1a\n" +
 	"\brestarts\x18\x04 \x01(\x05R\brestarts\x12*\n" +
-	"\x11last_fail_message\x18\x05 \x01(\tR\x0flastFailMessage\"\xac\x06\n" +
+	"\x11last_fail_message\x18\x05 \x01(\tR\x0flastFailMessage\"\xa3\x01\n" +
+	"\x10PodLabelSelector\x12O\n" +
+	"\fmatch_labels\x18\x01 \x03(\v2,.common.v1.PodLabelSelector.MatchLabelsEntryR\vmatchLabels\x1a>\n" +
+	"\x10MatchLabelsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xdf\a\n" +
 	"\x10WorkspaceDetails\x12E\n" +
 	"\x10workspace_status\x18\x01 \x01(\v2\x1a.common.v1.WorkspaceStatusR\x0fworkspaceStatus\x12\x1f\n" +
 	"\vapp_version\x18\x02 \x01(\tR\n" +
@@ -1419,7 +1504,8 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"\x06pod_ip\x18\v \x01(\tR\x05podIp\x12\x12\n" +
 	"\x04port\x18\f \x01(\x05R\x04port\x12\x1f\n" +
 	"\vtls_enabled\x18\r \x01(\bR\n" +
-	"tlsEnabled\x12\x10\n" +
+	"tlsEnabled\x120\n" +
+	"\x14network_policy_class\x18\x0e \x01(\tR\x12networkPolicyClass\x12\x10\n" +
 	"\x03cpu\x18\x0f \x01(\tR\x03cpu\x12\x16\n" +
 	"\x06memory\x18\x10 \x01(\tR\x06memory\x12\x1a\n" +
 	"\bhostname\x18\x11 \x01(\tR\bhostname\x12\x15\n" +
@@ -1430,7 +1516,9 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"\rworkload_kind\x18\x16 \x01(\tR\fworkloadKind\x12#\n" +
 	"\rworkload_name\x18\x17 \x01(\tR\fworkloadName\x12(\n" +
 	"\rreplica_index\x18\x18 \x01(\x05H\x00R\freplicaIndex\x88\x01\x01\x12(\n" +
-	"\rreplica_count\x18\x19 \x01(\x05H\x01R\freplicaCount\x88\x01\x01B\x10\n" +
+	"\rreplica_count\x18\x19 \x01(\x05H\x01R\freplicaCount\x88\x01\x01\x121\n" +
+	"\x15allow_egress_to_cidrs\x18\x1a \x03(\tR\x12allowEgressToCidrs\x12L\n" +
+	"\x14allow_egress_to_pods\x18\x1b \x03(\v2\x1b.common.v1.PodLabelSelectorR\x11allowEgressToPodsB\x10\n" +
 	"\x0e_replica_indexB\x10\n" +
 	"\x0e_replica_count\"\xaa\x02\n" +
 	"\x10BlueprintSummary\x12\x12\n" +
@@ -1458,7 +1546,7 @@ func file_common_v1_common_proto_rawDescGZIP() []byte {
 	return file_common_v1_common_proto_rawDescData
 }
 
-var file_common_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_common_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_common_v1_common_proto_goTypes = []any{
 	(*User)(nil),                  // 0: common.v1.User
 	(*UserCredential)(nil),        // 1: common.v1.UserCredential
@@ -1469,26 +1557,30 @@ var file_common_v1_common_proto_goTypes = []any{
 	(*OnboardUserRule)(nil),       // 6: common.v1.OnboardUserRule
 	(*UserResult)(nil),            // 7: common.v1.UserResult
 	(*WorkspaceStatus)(nil),       // 8: common.v1.WorkspaceStatus
-	(*WorkspaceDetails)(nil),      // 9: common.v1.WorkspaceDetails
-	(*BlueprintSummary)(nil),      // 10: common.v1.BlueprintSummary
-	(*timestamppb.Timestamp)(nil), // 11: google.protobuf.Timestamp
+	(*PodLabelSelector)(nil),      // 9: common.v1.PodLabelSelector
+	(*WorkspaceDetails)(nil),      // 10: common.v1.WorkspaceDetails
+	(*BlueprintSummary)(nil),      // 11: common.v1.BlueprintSummary
+	nil,                           // 12: common.v1.PodLabelSelector.MatchLabelsEntry
+	(*timestamppb.Timestamp)(nil), // 13: google.protobuf.Timestamp
 }
 var file_common_v1_common_proto_depIdxs = []int32{
-	11, // 0: common.v1.User.expires_at:type_name -> google.protobuf.Timestamp
-	11, // 1: common.v1.UserCredential.created_at:type_name -> google.protobuf.Timestamp
-	11, // 2: common.v1.UserCredential.updated_at:type_name -> google.protobuf.Timestamp
-	11, // 3: common.v1.UserCredential.expires_at:type_name -> google.protobuf.Timestamp
-	11, // 4: common.v1.UserCredential.last_used_at:type_name -> google.protobuf.Timestamp
+	13, // 0: common.v1.User.expires_at:type_name -> google.protobuf.Timestamp
+	13, // 1: common.v1.UserCredential.created_at:type_name -> google.protobuf.Timestamp
+	13, // 2: common.v1.UserCredential.updated_at:type_name -> google.protobuf.Timestamp
+	13, // 3: common.v1.UserCredential.expires_at:type_name -> google.protobuf.Timestamp
+	13, // 4: common.v1.UserCredential.last_used_at:type_name -> google.protobuf.Timestamp
 	6,  // 5: common.v1.UserResult.onboard_rule:type_name -> common.v1.OnboardUserRule
-	11, // 6: common.v1.WorkspaceStatus.created:type_name -> google.protobuf.Timestamp
-	8,  // 7: common.v1.WorkspaceDetails.workspace_status:type_name -> common.v1.WorkspaceStatus
-	11, // 8: common.v1.BlueprintSummary.created_at:type_name -> google.protobuf.Timestamp
-	11, // 9: common.v1.BlueprintSummary.updated_at:type_name -> google.protobuf.Timestamp
-	10, // [10:10] is the sub-list for method output_type
-	10, // [10:10] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	13, // 6: common.v1.WorkspaceStatus.created:type_name -> google.protobuf.Timestamp
+	12, // 7: common.v1.PodLabelSelector.match_labels:type_name -> common.v1.PodLabelSelector.MatchLabelsEntry
+	8,  // 8: common.v1.WorkspaceDetails.workspace_status:type_name -> common.v1.WorkspaceStatus
+	9,  // 9: common.v1.WorkspaceDetails.allow_egress_to_pods:type_name -> common.v1.PodLabelSelector
+	13, // 10: common.v1.BlueprintSummary.created_at:type_name -> google.protobuf.Timestamp
+	13, // 11: common.v1.BlueprintSummary.updated_at:type_name -> google.protobuf.Timestamp
+	12, // [12:12] is the sub-list for method output_type
+	12, // [12:12] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_common_v1_common_proto_init() }
@@ -1497,14 +1589,14 @@ func file_common_v1_common_proto_init() {
 		return
 	}
 	file_common_v1_common_proto_msgTypes[6].OneofWrappers = []any{}
-	file_common_v1_common_proto_msgTypes[9].OneofWrappers = []any{}
+	file_common_v1_common_proto_msgTypes[10].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_common_v1_common_proto_rawDesc), len(file_common_v1_common_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   11,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

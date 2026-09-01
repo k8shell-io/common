@@ -112,6 +112,7 @@ var scopeConstrainablePrefixes = map[string]struct{}{
 	"workspace":         {}, // enables "workspace:*:self"
 	"workspace:create":  {},
 	"workspace:read":    {},
+	"workspace:update":  {}, // cpu | memory | network
 	"workspace:delete":  {},
 	"workspace:files":   {},
 	"workspace:connect": {}, // webshell | webfiles | portforward
@@ -177,6 +178,13 @@ var validExactScopes = map[string]struct{}{
 	string(WorkspaceActionRead):   {},
 	string(WorkspaceActionDelete): {},
 	string(WorkspaceActionFiles):  {},
+
+	// workspace:update — one entry per data type (cpu | memory | network),
+	// so a token can be scoped to resize a workspace without also being able
+	// to rewrite its egress rules.
+	string(WorkspaceActionUpdate) + ":" + string(WorkspaceDataTypeCPU):     {},
+	string(WorkspaceActionUpdate) + ":" + string(WorkspaceDataTypeMemory):  {},
+	string(WorkspaceActionUpdate) + ":" + string(WorkspaceDataTypeNetwork): {},
 
 	// workspace:connect — one entry per connect type
 	string(WorkspaceActionConnect) + ":" + string(WorkspaceConnectTypeWebshell):    {},
@@ -266,6 +274,7 @@ var validExactScopes = map[string]struct{}{
 // is no value in "workspace:provision:*" when there are no qualifiers.
 var validWildcardPrefixes = map[string]struct{}{
 	"workspace":              {}, // all workspace actions
+	"workspace:update":       {}, // cpu | memory | network
 	"workspace:connect":      {}, // webshell | webfiles | portforward
 	"workspace:app":          {}, // install | start | stop
 	"session":                {}, // all session actions

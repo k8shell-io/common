@@ -89,6 +89,11 @@ var scopeCatalogSource = []domainSpec{
 			{action: "workspace:read", label: "Read", entries: []entrySpec{
 				{scope: "workspace:read", label: "Read", description: "Read a workspace's details."},
 			}},
+			{action: "workspace:update", label: "Update", wildcard: &entrySpec{scope: "workspace:update:*", label: "Any resource type"}, entries: []entrySpec{
+				{scope: "workspace:update:cpu", label: "CPU", description: "Change a workspace's CPU limit."},
+				{scope: "workspace:update:memory", label: "Memory", description: "Change a workspace's memory limit."},
+				{scope: "workspace:update:network", label: "Network", description: "Change a workspace's network policy class and egress rules."},
+			}},
 			{action: "workspace:delete", label: "Delete", entries: []entrySpec{
 				{scope: "workspace:delete", label: "Delete", description: "Delete a workspace."},
 			}},

@@ -65,6 +65,16 @@ type WorkspaceDetails struct {
 	Namespace    string `json:"namespace"`
 	Hostname     string `json:"hostname,omitempty"`
 	JobId        string `json:"jobId,omitempty"`
+	// NetworkPolicyClass is the predefined network policy class the workspace
+	// pod belongs to (e.g. "user", "organization"). Empty when the workspace
+	// has no network policy class.
+	NetworkPolicyClass string `json:"networkPolicyClass,omitempty" example:"user"`
+	// AllowEgressToCIDRs and AllowEgressToPods are the egress shortcuts in force
+	// on the workspace pod. They report the settings live on the pod now: a call
+	// to the update API can change them, and they revert to the blueprint's
+	// values on the next re-provision. Both are empty for an injected workspace.
+	AllowEgressToCIDRs []string            `json:"allowEgressToCIDRs,omitempty"`
+	AllowEgressToPods  []map[string]string `json:"allowEgressToPods,omitempty"`
 	// WorkspaceType tells standalone workspaces apart from injected ones.
 	WorkspaceType WorkspaceType `json:"workspaceType" example:"standalone"`
 	// WorkloadKind and WorkloadName identify the workload an injected
@@ -79,13 +89,6 @@ type WorkspaceDetails struct {
 	// is derived from pod-name order and can shift when a pod is replaced.
 	ReplicaIndex *int32 `json:"replicaIndex,omitempty" example:"0"`
 	ReplicaCount *int32 `json:"replicaCount,omitempty" example:"3"`
-}
-
-// WorkspaceCreateRequest represents workspace resources (CPU and memory)
-// It is used when updating the workspace resources via the API
-type WorkspaceResources struct {
-	CPU    string `json:"cpu" example:"500m"`
-	Memory string `json:"memory" example:"256Mi"`
 }
 
 type WorkspaceStreamEventType string

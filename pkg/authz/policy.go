@@ -124,6 +124,8 @@ func scopeForRequest(req *authzv1.EvaluateRequest) string {
 		return fold(dataType)
 	case "workspace:create":
 		return fold(ctx["mode"])
+	case "workspace:update":
+		return fold(ctx["data_type"])
 	case "workspace:connect":
 		return fold(ctx["type"])
 	case "workspace:files", "workspace:app":
@@ -209,6 +211,14 @@ func normalizeByDomain(req *authzv1.EvaluateRequest) (*authzv1.EvaluateRequest, 
 			return nil, err
 		}
 		normalized := accessReq.ToProto("")
+		normalized.Package = req.Package
+		return normalized, nil
+	case action == "workspace:update":
+		updateReq, err := WorkspaceUpdateEvalRequestFromProto(req)
+		if err != nil {
+			return nil, err
+		}
+		normalized := updateReq.ToProto("")
 		normalized.Package = req.Package
 		return normalized, nil
 	case action == "workspace:connect":

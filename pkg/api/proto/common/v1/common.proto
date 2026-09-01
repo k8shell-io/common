@@ -195,6 +195,12 @@ message WorkspaceStatus {
   string last_fail_message = 5;
 }
 
+// PodLabelSelector is a set of pod labels an egress rule targets, matching one
+// entry of a blueprint's network.allowEgressToPods shorthand list.
+message PodLabelSelector {
+  map<string, string> match_labels = 1;
+}
+
 // WorkspaceDetails describes a user workspace and its current runtime state.
 message WorkspaceDetails {
   // workspace_status holds the observed workspace status.
@@ -223,6 +229,10 @@ message WorkspaceDetails {
   int32 port = 12;
   // tls_enabled indicates whether TLS is enabled for the workspace endpoint.
   bool tls_enabled = 13;
+  // network_policy_class is the predefined network policy class the workspace
+  // pod belongs to: one of "workspace", "system", "isolated", "user",
+  // "organization". Empty when the workspace has no network policy class.
+  string network_policy_class = 14;
   // cpu is the CPU resource allocation in Kubernetes quantity format (e.g. "500m").
   string cpu = 15;
   // memory is the memory resource allocation in Kubernetes quantity format (e.g. "1Gi").
@@ -257,6 +267,15 @@ message WorkspaceDetails {
   // Deployment or StatefulSet, status.desiredNumberScheduled for a DaemonSet.
   // Set only when workspace_type is "injected".
   optional int32 replica_count = 25;
+  // allow_egress_to_cidrs is the set of CIDR egress shortcuts in force on the
+  // workspace pod. It reports the settings live on the pod now, which a call to
+  // UpdateWorkspaceResources can change and which revert to the blueprint on
+  // the next re-provision.
+  repeated string allow_egress_to_cidrs = 26;
+  // allow_egress_to_pods is the set of pod-label egress shortcuts in force on
+  // the workspace pod, with the same live-view and revert semantics as
+  // allow_egress_to_cidrs.
+  repeated PodLabelSelector allow_egress_to_pods = 27;
 }
 
 // BlueprintSummary is a lightweight representation of a blueprint used in
