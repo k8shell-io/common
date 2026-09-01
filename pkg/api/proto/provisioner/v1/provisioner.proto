@@ -42,6 +42,17 @@ service ProvisionerService {
   // when global) and is_global flag so a client can filter by organization.
   rpc ListBlueprints(ListBlueprintsRequest) returns (ListBlueprintsResponse);
 
+  // GetBlueprintsQuerySchema returns the query.v1.Descriptor advertising
+  // which blueprint fields are queryable/sortable via QueryBlueprints, and
+  // which operators are valid on each.
+  rpc GetBlueprintsQuerySchema(GetBlueprintsQuerySchemaRequest) returns (query.v1.Descriptor);
+
+  // QueryBlueprints retrieves blueprint summaries matching a generic
+  // query.v1.Payload, as advertised by GetBlueprintsQuerySchema. Like
+  // ListBlueprints, it is transparent to whether a matched blueprint is
+  // file-based or stored in the database.
+  rpc QueryBlueprints(QueryBlueprintsRequest) returns (QueryBlueprintsResponse);
+
   // GetBlueprint returns the full raw (unevaluated) spec of a single
   // blueprint by name. CEL expressions are returned as "!cel:"-prefixed
   // strings rather than evaluated, mirroring k8shelld.v1's GetBlueprint
@@ -168,6 +179,23 @@ message ListBlueprintsRequest {}
 // ListBlueprintsResponse carries a summary of every blueprint: the
 // file-based, global blueprints and every org-scoped database blueprint.
 message ListBlueprintsResponse {
+  repeated common.v1.BlueprintSummary blueprints = 1;
+}
+
+// GetBlueprintsQuerySchemaRequest requests the query.v1.Descriptor for the
+// blueprints resource. It carries no fields today; left as a message rather
+// than google.protobuf.Empty so parameters can be added later without
+// changing the RPC signature.
+message GetBlueprintsQuerySchemaRequest {}
+
+// QueryBlueprintsRequest carries a generic query against the fields
+// advertised by GetBlueprintsQuerySchema.
+message QueryBlueprintsRequest {
+  query.v1.Payload query = 1;
+}
+
+// QueryBlueprintsResponse contains the list of matching blueprint summaries.
+message QueryBlueprintsResponse {
   repeated common.v1.BlueprintSummary blueprints = 1;
 }
 
