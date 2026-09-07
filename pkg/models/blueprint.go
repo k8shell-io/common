@@ -162,10 +162,19 @@ type OrgBlueprintDocument struct {
 	Org          string `json:"org,omitempty" yaml:"org,omitempty"`
 }
 
-// InitScript represents a named initialization script
+// InitScript represents a named initialization script.
+//
+// Name must satisfy the "plainhostname" constraint (1-63 chars, alphanumeric
+// start/end, alphanumeric or '-' in between) because the provisioner uses it,
+// verbatim, as the trailing segment of the on-disk file name it materializes
+// for k8shelld. See InitScriptFileName.
 type InitScript struct {
-	Name   string `yaml:"name" json:"name" validate:"required"`
+	Name   string `yaml:"name" json:"name" validate:"required,plainhostname"`
 	Script string `yaml:"script" json:"script" validate:"required"`
+	// Always, when true, runs the script on every workspace start instead of
+	// only the first time. By default an init script runs once and is skipped
+	// on subsequent starts (e.g. after a workspace restart).
+	Always bool `yaml:"always,omitempty" json:"always,omitempty"`
 }
 
 type Conn struct {
