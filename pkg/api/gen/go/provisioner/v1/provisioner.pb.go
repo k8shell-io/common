@@ -704,7 +704,12 @@ type ValidateBlueprintRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// yaml is the raw blueprint YAML content: either a bare blueprint document
 	// or one wrapped in a top-level `blueprint:` key.
-	Yaml          []byte `protobuf:"bytes,1,opt,name=yaml,proto3" json:"yaml,omitempty"`
+	Yaml []byte `protobuf:"bytes,1,opt,name=yaml,proto3" json:"yaml,omitempty"`
+	// org optionally scopes `template:` resolution: when set, an org-scoped
+	// template of that name in this org is resolved before a global/file
+	// template of the same name, matching how a stored org blueprint of this
+	// org resolves its parent. Empty means global-only resolution.
+	Org           string `protobuf:"bytes,2,opt,name=org,proto3" json:"org,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -744,6 +749,13 @@ func (x *ValidateBlueprintRequest) GetYaml() []byte {
 		return x.Yaml
 	}
 	return nil
+}
+
+func (x *ValidateBlueprintRequest) GetOrg() string {
+	if x != nil {
+		return x.Org
+	}
+	return ""
 }
 
 // ValidateBlueprintResponse reports every problem found in the submitted
@@ -909,10 +921,11 @@ type OrgBlueprint struct {
 	// yaml is the raw blueprint YAML content: either a bare blueprint document
 	// or one wrapped in a top-level `blueprint:` key, in the same shape
 	// ValidateBlueprint/GetBlueprintResponse.blueprint accept/return. If it
-	// references an existing file-based Template via `template:`, that
-	// template's already-registered definition is merged in exactly as it
-	// would be for a blueprint loaded from disk. An org blueprint cannot
-	// inherit from another org blueprint, only from a file-based Template.
+	// references an existing Template via `template:`, that template's
+	// already-registered definition is merged in exactly as it would be for a
+	// blueprint loaded from disk. An org blueprint may inherit from a
+	// file-based Template or from an org-scoped Template in its own org, but
+	// never from another org's blueprint.
 	Yaml          []byte                 `protobuf:"bytes,4,opt,name=yaml,proto3" json:"yaml,omitempty"`
 	IsTemplate    bool                   `protobuf:"varint,5,opt,name=is_template,json=isTemplate,proto3" json:"is_template,omitempty"`
 	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
@@ -2754,9 +2767,10 @@ const file_provisioner_v1_provisioner_proto_rawDesc = "" +
 	"\x14GetBlueprintResponse\x12\x1c\n" +
 	"\tblueprint\x18\x01 \x01(\fR\tblueprint\x12#\n" +
 	"\rown_blueprint\x18\x02 \x01(\fR\fownBlueprint\x12\x1a\n" +
-	"\btemplate\x18\x03 \x01(\tR\btemplate\".\n" +
+	"\btemplate\x18\x03 \x01(\tR\btemplate\"@\n" +
 	"\x18ValidateBlueprintRequest\x12\x12\n" +
-	"\x04yaml\x18\x01 \x01(\fR\x04yaml\"\xa2\x01\n" +
+	"\x04yaml\x18\x01 \x01(\fR\x04yaml\x12\x10\n" +
+	"\x03org\x18\x02 \x01(\tR\x03org\"\xa2\x01\n" +
 	"\x19ValidateBlueprintResponse\x12\x14\n" +
 	"\x05valid\x18\x01 \x01(\bR\x05valid\x12@\n" +
 	"\x06errors\x18\x02 \x03(\v2(.provisioner.v1.BlueprintValidationErrorR\x06errors\x12-\n" +
