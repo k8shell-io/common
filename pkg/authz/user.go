@@ -41,11 +41,15 @@ package authz
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
 // Obligations
-//   auth_methods  JSON array of allowed auth method strings — "publickey",
-//                 "password", or both (e.g. ["publickey","password"]),
-//                 scoped to the surface in the request context. The enforcer
-//                 offers only the methods present in this list. publickey is
-//                 only meaningful for the ssh surface.
+//   auth_methods  JSON array of allowed auth method strings, scoped to the
+//                 surface in the request context. The enforcer offers only
+//                 the methods present in this list.
+//                   - ssh surface: "publickey", "password", or both
+//                                  (e.g. ["publickey","password"])
+//                   - web surface: "sso", "password", or both
+//                                  (e.g. ["sso","password"])
+//                 publickey is only meaningful for the ssh surface; sso only
+//                 for the web surface.
 //
 // ---
 //
@@ -302,13 +306,21 @@ func validateUserWriteDataType(dt UserDataType) error {
 type UserAuthMethod string
 
 const (
+	// UserAuthMethodPublicKey is SSH public-key authentication; only
+	// meaningful for AuthSurfaceSSH.
 	UserAuthMethodPublicKey UserAuthMethod = "publickey"
-	UserAuthMethodPassword  UserAuthMethod = "password"
+	// UserAuthMethodPassword is username/password authentication; valid on
+	// either surface.
+	UserAuthMethodPassword UserAuthMethod = "password"
+	// UserAuthMethodSSO is web SSO / OAuth login via an identity-provider
+	// redirect; only meaningful for AuthSurfaceWeb.
+	UserAuthMethodSSO UserAuthMethod = "sso"
 )
 
 // AuthSurface identifies which login surface a user:auth check is evaluating.
-// publickey is only meaningful for AuthSurfaceSSH; AuthSurfaceWeb is
-// password-only in practice, though the contract does not enforce that.
+// publickey is only meaningful for AuthSurfaceSSH and sso only for
+// AuthSurfaceWeb; password is valid on either. The contract does not enforce
+// these pairings — the enforcer for each surface ignores methods it cannot use.
 type AuthSurface string
 
 const (
@@ -1355,8 +1367,10 @@ func (r *UserWriteEvalRequest) Validate() error {
 
 const (
 	// ObligationKeyAuthMethods is the key the policy engine writes to indicate
-	// which SSH authentication methods are available to the user. The value is
-	// a JSON-encoded array of method strings (e.g. ["publickey","password"]).
+	// which authentication methods are available to the user for the surface
+	// named in the request context. The value is a JSON-encoded array of method
+	// strings (e.g. ["publickey","password"] for ssh, ["sso","password"] for
+	// web).
 	ObligationKeyAuthMethods = "auth_methods"
 )
 
@@ -1365,7 +1379,8 @@ const (
 // user:auth.
 type AuthMethodsObligation struct {
 	// Methods is the list of authentication methods the policy permits for
-	// the user (any of UserAuthMethodPublicKey, UserAuthMethodPassword).
+	// the user (any of UserAuthMethodPublicKey, UserAuthMethodPassword,
+	// UserAuthMethodSSO).
 	Methods []UserAuthMethod
 }
 
