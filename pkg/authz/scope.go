@@ -115,7 +115,7 @@ var scopeConstrainablePrefixes = map[string]struct{}{
 	"workspace:update":  {}, // cpu | memory | network
 	"workspace:delete":  {},
 	"workspace:files":   {},
-	"workspace:connect": {}, // webshell | webfiles | portforward
+	"workspace:connect": {}, // webshell | webfiles
 	"workspace:app":     {}, // read | install | start | stop
 	"workspace:list":    {},
 
@@ -186,10 +186,11 @@ var validExactScopes = map[string]struct{}{
 	string(WorkspaceActionUpdate) + ":" + string(WorkspaceDataTypeMemory):  {},
 	string(WorkspaceActionUpdate) + ":" + string(WorkspaceDataTypeNetwork): {},
 
-	// workspace:connect — one entry per connect type
-	string(WorkspaceActionConnect) + ":" + string(WorkspaceConnectTypeWebshell):    {},
-	string(WorkspaceActionConnect) + ":" + string(WorkspaceConnectTypeWebfiles):    {},
-	string(WorkspaceActionConnect) + ":" + string(WorkspaceConnectTypePortForward): {},
+	// workspace:connect — one entry per connect type. There is no portforward
+	// type: the port-forward proxy is gated on network.webProxy.allowedRoles,
+	// not on a workspace:connect scope (see the workspace:connect contract).
+	string(WorkspaceActionConnect) + ":" + string(WorkspaceConnectTypeWebshell): {},
+	string(WorkspaceActionConnect) + ":" + string(WorkspaceConnectTypeWebfiles): {},
 
 	// workspace:app — one entry per app op
 	string(WorkspaceActionApp) + ":" + string(WorkspaceAppOpRead):    {},
@@ -275,7 +276,7 @@ var validExactScopes = map[string]struct{}{
 var validWildcardPrefixes = map[string]struct{}{
 	"workspace":              {}, // all workspace actions
 	"workspace:update":       {}, // cpu | memory | network
-	"workspace:connect":      {}, // webshell | webfiles | portforward
+	"workspace:connect":      {}, // webshell | webfiles
 	"workspace:app":          {}, // install | start | stop
 	"session":                {}, // all session actions
 	"user":                   {}, // all user actions

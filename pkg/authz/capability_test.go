@@ -63,7 +63,6 @@ var expectedCapabilityActions = []string{
 	"workspace:delete",
 	"workspace:connect:webshell",
 	"workspace:connect:webfiles",
-	"workspace:connect:portforward",
 	"workspace:files:download",
 	"workspace:files:upload",
 	"workspace:app:read",

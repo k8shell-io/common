@@ -31,7 +31,7 @@ func TestScopeForRequest(t *testing.T) {
 		{"workspace:create standalone", "workspace:create", map[string]string{"mode": "standalone"}, "workspace:create:standalone"},
 		{"workspace:create inject", "workspace:create", map[string]string{"mode": "inject"}, "workspace:create:inject"},
 		{"workspace:connect webshell", "workspace:connect", map[string]string{"type": "webshell"}, "workspace:connect:webshell"},
-		{"workspace:connect portforward", "workspace:connect", map[string]string{"type": "portforward", "port": "8080"}, "workspace:connect:portforward"},
+		{"workspace:connect webfiles", "workspace:connect", map[string]string{"type": "webfiles"}, "workspace:connect:webfiles"},
 		{"workspace:files upload", "workspace:files", map[string]string{"op": "upload"}, "workspace:files:upload"},
 		{"workspace:app start", "workspace:app", map[string]string{"op": "start"}, "workspace:app:start"},
 

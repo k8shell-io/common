@@ -125,12 +125,17 @@ package authz
 //   owner  owner username (required)
 //
 // Context
-//   type  webshell | webfiles | portforward  (required)
-//   port  port number as string              (required for portforward)
+//   type  webshell | webfiles  (required)
 //
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
 // Obligations  (none) — allow/deny only
+//
+// There is no "portforward" connect type. The port-forward reverse proxy (the
+// {port}--{workspace}.<domain> subdomain) is authorized entirely on the target
+// workspace's network.webProxy.allowedRoles — the caller must hold one of
+// those roles, or own the workspace — and never issues a workspace:connect
+// Evaluate.
 //
 // ---
 //
@@ -459,9 +464,8 @@ func (r *WorkspaceEvalRequest) Validate() error {
 type WorkspaceConnectType string
 
 const (
-	WorkspaceConnectTypeWebshell    WorkspaceConnectType = "webshell"
-	WorkspaceConnectTypeWebfiles    WorkspaceConnectType = "webfiles"
-	WorkspaceConnectTypePortForward WorkspaceConnectType = "portforward"
+	WorkspaceConnectTypeWebshell WorkspaceConnectType = "webshell"
+	WorkspaceConnectTypeWebfiles WorkspaceConnectType = "webfiles"
 )
 
 // WorkspaceFilesOp is the direction of file transfer for workspace:files.
@@ -789,11 +793,9 @@ func (r *WorkspaceUpdateEvalRequest) Validate() error {
 
 // --- workspace:connect ---
 
-// WorkspaceConnectContext holds the session type and optional port for
-// workspace:connect.
+// WorkspaceConnectContext holds the session type for workspace:connect.
 type WorkspaceConnectContext struct {
 	Type WorkspaceConnectType
-	Port string // non-empty only when Type is WorkspaceConnectTypePortForward
 }
 
 // WorkspaceConnectEvalRequest is the validated, typed model for workspace:connect.
@@ -824,12 +826,6 @@ func (r *WorkspaceConnectEvalRequest) WithType(t WorkspaceConnectType) *Workspac
 	return r
 }
 
-// WithPort sets the port; required when type is WorkspaceConnectTypePortForward.
-func (r *WorkspaceConnectEvalRequest) WithPort(port string) *WorkspaceConnectEvalRequest {
-	r.Context.Port = port
-	return r
-}
-
 // Build validates the request and returns it if all constraints are satisfied.
 func (r *WorkspaceConnectEvalRequest) Build() (*WorkspaceConnectEvalRequest, error) {
 	if err := r.Validate(); err != nil {
@@ -842,9 +838,6 @@ func (r *WorkspaceConnectEvalRequest) Build() (*WorkspaceConnectEvalRequest, err
 // Implements EvalRequest.
 func (r *WorkspaceConnectEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
 	ctx := map[string]string{"type": string(r.Context.Type)}
-	if r.Context.Port != "" {
-		ctx["port"] = r.Context.Port
-	}
 	return &authzv1.EvaluateRequest{
 		Token:  token,
 		Action: "workspace:connect",
@@ -879,7 +872,6 @@ func WorkspaceConnectEvalRequestFromProto(req *authzv1.EvaluateRequest) (*Worksp
 		},
 		Context: WorkspaceConnectContext{
 			Type: WorkspaceConnectType(req.Context["type"]),
-			Port: req.Context["port"],
 		},
 	}
 	if err := r.Validate(); err != nil {
@@ -899,13 +891,9 @@ func (r *WorkspaceConnectEvalRequest) Validate() error {
 	}
 	switch r.Context.Type {
 	case WorkspaceConnectTypeWebshell, WorkspaceConnectTypeWebfiles:
-	case WorkspaceConnectTypePortForward:
-		if r.Context.Port == "" {
-			return fmt.Errorf("workspace:connect: context \"port\" is required for portforward")
-		}
 	default:
-		return fmt.Errorf("workspace:connect: context \"type\" must be %q, %q, or %q, got %q",
-			WorkspaceConnectTypeWebshell, WorkspaceConnectTypeWebfiles, WorkspaceConnectTypePortForward, r.Context.Type)
+		return fmt.Errorf("workspace:connect: context \"type\" must be %q or %q, got %q",
+			WorkspaceConnectTypeWebshell, WorkspaceConnectTypeWebfiles, r.Context.Type)
 	}
 	return nil
 }
@@ -1332,15 +1320,6 @@ func init() {
 		Build: func(ctx CapabilityContext) (EvalRequest, error) {
 			return NewWorkspaceConnectEvalRequest(capabilityWildcardWorkspace).
 				WithOwner(ctx.ResourceOwner).WithType(WorkspaceConnectTypeWebfiles).Build()
-		},
-	})
-	registerCapabilityCheck(CapabilityCheck{
-		Action:  string(WorkspaceActionConnect) + ":" + string(WorkspaceConnectTypePortForward),
-		Package: "workspace",
-		Scope:   string(WorkspaceActionConnect) + ":" + string(WorkspaceConnectTypePortForward),
-		Build: func(ctx CapabilityContext) (EvalRequest, error) {
-			return NewWorkspaceConnectEvalRequest(capabilityWildcardWorkspace).
-				WithOwner(ctx.ResourceOwner).WithType(WorkspaceConnectTypePortForward).WithPort(capabilityWildcardPort).Build()
 		},
 	})
 	registerCapabilityCheck(CapabilityCheck{
