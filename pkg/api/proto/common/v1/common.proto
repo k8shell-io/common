@@ -276,6 +276,16 @@ message WorkspaceDetails {
   // the workspace pod, with the same live-view and revert semantics as
   // allow_egress_to_cidrs.
   repeated PodLabelSelector allow_egress_to_pods = 27;
+  // web_proxy_port is the in-workspace TCP port currently published through the
+  // web proxy. It reports the route live on the pod now, which a call to
+  // UpdateWorkspaceResources can change and which reverts to the blueprint on
+  // the next re-provision. 0 when the workspace publishes no route, and for an
+  // injected workspace.
+  int32 web_proxy_port = 28;
+  // web_proxy_roles is the set of user roles allowed to reach the web-proxy
+  // route, with the same live-view and revert semantics as web_proxy_port.
+  // Empty when the workspace publishes no route, and for an injected workspace.
+  repeated string web_proxy_roles = 29;
 }
 
 // BlueprintSummary is a lightweight representation of a blueprint used in

@@ -123,17 +123,30 @@ type WorkspaceResourcesUpdateRequest struct {
 
 // WorkspaceNetworkUpdateRequest is the HTTP request body for PATCH
 // /workspaces/{workspace_name}/network, which changes a workspace's network
-// policy class and/or egress rules. Gated by the workspace:update:network
-// data type. AllowEgressToCidrs and AllowEgressToPods take effect only when
-// ReplaceEgress is true, in which case they replace the workspace's egress
-// rules wholesale (passing them empty clears every custom rule); when
-// ReplaceEgress is false only NetworkPolicyClass is considered.
+// policy class, egress rules, and/or web-proxy route. Gated by the
+// workspace:update:network data type. AllowEgressToCidrs and AllowEgressToPods
+// take effect only when ReplaceEgress is true, in which case they replace the
+// workspace's egress rules wholesale (passing them empty clears every custom
+// rule). WebProxyPort and WebProxyRoles take effect only when ReplaceWebProxy
+// is true, in which case they replace the web-proxy route wholesale (passing
+// WebProxyPort 0 clears the route). When both replace flags are false only
+// NetworkPolicyClass is considered.
 // Note: proto counterpart is provisionerv1.WorkspaceNetworkRules.
 type WorkspaceNetworkUpdateRequest struct {
 	NetworkPolicyClass string                 `json:"networkPolicyClass,omitempty"`
 	ReplaceEgress      bool                   `json:"replaceEgress,omitempty"`
 	AllowEgressToCidrs []string               `json:"allowEgressToCidrs,omitempty"`
 	AllowEgressToPods  []WorkspacePodSelector `json:"allowEgressToPods,omitempty"`
+	// ReplaceWebProxy must be true for WebProxyPort and WebProxyRoles to be
+	// applied; the route is replaced wholesale, so ReplaceWebProxy with
+	// WebProxyPort 0 clears it.
+	ReplaceWebProxy bool `json:"replaceWebProxy,omitempty"`
+	// WebProxyPort is the in-workspace TCP port to publish through the web
+	// proxy (0 clears the route). Applied only when ReplaceWebProxy is true.
+	WebProxyPort int `json:"webProxyPort,omitempty"`
+	// WebProxyRoles is the set of user roles allowed to reach the web-proxy
+	// route. Applied only when ReplaceWebProxy is true.
+	WebProxyRoles []Role `json:"webProxyRoles,omitempty"`
 }
 
 // WorkspacePodSelector is a set of pod labels a workspace egress rule is

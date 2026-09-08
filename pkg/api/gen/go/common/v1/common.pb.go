@@ -1048,8 +1048,18 @@ type WorkspaceDetails struct {
 	// the workspace pod, with the same live-view and revert semantics as
 	// allow_egress_to_cidrs.
 	AllowEgressToPods []*PodLabelSelector `protobuf:"bytes,27,rep,name=allow_egress_to_pods,json=allowEgressToPods,proto3" json:"allow_egress_to_pods,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	// web_proxy_port is the in-workspace TCP port currently published through the
+	// web proxy. It reports the route live on the pod now, which a call to
+	// UpdateWorkspaceResources can change and which reverts to the blueprint on
+	// the next re-provision. 0 when the workspace publishes no route, and for an
+	// injected workspace.
+	WebProxyPort int32 `protobuf:"varint,28,opt,name=web_proxy_port,json=webProxyPort,proto3" json:"web_proxy_port,omitempty"`
+	// web_proxy_roles is the set of user roles allowed to reach the web-proxy
+	// route, with the same live-view and revert semantics as web_proxy_port.
+	// Empty when the workspace publishes no route, and for an injected workspace.
+	WebProxyRoles []string `protobuf:"bytes,29,rep,name=web_proxy_roles,json=webProxyRoles,proto3" json:"web_proxy_roles,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *WorkspaceDetails) Reset() {
@@ -1267,6 +1277,20 @@ func (x *WorkspaceDetails) GetAllowEgressToCidrs() []string {
 func (x *WorkspaceDetails) GetAllowEgressToPods() []*PodLabelSelector {
 	if x != nil {
 		return x.AllowEgressToPods
+	}
+	return nil
+}
+
+func (x *WorkspaceDetails) GetWebProxyPort() int32 {
+	if x != nil {
+		return x.WebProxyPort
+	}
+	return 0
+}
+
+func (x *WorkspaceDetails) GetWebProxyRoles() []string {
+	if x != nil {
+		return x.WebProxyRoles
 	}
 	return nil
 }
@@ -1591,7 +1615,7 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"\fmatch_labels\x18\x01 \x03(\v2,.common.v1.PodLabelSelector.MatchLabelsEntryR\vmatchLabels\x1a>\n" +
 	"\x10MatchLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xdf\a\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xad\b\n" +
 	"\x10WorkspaceDetails\x12E\n" +
 	"\x10workspace_status\x18\x01 \x01(\v2\x1a.common.v1.WorkspaceStatusR\x0fworkspaceStatus\x12\x1f\n" +
 	"\vapp_version\x18\x02 \x01(\tR\n" +
@@ -1624,7 +1648,9 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"\rreplica_index\x18\x18 \x01(\x05H\x00R\freplicaIndex\x88\x01\x01\x12(\n" +
 	"\rreplica_count\x18\x19 \x01(\x05H\x01R\freplicaCount\x88\x01\x01\x121\n" +
 	"\x15allow_egress_to_cidrs\x18\x1a \x03(\tR\x12allowEgressToCidrs\x12L\n" +
-	"\x14allow_egress_to_pods\x18\x1b \x03(\v2\x1b.common.v1.PodLabelSelectorR\x11allowEgressToPodsB\x10\n" +
+	"\x14allow_egress_to_pods\x18\x1b \x03(\v2\x1b.common.v1.PodLabelSelectorR\x11allowEgressToPods\x12$\n" +
+	"\x0eweb_proxy_port\x18\x1c \x01(\x05R\fwebProxyPort\x12&\n" +
+	"\x0fweb_proxy_roles\x18\x1d \x03(\tR\rwebProxyRolesB\x10\n" +
 	"\x0e_replica_indexB\x10\n" +
 	"\x0e_replica_count\"\xaa\x02\n" +
 	"\x10BlueprintSummary\x12\x12\n" +

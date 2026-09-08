@@ -75,6 +75,13 @@ type WorkspaceDetails struct {
 	// values on the next re-provision. Both are empty for an injected workspace.
 	AllowEgressToCIDRs []string            `json:"allowEgressToCIDRs,omitempty"`
 	AllowEgressToPods  []map[string]string `json:"allowEgressToPods,omitempty"`
+	// WebProxyPort and WebProxyRoles report the web-proxy route live on the
+	// workspace pod now: the update API can change them and they revert to the
+	// blueprint on the next re-provision. WebProxyPort is 0 (and WebProxyRoles
+	// empty) when the workspace publishes no route, and for an injected
+	// workspace.
+	WebProxyPort  int    `json:"webProxyPort,omitempty"`
+	WebProxyRoles []Role `json:"webProxyRoles,omitempty"`
 	// WorkspaceType tells standalone workspaces apart from injected ones.
 	WorkspaceType WorkspaceType `json:"workspaceType" example:"standalone"`
 	// WorkloadKind and WorkloadName identify the workload an injected

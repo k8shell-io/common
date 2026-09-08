@@ -198,6 +198,19 @@ type Network struct {
 	AllowEgressToCIDRs []string `yaml:"allowEgressToCIDRs,omitempty" json:"allowEgressToCIDRs,omitempty" validate:"dive,cidr"`
 	// AllowEgressToPods is a convenience shorthand for permitting egress to pods matching label selectors.
 	AllowEgressToPods []map[string]string `yaml:"allowEgressToPods,omitempty" json:"allowEgressToPods,omitempty"`
+	// WebProxy exposes a TCP port listening inside the workspace through the
+	// web proxy, restricted to callers holding one of AllowedRoles. Nil means
+	// the workspace publishes nothing through the proxy.
+	WebProxy *WebProxy `yaml:"webProxy,omitempty" json:"webProxy,omitempty"`
+}
+
+// WebProxy publishes a single TCP port from inside the workspace through the
+// web proxy. Port is the in-workspace listener; AllowedRoles is the set of
+// user roles permitted to reach it (an empty list means no role is allowed,
+// i.e. the route is effectively closed until roles are added).
+type WebProxy struct {
+	Port         int    `yaml:"port" json:"port" validate:"required,min=1,max=65535" jsonschema:"required"`
+	AllowedRoles []Role `yaml:"allowedRoles,omitempty" json:"allowedRoles,omitempty" validate:"omitempty,dive,min=1"`
 }
 
 // Resources represents resource limits

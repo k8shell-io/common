@@ -478,6 +478,18 @@ message WorkspaceNetworkRules {
   // allow_egress_to_pods is the set of pod label selectors the workspace may
   // reach. Applied only when replace_egress is true.
   repeated WorkspacePodSelector allow_egress_to_pods = 4;
+  // replace_web_proxy must be true for web_proxy_port and web_proxy_roles to
+  // take effect. When true they replace the workspace's web-proxy route
+  // wholesale, so passing web_proxy_port 0 clears the route. When false both
+  // fields are ignored.
+  bool replace_web_proxy = 5;
+  // web_proxy_port is the TCP port listening inside the workspace to publish
+  // through the web proxy. Applied only when replace_web_proxy is true; 0
+  // clears the route.
+  int32 web_proxy_port = 6;
+  // web_proxy_roles is the set of user roles allowed to reach the web-proxy
+  // route. Applied only when replace_web_proxy is true.
+  repeated string web_proxy_roles = 7;
 }
 
 // UpdateWorkspaceResourcesRequest identifies the workspace to update and
@@ -505,6 +517,9 @@ message UpdateWorkspaceResourcesResponse {
   // applied_network_policy_class is the network policy class in effect after
   // the update. Empty when the network was not changed.
   string applied_network_policy_class = 4;
+  // applied_web_proxy_port is the TCP port published through the web proxy
+  // after the update. 0 when the route was cleared or not changed.
+  int32 applied_web_proxy_port = 5;
 }
 
 // StartWorkspaceRequest identifies the stopped workspace to start.

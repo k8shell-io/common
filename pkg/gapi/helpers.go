@@ -387,6 +387,8 @@ func WorkspaceDetailsToProto(m *models.WorkspaceDetails) *commonv1.WorkspaceDeta
 		NetworkPolicyClass: m.NetworkPolicyClass,
 		AllowEgressToCidrs: append([]string(nil), m.AllowEgressToCIDRs...),
 		AllowEgressToPods:  podSelectorsToProto(m.AllowEgressToPods),
+		WebProxyPort:       int32(m.WebProxyPort),
+		WebProxyRoles:      rolesToStrings(m.WebProxyRoles),
 		WorkspaceType:      string(m.WorkspaceType),
 		WorkloadKind:       m.WorkloadKind,
 		WorkloadName:       m.WorkloadName,
@@ -438,6 +440,31 @@ func protoToPodSelectors(sels []*commonv1.PodLabelSelector) []map[string]string 
 	return out
 }
 
+// rolesToStrings converts a []models.Role to the []string form used on the
+// wire, preserving nil.
+func rolesToStrings(roles []models.Role) []string {
+	if roles == nil {
+		return nil
+	}
+	out := make([]string, len(roles))
+	for i, r := range roles {
+		out[i] = string(r)
+	}
+	return out
+}
+
+// stringsToRoles is the inverse of rolesToStrings.
+func stringsToRoles(roles []string) []models.Role {
+	if roles == nil {
+		return nil
+	}
+	out := make([]models.Role, len(roles))
+	for i, r := range roles {
+		out[i] = models.Role(r)
+	}
+	return out
+}
+
 // ProtoToWorkspaceDetails converts a protobuf WorkspaceDetails message to its Go model.
 func ProtoToWorkspaceDetails(pb *commonv1.WorkspaceDetails) *models.WorkspaceDetails {
 	if pb == nil {
@@ -467,6 +494,8 @@ func ProtoToWorkspaceDetails(pb *commonv1.WorkspaceDetails) *models.WorkspaceDet
 		NetworkPolicyClass: pb.GetNetworkPolicyClass(),
 		AllowEgressToCIDRs: append([]string(nil), pb.GetAllowEgressToCidrs()...),
 		AllowEgressToPods:  protoToPodSelectors(pb.GetAllowEgressToPods()),
+		WebProxyPort:       int(pb.GetWebProxyPort()),
+		WebProxyRoles:      stringsToRoles(pb.GetWebProxyRoles()),
 		WorkspaceType:      models.WorkspaceType(pb.GetWorkspaceType()),
 		WorkloadKind:       pb.GetWorkloadKind(),
 		WorkloadName:       pb.GetWorkloadName(),

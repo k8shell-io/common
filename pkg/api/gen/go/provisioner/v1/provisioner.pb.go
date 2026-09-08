@@ -1962,8 +1962,20 @@ type WorkspaceNetworkRules struct {
 	// allow_egress_to_pods is the set of pod label selectors the workspace may
 	// reach. Applied only when replace_egress is true.
 	AllowEgressToPods []*WorkspacePodSelector `protobuf:"bytes,4,rep,name=allow_egress_to_pods,json=allowEgressToPods,proto3" json:"allow_egress_to_pods,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	// replace_web_proxy must be true for web_proxy_port and web_proxy_roles to
+	// take effect. When true they replace the workspace's web-proxy route
+	// wholesale, so passing web_proxy_port 0 clears the route. When false both
+	// fields are ignored.
+	ReplaceWebProxy bool `protobuf:"varint,5,opt,name=replace_web_proxy,json=replaceWebProxy,proto3" json:"replace_web_proxy,omitempty"`
+	// web_proxy_port is the TCP port listening inside the workspace to publish
+	// through the web proxy. Applied only when replace_web_proxy is true; 0
+	// clears the route.
+	WebProxyPort int32 `protobuf:"varint,6,opt,name=web_proxy_port,json=webProxyPort,proto3" json:"web_proxy_port,omitempty"`
+	// web_proxy_roles is the set of user roles allowed to reach the web-proxy
+	// route. Applied only when replace_web_proxy is true.
+	WebProxyRoles []string `protobuf:"bytes,7,rep,name=web_proxy_roles,json=webProxyRoles,proto3" json:"web_proxy_roles,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *WorkspaceNetworkRules) Reset() {
@@ -2020,6 +2032,27 @@ func (x *WorkspaceNetworkRules) GetAllowEgressToCidrs() []string {
 func (x *WorkspaceNetworkRules) GetAllowEgressToPods() []*WorkspacePodSelector {
 	if x != nil {
 		return x.AllowEgressToPods
+	}
+	return nil
+}
+
+func (x *WorkspaceNetworkRules) GetReplaceWebProxy() bool {
+	if x != nil {
+		return x.ReplaceWebProxy
+	}
+	return false
+}
+
+func (x *WorkspaceNetworkRules) GetWebProxyPort() int32 {
+	if x != nil {
+		return x.WebProxyPort
+	}
+	return 0
+}
+
+func (x *WorkspaceNetworkRules) GetWebProxyRoles() []string {
+	if x != nil {
+		return x.WebProxyRoles
 	}
 	return nil
 }
@@ -2104,8 +2137,11 @@ type UpdateWorkspaceResourcesResponse struct {
 	// applied_network_policy_class is the network policy class in effect after
 	// the update. Empty when the network was not changed.
 	AppliedNetworkPolicyClass string `protobuf:"bytes,4,opt,name=applied_network_policy_class,json=appliedNetworkPolicyClass,proto3" json:"applied_network_policy_class,omitempty"`
-	unknownFields             protoimpl.UnknownFields
-	sizeCache                 protoimpl.SizeCache
+	// applied_web_proxy_port is the TCP port published through the web proxy
+	// after the update. 0 when the route was cleared or not changed.
+	AppliedWebProxyPort int32 `protobuf:"varint,5,opt,name=applied_web_proxy_port,json=appliedWebProxyPort,proto3" json:"applied_web_proxy_port,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *UpdateWorkspaceResourcesResponse) Reset() {
@@ -2164,6 +2200,13 @@ func (x *UpdateWorkspaceResourcesResponse) GetAppliedNetworkPolicyClass() string
 		return x.AppliedNetworkPolicyClass
 	}
 	return ""
+}
+
+func (x *UpdateWorkspaceResourcesResponse) GetAppliedWebProxyPort() int32 {
+	if x != nil {
+		return x.AppliedWebProxyPort
+	}
+	return 0
 }
 
 // StartWorkspaceRequest identifies the stopped workspace to start.
@@ -2847,22 +2890,26 @@ const file_provisioner_v1_provisioner_proto_rawDesc = "" +
 	"\fmatch_labels\x18\x01 \x03(\v25.provisioner.v1.WorkspacePodSelector.MatchLabelsEntryR\vmatchLabels\x1a>\n" +
 	"\x10MatchLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xfa\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xf4\x02\n" +
 	"\x15WorkspaceNetworkRules\x120\n" +
 	"\x14network_policy_class\x18\x01 \x01(\tR\x12networkPolicyClass\x12%\n" +
 	"\x0ereplace_egress\x18\x02 \x01(\bR\rreplaceEgress\x121\n" +
 	"\x15allow_egress_to_cidrs\x18\x03 \x03(\tR\x12allowEgressToCidrs\x12U\n" +
-	"\x14allow_egress_to_pods\x18\x04 \x03(\v2$.provisioner.v1.WorkspacePodSelectorR\x11allowEgressToPods\"\xc7\x01\n" +
+	"\x14allow_egress_to_pods\x18\x04 \x03(\v2$.provisioner.v1.WorkspacePodSelectorR\x11allowEgressToPods\x12*\n" +
+	"\x11replace_web_proxy\x18\x05 \x01(\bR\x0freplaceWebProxy\x12$\n" +
+	"\x0eweb_proxy_port\x18\x06 \x01(\x05R\fwebProxyPort\x12&\n" +
+	"\x0fweb_proxy_roles\x18\a \x03(\tR\rwebProxyRoles\"\xc7\x01\n" +
 	"\x1fUpdateWorkspaceResourcesRequest\x12\x1c\n" +
 	"\tworkspace\x18\x01 \x01(\tR\tworkspace\x12E\n" +
 	"\tresources\x18\x02 \x01(\v2'.provisioner.v1.WorkspaceResourceLimitsR\tresources\x12?\n" +
-	"\anetwork\x18\x03 \x01(\v2%.provisioner.v1.WorkspaceNetworkRulesR\anetwork\"\xc5\x01\n" +
+	"\anetwork\x18\x03 \x01(\v2%.provisioner.v1.WorkspaceNetworkRulesR\anetwork\"\xfa\x01\n" +
 	" UpdateWorkspaceResourcesResponse\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage\x12\x1f\n" +
 	"\vapplied_cpu\x18\x02 \x01(\tR\n" +
 	"appliedCpu\x12%\n" +
 	"\x0eapplied_memory\x18\x03 \x01(\tR\rappliedMemory\x12?\n" +
-	"\x1capplied_network_policy_class\x18\x04 \x01(\tR\x19appliedNetworkPolicyClass\"\x95\x01\n" +
+	"\x1capplied_network_policy_class\x18\x04 \x01(\tR\x19appliedNetworkPolicyClass\x123\n" +
+	"\x16applied_web_proxy_port\x18\x05 \x01(\x05R\x13appliedWebProxyPort\"\x95\x01\n" +
 	"\x15StartWorkspaceRequest\x12\x1c\n" +
 	"\tworkspace\x18\x01 \x01(\tR\tworkspace\x12\x18\n" +
 	"\atimeout\x18\x02 \x01(\x05R\atimeout\x12#\n" +
