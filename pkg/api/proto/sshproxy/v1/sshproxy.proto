@@ -1,0 +1,23 @@
+// Copyright 2026 the k8Shell authors.
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+syntax = "proto3";
+
+// Package sshproxy.v1 defines the gRPC API for the k8shell ssh-proxy gateway,
+// which terminates SSH connections, authenticates users, provisions
+// workspaces, and proxies channel traffic to the in-workspace k8shelld
+// daemon. The proxy's data plane is SSH itself; this service exposes only
+// out-of-band control operations such as build/version metadata.
+package sshproxy.v1;
+
+option go_package = "github.com/k8shell-io/common/pkg/api/gen/go/sshproxy/v1;sshproxyv1";
+
+import "common/v1/common.proto";
+
+// SSHProxyService is the control-plane gRPC API of the ssh-proxy gateway.
+service SSHProxyService {
+  // GetVersionInfo returns build and version metadata for this service: its
+  // released semantic version, the git commit it was built from, and a short
+  // description of what the service does.
+  rpc GetVersionInfo(common.v1.GetVersionInfoRequest) returns (common.v1.GetVersionInfoResponse);
+}
