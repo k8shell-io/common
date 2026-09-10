@@ -1,0 +1,63 @@
+// Copyright 2026 the k8Shell authors.
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+syntax = "proto3";
+
+// Package sshshield.v1 defines the gRPC API for the k8shell ssh-shield
+// service, which consumes SSH connection-failure events and blocks abusive
+// source IPs via a remote nfgate. Failure events historically arrive on NATS;
+// this service also accepts them directly via ReportFailedLogin. Its only
+// other operation is out-of-band build/version metadata.
+package sshshield.v1;
+
+option go_package = "github.com/k8shell-io/common/pkg/api/gen/go/sshshield/v1;sshshieldv1";
+
+import "common/v1/common.proto";
+
+// SSHShieldService is the control-plane gRPC API of the ssh-shield service.
+service SSHShieldService {
+  // GetVersionInfo returns build and version metadata for this service: its
+  // released semantic version, the git commit it was built from, and a short
+  // description of what the service does.
+  rpc GetVersionInfo(common.v1.GetVersionInfoRequest) returns (common.v1.GetVersionInfoResponse);
+
+  // ReportFailedLogin records a failed SSH login attempt from a source IP and
+  // runs it through ssh-shield's sliding-window rate limiter, blocking the IP
+  // via the configured plugins once it crosses the threshold. It is the
+  // request-driven equivalent of the failure events ssh-shield consumes from
+  // NATS and carries the same fields.
+  rpc ReportFailedLogin(ReportFailedLoginRequest) returns (ReportFailedLoginResponse);
+}
+
+// ReportFailedLoginRequest describes a single failed SSH login attempt. Its
+// fields mirror the NATS FailedConnectionEvent one-for-one.
+message ReportFailedLoginRequest {
+  // client_ip is the source IP address of the failed attempt, IPv4 or IPv6.
+  // Required; an unparseable value is rejected with INVALID_ARGUMENT.
+  string client_ip = 1;
+  // client_port is the source TCP port of the attempt, when known.
+  int32 client_port = 2;
+  // username is the account the attempt tried to authenticate as.
+  string username = 3;
+  // timestamp is the RFC 3339 time the attempt occurred, as observed by the
+  // caller. Informational only; ssh-shield rate-limits against its own clock.
+  string timestamp = 4;
+  // failure_info carries optional human-readable detail about why the attempt
+  // failed (auth method tried, server message, ...).
+  repeated string failure_info = 5;
+  // proxy_id identifies the ssh-proxy instance that observed the attempt.
+  string proxy_id = 6;
+}
+
+// ReportFailedLoginResponse reports what ssh-shield did with the attempt.
+message ReportFailedLoginResponse {
+  // whitelisted is true when client_ip matched ssh-shield's whitelist. The
+  // attempt was then ignored and no counter was touched; blocked is false.
+  bool whitelisted = 1;
+  // blocked is true when registering this attempt caused the IP to be
+  // blocked (or to have its block escalated).
+  bool blocked = 2;
+  // block_seconds is the duration the IP is blocked for, in seconds. Set only
+  // when blocked is true.
+  int64 block_seconds = 3;
+}
