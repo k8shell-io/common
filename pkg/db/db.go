@@ -12,6 +12,7 @@ import (
 	"github.com/rs/zerolog"
 
 	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
@@ -98,7 +99,16 @@ func runDBMigrations(connString, serviceName string, retryTimeout, retryInterval
 		// another service's own migration hasn't created yet.
 		log.Warn().Msgf("migration version %d is dirty, likely waiting on a cross-service dependency; "+
 			"clearing and retrying in %s: %v", dirtyErr.Version, retryInterval, err)
-		if ferr := m.Force(int(dirtyErr.Version) - 1); ferr != nil {
+		// Force() writes whatever version it's given straight into
+		// schema_migrations without checking a migration for it exists.
+		// When the dirty migration is the very first one, "one less"
+		// is NilVersion (no migrations applied), not a real version 0 —
+		// there is no version-0 migration file to roll back to.
+		target := int(dirtyErr.Version) - 1
+		if dirtyErr.Version == 1 {
+			target = database.NilVersion
+		}
+		if ferr := m.Force(target); ferr != nil {
 			return fmt.Errorf("apply migrate: clear dirty version %d: %w", dirtyErr.Version, ferr)
 		}
 		time.Sleep(retryInterval)
