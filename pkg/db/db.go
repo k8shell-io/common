@@ -28,6 +28,19 @@ type DBConfig struct {
 	MaxConnIdleTime   time.Duration `yaml:"maxConnIdleTime"`
 	MaxConnLifetime   time.Duration `yaml:"maxConnLifetime"`
 	HealthCheckPeriod time.Duration `yaml:"healthCheckPeriod"`
+
+	// MigrationRetryTimeout and MigrationRetryInterval bound how long
+	// runDBMigrations keeps retrying a dirty migration before giving up.
+	// Services in a bundle can start in no particular order, and a
+	// migration's DDL may depend on a schema/table that another
+	// service's own migration creates (see e.g. the provisioner's
+	// db/migrations, which FKs into the identity schema). Since the
+	// postgres driver sends a whole migration file as a single implicit
+	// transaction, a failed migration never leaves partial DDL behind —
+	// only the dirty marker survives the rollback — so it's safe to
+	// clear that marker and retry until the dependency appears.
+	MigrationRetryTimeout  time.Duration `yaml:"migrationRetryTimeout"`
+	MigrationRetryInterval time.Duration `yaml:"migrationRetryInterval"`
 }
 
 type DB struct {
@@ -42,7 +55,7 @@ const (
 	MaxListLimit     = 100
 )
 
-func runDBMigrations(connString, serviceName string) error {
+func runDBMigrations(connString, serviceName string, retryTimeout, retryInterval time.Duration, log *zerolog.Logger) error {
 	src := fmt.Sprintf("file://%s", MigrationsRoot)
 
 	u, err := url.Parse(connString)
@@ -58,16 +71,38 @@ func runDBMigrations(connString, serviceName string) error {
 	if err != nil {
 		return fmt.Errorf("init migrate: %w (src=%s)", err, src)
 	}
-	// in runDBMigrations:
-	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
-		var dirtyErr migrate.ErrDirty
-		if errors.As(err, &dirtyErr) {
-			return fmt.Errorf("apply migrate: migration version %d is dirty — the SQL in db/migrations/ "+
-				"likely has a syntax error: %w", dirtyErr.Version, err)
+
+	deadline := time.Now().Add(retryTimeout)
+	for {
+		err := m.Up()
+		if err == nil || err == migrate.ErrNoChange {
+			return nil
 		}
-		return fmt.Errorf("apply migrate: %w", err)
+
+		var dirtyErr migrate.ErrDirty
+		if !errors.As(err, &dirtyErr) {
+			return fmt.Errorf("apply migrate: %w", err)
+		}
+
+		if time.Now().After(deadline) {
+			return fmt.Errorf("apply migrate: migration version %d is still dirty after retrying for %s — "+
+				"the SQL in db/migrations/ likely has a syntax error, or a cross-service dependency "+
+				"(e.g. a FK into another service's schema) never showed up: %w", dirtyErr.Version, retryTimeout, err)
+		}
+
+		// The postgres driver sends a whole migration file as a single
+		// implicit transaction, so this failed attempt rolled back any
+		// DDL it ran — only the dirty marker itself persists. Clear it
+		// and retry; this is expected when services in a bundle start
+		// in no particular order and this migration depends on state
+		// another service's own migration hasn't created yet.
+		log.Warn().Msgf("migration version %d is dirty, likely waiting on a cross-service dependency; "+
+			"clearing and retrying in %s: %v", dirtyErr.Version, retryInterval, err)
+		if ferr := m.Force(int(dirtyErr.Version) - 1); ferr != nil {
+			return fmt.Errorf("apply migrate: clear dirty version %d: %w", dirtyErr.Version, ferr)
+		}
+		time.Sleep(retryInterval)
 	}
-	return nil
 }
 
 func (c *DBConfig) SetDefaults() {
@@ -88,6 +123,12 @@ func (c *DBConfig) SetDefaults() {
 	}
 	if c.HealthCheckPeriod == 0 {
 		c.HealthCheckPeriod = 30 * time.Second
+	}
+	if c.MigrationRetryTimeout == 0 {
+		c.MigrationRetryTimeout = 2 * time.Minute
+	}
+	if c.MigrationRetryInterval == 0 {
+		c.MigrationRetryInterval = 3 * time.Second
 	}
 }
 
@@ -141,7 +182,7 @@ func NewDB(config DBConfig, serviceName string) (*DB, error) {
 	}
 	log.Info().Msgf("DB connection OK %s:%d/%s", config.Hostname, config.Port, config.Database)
 
-	if err := runDBMigrations(connString, serviceName); err != nil {
+	if err := runDBMigrations(connString, serviceName, config.MigrationRetryTimeout, config.MigrationRetryInterval, log); err != nil {
 		pool.Close()
 		return nil, fmt.Errorf("run database migrations: %w", err)
 	}
