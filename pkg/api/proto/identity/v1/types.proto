@@ -428,8 +428,8 @@ message CreateOnboardRuleRequest {
 }
 
 // UpdateOnboardRuleRequest fully replaces the mutable fields of an onboard
-// rule identified by id. idp/username_pattern/org are immutable — delete
-// and recreate the rule to change them.
+// rule identified by id. idp/org are immutable — delete and recreate the
+// rule to change them.
 message UpdateOnboardRuleRequest {
   int32           id       = 1;
   string          action   = 2;
@@ -442,6 +442,11 @@ message UpdateOnboardRuleRequest {
   // system-inserted (waitlist-hit) rows; see OnboardRule.fullname/email.
   string fullname = 7;
   string email    = 8;
+
+  // username_pattern replaces the rule's matching pattern: '*', a
+  // comma-delimited list of usernames, or a single exact username. Required,
+  // same as on CreateOnboardRuleRequest.
+  string username_pattern = 9;
 }
 
 // DeleteOnboardRuleRequest identifies the onboard rule to remove by id.

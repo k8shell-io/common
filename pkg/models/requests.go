@@ -173,16 +173,16 @@ type OnboardRuleCreateRequest struct {
 
 // OnboardRuleUpdateRequest is the HTTP request body for PATCH
 // /organizations/{org}/onboard-rules/{id}, which fully replaces the mutable
-// fields of an onboard rule. Idp/UsernamePattern/Org are immutable — taken
-// from the existing row, never from this body; delete and recreate the rule
-// to change them.
+// fields of an onboard rule. Idp/Org are immutable — taken from the existing
+// row, never from this body; delete and recreate the rule to change them.
 // Note: proto counterpart is identityv1.UpdateOnboardRuleRequest.
 type OnboardRuleUpdateRequest struct {
-	Action   string   `json:"action"`
-	Priority int32    `json:"priority,omitempty"`
-	Roles    []string `json:"roles,omitempty"`
-	Sudo     bool     `json:"sudo,omitempty"`
-	Note     string   `json:"note,omitempty"`
+	Action          string   `json:"action"`
+	UsernamePattern string   `json:"usernamePattern"`
+	Priority        int32    `json:"priority,omitempty"`
+	Roles           []string `json:"roles,omitempty"`
+	Sudo            bool     `json:"sudo,omitempty"`
+	Note            string   `json:"note,omitempty"`
 
 	// Fullname/Email let an admin correct the display metadata recorded for
 	// system-inserted (waitlist-hit) rows; see OnboardRule.Fullname/Email.
