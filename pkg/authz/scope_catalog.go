@@ -250,6 +250,16 @@ var scopeCatalogSource = []domainSpec{
 			}},
 		},
 	},
+	{
+		domain:      "announcement",
+		label:       "Announcements",
+		description: "Publish platform announcements.",
+		actions: []actionSpec{
+			{action: "announcement:write", label: "Write", entries: []entrySpec{
+				{scope: "announcement:write", label: "Write", description: "Create, update, or delete a platform announcement."},
+			}},
+		},
+	},
 }
 
 // buildEntry converts spec into a ScopeCatalogEntry, deriving Wildcard and

@@ -96,6 +96,16 @@ const (
 	IdentityService_AddUserEnvVar_FullMethodName                 = "/identity.v1.IdentityService/AddUserEnvVar"
 	IdentityService_UpdateUserEnvVar_FullMethodName              = "/identity.v1.IdentityService/UpdateUserEnvVar"
 	IdentityService_DeleteUserEnvVar_FullMethodName              = "/identity.v1.IdentityService/DeleteUserEnvVar"
+	IdentityService_CreateAnnouncement_FullMethodName            = "/identity.v1.IdentityService/CreateAnnouncement"
+	IdentityService_GetAnnouncement_FullMethodName               = "/identity.v1.IdentityService/GetAnnouncement"
+	IdentityService_UpdateAnnouncement_FullMethodName            = "/identity.v1.IdentityService/UpdateAnnouncement"
+	IdentityService_DeleteAnnouncement_FullMethodName            = "/identity.v1.IdentityService/DeleteAnnouncement"
+	IdentityService_ListAnnouncements_FullMethodName             = "/identity.v1.IdentityService/ListAnnouncements"
+	IdentityService_ListUnreadAnnouncements_FullMethodName       = "/identity.v1.IdentityService/ListUnreadAnnouncements"
+	IdentityService_ListUserAnnouncements_FullMethodName         = "/identity.v1.IdentityService/ListUserAnnouncements"
+	IdentityService_MarkAnnouncementRead_FullMethodName          = "/identity.v1.IdentityService/MarkAnnouncementRead"
+	IdentityService_GetAnnouncementsQuerySchema_FullMethodName   = "/identity.v1.IdentityService/GetAnnouncementsQuerySchema"
+	IdentityService_QueryAnnouncements_FullMethodName            = "/identity.v1.IdentityService/QueryAnnouncements"
 	IdentityService_GetVersionInfo_FullMethodName                = "/identity.v1.IdentityService/GetVersionInfo"
 )
 
@@ -337,6 +347,53 @@ type IdentityServiceClient interface {
 	// DeleteUserEnvVar removes a user-owned environment variable, restoring
 	// the organization's value (if any) as the effective value for that key.
 	DeleteUserEnvVar(ctx context.Context, in *DeleteUserEnvVarRequest, opts ...grpc.CallOption) (*DeleteUserEnvVarResponse, error)
+	// CreateAnnouncement creates a new announcement. It is global when orgs is
+	// empty, otherwise scoped to the listed organizations.
+	CreateAnnouncement(ctx context.Context, in *CreateAnnouncementRequest, opts ...grpc.CallOption) (*Announcement, error)
+	// GetAnnouncement retrieves a single announcement by id, including its
+	// read_count (the number of distinct users who have read it).
+	GetAnnouncement(ctx context.Context, in *GetAnnouncementRequest, opts ...grpc.CallOption) (*Announcement, error)
+	// UpdateAnnouncement partially updates an announcement's title, body, org
+	// scope, and/or validity period.
+	UpdateAnnouncement(ctx context.Context, in *UpdateAnnouncementRequest, opts ...grpc.CallOption) (*Announcement, error)
+	// DeleteAnnouncement permanently removes an announcement, along with its
+	// read tracking.
+	DeleteAnnouncement(ctx context.Context, in *DeleteAnnouncementRequest, opts ...grpc.CallOption) (*DeleteAnnouncementResponse, error)
+	// ListAnnouncements returns announcements for administration: every
+	// announcement, optionally filtered to those that apply to org, each with
+	// its read_count populated. Unlike ListUnreadAnnouncements/
+	// ListUserAnnouncements it is not scoped to a requesting user and is not
+	// filtered by validity period.
+	ListAnnouncements(ctx context.Context, in *ListAnnouncementsRequest, opts ...grpc.CallOption) (*AnnouncementList, error)
+	// ListUnreadAnnouncements returns announcements that apply to username's
+	// organization (global or scoped to it), currently fall within their
+	// validity period, and that username has not yet read. An announcement
+	// outside its validity period is excluded here even if unread — use
+	// ListUserAnnouncements to retrieve it regardless.
+	ListUnreadAnnouncements(ctx context.Context, in *ListUnreadAnnouncementsRequest, opts ...grpc.CallOption) (*AnnouncementList, error)
+	// ListUserAnnouncements returns every announcement that applies to
+	// username's organization (global or scoped to it), regardless of
+	// validity period or read status, with is_read/read_at populated per
+	// announcement so a client can distinguish ones already seen — including
+	// ones outside their validity period or already read, unlike
+	// ListUnreadAnnouncements.
+	ListUserAnnouncements(ctx context.Context, in *ListUserAnnouncementsRequest, opts ...grpc.CallOption) (*AnnouncementList, error)
+	// MarkAnnouncementRead records that username has read an announcement.
+	// Idempotent — marking an already-read announcement again does not change
+	// its original read_at.
+	MarkAnnouncementRead(ctx context.Context, in *MarkAnnouncementReadRequest, opts ...grpc.CallOption) (*MarkAnnouncementReadResponse, error)
+	// GetAnnouncementsQuerySchema returns the query.v1.Descriptor advertising
+	// which announcement fields are queryable/sortable via QueryAnnouncements,
+	// and which operators are valid on each.
+	GetAnnouncementsQuerySchema(ctx context.Context, in *GetAnnouncementsQuerySchemaRequest, opts ...grpc.CallOption) (*v11.Descriptor, error)
+	// QueryAnnouncements retrieves announcements matching a generic
+	// query.v1.Payload, as advertised by GetAnnouncementsQuerySchema — the
+	// administration-facing search/filter surface, complementing
+	// ListAnnouncements. Like ListAnnouncements it is not scoped to a
+	// requesting user's roles and is not filtered by active or validity
+	// period; each result's read_count is left zero (see Announcement.read_count)
+	// since it is not a queryable/sortable field.
+	QueryAnnouncements(ctx context.Context, in *QueryAnnouncementsRequest, opts ...grpc.CallOption) (*AnnouncementList, error)
 	// GetVersionInfo returns build and version metadata for this service: its
 	// released semantic version, the git commit it was built from, and a short
 	// description of what the service does.
@@ -1071,6 +1128,106 @@ func (c *identityServiceClient) DeleteUserEnvVar(ctx context.Context, in *Delete
 	return out, nil
 }
 
+func (c *identityServiceClient) CreateAnnouncement(ctx context.Context, in *CreateAnnouncementRequest, opts ...grpc.CallOption) (*Announcement, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Announcement)
+	err := c.cc.Invoke(ctx, IdentityService_CreateAnnouncement_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) GetAnnouncement(ctx context.Context, in *GetAnnouncementRequest, opts ...grpc.CallOption) (*Announcement, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Announcement)
+	err := c.cc.Invoke(ctx, IdentityService_GetAnnouncement_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) UpdateAnnouncement(ctx context.Context, in *UpdateAnnouncementRequest, opts ...grpc.CallOption) (*Announcement, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Announcement)
+	err := c.cc.Invoke(ctx, IdentityService_UpdateAnnouncement_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) DeleteAnnouncement(ctx context.Context, in *DeleteAnnouncementRequest, opts ...grpc.CallOption) (*DeleteAnnouncementResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteAnnouncementResponse)
+	err := c.cc.Invoke(ctx, IdentityService_DeleteAnnouncement_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) ListAnnouncements(ctx context.Context, in *ListAnnouncementsRequest, opts ...grpc.CallOption) (*AnnouncementList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AnnouncementList)
+	err := c.cc.Invoke(ctx, IdentityService_ListAnnouncements_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) ListUnreadAnnouncements(ctx context.Context, in *ListUnreadAnnouncementsRequest, opts ...grpc.CallOption) (*AnnouncementList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AnnouncementList)
+	err := c.cc.Invoke(ctx, IdentityService_ListUnreadAnnouncements_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) ListUserAnnouncements(ctx context.Context, in *ListUserAnnouncementsRequest, opts ...grpc.CallOption) (*AnnouncementList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AnnouncementList)
+	err := c.cc.Invoke(ctx, IdentityService_ListUserAnnouncements_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) MarkAnnouncementRead(ctx context.Context, in *MarkAnnouncementReadRequest, opts ...grpc.CallOption) (*MarkAnnouncementReadResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MarkAnnouncementReadResponse)
+	err := c.cc.Invoke(ctx, IdentityService_MarkAnnouncementRead_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) GetAnnouncementsQuerySchema(ctx context.Context, in *GetAnnouncementsQuerySchemaRequest, opts ...grpc.CallOption) (*v11.Descriptor, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(v11.Descriptor)
+	err := c.cc.Invoke(ctx, IdentityService_GetAnnouncementsQuerySchema_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) QueryAnnouncements(ctx context.Context, in *QueryAnnouncementsRequest, opts ...grpc.CallOption) (*AnnouncementList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AnnouncementList)
+	err := c.cc.Invoke(ctx, IdentityService_QueryAnnouncements_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *identityServiceClient) GetVersionInfo(ctx context.Context, in *v1.GetVersionInfoRequest, opts ...grpc.CallOption) (*v1.GetVersionInfoResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(v1.GetVersionInfoResponse)
@@ -1319,6 +1476,53 @@ type IdentityServiceServer interface {
 	// DeleteUserEnvVar removes a user-owned environment variable, restoring
 	// the organization's value (if any) as the effective value for that key.
 	DeleteUserEnvVar(context.Context, *DeleteUserEnvVarRequest) (*DeleteUserEnvVarResponse, error)
+	// CreateAnnouncement creates a new announcement. It is global when orgs is
+	// empty, otherwise scoped to the listed organizations.
+	CreateAnnouncement(context.Context, *CreateAnnouncementRequest) (*Announcement, error)
+	// GetAnnouncement retrieves a single announcement by id, including its
+	// read_count (the number of distinct users who have read it).
+	GetAnnouncement(context.Context, *GetAnnouncementRequest) (*Announcement, error)
+	// UpdateAnnouncement partially updates an announcement's title, body, org
+	// scope, and/or validity period.
+	UpdateAnnouncement(context.Context, *UpdateAnnouncementRequest) (*Announcement, error)
+	// DeleteAnnouncement permanently removes an announcement, along with its
+	// read tracking.
+	DeleteAnnouncement(context.Context, *DeleteAnnouncementRequest) (*DeleteAnnouncementResponse, error)
+	// ListAnnouncements returns announcements for administration: every
+	// announcement, optionally filtered to those that apply to org, each with
+	// its read_count populated. Unlike ListUnreadAnnouncements/
+	// ListUserAnnouncements it is not scoped to a requesting user and is not
+	// filtered by validity period.
+	ListAnnouncements(context.Context, *ListAnnouncementsRequest) (*AnnouncementList, error)
+	// ListUnreadAnnouncements returns announcements that apply to username's
+	// organization (global or scoped to it), currently fall within their
+	// validity period, and that username has not yet read. An announcement
+	// outside its validity period is excluded here even if unread — use
+	// ListUserAnnouncements to retrieve it regardless.
+	ListUnreadAnnouncements(context.Context, *ListUnreadAnnouncementsRequest) (*AnnouncementList, error)
+	// ListUserAnnouncements returns every announcement that applies to
+	// username's organization (global or scoped to it), regardless of
+	// validity period or read status, with is_read/read_at populated per
+	// announcement so a client can distinguish ones already seen — including
+	// ones outside their validity period or already read, unlike
+	// ListUnreadAnnouncements.
+	ListUserAnnouncements(context.Context, *ListUserAnnouncementsRequest) (*AnnouncementList, error)
+	// MarkAnnouncementRead records that username has read an announcement.
+	// Idempotent — marking an already-read announcement again does not change
+	// its original read_at.
+	MarkAnnouncementRead(context.Context, *MarkAnnouncementReadRequest) (*MarkAnnouncementReadResponse, error)
+	// GetAnnouncementsQuerySchema returns the query.v1.Descriptor advertising
+	// which announcement fields are queryable/sortable via QueryAnnouncements,
+	// and which operators are valid on each.
+	GetAnnouncementsQuerySchema(context.Context, *GetAnnouncementsQuerySchemaRequest) (*v11.Descriptor, error)
+	// QueryAnnouncements retrieves announcements matching a generic
+	// query.v1.Payload, as advertised by GetAnnouncementsQuerySchema — the
+	// administration-facing search/filter surface, complementing
+	// ListAnnouncements. Like ListAnnouncements it is not scoped to a
+	// requesting user's roles and is not filtered by active or validity
+	// period; each result's read_count is left zero (see Announcement.read_count)
+	// since it is not a queryable/sortable field.
+	QueryAnnouncements(context.Context, *QueryAnnouncementsRequest) (*AnnouncementList, error)
 	// GetVersionInfo returns build and version metadata for this service: its
 	// released semantic version, the git commit it was built from, and a short
 	// description of what the service does.
@@ -1548,6 +1752,36 @@ func (UnimplementedIdentityServiceServer) UpdateUserEnvVar(context.Context, *Upd
 }
 func (UnimplementedIdentityServiceServer) DeleteUserEnvVar(context.Context, *DeleteUserEnvVarRequest) (*DeleteUserEnvVarResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteUserEnvVar not implemented")
+}
+func (UnimplementedIdentityServiceServer) CreateAnnouncement(context.Context, *CreateAnnouncementRequest) (*Announcement, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateAnnouncement not implemented")
+}
+func (UnimplementedIdentityServiceServer) GetAnnouncement(context.Context, *GetAnnouncementRequest) (*Announcement, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetAnnouncement not implemented")
+}
+func (UnimplementedIdentityServiceServer) UpdateAnnouncement(context.Context, *UpdateAnnouncementRequest) (*Announcement, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateAnnouncement not implemented")
+}
+func (UnimplementedIdentityServiceServer) DeleteAnnouncement(context.Context, *DeleteAnnouncementRequest) (*DeleteAnnouncementResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteAnnouncement not implemented")
+}
+func (UnimplementedIdentityServiceServer) ListAnnouncements(context.Context, *ListAnnouncementsRequest) (*AnnouncementList, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListAnnouncements not implemented")
+}
+func (UnimplementedIdentityServiceServer) ListUnreadAnnouncements(context.Context, *ListUnreadAnnouncementsRequest) (*AnnouncementList, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListUnreadAnnouncements not implemented")
+}
+func (UnimplementedIdentityServiceServer) ListUserAnnouncements(context.Context, *ListUserAnnouncementsRequest) (*AnnouncementList, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListUserAnnouncements not implemented")
+}
+func (UnimplementedIdentityServiceServer) MarkAnnouncementRead(context.Context, *MarkAnnouncementReadRequest) (*MarkAnnouncementReadResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method MarkAnnouncementRead not implemented")
+}
+func (UnimplementedIdentityServiceServer) GetAnnouncementsQuerySchema(context.Context, *GetAnnouncementsQuerySchemaRequest) (*v11.Descriptor, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetAnnouncementsQuerySchema not implemented")
+}
+func (UnimplementedIdentityServiceServer) QueryAnnouncements(context.Context, *QueryAnnouncementsRequest) (*AnnouncementList, error) {
+	return nil, status.Error(codes.Unimplemented, "method QueryAnnouncements not implemented")
 }
 func (UnimplementedIdentityServiceServer) GetVersionInfo(context.Context, *v1.GetVersionInfoRequest) (*v1.GetVersionInfoResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetVersionInfo not implemented")
@@ -2869,6 +3103,186 @@ func _IdentityService_DeleteUserEnvVar_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IdentityService_CreateAnnouncement_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateAnnouncementRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).CreateAnnouncement(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_CreateAnnouncement_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).CreateAnnouncement(ctx, req.(*CreateAnnouncementRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_GetAnnouncement_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAnnouncementRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).GetAnnouncement(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_GetAnnouncement_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).GetAnnouncement(ctx, req.(*GetAnnouncementRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_UpdateAnnouncement_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateAnnouncementRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).UpdateAnnouncement(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_UpdateAnnouncement_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).UpdateAnnouncement(ctx, req.(*UpdateAnnouncementRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_DeleteAnnouncement_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteAnnouncementRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).DeleteAnnouncement(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_DeleteAnnouncement_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).DeleteAnnouncement(ctx, req.(*DeleteAnnouncementRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_ListAnnouncements_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAnnouncementsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).ListAnnouncements(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_ListAnnouncements_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).ListAnnouncements(ctx, req.(*ListAnnouncementsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_ListUnreadAnnouncements_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListUnreadAnnouncementsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).ListUnreadAnnouncements(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_ListUnreadAnnouncements_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).ListUnreadAnnouncements(ctx, req.(*ListUnreadAnnouncementsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_ListUserAnnouncements_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListUserAnnouncementsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).ListUserAnnouncements(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_ListUserAnnouncements_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).ListUserAnnouncements(ctx, req.(*ListUserAnnouncementsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_MarkAnnouncementRead_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MarkAnnouncementReadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).MarkAnnouncementRead(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_MarkAnnouncementRead_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).MarkAnnouncementRead(ctx, req.(*MarkAnnouncementReadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_GetAnnouncementsQuerySchema_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAnnouncementsQuerySchemaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).GetAnnouncementsQuerySchema(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_GetAnnouncementsQuerySchema_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).GetAnnouncementsQuerySchema(ctx, req.(*GetAnnouncementsQuerySchemaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_QueryAnnouncements_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryAnnouncementsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).QueryAnnouncements(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_QueryAnnouncements_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).QueryAnnouncements(ctx, req.(*QueryAnnouncementsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _IdentityService_GetVersionInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(v1.GetVersionInfoRequest)
 	if err := dec(in); err != nil {
@@ -3181,6 +3595,46 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteUserEnvVar",
 			Handler:    _IdentityService_DeleteUserEnvVar_Handler,
+		},
+		{
+			MethodName: "CreateAnnouncement",
+			Handler:    _IdentityService_CreateAnnouncement_Handler,
+		},
+		{
+			MethodName: "GetAnnouncement",
+			Handler:    _IdentityService_GetAnnouncement_Handler,
+		},
+		{
+			MethodName: "UpdateAnnouncement",
+			Handler:    _IdentityService_UpdateAnnouncement_Handler,
+		},
+		{
+			MethodName: "DeleteAnnouncement",
+			Handler:    _IdentityService_DeleteAnnouncement_Handler,
+		},
+		{
+			MethodName: "ListAnnouncements",
+			Handler:    _IdentityService_ListAnnouncements_Handler,
+		},
+		{
+			MethodName: "ListUnreadAnnouncements",
+			Handler:    _IdentityService_ListUnreadAnnouncements_Handler,
+		},
+		{
+			MethodName: "ListUserAnnouncements",
+			Handler:    _IdentityService_ListUserAnnouncements_Handler,
+		},
+		{
+			MethodName: "MarkAnnouncementRead",
+			Handler:    _IdentityService_MarkAnnouncementRead_Handler,
+		},
+		{
+			MethodName: "GetAnnouncementsQuerySchema",
+			Handler:    _IdentityService_GetAnnouncementsQuerySchema_Handler,
+		},
+		{
+			MethodName: "QueryAnnouncements",
+			Handler:    _IdentityService_QueryAnnouncements_Handler,
 		},
 		{
 			MethodName: "GetVersionInfo",

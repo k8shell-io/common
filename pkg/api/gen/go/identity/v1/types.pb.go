@@ -3661,6 +3661,277 @@ func (x *EnvVarList) GetEnvVars() []*EnvVar {
 	return nil
 }
 
+// AnnouncementTranslation carries an announcement's body in a single
+// language. Every announcement has at least one.
+type AnnouncementTranslation struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Lang          string                 `protobuf:"bytes,1,opt,name=lang,proto3" json:"lang,omitempty"` // BCP 47 language tag, e.g. "en", "en-US"
+	Body          string                 `protobuf:"bytes,2,opt,name=body,proto3" json:"body,omitempty"` // markdown content
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AnnouncementTranslation) Reset() {
+	*x = AnnouncementTranslation{}
+	mi := &file_identity_v1_types_proto_msgTypes[61]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AnnouncementTranslation) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AnnouncementTranslation) ProtoMessage() {}
+
+func (x *AnnouncementTranslation) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_types_proto_msgTypes[61]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AnnouncementTranslation.ProtoReflect.Descriptor instead.
+func (*AnnouncementTranslation) Descriptor() ([]byte, []int) {
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{61}
+}
+
+func (x *AnnouncementTranslation) GetLang() string {
+	if x != nil {
+		return x.Lang
+	}
+	return ""
+}
+
+func (x *AnnouncementTranslation) GetBody() string {
+	if x != nil {
+		return x.Body
+	}
+	return ""
+}
+
+// Announcement is a platform message rendered as markdown by clients. It is
+// either global (orgs empty) or scoped to one or more organizations/roles,
+// and optionally bounded to a validity period (starts_at/ends_at).
+type Announcement struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	// name is an admin-facing label only — not translated, not shown to end
+	// users — so admins can tell announcements apart in a listing.
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// translations carries the announcement's body in one or more languages;
+	// every announcement has at least one.
+	Translations []*AnnouncementTranslation `protobuf:"bytes,3,rep,name=translations,proto3" json:"translations,omitempty"`
+	CreatedBy    string                     `protobuf:"bytes,4,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"` // username of the author
+	// orgs names the organizations this announcement applies to; empty means
+	// every organization (global).
+	Orgs []string `protobuf:"bytes,5,rep,name=orgs,proto3" json:"orgs,omitempty"`
+	// roles further scopes the announcement to users holding at least one of
+	// these roles within the applicable org(s); empty means every role.
+	Roles []string `protobuf:"bytes,6,rep,name=roles,proto3" json:"roles,omitempty"`
+	// active toggles whether this announcement is shown in the user-facing
+	// listings (ListUnreadAnnouncements/ListUserAnnouncements) without
+	// deleting it; it always remains visible via ListAnnouncements/
+	// GetAnnouncement (the admin-facing views).
+	Active bool `protobuf:"varint,7,opt,name=active,proto3" json:"active,omitempty"`
+	// starts_at/ends_at bound the announcement's optional validity period. An
+	// unset bound is open on that side. An announcement outside its period is
+	// excluded from ListUnreadAnnouncements even when a user hasn't read it
+	// yet, but remains retrievable via ListAnnouncements/ListUserAnnouncements.
+	StartsAt  *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=starts_at,json=startsAt,proto3" json:"starts_at,omitempty"`
+	EndsAt    *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=ends_at,json=endsAt,proto3" json:"ends_at,omitempty"`
+	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	// read_count is the number of distinct users who have read this
+	// announcement. Populated by GetAnnouncement/ListAnnouncements (the
+	// admin-facing views); zero elsewhere.
+	ReadCount int32 `protobuf:"varint,12,opt,name=read_count,json=readCount,proto3" json:"read_count,omitempty"`
+	// is_read/read_at are populated only by ListUserAnnouncements, reporting
+	// whether and when the requesting user read this announcement.
+	IsRead        bool                   `protobuf:"varint,13,opt,name=is_read,json=isRead,proto3" json:"is_read,omitempty"`
+	ReadAt        *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=read_at,json=readAt,proto3" json:"read_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Announcement) Reset() {
+	*x = Announcement{}
+	mi := &file_identity_v1_types_proto_msgTypes[62]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Announcement) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Announcement) ProtoMessage() {}
+
+func (x *Announcement) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_types_proto_msgTypes[62]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Announcement.ProtoReflect.Descriptor instead.
+func (*Announcement) Descriptor() ([]byte, []int) {
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{62}
+}
+
+func (x *Announcement) GetId() int32 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *Announcement) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Announcement) GetTranslations() []*AnnouncementTranslation {
+	if x != nil {
+		return x.Translations
+	}
+	return nil
+}
+
+func (x *Announcement) GetCreatedBy() string {
+	if x != nil {
+		return x.CreatedBy
+	}
+	return ""
+}
+
+func (x *Announcement) GetOrgs() []string {
+	if x != nil {
+		return x.Orgs
+	}
+	return nil
+}
+
+func (x *Announcement) GetRoles() []string {
+	if x != nil {
+		return x.Roles
+	}
+	return nil
+}
+
+func (x *Announcement) GetActive() bool {
+	if x != nil {
+		return x.Active
+	}
+	return false
+}
+
+func (x *Announcement) GetStartsAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.StartsAt
+	}
+	return nil
+}
+
+func (x *Announcement) GetEndsAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.EndsAt
+	}
+	return nil
+}
+
+func (x *Announcement) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *Announcement) GetUpdatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.UpdatedAt
+	}
+	return nil
+}
+
+func (x *Announcement) GetReadCount() int32 {
+	if x != nil {
+		return x.ReadCount
+	}
+	return 0
+}
+
+func (x *Announcement) GetIsRead() bool {
+	if x != nil {
+		return x.IsRead
+	}
+	return false
+}
+
+func (x *Announcement) GetReadAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ReadAt
+	}
+	return nil
+}
+
+// AnnouncementList holds a list of announcements.
+type AnnouncementList struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Announcements []*Announcement        `protobuf:"bytes,1,rep,name=announcements,proto3" json:"announcements,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AnnouncementList) Reset() {
+	*x = AnnouncementList{}
+	mi := &file_identity_v1_types_proto_msgTypes[63]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AnnouncementList) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AnnouncementList) ProtoMessage() {}
+
+func (x *AnnouncementList) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_types_proto_msgTypes[63]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AnnouncementList.ProtoReflect.Descriptor instead.
+func (*AnnouncementList) Descriptor() ([]byte, []int) {
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{63}
+}
+
+func (x *AnnouncementList) GetAnnouncements() []*Announcement {
+	if x != nil {
+		return x.Announcements
+	}
+	return nil
+}
+
 var File_identity_v1_types_proto protoreflect.FileDescriptor
 
 const file_identity_v1_types_proto_rawDesc = "" +
@@ -3910,7 +4181,32 @@ const file_identity_v1_types_proto_rawDesc = "" +
 	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"<\n" +
 	"\n" +
 	"EnvVarList\x12.\n" +
-	"\benv_vars\x18\x01 \x03(\v2\x13.identity.v1.EnvVarR\aenvVarsBDZBgithub.com/k8shell-io/common/pkg/api/gen/go/identity/v1;identityv1b\x06proto3"
+	"\benv_vars\x18\x01 \x03(\v2\x13.identity.v1.EnvVarR\aenvVars\"A\n" +
+	"\x17AnnouncementTranslation\x12\x12\n" +
+	"\x04lang\x18\x01 \x01(\tR\x04lang\x12\x12\n" +
+	"\x04body\x18\x02 \x01(\tR\x04body\"\xae\x04\n" +
+	"\fAnnouncement\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12H\n" +
+	"\ftranslations\x18\x03 \x03(\v2$.identity.v1.AnnouncementTranslationR\ftranslations\x12\x1d\n" +
+	"\n" +
+	"created_by\x18\x04 \x01(\tR\tcreatedBy\x12\x12\n" +
+	"\x04orgs\x18\x05 \x03(\tR\x04orgs\x12\x14\n" +
+	"\x05roles\x18\x06 \x03(\tR\x05roles\x12\x16\n" +
+	"\x06active\x18\a \x01(\bR\x06active\x127\n" +
+	"\tstarts_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\bstartsAt\x123\n" +
+	"\aends_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\x06endsAt\x129\n" +
+	"\n" +
+	"created_at\x18\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"\n" +
+	"updated_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12\x1d\n" +
+	"\n" +
+	"read_count\x18\f \x01(\x05R\treadCount\x12\x17\n" +
+	"\ais_read\x18\r \x01(\bR\x06isRead\x123\n" +
+	"\aread_at\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\x06readAt\"S\n" +
+	"\x10AnnouncementList\x12?\n" +
+	"\rannouncements\x18\x01 \x03(\v2\x19.identity.v1.AnnouncementR\rannouncementsBDZBgithub.com/k8shell-io/common/pkg/api/gen/go/identity/v1;identityv1b\x06proto3"
 
 var (
 	file_identity_v1_types_proto_rawDescOnce sync.Once
@@ -3924,7 +4220,7 @@ func file_identity_v1_types_proto_rawDescGZIP() []byte {
 	return file_identity_v1_types_proto_rawDescData
 }
 
-var file_identity_v1_types_proto_msgTypes = make([]protoimpl.MessageInfo, 61)
+var file_identity_v1_types_proto_msgTypes = make([]protoimpl.MessageInfo, 64)
 var file_identity_v1_types_proto_goTypes = []any{
 	(*Username)(nil),                           // 0: identity.v1.Username
 	(*UserStr)(nil),                            // 1: identity.v1.UserStr
@@ -3987,45 +4283,55 @@ var file_identity_v1_types_proto_goTypes = []any{
 	(*AccessTokenInfo)(nil),                    // 58: identity.v1.AccessTokenInfo
 	(*EnvVar)(nil),                             // 59: identity.v1.EnvVar
 	(*EnvVarList)(nil),                         // 60: identity.v1.EnvVarList
-	(*v1.User)(nil),                            // 61: common.v1.User
-	(*v11.Payload)(nil),                        // 62: query.v1.Payload
-	(*v1.GetVersionInfoResponse)(nil),          // 63: common.v1.GetVersionInfoResponse
-	(*timestamppb.Timestamp)(nil),              // 64: google.protobuf.Timestamp
-	(*wrapperspb.StringValue)(nil),             // 65: google.protobuf.StringValue
+	(*AnnouncementTranslation)(nil),            // 61: identity.v1.AnnouncementTranslation
+	(*Announcement)(nil),                       // 62: identity.v1.Announcement
+	(*AnnouncementList)(nil),                   // 63: identity.v1.AnnouncementList
+	(*v1.User)(nil),                            // 64: common.v1.User
+	(*v11.Payload)(nil),                        // 65: query.v1.Payload
+	(*v1.GetVersionInfoResponse)(nil),          // 66: common.v1.GetVersionInfoResponse
+	(*timestamppb.Timestamp)(nil),              // 67: google.protobuf.Timestamp
+	(*wrapperspb.StringValue)(nil),             // 68: google.protobuf.StringValue
 }
 var file_identity_v1_types_proto_depIdxs = []int32{
-	61, // 0: identity.v1.UserList.users:type_name -> common.v1.User
-	62, // 1: identity.v1.QueryUsersRequest.query:type_name -> query.v1.Payload
-	61, // 2: identity.v1.GetUsersResponse.users:type_name -> common.v1.User
-	61, // 3: identity.v1.AuthUserResponse.user:type_name -> common.v1.User
+	64, // 0: identity.v1.UserList.users:type_name -> common.v1.User
+	65, // 1: identity.v1.QueryUsersRequest.query:type_name -> query.v1.Payload
+	64, // 2: identity.v1.GetUsersResponse.users:type_name -> common.v1.User
+	64, // 3: identity.v1.AuthUserResponse.user:type_name -> common.v1.User
 	19, // 4: identity.v1.RepoOwnerList.owners:type_name -> identity.v1.RepoOwner
 	22, // 5: identity.v1.RepoList.repos:type_name -> identity.v1.Repo
-	63, // 6: identity.v1.IdentityProviderInfo.version_info:type_name -> common.v1.GetVersionInfoResponse
-	64, // 7: identity.v1.Role.created_at:type_name -> google.protobuf.Timestamp
+	66, // 6: identity.v1.IdentityProviderInfo.version_info:type_name -> common.v1.GetVersionInfoResponse
+	67, // 7: identity.v1.Role.created_at:type_name -> google.protobuf.Timestamp
 	26, // 8: identity.v1.RoleList.roles:type_name -> identity.v1.Role
-	65, // 9: identity.v1.UpdateRoleRequest.description:type_name -> google.protobuf.StringValue
-	64, // 10: identity.v1.Organization.created_at:type_name -> google.protobuf.Timestamp
+	68, // 9: identity.v1.UpdateRoleRequest.description:type_name -> google.protobuf.StringValue
+	67, // 10: identity.v1.Organization.created_at:type_name -> google.protobuf.Timestamp
 	35, // 11: identity.v1.OrganizationList.organizations:type_name -> identity.v1.Organization
-	62, // 12: identity.v1.QueryOrganizationsRequest.query:type_name -> query.v1.Payload
-	65, // 13: identity.v1.UpdateOrganizationRequest.description:type_name -> google.protobuf.StringValue
-	64, // 14: identity.v1.OnboardRule.requested_at:type_name -> google.protobuf.Timestamp
-	64, // 15: identity.v1.OnboardRule.decided_at:type_name -> google.protobuf.Timestamp
-	64, // 16: identity.v1.OnboardRule.created_at:type_name -> google.protobuf.Timestamp
-	64, // 17: identity.v1.OnboardRule.updated_at:type_name -> google.protobuf.Timestamp
+	65, // 12: identity.v1.QueryOrganizationsRequest.query:type_name -> query.v1.Payload
+	68, // 13: identity.v1.UpdateOrganizationRequest.description:type_name -> google.protobuf.StringValue
+	67, // 14: identity.v1.OnboardRule.requested_at:type_name -> google.protobuf.Timestamp
+	67, // 15: identity.v1.OnboardRule.decided_at:type_name -> google.protobuf.Timestamp
+	67, // 16: identity.v1.OnboardRule.created_at:type_name -> google.protobuf.Timestamp
+	67, // 17: identity.v1.OnboardRule.updated_at:type_name -> google.protobuf.Timestamp
 	45, // 18: identity.v1.OnboardRuleList.rules:type_name -> identity.v1.OnboardRule
-	62, // 19: identity.v1.QueryOnboardRulesRequest.query:type_name -> query.v1.Payload
+	65, // 19: identity.v1.QueryOnboardRulesRequest.query:type_name -> query.v1.Payload
 	56, // 20: identity.v1.ListUserAuthKeysResponse.auth_keys:type_name -> identity.v1.UserAuthKey
-	64, // 21: identity.v1.AccessTokenInfo.expires_at:type_name -> google.protobuf.Timestamp
-	64, // 22: identity.v1.AccessTokenInfo.created_at:type_name -> google.protobuf.Timestamp
-	64, // 23: identity.v1.AccessTokenInfo.last_used_at:type_name -> google.protobuf.Timestamp
-	64, // 24: identity.v1.EnvVar.created_at:type_name -> google.protobuf.Timestamp
-	64, // 25: identity.v1.EnvVar.updated_at:type_name -> google.protobuf.Timestamp
+	67, // 21: identity.v1.AccessTokenInfo.expires_at:type_name -> google.protobuf.Timestamp
+	67, // 22: identity.v1.AccessTokenInfo.created_at:type_name -> google.protobuf.Timestamp
+	67, // 23: identity.v1.AccessTokenInfo.last_used_at:type_name -> google.protobuf.Timestamp
+	67, // 24: identity.v1.EnvVar.created_at:type_name -> google.protobuf.Timestamp
+	67, // 25: identity.v1.EnvVar.updated_at:type_name -> google.protobuf.Timestamp
 	59, // 26: identity.v1.EnvVarList.env_vars:type_name -> identity.v1.EnvVar
-	27, // [27:27] is the sub-list for method output_type
-	27, // [27:27] is the sub-list for method input_type
-	27, // [27:27] is the sub-list for extension type_name
-	27, // [27:27] is the sub-list for extension extendee
-	0,  // [0:27] is the sub-list for field type_name
+	61, // 27: identity.v1.Announcement.translations:type_name -> identity.v1.AnnouncementTranslation
+	67, // 28: identity.v1.Announcement.starts_at:type_name -> google.protobuf.Timestamp
+	67, // 29: identity.v1.Announcement.ends_at:type_name -> google.protobuf.Timestamp
+	67, // 30: identity.v1.Announcement.created_at:type_name -> google.protobuf.Timestamp
+	67, // 31: identity.v1.Announcement.updated_at:type_name -> google.protobuf.Timestamp
+	67, // 32: identity.v1.Announcement.read_at:type_name -> google.protobuf.Timestamp
+	62, // 33: identity.v1.AnnouncementList.announcements:type_name -> identity.v1.Announcement
+	34, // [34:34] is the sub-list for method output_type
+	34, // [34:34] is the sub-list for method input_type
+	34, // [34:34] is the sub-list for extension type_name
+	34, // [34:34] is the sub-list for extension extendee
+	0,  // [0:34] is the sub-list for field type_name
 }
 
 func init() { file_identity_v1_types_proto_init() }
@@ -4039,7 +4345,7 @@ func file_identity_v1_types_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_identity_v1_types_proto_rawDesc), len(file_identity_v1_types_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   61,
+			NumMessages:   64,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

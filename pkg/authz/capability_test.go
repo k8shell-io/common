@@ -88,6 +88,7 @@ var expectedCapabilityActions = []string{
 	"blueprints:read",
 	"blueprints:write",
 	"audit:list",
+	"announcement:write",
 }
 
 func TestCapabilityChecksCompleteness(t *testing.T) {

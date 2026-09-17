@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 // UserCreateRequest is the HTTP request body for POST /users, which creates a
 // new local user record with no backing identity provider (unlike onboarding).
 // Note: proto counterpart is identityv1.CreateUserRequest (different wire format, no json tags).
@@ -402,4 +404,59 @@ type EnvVarCreateRequest struct {
 type EnvVarUpdateRequest struct {
 	Value    *string `json:"value,omitempty"`
 	IsSecret *bool   `json:"isSecret,omitempty"`
+}
+
+// AnnouncementCreateRequest is the HTTP request body for POST /announcements,
+// which creates a new announcement. Name is required and admin-facing only
+// (not translated, not shown to end users). Translations must carry at
+// least one entry — every announcement must be readable in at least one
+// language. Orgs scopes the announcement to specific organizations; empty
+// (or omitted) makes it global. Roles further scopes it to users holding at
+// least one of these roles within Orgs; empty means every role. Active
+// defaults to true when omitted. StartsAt/EndsAt bound its optional
+// validity period; omit either for an open bound. CreatedBy is never read
+// from the body — the handler sets it from the authenticated caller.
+// Note: proto counterpart is identityv1.CreateAnnouncementRequest.
+type AnnouncementCreateRequest struct {
+	Name         string                    `json:"name"`
+	Translations []AnnouncementTranslation `json:"translations"`
+	Orgs         []string                  `json:"orgs,omitempty"`
+	Roles        []string                  `json:"roles,omitempty"`
+	Active       *bool                     `json:"active,omitempty"`
+	StartsAt     *time.Time                `json:"startsAt,omitempty"`
+	EndsAt       *time.Time                `json:"endsAt,omitempty"`
+}
+
+// AnnouncementUpdateRequest is the HTTP request body for PATCH
+// /announcements/{id}, which partially updates an announcement's name,
+// translations, org/role scope, active flag, and/or validity period. Only
+// non-nil/non-empty fields are applied (PATCH semantics), except
+// Translations, when given, which replaces the announcement's entire
+// translation set — it can never be replaced with an empty set, since every
+// announcement must keep at least one language. Because JSON can't
+// distinguish an absent field from an explicitly cleared one, clearing the
+// org/role scope or a validity bound back to "every org/role"/"open"
+// requires the matching Clear* flag rather than sending a nil/empty value —
+// mirroring identityv1.UpdateAnnouncementRequest's
+// clear_orgs/clear_roles/clear_starts_at/clear_ends_at fields. Set at most
+// one of a bound (or Orgs/Roles) and its own Clear* flag.
+// Note: proto counterpart is identityv1.UpdateAnnouncementRequest.
+type AnnouncementUpdateRequest struct {
+	Name         *string                   `json:"name,omitempty"`
+	Translations []AnnouncementTranslation `json:"translations,omitempty"`
+	Orgs         []string                  `json:"orgs,omitempty"`
+	// ClearOrgs makes the announcement global; Orgs must be empty when this
+	// is set.
+	ClearOrgs bool     `json:"clearOrgs,omitempty"`
+	Roles     []string `json:"roles,omitempty"`
+	// ClearRoles makes the announcement apply to every role; Roles must be
+	// empty when this is set.
+	ClearRoles bool       `json:"clearRoles,omitempty"`
+	Active     *bool      `json:"active,omitempty"`
+	StartsAt   *time.Time `json:"startsAt,omitempty"`
+	// ClearStartsAt removes the lower validity bound (open-started).
+	ClearStartsAt bool       `json:"clearStartsAt,omitempty"`
+	EndsAt        *time.Time `json:"endsAt,omitempty"`
+	// ClearEndsAt removes the upper validity bound (open-ended).
+	ClearEndsAt bool `json:"clearEndsAt,omitempty"`
 }

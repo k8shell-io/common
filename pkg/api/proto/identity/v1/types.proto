@@ -553,3 +553,66 @@ message EnvVar {
 message EnvVarList {
   repeated EnvVar env_vars = 1;
 }
+
+// AnnouncementTranslation carries an announcement's body in a single
+// language. Every announcement has at least one.
+message AnnouncementTranslation {
+  string lang = 1;  // BCP 47 language tag, e.g. "en", "en-US"
+  string body = 2;  // markdown content
+}
+
+// Announcement is a platform message rendered as markdown by clients. It is
+// either global (orgs empty) or scoped to one or more organizations/roles,
+// and optionally bounded to a validity period (starts_at/ends_at).
+message Announcement {
+  int32 id = 1;
+
+  // name is an admin-facing label only — not translated, not shown to end
+  // users — so admins can tell announcements apart in a listing.
+  string name = 2;
+
+  // translations carries the announcement's body in one or more languages;
+  // every announcement has at least one.
+  repeated AnnouncementTranslation translations = 3;
+
+  string created_by = 4;  // username of the author
+
+  // orgs names the organizations this announcement applies to; empty means
+  // every organization (global).
+  repeated string orgs = 5;
+
+  // roles further scopes the announcement to users holding at least one of
+  // these roles within the applicable org(s); empty means every role.
+  repeated string roles = 6;
+
+  // active toggles whether this announcement is shown in the user-facing
+  // listings (ListUnreadAnnouncements/ListUserAnnouncements) without
+  // deleting it; it always remains visible via ListAnnouncements/
+  // GetAnnouncement (the admin-facing views).
+  bool active = 7;
+
+  // starts_at/ends_at bound the announcement's optional validity period. An
+  // unset bound is open on that side. An announcement outside its period is
+  // excluded from ListUnreadAnnouncements even when a user hasn't read it
+  // yet, but remains retrievable via ListAnnouncements/ListUserAnnouncements.
+  google.protobuf.Timestamp starts_at = 8;
+  google.protobuf.Timestamp ends_at   = 9;
+
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+
+  // read_count is the number of distinct users who have read this
+  // announcement. Populated by GetAnnouncement/ListAnnouncements (the
+  // admin-facing views); zero elsewhere.
+  int32 read_count = 12;
+
+  // is_read/read_at are populated only by ListUserAnnouncements, reporting
+  // whether and when the requesting user read this announcement.
+  bool                       is_read = 13;
+  google.protobuf.Timestamp read_at  = 14;
+}
+
+// AnnouncementList holds a list of announcements.
+message AnnouncementList {
+  repeated Announcement announcements = 1;
+}

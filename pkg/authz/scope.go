@@ -268,6 +268,12 @@ var validExactScopes = map[string]struct{}{
 
 	// audit — flat
 	"audit:list": {},
+
+	// announcement — flat. Single write action covers create/update/delete;
+	// reading announcements has no scope of its own since every
+	// authenticated user may read them (see the announcement:write contract
+	// doc).
+	"announcement:write": {},
 }
 
 // validWildcardPrefixes is the set of prefixes that may appear before ":*".

@@ -320,6 +320,63 @@ service IdentityService {
   // the organization's value (if any) as the effective value for that key.
   rpc DeleteUserEnvVar (DeleteUserEnvVarRequest) returns (DeleteUserEnvVarResponse);
 
+  // CreateAnnouncement creates a new announcement. It is global when orgs is
+  // empty, otherwise scoped to the listed organizations.
+  rpc CreateAnnouncement (CreateAnnouncementRequest) returns (Announcement);
+
+  // GetAnnouncement retrieves a single announcement by id, including its
+  // read_count (the number of distinct users who have read it).
+  rpc GetAnnouncement (GetAnnouncementRequest) returns (Announcement);
+
+  // UpdateAnnouncement partially updates an announcement's title, body, org
+  // scope, and/or validity period.
+  rpc UpdateAnnouncement (UpdateAnnouncementRequest) returns (Announcement);
+
+  // DeleteAnnouncement permanently removes an announcement, along with its
+  // read tracking.
+  rpc DeleteAnnouncement (DeleteAnnouncementRequest) returns (DeleteAnnouncementResponse);
+
+  // ListAnnouncements returns announcements for administration: every
+  // announcement, optionally filtered to those that apply to org, each with
+  // its read_count populated. Unlike ListUnreadAnnouncements/
+  // ListUserAnnouncements it is not scoped to a requesting user and is not
+  // filtered by validity period.
+  rpc ListAnnouncements (ListAnnouncementsRequest) returns (AnnouncementList);
+
+  // ListUnreadAnnouncements returns announcements that apply to username's
+  // organization (global or scoped to it), currently fall within their
+  // validity period, and that username has not yet read. An announcement
+  // outside its validity period is excluded here even if unread — use
+  // ListUserAnnouncements to retrieve it regardless.
+  rpc ListUnreadAnnouncements (ListUnreadAnnouncementsRequest) returns (AnnouncementList);
+
+  // ListUserAnnouncements returns every announcement that applies to
+  // username's organization (global or scoped to it), regardless of
+  // validity period or read status, with is_read/read_at populated per
+  // announcement so a client can distinguish ones already seen — including
+  // ones outside their validity period or already read, unlike
+  // ListUnreadAnnouncements.
+  rpc ListUserAnnouncements (ListUserAnnouncementsRequest) returns (AnnouncementList);
+
+  // MarkAnnouncementRead records that username has read an announcement.
+  // Idempotent — marking an already-read announcement again does not change
+  // its original read_at.
+  rpc MarkAnnouncementRead (MarkAnnouncementReadRequest) returns (MarkAnnouncementReadResponse);
+
+  // GetAnnouncementsQuerySchema returns the query.v1.Descriptor advertising
+  // which announcement fields are queryable/sortable via QueryAnnouncements,
+  // and which operators are valid on each.
+  rpc GetAnnouncementsQuerySchema (GetAnnouncementsQuerySchemaRequest) returns (query.v1.Descriptor);
+
+  // QueryAnnouncements retrieves announcements matching a generic
+  // query.v1.Payload, as advertised by GetAnnouncementsQuerySchema — the
+  // administration-facing search/filter surface, complementing
+  // ListAnnouncements. Like ListAnnouncements it is not scoped to a
+  // requesting user's roles and is not filtered by active or validity
+  // period; each result's read_count is left zero (see Announcement.read_count)
+  // since it is not a queryable/sortable field.
+  rpc QueryAnnouncements (QueryAnnouncementsRequest) returns (AnnouncementList);
+
   // GetVersionInfo returns build and version metadata for this service: its
   // released semantic version, the git commit it was built from, and a short
   // description of what the service does.
@@ -725,4 +782,112 @@ message DeleteUserEnvVarRequest {
 // DeleteUserEnvVarResponse indicates whether the deletion was successful.
 message DeleteUserEnvVarResponse {
   bool success = 1;
+}
+
+// CreateAnnouncementRequest carries the fields for creating a new
+// announcement. name is an admin-facing label only (not translated, not
+// shown to end users). translations must carry at least one entry — every
+// announcement must be readable in at least one language. created_by is the
+// caller-supplied author username — the server has no other way to learn
+// the caller's identity, same as ApproveOnboardRuleRequest.decided_by.
+// roles further scopes the announcement to users holding at least one of
+// these roles within orgs; empty means every role. active defaults to true
+// (omit for the default); starts_at/ends_at bound the announcement's
+// optional validity period, omit either for an open bound.
+message CreateAnnouncementRequest {
+  string                            name         = 1;
+  repeated AnnouncementTranslation  translations = 2;
+  string                            created_by   = 3;
+  repeated string                   orgs         = 4;  // empty = every organization (global)
+  repeated string                   roles        = 5;  // empty = every role within orgs
+  google.protobuf.BoolValue         active       = 6;  // omit for the default (active)
+  google.protobuf.Timestamp         starts_at    = 7;
+  google.protobuf.Timestamp         ends_at      = 8;
+}
+
+// GetAnnouncementRequest identifies the announcement to retrieve by id.
+message GetAnnouncementRequest {
+  int32 id = 1;
+}
+
+// UpdateAnnouncementRequest partially updates an announcement identified by
+// id. name/active are applied when set. translations, when non-empty,
+// replaces the announcement's entire translation set — leave it empty to
+// keep the existing translations unchanged; it can never be replaced with
+// an empty set, since every announcement must keep at least one language.
+// Because proto3 cannot distinguish an absent "orgs"/"roles" list from an
+// explicitly empty one on the wire, clear_orgs/clear_roles must be set to
+// make the announcement apply to every organization/role; orgs/roles must
+// be empty when their own clear_* flag is set — mirroring
+// UpdateUserRequest.clear_roles. clear_starts_at/clear_ends_at remove the
+// corresponding bound (open-ended) the same way; set at most one of a bound
+// (or orgs/roles) and its own clear_* flag.
+message UpdateAnnouncementRequest {
+  int32                             id              = 1;
+  google.protobuf.StringValue       name            = 2;
+  repeated AnnouncementTranslation  translations    = 3;
+  repeated string                   orgs            = 4;
+  bool                              clear_orgs      = 5;
+  repeated string                   roles           = 6;
+  bool                              clear_roles     = 7;
+  google.protobuf.BoolValue         active          = 8;
+  google.protobuf.Timestamp         starts_at       = 9;
+  bool                              clear_starts_at = 10;
+  google.protobuf.Timestamp         ends_at         = 11;
+  bool                              clear_ends_at   = 12;
+}
+
+// DeleteAnnouncementRequest identifies the announcement to remove by id.
+message DeleteAnnouncementRequest {
+  int32 id = 1;
+}
+
+// DeleteAnnouncementResponse indicates whether the deletion was successful.
+message DeleteAnnouncementResponse {
+  bool success = 1;
+}
+
+// ListAnnouncementsRequest carries the admin-facing listing parameters. org,
+// when set, limits results to announcements that apply to org (global ones
+// plus any scoped to it); omit to list every announcement regardless of
+// scope.
+message ListAnnouncementsRequest {
+  string org    = 1;
+  int32  limit  = 2;
+  int32  offset = 3;
+}
+
+// ListUnreadAnnouncementsRequest identifies the user whose unread, in-period,
+// applicable announcements are being listed.
+message ListUnreadAnnouncementsRequest {
+  string username = 1;
+}
+
+// ListUserAnnouncementsRequest identifies the user whose applicable
+// announcements (read or unread, in or out of period) are being listed.
+message ListUserAnnouncementsRequest {
+  string username = 1;
+}
+
+// MarkAnnouncementReadRequest identifies the announcement and the user
+// recording that they've read it.
+message MarkAnnouncementReadRequest {
+  int32  id       = 1;
+  string username = 2;
+}
+
+// MarkAnnouncementReadResponse indicates whether the read was recorded.
+message MarkAnnouncementReadResponse {
+  bool success = 1;
+}
+
+// GetAnnouncementsQuerySchemaRequest carries no fields today. Left as a
+// message rather than google.protobuf.Empty so parameters can be added
+// later without changing the RPC signature.
+message GetAnnouncementsQuerySchemaRequest {}
+
+// QueryAnnouncementsRequest carries a generic query against the fields
+// advertised by GetAnnouncementsQuerySchema.
+message QueryAnnouncementsRequest {
+  query.v1.Payload query = 1;
 }
