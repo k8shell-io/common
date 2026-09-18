@@ -3,18 +3,31 @@
 
 package models
 
-// ServiceVersionInfo is a backend service's build metadata, as reported by
-// its common.v1 GetVersionInfo RPC and surfaced by the api-server's
-// GET /api/v1/version endpoint.
+// PlatformVersions is the api-server's GET /api/v1/versions response: the
+// versions of the deployed k8Shell release, as published by the deployment's
+// k8shell-versions ConfigMap, plus the infrastructure versions the api-server
+// observes at runtime.
+type PlatformVersions struct {
+	// PlatformVersion is the version of the k8Shell release the services were
+	// deployed from (the Helm chart's app version).
+	PlatformVersion string `json:"platformVersion"`
+	// Services maps a service name (e.g. "apiServer", "k8shelld") to the
+	// version of the image the release deployed it from. The set of services
+	// comes from the release itself, so it grows with the platform rather than
+	// with this struct.
+	Services map[string]string `json:"services"`
+	// Infra holds versions of the infrastructure the platform runs on. These
+	// are not part of the release, so they are read from the live connection
+	// rather than from the ConfigMap.
+	Infra map[string]ServiceVersionInfo `json:"infra"`
+}
+
+// ServiceVersionInfo is the version of a single infrastructure dependency.
 type ServiceVersionInfo struct {
-	// Version is the service's released semantic version, or a caller-chosen
-	// fallback (e.g. "0.0.0") when the service did not report one.
+	// Version is the reported version, or a caller-chosen fallback
+	// (e.g. "0.0.0") when it could not be resolved.
 	Version string `json:"version"`
-	// CommitID is the git commit the service binary was built from.
-	CommitID string `json:"commit_id,omitempty"`
-	// Description is a short human-readable summary of what the service does.
-	Description string `json:"description,omitempty"`
-	// Error is set when the GetVersionInfo call itself failed; Version then
-	// carries the fallback and CommitID/Description are empty.
+	// Error is set when the version could not be read; Version then carries
+	// the fallback.
 	Error string `json:"error,omitempty"`
 }
