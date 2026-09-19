@@ -89,7 +89,6 @@ var scopeConstrainablePrefixes = map[string]struct{}{
 	"user:write:keys":       {},
 	"user:write:password":   {},
 	"user:write:envvars":    {},
-	"user:write:settings":   {},
 
 	// user:write:credentials — one entry per credential type, since the
 	// action string carries the type as a fourth segment
@@ -212,7 +211,6 @@ var validExactScopes = map[string]struct{}{
 	"user:read:" + string(UserDataTypeKeys):       {},
 	"user:read:" + string(UserDataTypeRepos):      {},
 	"user:read:" + string(UserDataTypeEnvVars):    {},
-	"user:read:" + string(UserDataTypeSettings):   {},
 
 	// user:read:credentials / user:write:credentials — one entry per
 	// credential type (kubernetes | git | registry) instead of a single
@@ -234,7 +232,6 @@ var validExactScopes = map[string]struct{}{
 	"user:write:" + string(UserDataTypePosix):    {},
 	"user:write:" + string(UserDataTypePassword): {},
 	"user:write:" + string(UserDataTypeEnvVars):  {},
-	"user:write:" + string(UserDataTypeSettings): {},
 
 	"user:write:" + string(UserDataTypeCredentials) + ":kubernetes": {},
 	"user:write:" + string(UserDataTypeCredentials) + ":git":        {},

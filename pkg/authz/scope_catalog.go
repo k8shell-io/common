@@ -139,7 +139,6 @@ var scopeCatalogSource = []domainSpec{
 				{scope: "user:read:keys", label: "Keys", description: "Read a user's SSH/API keys."},
 				{scope: "user:read:repos", label: "Repos", description: "Browse a user's identity-provider repository owners and repos."},
 				{scope: "user:read:envvars", label: "Environment variables", description: "Read a user's effective environment variables (org values plus their own overrides)."},
-				{scope: "user:read:settings", label: "Settings", description: "Read a user's client settings."},
 			}},
 			{action: "user:read:credentials", label: "Credentials (read)", wildcard: &entrySpec{scope: "user:read:credentials:*", label: "Any credential type"}, entries: []entrySpec{
 				{scope: "user:read:credentials:kubernetes", label: "Kubernetes", description: "Read a user's stored Kubernetes service-account credentials."},
@@ -156,7 +155,6 @@ var scopeCatalogSource = []domainSpec{
 				{scope: "user:write:org", label: "Organization", description: "Change a user's organization membership."},
 				{scope: "user:write:posix", label: "POSIX", description: "Update a user's POSIX (uid/gid/shell) attributes."},
 				{scope: "user:write:envvars", label: "Environment variables", description: "Add, update, or remove a user's own environment variable overrides."},
-				{scope: "user:write:settings", label: "Settings", description: "Update a user's client settings."},
 			}},
 			{action: "user:write:credentials", label: "Credentials (write)", wildcard: &entrySpec{scope: "user:write:credentials:*", label: "Any credential type"}, entries: []entrySpec{
 				{scope: "user:write:credentials:kubernetes", label: "Kubernetes", description: "Add or remove a user's stored Kubernetes credentials."},

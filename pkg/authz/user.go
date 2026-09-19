@@ -273,20 +273,16 @@ const (
 	UserDataTypePosix       UserDataType = "posix"
 	UserDataTypePassword    UserDataType = "password"
 	UserDataTypeEnvVars     UserDataType = "envvars"
-	// UserDataTypeSettings covers a user's client-settings blob (see
-	// GetUserSettings/PutUserSettings) — subject may read/write its own
-	// record, mirroring profile and envvars.
-	UserDataTypeSettings UserDataType = "settings"
 )
 
 // validateUserDataType checks the data types valid for user:read.
 func validateUserDataType(dt UserDataType) error {
 	switch dt {
-	case UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys, UserDataTypeRepos, UserDataTypeEnvVars, UserDataTypeSettings:
+	case UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys, UserDataTypeRepos, UserDataTypeEnvVars:
 		return nil
 	default:
-		return fmt.Errorf("context \"data_type\" must be %q, %q, %q, %q, %q, %q, %q, or %q, got %q",
-			UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys, UserDataTypeRepos, UserDataTypeEnvVars, UserDataTypeSettings, dt)
+		return fmt.Errorf("context \"data_type\" must be %q, %q, %q, %q, %q, %q, or %q, got %q",
+			UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys, UserDataTypeRepos, UserDataTypeEnvVars, dt)
 	}
 }
 
@@ -297,12 +293,12 @@ func validateUserDataType(dt UserDataType) error {
 // path for it.
 func validateUserWriteDataType(dt UserDataType) error {
 	switch dt {
-	case UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeRoles, UserDataTypeKeys, UserDataTypeSudo, UserDataTypeLocked, UserDataTypeOrg, UserDataTypePosix, UserDataTypePassword, UserDataTypeEnvVars, UserDataTypeSettings:
+	case UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeRoles, UserDataTypeKeys, UserDataTypeSudo, UserDataTypeLocked, UserDataTypeOrg, UserDataTypePosix, UserDataTypePassword, UserDataTypeEnvVars:
 		return nil
 	default:
-		return fmt.Errorf("context \"data_type\" must be %q, %q, %q, %q, %q, %q, %q, %q, %q, %q, or %q, got %q",
+		return fmt.Errorf("context \"data_type\" must be %q, %q, %q, %q, %q, %q, %q, %q, %q, or %q, got %q",
 			UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeRoles, UserDataTypeKeys,
-			UserDataTypeSudo, UserDataTypeLocked, UserDataTypeOrg, UserDataTypePosix, UserDataTypePassword, UserDataTypeEnvVars, UserDataTypeSettings, dt)
+			UserDataTypeSudo, UserDataTypeLocked, UserDataTypeOrg, UserDataTypePosix, UserDataTypePassword, UserDataTypeEnvVars, dt)
 	}
 }
 
@@ -1689,7 +1685,7 @@ func init() {
 	})
 
 	for _, dt := range []UserDataType{
-		UserDataTypeProfile, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys, UserDataTypeRepos, UserDataTypeEnvVars, UserDataTypeSettings,
+		UserDataTypeProfile, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys, UserDataTypeRepos, UserDataTypeEnvVars,
 	} {
 		action := "user:read:" + string(dt)
 		registerCapabilityCheck(CapabilityCheck{
@@ -1702,7 +1698,7 @@ func init() {
 
 	for _, dt := range []UserDataType{
 		UserDataTypeProfile, UserDataTypeRoles, UserDataTypeKeys,
-		UserDataTypeSudo, UserDataTypeLocked, UserDataTypeOrg, UserDataTypePosix, UserDataTypePassword, UserDataTypeEnvVars, UserDataTypeSettings,
+		UserDataTypeSudo, UserDataTypeLocked, UserDataTypeOrg, UserDataTypePosix, UserDataTypePassword, UserDataTypeEnvVars,
 	} {
 		action := "user:write:" + string(dt)
 		registerCapabilityCheck(CapabilityCheck{
