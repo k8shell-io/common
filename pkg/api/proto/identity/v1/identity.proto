@@ -381,6 +381,18 @@ service IdentityService {
   // released semantic version, the git commit it was built from, and a short
   // description of what the service does.
   rpc GetVersionInfo (common.v1.GetVersionInfoRequest) returns (common.v1.GetVersionInfoResponse);
+
+  // GetUserSettings retrieves a user's stored settings blob. A user with no
+  // settings row returns the zero-value response (version 0, empty data,
+  // zero-value updated_at, unset controlled) rather than a NotFound error.
+  rpc GetUserSettings (GetUserSettingsRequest) returns (GetUserSettingsResponse);
+
+  // PutUserSettings replaces a user's settings blob (last-write-wins —
+  // version is not used for optimistic-concurrency conflict detection, only
+  // as an informational counter). Identity does not interpret data beyond
+  // enforcing its size cap; controlled carries the subset of settings
+  // Identity validates and enforces server-side.
+  rpc PutUserSettings (PutUserSettingsRequest) returns (PutUserSettingsResponse);
 }
 
 // Messages
@@ -890,4 +902,54 @@ message GetAnnouncementsQuerySchemaRequest {}
 // advertised by GetAnnouncementsQuerySchema.
 message QueryAnnouncementsRequest {
   query.v1.Payload query = 1;
+}
+
+// ControlledSettings carries the subset of a user's settings that Identity
+// itself validates and enforces, as opposed to the opaque data blob in
+// GetUserSettingsResponse/PutUserSettingsRequest which Identity never
+// parses. Each field uses a wrapper type so a client can distinguish "leave
+// unset / use the platform default" from an explicit value, the same
+// convention as UpdateUserRequest. Adding a new controlled setting means
+// adding a field here (a proto change), not extending the opaque blob.
+message ControlledSettings {
+  // session_idle_timeout_seconds bounds how long a session may sit idle
+  // before requiring re-authentication. Unset (or the wrapper's absence)
+  // means "use the platform default". Identity rejects values outside its
+  // configured min/max range with InvalidArgument.
+  google.protobuf.Int32Value session_idle_timeout_seconds = 1;
+}
+
+// GetUserSettingsRequest identifies the user whose settings are being read.
+message GetUserSettingsRequest {
+  string username = 1;
+}
+
+// GetUserSettingsResponse carries a user's stored settings. A user with no
+// settings row returns the zero value for every field — there is no
+// found/not-found flag, so callers should not special-case NotFound here.
+message GetUserSettingsResponse {
+  int32                      version    = 1;
+  bytes                      data       = 2; // opaque JSON; Identity never parses it
+  ControlledSettings         controlled = 3;
+  google.protobuf.Timestamp  updated_at = 4; // zero value if never set
+}
+
+// PutUserSettingsRequest replaces a user's settings. version is echoed back
+// in future GetUserSettingsResponse.version calls as an informational
+// counter only — it is not checked against the stored version, so this is
+// always a last-write-wins replace, never a conditional update. data is
+// size-capped (~64KB) at api-server; Identity re-enforces the same cap at
+// its own boundary since other internal callers could bypass the gateway.
+message PutUserSettingsRequest {
+  string              username   = 1;
+  int32               version    = 2;
+  bytes               data       = 3;
+  ControlledSettings  controlled = 4;
+}
+
+// PutUserSettingsResponse confirms the write with the settings' new version
+// and timestamp.
+message PutUserSettingsResponse {
+  int32                      version    = 1;
+  google.protobuf.Timestamp  updated_at = 2;
 }

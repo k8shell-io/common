@@ -107,6 +107,8 @@ const (
 	IdentityService_GetAnnouncementsQuerySchema_FullMethodName   = "/identity.v1.IdentityService/GetAnnouncementsQuerySchema"
 	IdentityService_QueryAnnouncements_FullMethodName            = "/identity.v1.IdentityService/QueryAnnouncements"
 	IdentityService_GetVersionInfo_FullMethodName                = "/identity.v1.IdentityService/GetVersionInfo"
+	IdentityService_GetUserSettings_FullMethodName               = "/identity.v1.IdentityService/GetUserSettings"
+	IdentityService_PutUserSettings_FullMethodName               = "/identity.v1.IdentityService/PutUserSettings"
 )
 
 // IdentityServiceClient is the client API for IdentityService service.
@@ -398,6 +400,16 @@ type IdentityServiceClient interface {
 	// released semantic version, the git commit it was built from, and a short
 	// description of what the service does.
 	GetVersionInfo(ctx context.Context, in *v1.GetVersionInfoRequest, opts ...grpc.CallOption) (*v1.GetVersionInfoResponse, error)
+	// GetUserSettings retrieves a user's stored settings blob. A user with no
+	// settings row returns the zero-value response (version 0, empty data,
+	// zero-value updated_at, unset controlled) rather than a NotFound error.
+	GetUserSettings(ctx context.Context, in *GetUserSettingsRequest, opts ...grpc.CallOption) (*GetUserSettingsResponse, error)
+	// PutUserSettings replaces a user's settings blob (last-write-wins —
+	// version is not used for optimistic-concurrency conflict detection, only
+	// as an informational counter). Identity does not interpret data beyond
+	// enforcing its size cap; controlled carries the subset of settings
+	// Identity validates and enforces server-side.
+	PutUserSettings(ctx context.Context, in *PutUserSettingsRequest, opts ...grpc.CallOption) (*PutUserSettingsResponse, error)
 }
 
 type identityServiceClient struct {
@@ -1238,6 +1250,26 @@ func (c *identityServiceClient) GetVersionInfo(ctx context.Context, in *v1.GetVe
 	return out, nil
 }
 
+func (c *identityServiceClient) GetUserSettings(ctx context.Context, in *GetUserSettingsRequest, opts ...grpc.CallOption) (*GetUserSettingsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetUserSettingsResponse)
+	err := c.cc.Invoke(ctx, IdentityService_GetUserSettings_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) PutUserSettings(ctx context.Context, in *PutUserSettingsRequest, opts ...grpc.CallOption) (*PutUserSettingsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PutUserSettingsResponse)
+	err := c.cc.Invoke(ctx, IdentityService_PutUserSettings_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // IdentityServiceServer is the server API for IdentityService service.
 // All implementations must embed UnimplementedIdentityServiceServer
 // for forward compatibility.
@@ -1527,6 +1559,16 @@ type IdentityServiceServer interface {
 	// released semantic version, the git commit it was built from, and a short
 	// description of what the service does.
 	GetVersionInfo(context.Context, *v1.GetVersionInfoRequest) (*v1.GetVersionInfoResponse, error)
+	// GetUserSettings retrieves a user's stored settings blob. A user with no
+	// settings row returns the zero-value response (version 0, empty data,
+	// zero-value updated_at, unset controlled) rather than a NotFound error.
+	GetUserSettings(context.Context, *GetUserSettingsRequest) (*GetUserSettingsResponse, error)
+	// PutUserSettings replaces a user's settings blob (last-write-wins —
+	// version is not used for optimistic-concurrency conflict detection, only
+	// as an informational counter). Identity does not interpret data beyond
+	// enforcing its size cap; controlled carries the subset of settings
+	// Identity validates and enforces server-side.
+	PutUserSettings(context.Context, *PutUserSettingsRequest) (*PutUserSettingsResponse, error)
 	mustEmbedUnimplementedIdentityServiceServer()
 }
 
@@ -1785,6 +1827,12 @@ func (UnimplementedIdentityServiceServer) QueryAnnouncements(context.Context, *Q
 }
 func (UnimplementedIdentityServiceServer) GetVersionInfo(context.Context, *v1.GetVersionInfoRequest) (*v1.GetVersionInfoResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetVersionInfo not implemented")
+}
+func (UnimplementedIdentityServiceServer) GetUserSettings(context.Context, *GetUserSettingsRequest) (*GetUserSettingsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetUserSettings not implemented")
+}
+func (UnimplementedIdentityServiceServer) PutUserSettings(context.Context, *PutUserSettingsRequest) (*PutUserSettingsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method PutUserSettings not implemented")
 }
 func (UnimplementedIdentityServiceServer) mustEmbedUnimplementedIdentityServiceServer() {}
 func (UnimplementedIdentityServiceServer) testEmbeddedByValue()                         {}
@@ -3301,6 +3349,42 @@ func _IdentityService_GetVersionInfo_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IdentityService_GetUserSettings_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserSettingsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).GetUserSettings(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_GetUserSettings_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).GetUserSettings(ctx, req.(*GetUserSettingsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_PutUserSettings_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PutUserSettingsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).PutUserSettings(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_PutUserSettings_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).PutUserSettings(ctx, req.(*PutUserSettingsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // IdentityService_ServiceDesc is the grpc.ServiceDesc for IdentityService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -3639,6 +3723,14 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetVersionInfo",
 			Handler:    _IdentityService_GetVersionInfo_Handler,
+		},
+		{
+			MethodName: "GetUserSettings",
+			Handler:    _IdentityService_GetUserSettings_Handler,
+		},
+		{
+			MethodName: "PutUserSettings",
+			Handler:    _IdentityService_PutUserSettings_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

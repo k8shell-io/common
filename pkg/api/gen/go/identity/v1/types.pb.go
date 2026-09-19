@@ -10,12 +10,12 @@
 package identityv1
 
 import (
+	timestamp "github.com/golang/protobuf/ptypes/timestamp"
+	wrappers "github.com/golang/protobuf/ptypes/wrappers"
 	v1 "github.com/k8shell-io/common/pkg/api/gen/go/common/v1"
 	v11 "github.com/k8shell-io/common/pkg/api/gen/go/query/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
-	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -1478,7 +1478,7 @@ type Role struct {
 	Name        string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"` // unique; exact string stored in User.roles
 	Description string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
 	Org         string                 `protobuf:"bytes,3,opt,name=org,proto3" json:"org,omitempty"` // optional; empty means global
-	CreatedAt   *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	CreatedAt   *timestamp.Timestamp   `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	// user_count is a computed, read-only field populated by ListRoles — the
 	// number of users currently holding this role. Not stored on the role
 	// itself and ignored (left zero) by CreateRole/UpdateRole's response.
@@ -1542,7 +1542,7 @@ func (x *Role) GetOrg() string {
 	return ""
 }
 
-func (x *Role) GetCreatedAt() *timestamppb.Timestamp {
+func (x *Role) GetCreatedAt() *timestamp.Timestamp {
 	if x != nil {
 		return x.CreatedAt
 	}
@@ -1762,10 +1762,10 @@ func (x *CreateRoleRequest) GetOrg() string {
 // together identify the role and are immutable. org is required — global
 // roles cannot be updated through this RPC.
 type UpdateRoleRequest struct {
-	state         protoimpl.MessageState  `protogen:"open.v1"`
-	Name          string                  `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Org           string                  `protobuf:"bytes,2,opt,name=org,proto3" json:"org,omitempty"` // required
-	Description   *wrapperspb.StringValue `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Org           string                 `protobuf:"bytes,2,opt,name=org,proto3" json:"org,omitempty"` // required
+	Description   *wrappers.StringValue  `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1814,7 +1814,7 @@ func (x *UpdateRoleRequest) GetOrg() string {
 	return ""
 }
 
-func (x *UpdateRoleRequest) GetDescription() *wrapperspb.StringValue {
+func (x *UpdateRoleRequest) GetDescription() *wrappers.StringValue {
 	if x != nil {
 		return x.Description
 	}
@@ -1991,7 +1991,7 @@ type Organization struct {
 	state       protoimpl.MessageState `protogen:"open.v1"`
 	Name        string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"` // unique
 	Description string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
-	CreatedAt   *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	CreatedAt   *timestamp.Timestamp   `protobuf:"bytes,3,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	// admin_usernames and user_count are computed fields populated by
 	// ListOrganizations — they are not stored on the organization itself and
 	// are ignored (left empty/zero) by CreateOrganization's response.
@@ -2051,7 +2051,7 @@ func (x *Organization) GetDescription() string {
 	return ""
 }
 
-func (x *Organization) GetCreatedAt() *timestamppb.Timestamp {
+func (x *Organization) GetCreatedAt() *timestamp.Timestamp {
 	if x != nil {
 		return x.CreatedAt
 	}
@@ -2351,9 +2351,9 @@ func (x *CreateOrganizationRequest) GetDescription() string {
 // UpdateOrganizationRequest partially updates an organization's description.
 // Name is immutable and used only to identify the organization.
 type UpdateOrganizationRequest struct {
-	state         protoimpl.MessageState  `protogen:"open.v1"`
-	Name          string                  `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Description   *wrapperspb.StringValue `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Description   *wrappers.StringValue  `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2395,7 +2395,7 @@ func (x *UpdateOrganizationRequest) GetName() string {
 	return ""
 }
 
-func (x *UpdateOrganizationRequest) GetDescription() *wrapperspb.StringValue {
+func (x *UpdateOrganizationRequest) GetDescription() *wrappers.StringValue {
 	if x != nil {
 		return x.Description
 	}
@@ -2528,14 +2528,14 @@ type OnboardRule struct {
 	// fullname/email are display metadata for system-inserted (waitlist-hit)
 	// rows, so an admin can see who's asking without a fresh provider
 	// round-trip.
-	Fullname      string                 `protobuf:"bytes,9,opt,name=fullname,proto3" json:"fullname,omitempty"`
-	Email         string                 `protobuf:"bytes,10,opt,name=email,proto3" json:"email,omitempty"`
-	Note          string                 `protobuf:"bytes,11,opt,name=note,proto3" json:"note,omitempty"`                                  // admin comment / rejection reason
-	RequestedAt   *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=requested_at,json=requestedAt,proto3" json:"requested_at,omitempty"` // set only for system-inserted rows
-	DecidedAt     *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=decided_at,json=decidedAt,proto3" json:"decided_at,omitempty"`       // set when action moves out of "waitlist"
-	DecidedBy     string                 `protobuf:"bytes,14,opt,name=decided_by,json=decidedBy,proto3" json:"decided_by,omitempty"`       // admin username who approved/rejected
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,16,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	Fullname      string               `protobuf:"bytes,9,opt,name=fullname,proto3" json:"fullname,omitempty"`
+	Email         string               `protobuf:"bytes,10,opt,name=email,proto3" json:"email,omitempty"`
+	Note          string               `protobuf:"bytes,11,opt,name=note,proto3" json:"note,omitempty"`                                  // admin comment / rejection reason
+	RequestedAt   *timestamp.Timestamp `protobuf:"bytes,12,opt,name=requested_at,json=requestedAt,proto3" json:"requested_at,omitempty"` // set only for system-inserted rows
+	DecidedAt     *timestamp.Timestamp `protobuf:"bytes,13,opt,name=decided_at,json=decidedAt,proto3" json:"decided_at,omitempty"`       // set when action moves out of "waitlist"
+	DecidedBy     string               `protobuf:"bytes,14,opt,name=decided_by,json=decidedBy,proto3" json:"decided_by,omitempty"`       // admin username who approved/rejected
+	CreatedAt     *timestamp.Timestamp `protobuf:"bytes,15,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt     *timestamp.Timestamp `protobuf:"bytes,16,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2654,14 +2654,14 @@ func (x *OnboardRule) GetNote() string {
 	return ""
 }
 
-func (x *OnboardRule) GetRequestedAt() *timestamppb.Timestamp {
+func (x *OnboardRule) GetRequestedAt() *timestamp.Timestamp {
 	if x != nil {
 		return x.RequestedAt
 	}
 	return nil
 }
 
-func (x *OnboardRule) GetDecidedAt() *timestamppb.Timestamp {
+func (x *OnboardRule) GetDecidedAt() *timestamp.Timestamp {
 	if x != nil {
 		return x.DecidedAt
 	}
@@ -2675,14 +2675,14 @@ func (x *OnboardRule) GetDecidedBy() string {
 	return ""
 }
 
-func (x *OnboardRule) GetCreatedAt() *timestamppb.Timestamp {
+func (x *OnboardRule) GetCreatedAt() *timestamp.Timestamp {
 	if x != nil {
 		return x.CreatedAt
 	}
 	return nil
 }
 
-func (x *OnboardRule) GetUpdatedAt() *timestamppb.Timestamp {
+func (x *OnboardRule) GetUpdatedAt() *timestamp.Timestamp {
 	if x != nil {
 		return x.UpdatedAt
 	}
@@ -3407,9 +3407,9 @@ type AccessTokenInfo struct {
 	Username   string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
 	Name       string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
 	Scopes     []string               `protobuf:"bytes,4,rep,name=scopes,proto3" json:"scopes,omitempty"`
-	ExpiresAt  *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
-	CreatedAt  *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	LastUsedAt *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=last_used_at,json=lastUsedAt,proto3" json:"last_used_at,omitempty"`
+	ExpiresAt  *timestamp.Timestamp   `protobuf:"bytes,5,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	CreatedAt  *timestamp.Timestamp   `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	LastUsedAt *timestamp.Timestamp   `protobuf:"bytes,7,opt,name=last_used_at,json=lastUsedAt,proto3" json:"last_used_at,omitempty"`
 	IsActive   bool                   `protobuf:"varint,8,opt,name=is_active,json=isActive,proto3" json:"is_active,omitempty"`
 	// token_preview holds the first few characters of the token's random portion
 	// (after the k8sh_ prefix), letting a user tell their tokens apart without the
@@ -3478,21 +3478,21 @@ func (x *AccessTokenInfo) GetScopes() []string {
 	return nil
 }
 
-func (x *AccessTokenInfo) GetExpiresAt() *timestamppb.Timestamp {
+func (x *AccessTokenInfo) GetExpiresAt() *timestamp.Timestamp {
 	if x != nil {
 		return x.ExpiresAt
 	}
 	return nil
 }
 
-func (x *AccessTokenInfo) GetCreatedAt() *timestamppb.Timestamp {
+func (x *AccessTokenInfo) GetCreatedAt() *timestamp.Timestamp {
 	if x != nil {
 		return x.CreatedAt
 	}
 	return nil
 }
 
-func (x *AccessTokenInfo) GetLastUsedAt() *timestamppb.Timestamp {
+func (x *AccessTokenInfo) GetLastUsedAt() *timestamp.Timestamp {
 	if x != nil {
 		return x.LastUsedAt
 	}
@@ -3530,9 +3530,9 @@ type EnvVar struct {
 	// origin is "org" or "user", identifying which table this entry's
 	// effective value came from. Only set by ListUserEnvVars/GetUserEnvVar;
 	// empty for organization-scoped calls.
-	Origin        string                 `protobuf:"bytes,5,opt,name=origin,proto3" json:"origin,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	Origin        string               `protobuf:"bytes,5,opt,name=origin,proto3" json:"origin,omitempty"`
+	CreatedAt     *timestamp.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt     *timestamp.Timestamp `protobuf:"bytes,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3602,14 +3602,14 @@ func (x *EnvVar) GetOrigin() string {
 	return ""
 }
 
-func (x *EnvVar) GetCreatedAt() *timestamppb.Timestamp {
+func (x *EnvVar) GetCreatedAt() *timestamp.Timestamp {
 	if x != nil {
 		return x.CreatedAt
 	}
 	return nil
 }
 
-func (x *EnvVar) GetUpdatedAt() *timestamppb.Timestamp {
+func (x *EnvVar) GetUpdatedAt() *timestamp.Timestamp {
 	if x != nil {
 		return x.UpdatedAt
 	}
@@ -3743,18 +3743,18 @@ type Announcement struct {
 	// unset bound is open on that side. An announcement outside its period is
 	// excluded from ListUnreadAnnouncements even when a user hasn't read it
 	// yet, but remains retrievable via ListAnnouncements/ListUserAnnouncements.
-	StartsAt  *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=starts_at,json=startsAt,proto3" json:"starts_at,omitempty"`
-	EndsAt    *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=ends_at,json=endsAt,proto3" json:"ends_at,omitempty"`
-	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	StartsAt  *timestamp.Timestamp `protobuf:"bytes,8,opt,name=starts_at,json=startsAt,proto3" json:"starts_at,omitempty"`
+	EndsAt    *timestamp.Timestamp `protobuf:"bytes,9,opt,name=ends_at,json=endsAt,proto3" json:"ends_at,omitempty"`
+	CreatedAt *timestamp.Timestamp `protobuf:"bytes,10,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt *timestamp.Timestamp `protobuf:"bytes,11,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	// read_count is the number of distinct users who have read this
 	// announcement. Populated by GetAnnouncement/ListAnnouncements (the
 	// admin-facing views); zero elsewhere.
 	ReadCount int32 `protobuf:"varint,12,opt,name=read_count,json=readCount,proto3" json:"read_count,omitempty"`
 	// is_read/read_at are populated only by ListUserAnnouncements, reporting
 	// whether and when the requesting user read this announcement.
-	IsRead        bool                   `protobuf:"varint,13,opt,name=is_read,json=isRead,proto3" json:"is_read,omitempty"`
-	ReadAt        *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=read_at,json=readAt,proto3" json:"read_at,omitempty"`
+	IsRead        bool                 `protobuf:"varint,13,opt,name=is_read,json=isRead,proto3" json:"is_read,omitempty"`
+	ReadAt        *timestamp.Timestamp `protobuf:"bytes,14,opt,name=read_at,json=readAt,proto3" json:"read_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3838,28 +3838,28 @@ func (x *Announcement) GetActive() bool {
 	return false
 }
 
-func (x *Announcement) GetStartsAt() *timestamppb.Timestamp {
+func (x *Announcement) GetStartsAt() *timestamp.Timestamp {
 	if x != nil {
 		return x.StartsAt
 	}
 	return nil
 }
 
-func (x *Announcement) GetEndsAt() *timestamppb.Timestamp {
+func (x *Announcement) GetEndsAt() *timestamp.Timestamp {
 	if x != nil {
 		return x.EndsAt
 	}
 	return nil
 }
 
-func (x *Announcement) GetCreatedAt() *timestamppb.Timestamp {
+func (x *Announcement) GetCreatedAt() *timestamp.Timestamp {
 	if x != nil {
 		return x.CreatedAt
 	}
 	return nil
 }
 
-func (x *Announcement) GetUpdatedAt() *timestamppb.Timestamp {
+func (x *Announcement) GetUpdatedAt() *timestamp.Timestamp {
 	if x != nil {
 		return x.UpdatedAt
 	}
@@ -3880,7 +3880,7 @@ func (x *Announcement) GetIsRead() bool {
 	return false
 }
 
-func (x *Announcement) GetReadAt() *timestamppb.Timestamp {
+func (x *Announcement) GetReadAt() *timestamp.Timestamp {
 	if x != nil {
 		return x.ReadAt
 	}
@@ -4289,8 +4289,8 @@ var file_identity_v1_types_proto_goTypes = []any{
 	(*v1.User)(nil),                            // 64: common.v1.User
 	(*v11.Payload)(nil),                        // 65: query.v1.Payload
 	(*v1.GetVersionInfoResponse)(nil),          // 66: common.v1.GetVersionInfoResponse
-	(*timestamppb.Timestamp)(nil),              // 67: google.protobuf.Timestamp
-	(*wrapperspb.StringValue)(nil),             // 68: google.protobuf.StringValue
+	(*timestamp.Timestamp)(nil),                // 67: google.protobuf.Timestamp
+	(*wrappers.StringValue)(nil),               // 68: google.protobuf.StringValue
 }
 var file_identity_v1_types_proto_depIdxs = []int32{
 	64, // 0: identity.v1.UserList.users:type_name -> common.v1.User
