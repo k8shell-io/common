@@ -407,8 +407,7 @@ type IdentityServiceClient interface {
 	// PutUserSettings replaces a user's settings blob (last-write-wins —
 	// version is not used for optimistic-concurrency conflict detection, only
 	// as an informational counter). Identity does not interpret data beyond
-	// enforcing its size cap; controlled carries the subset of settings
-	// Identity validates and enforces server-side.
+	// enforcing its size cap.
 	PutUserSettings(ctx context.Context, in *PutUserSettingsRequest, opts ...grpc.CallOption) (*PutUserSettingsResponse, error)
 }
 
@@ -1566,8 +1565,7 @@ type IdentityServiceServer interface {
 	// PutUserSettings replaces a user's settings blob (last-write-wins —
 	// version is not used for optimistic-concurrency conflict detection, only
 	// as an informational counter). Identity does not interpret data beyond
-	// enforcing its size cap; controlled carries the subset of settings
-	// Identity validates and enforces server-side.
+	// enforcing its size cap.
 	PutUserSettings(context.Context, *PutUserSettingsRequest) (*PutUserSettingsResponse, error)
 	mustEmbedUnimplementedIdentityServiceServer()
 }

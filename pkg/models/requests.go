@@ -413,13 +413,11 @@ type EnvVarUpdateRequest struct {
 // /users/{username}/settings and /me/settings, which fully replaces a user's
 // settings blob (last-write-wins, no merge — Version is informational only,
 // not used for optimistic-concurrency conflict detection). Data is an opaque
-// JSON value the server never parses; SessionIdleTimeoutSeconds is nil to
-// leave the platform default in place, matching ControlledSettings' wrapper
-// semantics. Note: proto counterpart is identityv1.PutUserSettingsRequest.
+// JSON value the server never parses. Note: proto counterpart is
+// identityv1.PutUserSettingsRequest.
 type UserSettingsUpdateRequest struct {
-	Version                   int32           `json:"version"`
-	Data                      json.RawMessage `json:"data,omitempty"`
-	SessionIdleTimeoutSeconds *int32          `json:"sessionIdleTimeoutSeconds,omitempty"`
+	Version int32           `json:"version"`
+	Data    json.RawMessage `json:"data,omitempty"`
 }
 
 // AnnouncementCreateRequest is the HTTP request body for POST /announcements,

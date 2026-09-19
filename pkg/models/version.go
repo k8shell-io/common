@@ -16,18 +16,9 @@ type PlatformVersions struct {
 	// comes from the release itself, so it grows with the platform rather than
 	// with this struct.
 	Services map[string]string `json:"services"`
-	// Infra holds versions of the infrastructure the platform runs on. These
-	// are not part of the release, so they are read from the live connection
-	// rather than from the ConfigMap.
-	Infra map[string]ServiceVersionInfo `json:"infra"`
-}
-
-// ServiceVersionInfo is the version of a single infrastructure dependency.
-type ServiceVersionInfo struct {
-	// Version is the reported version, or a caller-chosen fallback
-	// (e.g. "0.0.0") when it could not be resolved.
-	Version string `json:"version"`
-	// Error is set when the version could not be read; Version then carries
-	// the fallback.
-	Error string `json:"error,omitempty"`
+	// Infra maps an infrastructure dependency name (e.g. "postgresql", "nats")
+	// to its version, mirroring Services. These aren't part of the k8Shell
+	// release, so they are published separately by the k8shell-infra-versions
+	// ConfigMap rather than the release's k8shell-versions ConfigMap.
+	Infra map[string]string `json:"infra"`
 }
