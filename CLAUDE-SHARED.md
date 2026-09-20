@@ -80,6 +80,15 @@ Request/response payload structs go in `common`'s `pkg/models`, not in the
 service repo, so every consumer (other services, the frontend) shares the
 same type instead of hand-rolling a duplicate.
 
+## Adding a new RPC
+
+The owning service — whichever one implements the server-side logic — is
+responsible for defining a new RPC, not its callers. That means authoring the
+proto in `common`'s `pkg/api/proto/<service>/`, regenerating stubs (`make
+proto` in `common`), and bumping the `common` dependency in consuming
+services once it's published. A caller needing a new RPC from another service
+asks that service's agent to add it rather than defining it itself.
+
 ## Feature branches and pull requests
 
 **Current release base branch: `26.9.4`** — every service repo uses this

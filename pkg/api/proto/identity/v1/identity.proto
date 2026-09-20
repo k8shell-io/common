@@ -220,6 +220,23 @@ service IdentityService {
   // disables password auth for the user.
   rpc SetUserPassword (SetUserPasswordRequest) returns (common.v1.User);
 
+  // RequestPasswordReset issues a single-use password-reset link for username and
+  // emails it to the user's on-file address, if one is on file and SMTP is configured.
+  // Called by api-server after its own user:auth policy gate passes; api-server
+  // discards the outcome either way (its HTTP response is already sent), so this RPC
+  // never surfaces a send failure to the caller — it always returns success, logging
+  // failures (missing email, SMTP unavailable, token-store unavailable) internally
+  // instead. Repeated calls for the same username within a short cooldown window are
+  // silently no-ops that still return success.
+  rpc RequestPasswordReset (RequestPasswordResetRequest) returns (RequestPasswordResetResponse);
+
+  // ConfirmPasswordReset redeems a token issued by RequestPasswordReset, folding
+  // "consume token" + "set new password" + "clear login lockout" into a single RPC.
+  // An invalid, expired, or unknown token returns codes.InvalidArgument (never
+  // codes.NotFound, so callers' default gRPC-to-HTTP error mapping keeps producing a
+  // 400 response without a bespoke override). Any other failure returns codes.Internal.
+  rpc ConfirmPasswordReset (ConfirmPasswordResetRequest) returns (ConfirmPasswordResetResponse);
+
   // UpdateUserCredential partially updates a credential by ID. Only fields wrapped in a value
   // type that are set (non-nil) are applied. Credentials whose credential_source matches
   // "idp.k8shell.io/*" — provisioned by the onboarding flow — may only have active updated;
@@ -478,6 +495,29 @@ message SetUserPasswordRequest {
   string username = 1;
   string password = 2;
 }
+
+// RequestPasswordResetRequest carries a pre-resolved username (the caller has already
+// looked it up) and the base URL the emailed confirmation link should point to; identity
+// appends "?token=<raw>" (or "&token=<raw>" if confirm_url_base already has a query
+// string) to it.
+message RequestPasswordResetRequest {
+  string username = 1;
+  string confirm_url_base = 2;
+}
+
+// RequestPasswordResetResponse is always returned, even when the email could not be
+// sent — see RequestPasswordReset's doc comment.
+message RequestPasswordResetResponse {}
+
+// ConfirmPasswordResetRequest carries the raw token from the emailed confirmation link
+// and the new plaintext password to set.
+message ConfirmPasswordResetRequest {
+  string token = 1;
+  string password = 2;
+}
+
+// ConfirmPasswordResetResponse indicates the password was changed and the token consumed.
+message ConfirmPasswordResetResponse {}
 
 // IssueUserTokenRequest carries the username for a token issuance request.
 message IssueUserTokenRequest {
