@@ -10,7 +10,7 @@ import (
 
 // JsonLogger controls whether the logger outputs in JSON format or console format.
 // Set this to false to use a human-readable console format.
-var JsonLogger = true
+var JsonLogger = false
 
 // Time format with milliseconds
 const TimeFormat = "2006-01-02T15:04:05.000"
