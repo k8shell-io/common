@@ -60,4 +60,10 @@ type Announcement struct {
 	// user-facing listing that reports read status, empty otherwise.
 	IsRead bool       `json:"isRead,omitempty"`
 	ReadAt *time.Time `json:"readAt,omitempty"`
+
+	// EmailEnabled marks this announcement as eligible to be sent by email,
+	// in addition to a user's own announcementsByEmail opt-in (stored in
+	// UserSettings.Data) — an announcement is only emailed to a user when
+	// both are true. No sender exists yet; this only records the flag.
+	EmailEnabled bool `json:"emailEnabled"`
 }

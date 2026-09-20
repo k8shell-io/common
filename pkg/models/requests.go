@@ -427,10 +427,12 @@ type UserSettingsUpdateRequest struct {
 // language. Orgs scopes the announcement to specific organizations; empty
 // (or omitted) makes it global. Roles further scopes it to users holding at
 // least one of these roles within Orgs; empty means every role. Active
-// defaults to true when omitted. StartsAt/EndsAt bound its optional
-// validity period; omit either for an open bound. CreatedBy is never read
-// from the body — the handler sets it from the authenticated caller.
-// Note: proto counterpart is identityv1.CreateAnnouncementRequest.
+// defaults to true when omitted. EmailEnabled defaults to false when
+// omitted — announcements are not email-eligible unless explicitly enabled;
+// no sender exists yet, this only records the flag. StartsAt/EndsAt bound
+// its optional validity period; omit either for an open bound. CreatedBy is
+// never read from the body — the handler sets it from the authenticated
+// caller. Note: proto counterpart is identityv1.CreateAnnouncementRequest.
 type AnnouncementCreateRequest struct {
 	Name         string                    `json:"name"`
 	Translations []AnnouncementTranslation `json:"translations"`
@@ -439,13 +441,14 @@ type AnnouncementCreateRequest struct {
 	Active       *bool                     `json:"active,omitempty"`
 	StartsAt     *time.Time                `json:"startsAt,omitempty"`
 	EndsAt       *time.Time                `json:"endsAt,omitempty"`
+	EmailEnabled *bool                     `json:"emailEnabled,omitempty"`
 }
 
 // AnnouncementUpdateRequest is the HTTP request body for PATCH
 // /announcements/{id}, which partially updates an announcement's name,
-// translations, org/role scope, active flag, and/or validity period. Only
-// non-nil/non-empty fields are applied (PATCH semantics), except
-// Translations, when given, which replaces the announcement's entire
+// translations, org/role scope, active/emailEnabled flags, and/or validity
+// period. Only non-nil/non-empty fields are applied (PATCH semantics),
+// except Translations, when given, which replaces the announcement's entire
 // translation set — it can never be replaced with an empty set, since every
 // announcement must keep at least one language. Because JSON can't
 // distinguish an absent field from an explicitly cleared one, clearing the
@@ -473,4 +476,7 @@ type AnnouncementUpdateRequest struct {
 	EndsAt        *time.Time `json:"endsAt,omitempty"`
 	// ClearEndsAt removes the upper validity bound (open-ended).
 	ClearEndsAt bool `json:"clearEndsAt,omitempty"`
+	// EmailEnabled marks the announcement eligible (or ineligible) to be
+	// sent by email; see models.Announcement.EmailEnabled.
+	EmailEnabled *bool `json:"emailEnabled,omitempty"`
 }

@@ -13,6 +13,12 @@ import (
 // GetUserSettings never errors on a missing row. Data is json.RawMessage
 // (not []byte) so it serializes as an embedded JSON value rather than a
 // base64 string.
+//
+// Data is never parsed by api-server or Identity; keys are an
+// agreement between producers/consumers of the blob. Known keys:
+//   - "announcementsByEmail" (bool): the user opted in to receiving
+//     product/service announcements by email. Nothing currently sends
+//     that email — this only records the preference.
 type UserSettings struct {
 	Username  string          `json:"username"`
 	Version   int32           `json:"version"`

@@ -610,6 +610,13 @@ message Announcement {
   // whether and when the requesting user read this announcement.
   bool                       is_read = 13;
   google.protobuf.Timestamp read_at  = 14;
+
+  // email_enabled marks this announcement as eligible to be sent by email,
+  // in addition to the per-user announcementsByEmail opt-in stored in
+  // UserSettings — an announcement is only emailed to a user when both are
+  // true. Defaults to false (not email-eligible) when omitted. No sender
+  // exists yet; this only records the flag.
+  bool email_enabled = 15;
 }
 
 // AnnouncementList holds a list of announcements.
