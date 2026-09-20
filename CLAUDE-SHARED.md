@@ -80,14 +80,60 @@ Request/response payload structs go in `common`'s `pkg/models`, not in the
 service repo, so every consumer (other services, the frontend) shares the
 same type instead of hand-rolling a duplicate.
 
+## Feature branches and pull requests
+
+**Current release base branch: `26.9.4`** — every service repo uses this
+exact branch name as the base for feature work. This is a single fleet-wide
+value, not per-service; update it here whenever a new release branch is cut.
+
+- Branch name: `<feature-slug>` exactly — no `feature/` prefix, same slug as
+  `common/docs/features/<slug>/`.
+- Create it from the current release base branch above, never from `main`.
+- A PR must always exist for the feature branch, in every service repo the
+  feature touches. The agent working in a given service repo is responsible
+  for creating both the branch and the PR there — don't wait to be asked. As
+  with any push, still confirm with the user before actually pushing or
+  opening the PR. If the feature spans multiple repos, name the feature slug
+  in each PR description and link the companion PRs so a reviewer on one side
+  can find the other.
+
+### Hard preconditions — stop and ask the user to clean up if any fail
+
+Check these, in order, before creating `<feature-slug>`. If any check fails,
+stop working and ask the user to clean up — do not fix it yourself (no
+auto-stash, auto-commit, or auto-merge on your own initiative):
+
+1. **The base branch exists in this repo.** If the branch named above isn't
+   present (locally or on the remote), stop — don't substitute `main` or
+   improvise a different base.
+2. **The working tree is clean.** Any uncommitted changes, staged or
+   unstaged, anywhere in the repo — stop.
+3. **No other feature branch is currently checked out unmerged.** If the repo
+   is sitting on a different feature branch (e.g. you're asked to start
+   feature A while the repo is on branch `feature-b`), `feature-b` must be
+   merged into the base branch first. Do not branch feature A off of
+   `feature-b`, and do not branch it off of base while `feature-b` is still
+   open/unmerged — stop and ask the user to merge or clean up `feature-b`
+   first.
+
+Only once all three checks pass: check out the base branch, pull latest, then
+create `<feature-slug>` from it.
+
 ## Cross-service feature contracts
 
-**STEP 0, before writing or reading any code for a named feature:** run `ls
-common/docs/features/` and match the feature name against existing
-folders. If a matching folder is found, read its `README.md` and every other 
-service's `<service>.md` file —  especially any "Questions for `<my service>`" section — 
-before touching source. Do this even if the user's request doesn't mention other 
-services by name; a single-word feature name is enough to trigger this.
+**Before writing or reading any code for a named feature:** run `ls
+common/docs/features/` and match the feature name against existing folders
+(by slug, kebab-case). Do this even if the user's request doesn't mention
+other services by name — a single-word feature name is enough to trigger it.
+Never skip this check; missing an existing feature doc means duplicating or
+contradicting a contract another service's agent already wrote.
+
+- **Matching folder exists** — read its `README.md` and every other service's
+  `<service>.md` file, especially any "Questions for `<my service>`" section
+  directed at you, before touching source.
+- **No matching folder exists** — this is a new feature. Confirm with the
+  user before creating `common/docs/features/<slug>/`. Once confirmed, create
+  it yourself following the layout below.
 
 **Trigger**: whenever the user says something of the shape "we are working on
 feature `<name>` across `<service A>`, `<service B>`, ..." (or otherwise names
