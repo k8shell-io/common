@@ -76,7 +76,7 @@ package authz
 //   id   username (required)
 //
 // Context
-//   data_type  profile | credentials | blueprints | roles | keys | repos | envvars  (required)
+//   data_type  profile | credentials | blueprints | roles | keys | repos | envvars | logins  (required)
 //              profile returns the full profile view, including the sudo and
 //              locked flags — those are not broken out into their own
 //              data_type for reads, only for writes (see user:write below).
@@ -89,6 +89,11 @@ package authz
 //              the user has defined themselves — gated separately from
 //              profile since entries may hold secrets (EnvVar.is_secret),
 //              the same reasoning that keeps credentials off profile.
+//              logins covers listing the user's active web login sessions
+//              (device/IP/last-seen) — not the sessions themselves, which
+//              carry a signed JWT and are never exposed through this
+//              contract. Subject may read their own record, mirroring
+//              profile/envvars.
 //   credential_type  kubernetes | git | registry — required when data_type is
 //              credentials, ignored otherwise. Lets policy grant read access
 //              to one credential type without granting it to the other two
@@ -167,7 +172,7 @@ package authz
 //   id   username (required) — the user record being mutated
 //
 // Context
-//   data_type  profile | credentials | blueprints | roles | keys | sudo | locked | org | posix | envvars  (required)
+//   data_type  profile | credentials | blueprints | roles | keys | sudo | locked | org | posix | envvars | logins  (required)
 //              profile     — self-editable identity fields (e.g. fullname,
 //                            shell, email); subject may write its own record.
 //              credentials — auth credentials.
@@ -186,6 +191,13 @@ package authz
 //                            own record, mirroring profile. Gated separately
 //                            from profile for the same reason as the read
 //                            side: entries may hold secrets.
+//              logins      — revoking one (or all but the current one) of
+//                            the user's active web login sessions; subject
+//                            may write its own record (signing itself out of
+//                            other devices), mirroring profile/envvars. An
+//                            admin revoking another user's login is the same
+//                            data_type, decided by policy rather than a
+//                            separate contract.
 //
 //              A single mutating RPC that touches fields from more than one
 //              group (e.g. UpdateUser, which carries fullname/email alongside
@@ -273,16 +285,17 @@ const (
 	UserDataTypePosix       UserDataType = "posix"
 	UserDataTypePassword    UserDataType = "password"
 	UserDataTypeEnvVars     UserDataType = "envvars"
+	UserDataTypeLogins      UserDataType = "logins"
 )
 
 // validateUserDataType checks the data types valid for user:read.
 func validateUserDataType(dt UserDataType) error {
 	switch dt {
-	case UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys, UserDataTypeRepos, UserDataTypeEnvVars:
+	case UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys, UserDataTypeRepos, UserDataTypeEnvVars, UserDataTypeLogins:
 		return nil
 	default:
-		return fmt.Errorf("context \"data_type\" must be %q, %q, %q, %q, %q, %q, or %q, got %q",
-			UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys, UserDataTypeRepos, UserDataTypeEnvVars, dt)
+		return fmt.Errorf("context \"data_type\" must be %q, %q, %q, %q, %q, %q, %q, or %q, got %q",
+			UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys, UserDataTypeRepos, UserDataTypeEnvVars, UserDataTypeLogins, dt)
 	}
 }
 
@@ -293,12 +306,12 @@ func validateUserDataType(dt UserDataType) error {
 // path for it.
 func validateUserWriteDataType(dt UserDataType) error {
 	switch dt {
-	case UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeRoles, UserDataTypeKeys, UserDataTypeSudo, UserDataTypeLocked, UserDataTypeOrg, UserDataTypePosix, UserDataTypePassword, UserDataTypeEnvVars:
+	case UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeRoles, UserDataTypeKeys, UserDataTypeSudo, UserDataTypeLocked, UserDataTypeOrg, UserDataTypePosix, UserDataTypePassword, UserDataTypeEnvVars, UserDataTypeLogins:
 		return nil
 	default:
-		return fmt.Errorf("context \"data_type\" must be %q, %q, %q, %q, %q, %q, %q, %q, %q, or %q, got %q",
+		return fmt.Errorf("context \"data_type\" must be %q, %q, %q, %q, %q, %q, %q, %q, %q, %q, or %q, got %q",
 			UserDataTypeProfile, UserDataTypeCredentials, UserDataTypeRoles, UserDataTypeKeys,
-			UserDataTypeSudo, UserDataTypeLocked, UserDataTypeOrg, UserDataTypePosix, UserDataTypePassword, UserDataTypeEnvVars, dt)
+			UserDataTypeSudo, UserDataTypeLocked, UserDataTypeOrg, UserDataTypePosix, UserDataTypePassword, UserDataTypeEnvVars, UserDataTypeLogins, dt)
 	}
 }
 
@@ -1685,7 +1698,7 @@ func init() {
 	})
 
 	for _, dt := range []UserDataType{
-		UserDataTypeProfile, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys, UserDataTypeRepos, UserDataTypeEnvVars,
+		UserDataTypeProfile, UserDataTypeBlueprints, UserDataTypeRoles, UserDataTypeKeys, UserDataTypeRepos, UserDataTypeEnvVars, UserDataTypeLogins,
 	} {
 		action := "user:read:" + string(dt)
 		registerCapabilityCheck(CapabilityCheck{
@@ -1698,7 +1711,7 @@ func init() {
 
 	for _, dt := range []UserDataType{
 		UserDataTypeProfile, UserDataTypeRoles, UserDataTypeKeys,
-		UserDataTypeSudo, UserDataTypeLocked, UserDataTypeOrg, UserDataTypePosix, UserDataTypePassword, UserDataTypeEnvVars,
+		UserDataTypeSudo, UserDataTypeLocked, UserDataTypeOrg, UserDataTypePosix, UserDataTypePassword, UserDataTypeEnvVars, UserDataTypeLogins,
 	} {
 		action := "user:write:" + string(dt)
 		registerCapabilityCheck(CapabilityCheck{

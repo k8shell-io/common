@@ -77,7 +77,7 @@ var validScopeConstraints = map[ScopeConstraint]struct{}{
 var scopeConstrainablePrefixes = map[string]struct{}{
 	// user:read — every data type addresses the resource owner's own
 	// record, so the whole action is opted in at once.
-	"user:read": {}, // profile | credentials | blueprints | roles | keys | repos
+	"user:read": {}, // profile | credentials | blueprints | roles | keys | repos | envvars | logins
 
 	// user:write — opted in per data type, deliberately excluding sudo,
 	// locked, org, and posix: the user:write contract (see user.go) forbids
@@ -89,6 +89,7 @@ var scopeConstrainablePrefixes = map[string]struct{}{
 	"user:write:keys":       {},
 	"user:write:password":   {},
 	"user:write:envvars":    {},
+	"user:write:logins":     {},
 
 	// user:write:credentials — one entry per credential type, since the
 	// action string carries the type as a fourth segment
@@ -211,6 +212,7 @@ var validExactScopes = map[string]struct{}{
 	"user:read:" + string(UserDataTypeKeys):       {},
 	"user:read:" + string(UserDataTypeRepos):      {},
 	"user:read:" + string(UserDataTypeEnvVars):    {},
+	"user:read:" + string(UserDataTypeLogins):     {},
 
 	// user:read:credentials / user:write:credentials — one entry per
 	// credential type (kubernetes | git | registry) instead of a single
@@ -232,6 +234,7 @@ var validExactScopes = map[string]struct{}{
 	"user:write:" + string(UserDataTypePosix):    {},
 	"user:write:" + string(UserDataTypePassword): {},
 	"user:write:" + string(UserDataTypeEnvVars):  {},
+	"user:write:" + string(UserDataTypeLogins):   {},
 
 	"user:write:" + string(UserDataTypeCredentials) + ":kubernetes": {},
 	"user:write:" + string(UserDataTypeCredentials) + ":git":        {},
