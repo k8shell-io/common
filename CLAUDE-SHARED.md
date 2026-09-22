@@ -91,7 +91,7 @@ asks that service's agent to add it rather than defining it itself.
 
 ## Feature branches and pull requests
 
-**Current release base branch: `26.9.4`** — every service repo uses this
+**Current release base branch: `release/candidate-1`** — every service repo uses this
 exact branch name as the base for feature work. This is a single fleet-wide
 value, not per-service; update it here whenever a new release branch is cut.
 

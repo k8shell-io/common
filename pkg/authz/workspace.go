@@ -13,6 +13,17 @@ package authz
 // Context
 //   blueprint          YAML-encoded blueprint struct       (required)
 //   mode               standalone | inject                 (required)
+//   source             catalog | git                        (required) — catalog
+//                      means the blueprint was resolved by name from the
+//                      blueprint catalog (implicit/explicit userstr form); git
+//                      means it was supplied ad hoc by a git repository's
+//                      k8shell file (custom userstr form). Derived server-side
+//                      from the resolved userstr.BlueprintKind(), never
+//                      client-supplied, so lets the policy grant e.g. catalog
+//                      provisioning without also granting provisioning from
+//                      arbitrary repos, or vice versa. Redundant with (but far
+//                      cheaper to test than) blueprint.metadata.repoName != ""
+//                      in the blueprint YAML above.
 //   workload_name      target workload name                (required for inject)
 //   workload_namespace target workload namespace           (required for inject)
 //   workload_kind      target workload kind                (required for inject)
@@ -61,9 +72,17 @@ package authz
 //   owner  owner username  (required)
 //
 // Context
-//   mode  standalone | inject  (required) — lets the policy grant standalone
-//         creation without also granting the ability to inject into an
-//         existing workload, or vice versa.
+//   mode    standalone | inject  (required) — lets the policy grant standalone
+//           creation without also granting the ability to inject into an
+//           existing workload, or vice versa.
+//   source  catalog | git  (required) — same meaning as workspace:provision's
+//           source: catalog names a blueprint from the catalog by name; git
+//           means the request will supply its own blueprint from a git
+//           repository's k8shell file. Derived server-side from the parsed
+//           userstr.BlueprintKind() before any blueprint is fetched, so lets
+//           the policy grant/deny each mode x source combination
+//           independently — e.g. catalog-only standalone creation without
+//           also allowing arbitrary-repo provisioning.
 //
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
@@ -174,6 +193,7 @@ import (
 
 	authzv1 "github.com/k8shell-io/common/pkg/api/gen/go/authz/v1"
 	"github.com/k8shell-io/common/pkg/models"
+	"github.com/k8shell-io/common/pkg/userstr"
 	"gopkg.in/yaml.v3"
 )
 
@@ -249,6 +269,56 @@ var validWorkspaceProvisionModes = map[WorkspaceProvisionMode]struct{}{
 	WorkspaceProvisionModeInject:     {},
 }
 
+// WorkspaceProvisionSource identifies where the blueprint used to create or
+// provision a workspace comes from. It is orthogonal to WorkspaceProvisionMode
+// (standalone/inject): source says where the blueprint originates, mode says
+// how the workspace attaches to its runtime.
+type WorkspaceProvisionSource string
+
+const (
+	// WorkspaceSourceCatalog means the blueprint was resolved by name from the
+	// org/global blueprint catalog (userstr.BlueprintKindImplicit or
+	// BlueprintKindExplicit).
+	WorkspaceSourceCatalog WorkspaceProvisionSource = "catalog"
+
+	// WorkspaceSourceGit means the blueprint was supplied ad hoc by a git
+	// repository's k8shell file (userstr.BlueprintKindCustom). A git-sourced
+	// blueprint still names a Template that must appear in the caller's
+	// blueprint allowlist, but it can override arbitrary fields (resources,
+	// storages, init scripts, apps, ...) inherited from that template.
+	WorkspaceSourceGit WorkspaceProvisionSource = "git"
+)
+
+// validWorkspaceProvisionSources is the set of recognized provision sources.
+var validWorkspaceProvisionSources = map[WorkspaceProvisionSource]struct{}{
+	WorkspaceSourceCatalog: {},
+	WorkspaceSourceGit:     {},
+}
+
+// validateWorkspaceProvisionSource checks src against the recognized set.
+func validateWorkspaceProvisionSource(src WorkspaceProvisionSource) error {
+	if _, ok := validWorkspaceProvisionSources[src]; !ok {
+		return fmt.Errorf("workspace: context \"source\" must be %q or %q, got %q",
+			WorkspaceSourceCatalog, WorkspaceSourceGit, src)
+	}
+	return nil
+}
+
+// WorkspaceSourceFromBlueprintKind maps a userstr.BlueprintKind — as parsed
+// from a userstr, or resolved from the identity the provisioner builds off
+// one — to the coarser WorkspaceProvisionSource the workspace:create and
+// workspace:provision contracts use. Implicit and Explicit both name a
+// blueprint from the catalog; only Custom means the blueprint came from a git
+// repository's k8shell file. Callers (api-server, ssh-proxy, the provisioner)
+// use this instead of re-deriving the mapping themselves, so all three stay
+// in lockstep as new BlueprintKind values are added.
+func WorkspaceSourceFromBlueprintKind(k userstr.BlueprintKind) WorkspaceProvisionSource {
+	if k == userstr.BlueprintKindCustom {
+		return WorkspaceSourceGit
+	}
+	return WorkspaceSourceCatalog
+}
+
 // WorkspaceResource holds the resource-scoped attributes for a workspace policy check.
 type WorkspaceResource struct {
 	// ID is the workspace name (resource.id in the EvaluateRequest).
@@ -268,6 +338,7 @@ type WorkspaceResource struct {
 type WorkspaceProvisionContext struct {
 	Blueprint         *models.Blueprint
 	Mode              WorkspaceProvisionMode
+	Source            WorkspaceProvisionSource
 	WorkloadName      string
 	WorkloadNamespace string
 	WorkloadKind      string
@@ -320,6 +391,14 @@ func (r *WorkspaceEvalRequest) WithMode(mode WorkspaceProvisionMode) *WorkspaceE
 	return r
 }
 
+// WithSource sets where the blueprint originates (catalog or git); required
+// for WorkspaceActionProvision. Use WorkspaceSourceFromBlueprintKind to derive
+// it from the resolved userstr identity rather than setting it by hand.
+func (r *WorkspaceEvalRequest) WithSource(source WorkspaceProvisionSource) *WorkspaceEvalRequest {
+	r.Context.Source = source
+	return r
+}
+
 // WithWorkload sets the target workload fields; required when mode is
 // WorkspaceProvisionModeInject.
 func (r *WorkspaceEvalRequest) WithWorkload(name, namespace, kind string) *WorkspaceEvalRequest {
@@ -358,6 +437,9 @@ func (r *WorkspaceEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
 	}
 	if r.Context.Mode != "" {
 		ctx["mode"] = string(r.Context.Mode)
+	}
+	if r.Context.Source != "" {
+		ctx["source"] = string(r.Context.Source)
 	}
 	if r.Context.WorkloadName != "" {
 		ctx["workload_name"] = r.Context.WorkloadName
@@ -415,6 +497,7 @@ func WorkspaceEvalRequestFromProto(req *authzv1.EvaluateRequest) (*WorkspaceEval
 		r.Context.Blueprint = &bp
 	}
 	r.Context.Mode = WorkspaceProvisionMode(ctx["mode"])
+	r.Context.Source = WorkspaceProvisionSource(ctx["source"])
 	r.Context.WorkloadName = ctx["workload_name"]
 	r.Context.WorkloadNamespace = ctx["workload_namespace"]
 	r.Context.WorkloadKind = ctx["workload_kind"]
@@ -445,6 +528,9 @@ func (r *WorkspaceEvalRequest) Validate() error {
 	if _, ok := validWorkspaceProvisionModes[r.Context.Mode]; !ok {
 		return fmt.Errorf("workspace: context \"mode\" must be %q or %q, got %q",
 			WorkspaceProvisionModeStandalone, WorkspaceProvisionModeInject, r.Context.Mode)
+	}
+	if err := validateWorkspaceProvisionSource(r.Context.Source); err != nil {
+		return err
 	}
 	if r.Context.Mode == WorkspaceProvisionModeInject {
 		if r.Context.WorkloadName == "" {
@@ -494,6 +580,12 @@ type WorkspaceOwnerContext struct {
 	// Mode is which kind of workspace is being created: standalone or
 	// inject. Required for workspace:create.
 	Mode WorkspaceProvisionMode
+
+	// Source is where the blueprint will come from: catalog or git. Required
+	// for workspace:create. Unlike workspace:provision's Source, this is
+	// derived from the parsed userstr before any blueprint is fetched — see
+	// WorkspaceSourceFromBlueprintKind.
+	Source WorkspaceProvisionSource
 }
 
 // WorkspaceOwnerEvalRequest is the validated, typed model for workspace:list
@@ -524,6 +616,14 @@ func (r *WorkspaceOwnerEvalRequest) WithMode(mode WorkspaceProvisionMode) *Works
 	return r
 }
 
+// WithSource sets where the blueprint will come from (catalog or git);
+// required for workspace:create. Use WorkspaceSourceFromBlueprintKind to
+// derive it from the parsed userstr rather than setting it by hand.
+func (r *WorkspaceOwnerEvalRequest) WithSource(source WorkspaceProvisionSource) *WorkspaceOwnerEvalRequest {
+	r.Context.Source = source
+	return r
+}
+
 // Build validates the request and returns it if all constraints are satisfied.
 func (r *WorkspaceOwnerEvalRequest) Build() (*WorkspaceOwnerEvalRequest, error) {
 	if err := r.Validate(); err != nil {
@@ -540,8 +640,14 @@ func (r *WorkspaceOwnerEvalRequest) ToProto(token string) *authzv1.EvaluateReque
 		attrs["owner"] = r.Resource.Owner
 	}
 	var ctx map[string]string
-	if r.Context.Mode != "" {
-		ctx = map[string]string{"mode": string(r.Context.Mode)}
+	if r.Context.Mode != "" || r.Context.Source != "" {
+		ctx = map[string]string{}
+		if r.Context.Mode != "" {
+			ctx["mode"] = string(r.Context.Mode)
+		}
+		if r.Context.Source != "" {
+			ctx["source"] = string(r.Context.Source)
+		}
 	}
 	return &authzv1.EvaluateRequest{
 		Token:  token,
@@ -574,7 +680,8 @@ func WorkspaceOwnerEvalRequestFromProto(req *authzv1.EvaluateRequest) (*Workspac
 			Owner: req.Resource.Attributes["owner"],
 		},
 		Context: WorkspaceOwnerContext{
-			Mode: WorkspaceProvisionMode(req.Context["mode"]),
+			Mode:   WorkspaceProvisionMode(req.Context["mode"]),
+			Source: WorkspaceProvisionSource(req.Context["source"]),
 		},
 	}
 	if err := r.Validate(); err != nil {
@@ -596,6 +703,9 @@ func (r *WorkspaceOwnerEvalRequest) Validate() error {
 		if _, ok := validWorkspaceProvisionModes[r.Context.Mode]; !ok {
 			return fmt.Errorf("workspace: context \"mode\" must be %q or %q, got %q",
 				WorkspaceProvisionModeStandalone, WorkspaceProvisionModeInject, r.Context.Mode)
+		}
+		if err := validateWorkspaceProvisionSource(r.Context.Source); err != nil {
+			return err
 		}
 	}
 	return nil
@@ -1242,42 +1352,49 @@ func init() {
 			return NewWorkspaceOwnerEvalRequest(WorkspaceActionList, ctx.ResourceOwner).Build()
 		},
 	})
-	registerCapabilityCheck(CapabilityCheck{
-		// Scope stays the flat action (not action:mode) — a PAT scoped for
-		// workspace:create covers both modes; only the Action display label
-		// here is split for a more informative report, same convention as
-		// workspace:files' download/upload split below.
-		Action:  string(WorkspaceActionCreate) + ":" + string(WorkspaceProvisionModeStandalone),
-		Package: "workspace",
-		Scope:   string(WorkspaceActionCreate),
-		Build: func(ctx CapabilityContext) (EvalRequest, error) {
-			return NewWorkspaceOwnerEvalRequest(WorkspaceActionCreate, ctx.ResourceOwner).
-				WithMode(WorkspaceProvisionModeStandalone).Build()
-		},
-	})
-	registerCapabilityCheck(CapabilityCheck{
-		Action:  string(WorkspaceActionCreate) + ":" + string(WorkspaceProvisionModeInject),
-		Package: "workspace",
-		Scope:   string(WorkspaceActionCreate),
-		Build: func(ctx CapabilityContext) (EvalRequest, error) {
-			return NewWorkspaceOwnerEvalRequest(WorkspaceActionCreate, ctx.ResourceOwner).
-				WithMode(WorkspaceProvisionModeInject).Build()
-		},
-	})
-	registerCapabilityCheck(CapabilityCheck{
-		Action: string(WorkspaceActionProvision), Package: "workspace", Scope: string(WorkspaceActionProvision),
-		Build: func(ctx CapabilityContext) (EvalRequest, error) {
-			b := NewWorkspaceEvalRequest(WorkspaceActionProvision, capabilityWildcardWorkspace).WithOwner(ctx.ResourceOwner)
-			if ctx.BlueprintName != "" {
-				bp := ctx.Blueprint
-				if bp == nil {
-					bp = &models.Blueprint{Name: ctx.BlueprintName}
+	// Scope stays the flat action (not action:mode:source) — a PAT scoped for
+	// workspace:create covers every mode x source combination; only the
+	// Action display label here is split for a more informative report, same
+	// convention as workspace:files' download/upload split below.
+	for _, mode := range []WorkspaceProvisionMode{WorkspaceProvisionModeStandalone, WorkspaceProvisionModeInject} {
+		for _, source := range []WorkspaceProvisionSource{WorkspaceSourceCatalog, WorkspaceSourceGit} {
+			mode, source := mode, source
+			registerCapabilityCheck(CapabilityCheck{
+				Action:  string(WorkspaceActionCreate) + ":" + string(mode) + ":" + string(source),
+				Package: "workspace",
+				Scope:   string(WorkspaceActionCreate),
+				Build: func(ctx CapabilityContext) (EvalRequest, error) {
+					return NewWorkspaceOwnerEvalRequest(WorkspaceActionCreate, ctx.ResourceOwner).
+						WithMode(mode).WithSource(source).Build()
+				},
+			})
+		}
+	}
+	for _, source := range []WorkspaceProvisionSource{WorkspaceSourceCatalog, WorkspaceSourceGit} {
+		source := source
+		registerCapabilityCheck(CapabilityCheck{
+			Action:  string(WorkspaceActionProvision) + ":" + string(source),
+			Package: "workspace",
+			Scope:   string(WorkspaceActionProvision),
+			Build: func(ctx CapabilityContext) (EvalRequest, error) {
+				b := NewWorkspaceEvalRequest(WorkspaceActionProvision, capabilityWildcardWorkspace).WithOwner(ctx.ResourceOwner)
+				if ctx.BlueprintName != "" {
+					bp := ctx.Blueprint
+					if bp == nil {
+						bp = &models.Blueprint{Name: ctx.BlueprintName}
+					}
+					if source == WorkspaceSourceGit {
+						bpCopy := *bp
+						bpCopy.Metadata.RepoName = capabilityWildcardRepo
+						bp = &bpCopy
+					}
+					b = b.WithBlueprintName(ctx.BlueprintName).WithBlueprint(bp).
+						WithMode(WorkspaceProvisionModeStandalone).WithSource(source)
 				}
-				b = b.WithBlueprintName(ctx.BlueprintName).WithBlueprint(bp).WithMode(WorkspaceProvisionModeStandalone)
-			}
-			return b.Build()
-		},
-	})
+				return b.Build()
+			},
+		})
+	}
 	registerCapabilityCheck(CapabilityCheck{
 		Action: string(WorkspaceActionRead), Package: "workspace", Scope: string(WorkspaceActionRead),
 		Build: func(ctx CapabilityContext) (EvalRequest, error) {

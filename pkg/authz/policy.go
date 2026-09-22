@@ -123,7 +123,17 @@ func scopeForRequest(req *authzv1.EvaluateRequest) string {
 		}
 		return fold(dataType)
 	case "workspace:create":
-		return fold(ctx["mode"])
+		mode, source := ctx["mode"], ctx["source"]
+		switch {
+		case mode != "" && source != "":
+			return action + ":" + mode + ":" + source
+		case mode != "":
+			return fold(mode)
+		default:
+			return fold(source)
+		}
+	case "workspace:provision":
+		return fold(ctx["source"])
 	case "workspace:update":
 		return fold(ctx["data_type"])
 	case "workspace:connect":

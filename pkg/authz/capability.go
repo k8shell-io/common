@@ -12,6 +12,7 @@ import "github.com/k8shell-io/common/pkg/models"
 const (
 	capabilityWildcardWorkspace  = "*"
 	capabilityWildcardApp        = "*"
+	capabilityWildcardRepo       = "*"
 	capabilityWildcardCommand    = "*"
 	capabilityWildcardHost       = "*"
 	capabilityWildcardPort       = "0"
