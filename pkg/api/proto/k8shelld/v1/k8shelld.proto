@@ -374,7 +374,14 @@ message ExecRequest {
     CommandDetails command_details = 1;  // Command details including command and shell binary
     bytes input = 2;                     // Input to send to the command
     string signal = 3;                   // Signal to send to the command
+    TerminalSize resize = 4;             // Resize the command's PTY (ignored unless use_pty was set)
   }
+}
+
+// Terminal size message
+message TerminalSize {
+  uint32 width = 1;   // Terminal width (columns)
+  uint32 height = 2;  // Terminal height (rows)
 }
 
 // Response for the Exec operation
@@ -383,15 +390,29 @@ message ExecResponse {
     bytes stdout = 1;    // Standard output
     bytes stderr = 2;    // Standard error
     int32 exit_code = 3; // Exit code when the process exits
+    string pty = 4;      // PTY name, sent once at start if use_pty was set
   }
 }
 
 // Command details message
+// The command is always run as `<shell> -c "<command>"`, like sshd does.
 message CommandDetails {
   string as_user = 1;      // User to run the command as (empty for default)
-  string command = 2;       // Initial command with arguments
-  string shell_binary = 3;  // Optional shell binary to use (e.g., "/bin/sh"), empty for none
-  repeated string env_vars = 4;   // Environment variables to be set for the command
+  string command = 2;      // Command line, passed verbatim to `<shell> -c`
+  // Optional. If set, k8shelld uses this binary as the interpreter if it
+  // exists in the workspace; if not found, falls back to passwd resolution
+  // below. If empty, k8shelld resolves the user's login shell from the
+  // workspace's passwd entry (/etc/passwd), falling back to /bin/sh only if
+  // nothing resolves.
+  string shell_binary = 3;
+  // Environment variables to be set for the command (KEY=VALUE). These take
+  // precedence over k8shelld defaults (SHELL, USER, LOGNAME, TERM, LANG, LC_*,
+  // PATH); HOME is always set to the user's home directory. TERM for a PTY
+  // is passed here as well.
+  repeated string env_vars = 4;
+  bool use_pty = 5;        // True to allocate a pseudo-terminal (stdout and stderr merge into stdout)
+  uint32 width = 6;        // Initial terminal width, used when use_pty is true
+  uint32 height = 7;       // Initial terminal height, used when use_pty is true
 }
 
 // Request for the UnixSocket operation
