@@ -43,6 +43,14 @@ type K8shelld struct {
 
 type NotifyPtyNameFunc func(ptyName string)
 
+// Resize describes a terminal size change to apply to a running Exec
+// session's PTY (ignored by k8shelld unless the session was started with
+// usePty).
+type Resize struct {
+	Width  uint32
+	Height uint32
+}
+
 // ConnCounters holds counters for bytes sent and received.
 type ConnCounters struct {
 	inTotal  int64
@@ -726,7 +734,11 @@ func (c *K8shelld) RunExec(
 	command string,
 	shellBinary string,
 	envVars []string,
+	usePty bool,
+	width, height uint32,
 	signalChan <-chan string,
+	resizeChan <-chan Resize,
+	notifyPtyName NotifyPtyNameFunc,
 	enableRecording bool,
 ) (int32, error) {
 	if enableRecording && c.sessionClient == nil {
@@ -759,6 +771,9 @@ func (c *K8shelld) RunExec(
 				ShellBinary: shellBinary,
 				EnvVars:     envVars,
 				AsUser:      asUser,
+				UsePty:      usePty,
+				Width:       width,
+				Height:      height,
 			},
 		},
 	}
@@ -784,6 +799,21 @@ func (c *K8shelld) RunExec(
 		}
 	}
 
+	// helper to send a terminal resize (ignored by k8shelld unless usePty was set)
+	sendResize := func(size Resize) {
+		resizeReq := &k8shelldv1.ExecRequest{
+			Request: &k8shelldv1.ExecRequest_Resize{
+				Resize: &k8shelldv1.TerminalSize{
+					Width:  size.Width,
+					Height: size.Height,
+				},
+			},
+		}
+		if err := stream.Send(resizeReq); err != nil {
+			c.log.Error().Err(err).Msgf("Failed to send resize %dx%d to exec process %s", size.Width, size.Height, execID)
+		}
+	}
+
 	// writer goroutine (SSH -> gRPC)
 	wg.Add(1)
 	go func() {
@@ -802,6 +832,8 @@ func (c *K8shelld) RunExec(
 				return
 			case signalName := <-signalChan:
 				sendSignal(signalName)
+			case size := <-resizeChan:
+				sendResize(size)
 			default:
 			}
 
@@ -841,6 +873,8 @@ func (c *K8shelld) RunExec(
 					return
 				case signalName := <-signalChan:
 					sendSignal(signalName)
+				case size := <-resizeChan:
+					sendResize(size)
 				case <-time.After(10 * time.Millisecond):
 					// Continue checking
 				}
@@ -879,6 +913,10 @@ func (c *K8shelld) RunExec(
 					return
 				}
 				c.counters.AddOut(len(r.Stderr))
+			case *k8shelldv1.ExecResponse_Pty:
+				if notifyPtyName != nil {
+					notifyPtyName(r.Pty)
+				}
 			case *k8shelldv1.ExecResponse_ExitCode:
 				exitCodeCh <- r.ExitCode
 				return
@@ -955,8 +993,19 @@ func (c *K8shelld) RunSFTP(
 		Request: &k8shelldv1.ExecRequest_CommandDetails{
 			CommandDetails: &k8shelldv1.CommandDetails{
 				Command: command,
-				EnvVars: envVars,
-				AsUser:  asUser,
+				// Force /bin/sh rather than leaving this empty. Under the new
+				// "empty means resolve the user's login shell" contract, an
+				// empty shell_binary here would run sftp-server through the
+				// user's actual login shell (zsh, bash, ...), which sources rc
+				// files (.zshenv etc.) on startup; any output those print would
+				// land on stdout and corrupt the binary SFTP protocol stream.
+				// /bin/sh -c avoids that: dash/ash don't source rc files for
+				// non-interactive -c invocations, so this is equivalent to
+				// running sftp-server directly, matching sshd's own sftp
+				// subsystem behavior (no login shell involved).
+				ShellBinary: "/bin/sh",
+				EnvVars:     envVars,
+				AsUser:      asUser,
 			},
 		},
 	}
