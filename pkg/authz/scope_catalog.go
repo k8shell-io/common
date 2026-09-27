@@ -103,6 +103,7 @@ var scopeCatalogSource = []domainSpec{
 			{action: "workspace:connect", label: "Connect", wildcard: &entrySpec{scope: "workspace:connect:*", label: "Any connect type"}, entries: []entrySpec{
 				{scope: "workspace:connect:webshell", label: "Web shell", description: "Open an interactive terminal session in the browser."},
 				{scope: "workspace:connect:webfiles", label: "Web files", description: "Open the browser-based file manager."},
+				{scope: "workspace:connect:proxy", label: "Web proxy", description: "Reach a workspace's published web-proxy port. Still requires the caller to hold one of the workspace's own allowed roles."},
 			}},
 			{action: "workspace:app", label: "Apps", wildcard: &entrySpec{scope: "workspace:app:*", label: "Any app operation"}, entries: []entrySpec{
 				{scope: "workspace:app:read", label: "Read", description: "List installed apps and their status."},

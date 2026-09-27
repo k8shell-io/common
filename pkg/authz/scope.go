@@ -116,7 +116,7 @@ var scopeConstrainablePrefixes = map[string]struct{}{
 	"workspace:update":  {}, // cpu | memory | network
 	"workspace:delete":  {},
 	"workspace:files":   {},
-	"workspace:connect": {}, // webshell | webfiles
+	"workspace:connect": {}, // webshell | webfiles | proxy
 	"workspace:app":     {}, // read | install | start | stop
 	"workspace:list":    {},
 
@@ -192,6 +192,13 @@ var validExactScopes = map[string]struct{}{
 	// not on a workspace:connect scope (see the workspace:connect contract).
 	string(WorkspaceActionConnect) + ":" + string(WorkspaceConnectTypeWebshell): {},
 	string(WorkspaceActionConnect) + ":" + string(WorkspaceConnectTypeWebfiles): {},
+
+	// workspace:connect:proxy — not a connect type (no EvalRequest, never
+	// checked by OPA): api-server checks this scope directly via
+	// checkTokenScopes to gate which PATs may authenticate to the
+	// port-forward proxy at all, on top of (not instead of) the caller
+	// holding one of the target workspace's webProxy.allowedRoles.
+	string(WorkspaceActionConnect) + ":proxy": {},
 
 	// workspace:app — one entry per app op
 	string(WorkspaceActionApp) + ":" + string(WorkspaceAppOpRead):    {},
@@ -285,7 +292,7 @@ var validExactScopes = map[string]struct{}{
 var validWildcardPrefixes = map[string]struct{}{
 	"workspace":              {}, // all workspace actions
 	"workspace:update":       {}, // cpu | memory | network
-	"workspace:connect":      {}, // webshell | webfiles
+	"workspace:connect":      {}, // webshell | webfiles | proxy
 	"workspace:app":          {}, // install | start | stop
 	"session":                {}, // all session actions
 	"user":                   {}, // all user actions

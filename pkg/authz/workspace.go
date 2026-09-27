@@ -156,6 +156,13 @@ package authz
 // those roles, or own the workspace — and never issues a workspace:connect
 // Evaluate.
 //
+// The "workspace:connect:proxy" PAT scope is a related but separate
+// mechanism: it caps which PATs may authenticate to the port-forward proxy
+// at all, on top of (not instead of) the allowedRoles check above. It has no
+// EvalRequest of its own — api-server checks it directly via checkTokenScopes
+// — so it is not really a fourth connect type, just a scope-registry entry
+// (see validExactScopes in scope.go).
+//
 // ---
 //
 // Contract: workspace:files
