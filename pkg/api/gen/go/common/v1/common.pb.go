@@ -1058,8 +1058,16 @@ type WorkspaceDetails struct {
 	// route, with the same live-view and revert semantics as web_proxy_port.
 	// Empty when the workspace publishes no route, and for an injected workspace.
 	WebProxyRoles []string `protobuf:"bytes,29,rep,name=web_proxy_roles,json=webProxyRoles,proto3" json:"web_proxy_roles,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// web_proxy_alias is the alias the web-proxy route is reachable under,
+	// unique within the organization, with the same live-view and revert
+	// semantics as web_proxy_port. Empty when no alias is applied.
+	WebProxyAlias string `protobuf:"bytes,30,opt,name=web_proxy_alias,json=webProxyAlias,proto3" json:"web_proxy_alias,omitempty"`
+	// web_proxy_alias_message explains why the blueprint's alias was not
+	// applied, e.g. because another workspace of the organization holds it.
+	// Empty when the alias was applied or the blueprint declares none.
+	WebProxyAliasMessage string `protobuf:"bytes,31,opt,name=web_proxy_alias_message,json=webProxyAliasMessage,proto3" json:"web_proxy_alias_message,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *WorkspaceDetails) Reset() {
@@ -1293,6 +1301,20 @@ func (x *WorkspaceDetails) GetWebProxyRoles() []string {
 		return x.WebProxyRoles
 	}
 	return nil
+}
+
+func (x *WorkspaceDetails) GetWebProxyAlias() string {
+	if x != nil {
+		return x.WebProxyAlias
+	}
+	return ""
+}
+
+func (x *WorkspaceDetails) GetWebProxyAliasMessage() string {
+	if x != nil {
+		return x.WebProxyAliasMessage
+	}
+	return ""
 }
 
 // BlueprintSummary is a lightweight representation of a blueprint used in
@@ -1615,7 +1637,7 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"\fmatch_labels\x18\x01 \x03(\v2,.common.v1.PodLabelSelector.MatchLabelsEntryR\vmatchLabels\x1a>\n" +
 	"\x10MatchLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xad\b\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x8c\t\n" +
 	"\x10WorkspaceDetails\x12E\n" +
 	"\x10workspace_status\x18\x01 \x01(\v2\x1a.common.v1.WorkspaceStatusR\x0fworkspaceStatus\x12\x1f\n" +
 	"\vapp_version\x18\x02 \x01(\tR\n" +
@@ -1650,7 +1672,9 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"\x15allow_egress_to_cidrs\x18\x1a \x03(\tR\x12allowEgressToCidrs\x12L\n" +
 	"\x14allow_egress_to_pods\x18\x1b \x03(\v2\x1b.common.v1.PodLabelSelectorR\x11allowEgressToPods\x12$\n" +
 	"\x0eweb_proxy_port\x18\x1c \x01(\x05R\fwebProxyPort\x12&\n" +
-	"\x0fweb_proxy_roles\x18\x1d \x03(\tR\rwebProxyRolesB\x10\n" +
+	"\x0fweb_proxy_roles\x18\x1d \x03(\tR\rwebProxyRoles\x12&\n" +
+	"\x0fweb_proxy_alias\x18\x1e \x01(\tR\rwebProxyAlias\x125\n" +
+	"\x17web_proxy_alias_message\x18\x1f \x01(\tR\x14webProxyAliasMessageB\x10\n" +
 	"\x0e_replica_indexB\x10\n" +
 	"\x0e_replica_count\"\xaa\x02\n" +
 	"\x10BlueprintSummary\x12\x12\n" +

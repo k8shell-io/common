@@ -30,6 +30,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	ProvisionerService_GetWorkspaces_FullMethodName            = "/provisioner.v1.ProvisionerService/GetWorkspaces"
 	ProvisionerService_FindWorkspace_FullMethodName            = "/provisioner.v1.ProvisionerService/FindWorkspace"
+	ProvisionerService_FindWorkspaceByAlias_FullMethodName     = "/provisioner.v1.ProvisionerService/FindWorkspaceByAlias"
 	ProvisionerService_GetWorkspacesByUserStr_FullMethodName   = "/provisioner.v1.ProvisionerService/GetWorkspacesByUserStr"
 	ProvisionerService_GetWorkspacesQuerySchema_FullMethodName = "/provisioner.v1.ProvisionerService/GetWorkspacesQuerySchema"
 	ProvisionerService_QueryWorkspaces_FullMethodName          = "/provisioner.v1.ProvisionerService/QueryWorkspaces"
@@ -65,6 +66,10 @@ type ProvisionerServiceClient interface {
 	GetWorkspaces(ctx context.Context, in *GetWorkspacesRequest, opts ...grpc.CallOption) (*GetWorkspacesResponse, error)
 	// FindWorkspace returns the details of a single workspace by name.
 	FindWorkspace(ctx context.Context, in *FindWorkspaceRequest, opts ...grpc.CallOption) (*v1.WorkspaceDetails, error)
+	// FindWorkspaceByAlias returns the details of the workspace whose web-proxy
+	// route holds the given alias within the organization. Returns NotFound
+	// when no workspace holds it.
+	FindWorkspaceByAlias(ctx context.Context, in *FindWorkspaceByAliasRequest, opts ...grpc.CallOption) (*v1.WorkspaceDetails, error)
 	// GetWorkspacesByUserStr returns workspaces for the given userstr
 	GetWorkspacesByUserStr(ctx context.Context, in *GetWorkspacesByUserStrRequest, opts ...grpc.CallOption) (*GetWorkspacesResponse, error)
 	// GetWorkspacesQuerySchema returns the query.v1.Descriptor advertising
@@ -182,6 +187,16 @@ func (c *provisionerServiceClient) FindWorkspace(ctx context.Context, in *FindWo
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(v1.WorkspaceDetails)
 	err := c.cc.Invoke(ctx, ProvisionerService_FindWorkspace_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *provisionerServiceClient) FindWorkspaceByAlias(ctx context.Context, in *FindWorkspaceByAliasRequest, opts ...grpc.CallOption) (*v1.WorkspaceDetails, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(v1.WorkspaceDetails)
+	err := c.cc.Invoke(ctx, ProvisionerService_FindWorkspaceByAlias_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -428,6 +443,10 @@ type ProvisionerServiceServer interface {
 	GetWorkspaces(context.Context, *GetWorkspacesRequest) (*GetWorkspacesResponse, error)
 	// FindWorkspace returns the details of a single workspace by name.
 	FindWorkspace(context.Context, *FindWorkspaceRequest) (*v1.WorkspaceDetails, error)
+	// FindWorkspaceByAlias returns the details of the workspace whose web-proxy
+	// route holds the given alias within the organization. Returns NotFound
+	// when no workspace holds it.
+	FindWorkspaceByAlias(context.Context, *FindWorkspaceByAliasRequest) (*v1.WorkspaceDetails, error)
 	// GetWorkspacesByUserStr returns workspaces for the given userstr
 	GetWorkspacesByUserStr(context.Context, *GetWorkspacesByUserStrRequest) (*GetWorkspacesResponse, error)
 	// GetWorkspacesQuerySchema returns the query.v1.Descriptor advertising
@@ -536,6 +555,9 @@ func (UnimplementedProvisionerServiceServer) GetWorkspaces(context.Context, *Get
 }
 func (UnimplementedProvisionerServiceServer) FindWorkspace(context.Context, *FindWorkspaceRequest) (*v1.WorkspaceDetails, error) {
 	return nil, status.Error(codes.Unimplemented, "method FindWorkspace not implemented")
+}
+func (UnimplementedProvisionerServiceServer) FindWorkspaceByAlias(context.Context, *FindWorkspaceByAliasRequest) (*v1.WorkspaceDetails, error) {
+	return nil, status.Error(codes.Unimplemented, "method FindWorkspaceByAlias not implemented")
 }
 func (UnimplementedProvisionerServiceServer) GetWorkspacesByUserStr(context.Context, *GetWorkspacesByUserStrRequest) (*GetWorkspacesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetWorkspacesByUserStr not implemented")
@@ -653,6 +675,24 @@ func _ProvisionerService_FindWorkspace_Handler(srv interface{}, ctx context.Cont
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ProvisionerServiceServer).FindWorkspace(ctx, req.(*FindWorkspaceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProvisionerService_FindWorkspaceByAlias_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FindWorkspaceByAliasRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProvisionerServiceServer).FindWorkspaceByAlias(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProvisionerService_FindWorkspaceByAlias_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProvisionerServiceServer).FindWorkspaceByAlias(ctx, req.(*FindWorkspaceByAliasRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1035,6 +1075,10 @@ var ProvisionerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "FindWorkspace",
 			Handler:    _ProvisionerService_FindWorkspace_Handler,
+		},
+		{
+			MethodName: "FindWorkspaceByAlias",
+			Handler:    _ProvisionerService_FindWorkspaceByAlias_Handler,
 		},
 		{
 			MethodName: "GetWorkspacesByUserStr",

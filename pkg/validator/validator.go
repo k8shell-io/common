@@ -83,6 +83,8 @@ func getValidationMessage(tag, field, param, value string) string {
 		return fmt.Sprintf("%s must start with '%s' (value: %s)", field, param, value)
 	case "required_if":
 		return fmt.Sprintf("%s is required when %s (value: %s)", field, param, value)
+	case "webproxyalias":
+		return fmt.Sprintf("%s must be a lowercase DNS label: 1-63 characters of a-z, 0-9 and '-', starting and ending with a letter or digit, with no '--' and not all digits (value: %s)", field, value)
 	default:
 		return fmt.Sprintf("%s is invalid (validation: %s) (value: %s)", field, tag, value)
 	}
@@ -91,6 +93,46 @@ func getValidationMessage(tag, field, param, value string) string {
 // Register custom validators
 func RegisterCustomValidators(v *validator.Validate) {
 	v.RegisterValidation("plainhostname", validatePlainHostname)
+	v.RegisterValidation("webproxyalias", validateWebProxyAlias)
+}
+
+// validateWebProxyAlias is the "webproxyalias" tag; an empty value passes so
+// the tag composes with omitempty.
+func validateWebProxyAlias(fl validator.FieldLevel) bool {
+	value := fl.Field().String()
+	return value == "" || IsWebProxyAlias(value)
+}
+
+// IsWebProxyAlias reports whether s is a valid web-proxy alias: a strict
+// lowercase RFC 1123 DNS label (1-63 characters of a-z, 0-9 and '-',
+// starting and ending with a letter or digit) that additionally contains no
+// "--" (the web proxy's host-label separator) and is not all digits (an
+// all-digit first segment, as in "8080--tul-fm", is read as the port form,
+// so such an alias could never be reached). Unlike plainhostname it rejects
+// uppercase. It
+// is exported so services can validate an alias that only exists after CEL
+// evaluation, where the struct tag never ran.
+func IsWebProxyAlias(s string) bool {
+	if len(s) < 1 || len(s) > 63 {
+		return false
+	}
+	if strings.Contains(s, "--") {
+		return false
+	}
+	isLowerAlnum := func(b byte) bool { return (b >= 'a' && b <= 'z') || (b >= '0' && b <= '9') }
+	if !isLowerAlnum(s[0]) || !isLowerAlnum(s[len(s)-1]) {
+		return false
+	}
+	allDigits := true
+	for i := 0; i < len(s); i++ {
+		if !isLowerAlnum(s[i]) && s[i] != '-' {
+			return false
+		}
+		if s[i] < '0' || s[i] > '9' {
+			allDigits = false
+		}
+	}
+	return !allDigits
 }
 
 // validatePlainHostname validates that a string is a valid hostname without dots

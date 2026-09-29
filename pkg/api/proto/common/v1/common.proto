@@ -286,6 +286,14 @@ message WorkspaceDetails {
   // route, with the same live-view and revert semantics as web_proxy_port.
   // Empty when the workspace publishes no route, and for an injected workspace.
   repeated string web_proxy_roles = 29;
+  // web_proxy_alias is the alias the web-proxy route is reachable under,
+  // unique within the organization, with the same live-view and revert
+  // semantics as web_proxy_port. Empty when no alias is applied.
+  string web_proxy_alias = 30;
+  // web_proxy_alias_message explains why the blueprint's alias was not
+  // applied, e.g. because another workspace of the organization holds it.
+  // Empty when the alias was applied or the blueprint declares none.
+  string web_proxy_alias_message = 31;
 }
 
 // BlueprintSummary is a lightweight representation of a blueprint used in

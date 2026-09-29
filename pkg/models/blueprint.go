@@ -208,9 +208,17 @@ type Network struct {
 // web proxy. Port is the in-workspace listener; AllowedRoles is the set of
 // user roles permitted to reach it (an empty list means no role is allowed,
 // i.e. the route is effectively closed until roles are added).
+//
+// Alias is an optional friendly name for the route, unique within the
+// workspace's organization. It may be a static value or a !cel expression
+// (e.g. to derive it from the username); a CEL result is validated by the
+// provisioner after evaluation. When the alias is already held by another
+// workspace of the org, the workspace is provisioned without one and
+// WorkspaceDetails.WebProxyAliasMessage says why.
 type WebProxy struct {
 	Port         int    `yaml:"port" json:"port" validate:"required,min=1,max=65535" jsonschema:"required"`
 	AllowedRoles []Role `yaml:"allowedRoles,omitempty" json:"allowedRoles,omitempty" validate:"omitempty,dive,min=1"`
+	Alias        string `yaml:"alias,omitempty" json:"alias,omitempty" validate:"omitempty,webproxyalias"`
 }
 
 // Resources represents resource limits

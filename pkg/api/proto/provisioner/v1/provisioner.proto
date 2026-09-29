@@ -24,6 +24,11 @@ service ProvisionerService {
   // FindWorkspace returns the details of a single workspace by name.
   rpc FindWorkspace(FindWorkspaceRequest) returns (common.v1.WorkspaceDetails);
 
+  // FindWorkspaceByAlias returns the details of the workspace whose web-proxy
+  // route holds the given alias within the organization. Returns NotFound
+  // when no workspace holds it.
+  rpc FindWorkspaceByAlias(FindWorkspaceByAliasRequest) returns (common.v1.WorkspaceDetails);
+
   // GetWorkspacesByUserStr returns workspaces for the given userstr
   rpc GetWorkspacesByUserStr(GetWorkspacesByUserStrRequest) returns (GetWorkspacesResponse);
 
@@ -143,6 +148,14 @@ service ProvisionerService {
 message FindWorkspaceRequest {
   // workspace is the unique name of the workspace.
   string workspace = 1;
+}
+
+// FindWorkspaceByAliasRequest identifies a workspace by its web-proxy alias.
+message FindWorkspaceByAliasRequest {
+  // org is the organization the alias is scoped to.
+  string org = 1;
+  // alias is the web-proxy alias to look up.
+  string alias = 2;
 }
 
 // GetWorkspacesRequest filters the list of workspaces to return.
@@ -490,6 +503,19 @@ message WorkspaceNetworkRules {
   // web_proxy_roles is the set of user roles allowed to reach the web-proxy
   // route. Applied only when replace_web_proxy is true.
   repeated string web_proxy_roles = 7;
+  // web_proxy_alias changes the alias of the web-proxy route independently of
+  // replace_web_proxy: unset leaves it unchanged, "" clears it. Setting it
+  // requires the route in effect after the update: a route published in the
+  // same request (replace_web_proxy with web_proxy_port > 0) satisfies this,
+  // as does the workspace's current route when the request leaves it alone.
+  // It fails with FailedPrecondition when there is no such route, including
+  // when the same request clears it (web_proxy_port 0), and with
+  // AlreadyExists when another workspace of the organization holds the
+  // alias. Either failure leaves the workspace unchanged: the route is not
+  // replaced or cleared either. The route and alias are written together.
+  // It reverts to the blueprint's alias on the next re-provision. Clearing
+  // the route (replace_web_proxy with web_proxy_port 0) clears the alias too.
+  optional string web_proxy_alias = 8;
 }
 
 // UpdateWorkspaceResourcesRequest identifies the workspace to update and
@@ -520,6 +546,9 @@ message UpdateWorkspaceResourcesResponse {
   // applied_web_proxy_port is the TCP port published through the web proxy
   // after the update. 0 when the route was cleared or not changed.
   int32 applied_web_proxy_port = 5;
+  // applied_web_proxy_alias is the web-proxy alias after the update. Empty
+  // when the alias was cleared or not changed.
+  string applied_web_proxy_alias = 6;
 }
 
 // StartWorkspaceRequest identifies the stopped workspace to start.

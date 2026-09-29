@@ -82,6 +82,14 @@ type WorkspaceDetails struct {
 	// workspace.
 	WebProxyPort  int    `json:"webProxyPort,omitempty"`
 	WebProxyRoles []Role `json:"webProxyRoles,omitempty"`
+	// WebProxyAlias is the alias the web-proxy route is reachable under,
+	// unique within the organization. It has the same live-view and revert
+	// semantics as WebProxyPort. Empty when no alias is applied.
+	WebProxyAlias string `json:"webProxyAlias,omitempty"`
+	// WebProxyAliasMessage explains why the blueprint's alias was not applied
+	// (e.g. held by another workspace, or invalid after CEL evaluation). Empty
+	// when the alias was applied or the blueprint declares none.
+	WebProxyAliasMessage string `json:"webProxyAliasMessage,omitempty"`
 	// WorkspaceType tells standalone workspaces apart from injected ones.
 	WorkspaceType WorkspaceType `json:"workspaceType" example:"standalone"`
 	// WorkloadKind and WorkloadName identify the workload an injected

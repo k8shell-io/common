@@ -152,6 +152,14 @@ type WorkspaceNetworkUpdateRequest struct {
 	// WebProxyRoles is the set of user roles allowed to reach the web-proxy
 	// route. Applied only when ReplaceWebProxy is true.
 	WebProxyRoles []Role `json:"webProxyRoles,omitempty"`
+	// WebProxyAlias changes the alias of the web-proxy route independently of
+	// ReplaceWebProxy: nil leaves it unchanged, "" clears it. Setting it
+	// requires the route in effect after the update, which a route published
+	// in the same request satisfies; without one, or when the alias is taken,
+	// the whole update is rejected unapplied. Like the other network settings it reverts
+	// to the blueprint's alias on the next re-provision. Clearing the route
+	// (ReplaceWebProxy with WebProxyPort 0) clears the alias too.
+	WebProxyAlias *string `json:"webProxyAlias,omitempty" validate:"omitempty,webproxyalias"`
 }
 
 // WorkspacePodSelector is a set of pod labels a workspace egress rule is
