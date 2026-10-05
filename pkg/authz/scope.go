@@ -122,7 +122,7 @@ var scopeConstrainablePrefixes = map[string]struct{}{
 
 	// session:list — same reasoning as workspace:list: the API server sets
 	// the owner attribute to the actual queried username, so "self" is
-	// meaningful whenever that's the token's own subject. session:start
+	// meaningful whenever that's the token's own subject. session:record
 	// isn't listed here — it isn't a listing at all, and self-ness for it is
 	// already implicit (a session is always started as the caller).
 	"session:list": {},
@@ -166,7 +166,7 @@ func scopeConstrainable(prefix string) bool {
 // For actions where the qualifier is embedded in the action string
 // (workspace:connect:<type>, workspace:app:<op>, user:read:<dataType>),
 // each concrete qualifier is its own entry. For flat actions (workspace:list,
-// session:start, ssh:shell, …), the 2-segment string is the entry.
+// session:record, ssh:shell, …), the 2-segment string is the entry.
 var validExactScopes = map[string]struct{}{
 	// workspace — flat
 	//

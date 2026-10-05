@@ -69,7 +69,7 @@ func TestValidateScope(t *testing.T) {
 		"user:write:posix:self",
 		"user:write:blueprints:self", // no longer a scope — blueprints are role-derived only
 		"user:write:*:self",          // wildcard can't cover a partial exclusion set
-		"session:start:self",         // not a listing; self is already implicit
+		"session:record:self",        // not a listing; self is already implicit
 		"workspace:provision:self",   // no longer a scope — provisioning isn't reachable via api-server
 	}
 	for _, s := range invalid {

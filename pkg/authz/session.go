@@ -3,7 +3,14 @@
 
 package authz
 
-// Contract: session:start
+// Contract: session:record
+//
+// Decides what to record for a session; it is NOT an access check. The entry
+// contracts (ssh:*, workspace:connect:*) are the only gate on whether the
+// session may happen. Callers must not gate on PolicyResult.Allowed — only
+// the obligations are consumed. A missing "record" obligation means the
+// enforcer's configured default (typically no recording). session:record is
+// not a grantable PAT scope and has no capability probe.
 //
 // Resource  type="workspace"
 //   id             workspace name            (required)
@@ -65,10 +72,11 @@ import (
 type SessionAction string
 
 const (
-	// SessionActionStart is the action evaluated when a new session is being
-	// established. The policy result may carry a "record" obligation that
-	// instructs the enforcer what kind of recording to apply to the session.
-	SessionActionStart SessionAction = "session:start"
+	// SessionActionRecord is the action evaluated when a new session is being
+	// established, solely to learn what to record. The policy result may carry
+	// a "record" obligation that instructs the enforcer what kind of recording
+	// to apply to the session; Allowed is not a gate (see the contract above).
+	SessionActionRecord SessionAction = "session:record"
 
 	// SessionActionList is the action evaluated when listing sessions. The
 	// scope is controlled by the resource fields: both id and owner set scopes
@@ -78,8 +86,8 @@ const (
 
 // validSessionActions is the set of recognized session actions for fast lookup.
 var validSessionActions = map[SessionAction]struct{}{
-	SessionActionStart: {},
-	SessionActionList:  {},
+	SessionActionRecord: {},
+	SessionActionList:   {},
 }
 
 // SessionType describes the kind of session being established.
@@ -134,23 +142,23 @@ type SessionContext struct {
 	Source SessionSource
 }
 
-// SessionStartEvalRequest is the validated, typed model for session policy evaluation.
-// Use NewSessionStartEvalRequest to start building, then chain With* methods and call
-// Build to get a validated instance. Use SessionStartEvalRequestFromProto to convert
+// SessionRecordEvalRequest is the validated, typed model for session policy evaluation.
+// Use NewSessionRecordEvalRequest to start building, then chain With* methods and call
+// Build to get a validated instance. Use SessionRecordEvalRequestFromProto to convert
 // directly from a gRPC EvaluateRequest.
-type SessionStartEvalRequest struct {
+type SessionRecordEvalRequest struct {
 	Action   SessionAction
 	Resource WorkspaceResource
 	Context  SessionContext
 }
 
-var _ EvalRequest = (*SessionStartEvalRequest)(nil)
+var _ EvalRequest = (*SessionRecordEvalRequest)(nil)
 
-// NewSessionStartEvalRequest begins building a SessionStartEvalRequest for the given
+// NewSessionRecordEvalRequest begins building a SessionRecordEvalRequest for the given
 // action, workspace ID, and session type. Chain With* methods to supply
 // additional fields, then call Build to validate and obtain the final struct.
-func NewSessionStartEvalRequest(action SessionAction, workspaceID string, sessionType SessionType) *SessionStartEvalRequest {
-	return &SessionStartEvalRequest{
+func NewSessionRecordEvalRequest(action SessionAction, workspaceID string, sessionType SessionType) *SessionRecordEvalRequest {
+	return &SessionRecordEvalRequest{
 		Action:   action,
 		Resource: WorkspaceResource{ID: workspaceID},
 		Context:  SessionContext{Type: sessionType},
@@ -158,26 +166,26 @@ func NewSessionStartEvalRequest(action SessionAction, workspaceID string, sessio
 }
 
 // WithSource sets the session source on the context.
-func (r *SessionStartEvalRequest) WithSource(source SessionSource) *SessionStartEvalRequest {
+func (r *SessionRecordEvalRequest) WithSource(source SessionSource) *SessionRecordEvalRequest {
 	r.Context.Source = source
 	return r
 }
 
 // WithOwner sets the workspace owner on the resource.
-func (r *SessionStartEvalRequest) WithOwner(owner string) *SessionStartEvalRequest {
+func (r *SessionRecordEvalRequest) WithOwner(owner string) *SessionRecordEvalRequest {
 	r.Resource.Owner = owner
 	return r
 }
 
 // WithBlueprint sets the blueprint name on the resource.
-func (r *SessionStartEvalRequest) WithBlueprint(blueprint string) *SessionStartEvalRequest {
+func (r *SessionRecordEvalRequest) WithBlueprint(blueprint string) *SessionRecordEvalRequest {
 	r.Resource.Blueprint = blueprint
 	return r
 }
 
 // Build validates the request and returns it if all constraints are satisfied.
 // It is the required terminator for the builder chain.
-func (r *SessionStartEvalRequest) Build() (*SessionStartEvalRequest, error) {
+func (r *SessionRecordEvalRequest) Build() (*SessionRecordEvalRequest, error) {
 	if err := r.Validate(); err != nil {
 		return nil, err
 	}
@@ -187,7 +195,7 @@ func (r *SessionStartEvalRequest) Build() (*SessionStartEvalRequest, error) {
 // ToProto serializes the typed request into a gRPC EvaluateRequest, attaching
 // the supplied JWT token. Only non-empty resource attributes are included.
 // Implements EvalRequest.
-func (r *SessionStartEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
+func (r *SessionRecordEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
 	attrs := map[string]string{
 		"owner": r.Resource.Owner,
 	}
@@ -210,10 +218,10 @@ func (r *SessionStartEvalRequest) ToProto(token string) *authzv1.EvaluateRequest
 	}
 }
 
-// SessionStartEvalRequestFromProto converts a gRPC EvaluateRequest into a validated
-// SessionStartEvalRequest. Returns an error if the request does not conform to the
+// SessionRecordEvalRequestFromProto converts a gRPC EvaluateRequest into a validated
+// SessionRecordEvalRequest. Returns an error if the request does not conform to the
 // session policy contract.
-func SessionStartEvalRequestFromProto(req *authzv1.EvaluateRequest) (*SessionStartEvalRequest, error) {
+func SessionRecordEvalRequestFromProto(req *authzv1.EvaluateRequest) (*SessionRecordEvalRequest, error) {
 	if req == nil {
 		return nil, fmt.Errorf("session: EvaluateRequest is nil")
 	}
@@ -227,7 +235,7 @@ func SessionStartEvalRequestFromProto(req *authzv1.EvaluateRequest) (*SessionSta
 	attrs := req.Resource.Attributes
 	ctx := req.Context
 
-	r := &SessionStartEvalRequest{
+	r := &SessionRecordEvalRequest{
 		Action: SessionAction(req.Action),
 		Resource: WorkspaceResource{
 			ID:        req.Resource.Id,
@@ -250,7 +258,7 @@ func SessionStartEvalRequestFromProto(req *authzv1.EvaluateRequest) (*SessionSta
 // must be recognized, core resource fields must be present, and the session
 // type must be a known value.
 // Implements EvalRequest.
-func (r *SessionStartEvalRequest) Validate() error {
+func (r *SessionRecordEvalRequest) Validate() error {
 	if _, ok := validSessionActions[r.Action]; !ok {
 		return fmt.Errorf("session: unknown action %q", r.Action)
 	}
@@ -380,7 +388,7 @@ const (
 )
 
 // RecordObligation is the typed representation of the "record" obligation key
-// returned by the policy engine in a PolicyResult for session:start.
+// returned by the policy engine in a PolicyResult for session:record.
 // Each field corresponds to one recording channel; all default to false.
 type RecordObligation struct {
 	Shell       bool
@@ -441,20 +449,15 @@ func ParseUsernameObligation(obligations map[string]string) (UsernameObligation,
 	return UsernameObligation{Username: v}, true
 }
 
-// init registers a capability probe for every session domain action. See
+// init registers a capability probe for every session domain action that is a
+// permission. session:record is not one (it only yields obligations), so it has
+// no probe. See
 // CapabilityCheck and registerCapabilityCheck in capability.go.
 func init() {
 	registerCapabilityCheck(CapabilityCheck{
 		Action: string(SessionActionList), Package: "session", Scope: string(SessionActionList),
 		Build: func(ctx CapabilityContext) (EvalRequest, error) {
 			return NewSessionListEvalRequest().WithOwner(ctx.ResourceOwner).Build()
-		},
-	})
-	registerCapabilityCheck(CapabilityCheck{
-		Action: string(SessionActionStart), Package: "session", Scope: string(SessionActionStart),
-		Build: func(ctx CapabilityContext) (EvalRequest, error) {
-			return NewSessionStartEvalRequest(SessionActionStart, capabilityWildcardWorkspace, SessionTypeShell).
-				WithOwner(ctx.ResourceOwner).WithSource(SessionSourceAPIServer).Build()
 		},
 	})
 }
