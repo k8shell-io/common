@@ -841,7 +841,10 @@ func (x *TerminalResize) GetHeight() uint32 {
 // ShellRecordingHeader is the mandatory first frame of a shell recording stream.
 type ShellRecordingHeader struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// session_id ties this recording to a SessionService session record.
+	// session_id is the channel ID: the per-channel identifier the recording
+	// client passed to k8shelld (for example "sh-<connId>3" from ssh-proxy).
+	// It equals connection_id when the session has a single channel, as for an
+	// api-server webshell. Required.
 	SessionId string `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	// user_token is the token of the user owning the session being recorded.
 	UserToken string `protobuf:"bytes,2,opt,name=user_token,json=userToken,proto3" json:"user_token,omitempty"`
@@ -851,7 +854,9 @@ type ShellRecordingHeader struct {
 	Width uint32 `protobuf:"varint,4,opt,name=width,proto3" json:"width,omitempty"`
 	// height is the initial terminal height in rows.
 	Height uint32 `protobuf:"varint,5,opt,name=height,proto3" json:"height,omitempty"`
-	// connection_id is the unique identifier of the SSH connection.
+	// connection_id is the SessionService session ID: the same value the
+	// recording client sends as SessionId to UpsertSession and EndSession
+	// (one per SSH connection or webshell session). Required.
 	ConnectionId  string `protobuf:"bytes,6,opt,name=connection_id,json=connectionId,proto3" json:"connection_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1034,7 +1039,10 @@ func (*ShellRecordingFrame_Resize) isShellRecordingFrame_Payload() {}
 // ExecRecordingHeader is the mandatory first frame of an exec recording stream.
 type ExecRecordingHeader struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// session_id ties this recording to a SessionService session record.
+	// session_id is the channel ID: the per-channel identifier the recording
+	// client passed to k8shelld (for example "sh-<connId>3" from ssh-proxy).
+	// It equals connection_id when the session has a single channel, as for an
+	// api-server webshell. Required.
 	SessionId string `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	// user_token is the token of the user owning the session being recorded.
 	UserToken string `protobuf:"bytes,2,opt,name=user_token,json=userToken,proto3" json:"user_token,omitempty"`
@@ -1042,7 +1050,9 @@ type ExecRecordingHeader struct {
 	StartedAt int64 `protobuf:"varint,3,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
 	// command is the command that was executed.
 	Command string `protobuf:"bytes,4,opt,name=command,proto3" json:"command,omitempty"`
-	// connection_id is the unique identifier of the SSH connection.
+	// connection_id is the SessionService session ID: the same value the
+	// recording client sends as SessionId to UpsertSession and EndSession
+	// (one per SSH connection or webshell session). Required.
 	ConnectionId  string `protobuf:"bytes,5,opt,name=connection_id,json=connectionId,proto3" json:"connection_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1201,7 +1211,10 @@ func (*ExecRecordingFrame_Chunk) isExecRecordingFrame_Payload() {}
 // TcpipRecordingHeader is the mandatory first frame of a direct-tcpip recording stream.
 type TcpipRecordingHeader struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// session_id ties this recording to a SessionService session record.
+	// session_id is the channel ID: the per-channel identifier the recording
+	// client passed to k8shelld (for example "sh-<connId>3" from ssh-proxy).
+	// It equals connection_id when the session has a single channel, as for an
+	// api-server webshell. Required.
 	SessionId string `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	// user_token is the token of the user owning the session being recorded.
 	UserToken string `protobuf:"bytes,2,opt,name=user_token,json=userToken,proto3" json:"user_token,omitempty"`
@@ -1215,7 +1228,9 @@ type TcpipRecordingHeader struct {
 	DstHost string `protobuf:"bytes,6,opt,name=dst_host,json=dstHost,proto3" json:"dst_host,omitempty"`
 	// dst_port is the destination port of the port-forward request.
 	DstPort uint32 `protobuf:"varint,7,opt,name=dst_port,json=dstPort,proto3" json:"dst_port,omitempty"`
-	// connection_id is the unique identifier of the SSH connection.
+	// connection_id is the SessionService session ID: the same value the
+	// recording client sends as SessionId to UpsertSession and EndSession
+	// (one per SSH connection or webshell session). Required.
 	ConnectionId  string `protobuf:"bytes,8,opt,name=connection_id,json=connectionId,proto3" json:"connection_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1395,13 +1410,18 @@ func (*TcpipRecordingFrame_Chunk) isTcpipRecordingFrame_Payload() {}
 // SftpRecordingHeader is the mandatory first frame of an SFTP recording stream.
 type SftpRecordingHeader struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// session_id ties this recording to a SessionService session record.
+	// session_id is the channel ID: the per-channel identifier the recording
+	// client passed to k8shelld (for example "sh-<connId>3" from ssh-proxy).
+	// It equals connection_id when the session has a single channel, as for an
+	// api-server webshell. Required.
 	SessionId string `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	// user_token is the token of the user owning the session being recorded.
 	UserToken string `protobuf:"bytes,2,opt,name=user_token,json=userToken,proto3" json:"user_token,omitempty"`
 	// started_at is the channel start time as a Unix timestamp (seconds).
 	StartedAt int64 `protobuf:"varint,3,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
-	// connection_id is the unique identifier of the SSH connection.
+	// connection_id is the SessionService session ID: the same value the
+	// recording client sends as SessionId to UpsertSession and EndSession
+	// (one per SSH connection or webshell session). Required.
 	ConnectionId  string `protobuf:"bytes,4,opt,name=connection_id,json=connectionId,proto3" json:"connection_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

@@ -94,6 +94,37 @@ func NewClient(
 	}, nil
 }
 
+// WithConnectionID returns a copy of the client whose recordings are tagged with
+// connectionID, for callers that only learn the session-service session ID after
+// the client is created. The copy shares the underlying gRPC connection, so close
+// only the original. Call it before any Run* method: the copy also carries the
+// per-run shell recorder state.
+func (c *K8shelld) WithConnectionID(connectionID string) *K8shelld {
+	cp := *c
+	cp.connectionID = connectionID
+	return &cp
+}
+
+// checkRecording returns an error when recording is requested but cannot be
+// attributed. channelID is the per-channel ID sent as the recording header's
+// session_id; the client's connectionID is sent as connection_id and must be
+// the session-service session ID (the SessionId used in UpsertSession).
+func (c *K8shelld) checkRecording(enableRecording bool, channelID string) error {
+	if !enableRecording {
+		return nil
+	}
+	if c.sessionClient == nil {
+		return fmt.Errorf("session recording requested but session client is not set")
+	}
+	if c.connectionID == "" {
+		return fmt.Errorf("session recording requested but connection ID is not set")
+	}
+	if channelID == "" {
+		return fmt.Errorf("session recording requested but channel ID is empty")
+	}
+	return nil
+}
+
 // Handshake performs a handshake with the k8shelld service to establish a session.
 func (c *K8shelld) Handshake(ctx context.Context) (*k8shelldv1.HandshakeResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
@@ -330,8 +361,8 @@ func (c *K8shelld) RunShell(
 	enableRecording bool,
 	notifyPtyName NotifyPtyNameFunc,
 ) error {
-	if enableRecording && c.sessionClient == nil {
-		return fmt.Errorf("session recording requested but session client is not set")
+	if err := c.checkRecording(enableRecording, sessionId); err != nil {
+		return err
 	}
 
 	md := metadata.Pairs("session-id", sessionId)
@@ -621,8 +652,8 @@ func (c *K8shelld) RunPortForward(
 	destinationPort uint32,
 	enableRecording bool,
 ) error {
-	if enableRecording && c.sessionClient == nil {
-		return fmt.Errorf("session recording requested but session client is not set")
+	if err := c.checkRecording(enableRecording, portForwardID); err != nil {
+		return err
 	}
 	if destinationIP == "" {
 		destinationIP = "localhost"
@@ -741,8 +772,8 @@ func (c *K8shelld) RunExec(
 	notifyPtyName NotifyPtyNameFunc,
 	enableRecording bool,
 ) (int32, error) {
-	if enableRecording && c.sessionClient == nil {
-		return 1, fmt.Errorf("session recording requested but session client is not set")
+	if err := c.checkRecording(enableRecording, execID); err != nil {
+		return 1, err
 	}
 
 	md := metadata.Pairs("exec-id", execID)
@@ -966,8 +997,8 @@ func (c *K8shelld) RunSFTP(
 	envVars []string,
 	enableRecording bool,
 ) (int32, error) {
-	if enableRecording && c.sessionClient == nil {
-		return 1, fmt.Errorf("session recording requested but session client is not set")
+	if err := c.checkRecording(enableRecording, sessionID); err != nil {
+		return 1, err
 	}
 
 	md := metadata.Pairs("exec-id", sessionID)
