@@ -60,6 +60,32 @@ package authz
 //   id set,    owner set   → sessions for one workspace
 //   id empty,  owner set   → sessions for all workspaces owned by that user
 //   id empty,  owner empty → all sessions (admin)
+//
+// ---
+//
+// Contract: session:recording:read
+//
+// Grants reading the recordings of sessions: listing a session's recordings,
+// downloading one, and streaming its content. One action covers every
+// recording type (shell, exec, tcpip, sftp) and format; there is no per-type
+// granularity. It is a separate permission from session:list — being able to
+// list sessions does not imply being able to read what was recorded in them.
+//
+// Resource  type="workspace" — identical shape and validation to session:list
+//   id     workspace name           (optional — omit to read across workspaces)
+//   owner  workspace owner username (optional — omit to read any user's
+//                                    recordings; required when id is set)
+//
+// Context   (none)
+//
+// Subject   injected by the backend from JWT claims (username, roles, email, ...)
+//
+// Obligations — the same three optional keys, with the same meaning and
+// parsers, as session:list: roles (ParseRolesObligation), org
+// (ParseOrgObligation) and username (ParseUsernameObligation). The enforcer
+// forwards them to the session service, which only exposes recordings of
+// sessions that satisfy every present key; a session outside them is
+// indistinguishable from a missing one (NOT_FOUND).
 
 import (
 	"fmt"
@@ -82,6 +108,12 @@ const (
 	// scope is controlled by the resource fields: both id and owner set scopes
 	// to one workspace; owner only scopes to a user; neither means all sessions.
 	SessionActionList SessionAction = "session:list"
+
+	// SessionActionRecordingRead is the action evaluated when reading session
+	// recordings (listing, metadata, download, playback). It covers every
+	// recording type; the resource fields scope it exactly as for
+	// SessionActionList.
+	SessionActionRecordingRead SessionAction = "session:recording:read"
 )
 
 // validSessionActions is the set of recognized session actions for fast lookup.
@@ -370,6 +402,98 @@ func (r *SessionListEvalRequest) Validate() error {
 	return nil
 }
 
+// --- session:recording:read ---
+
+// SessionRecordingReadEvalRequest is the validated, typed model for
+// session:recording:read policy evaluation. It shares session:list's resource
+// shape and validation (see the contract comment at the top of this file).
+type SessionRecordingReadEvalRequest struct {
+	Resource WorkspaceResource
+}
+
+var _ EvalRequest = (*SessionRecordingReadEvalRequest)(nil)
+
+// NewSessionRecordingReadEvalRequest returns a SessionRecordingReadEvalRequest
+// ready to be built. Chain WithWorkspace and/or WithOwner to narrow the
+// scope, then call Build.
+func NewSessionRecordingReadEvalRequest() *SessionRecordingReadEvalRequest {
+	return &SessionRecordingReadEvalRequest{}
+}
+
+// WithWorkspace sets the workspace name; requires WithOwner to also be called.
+func (r *SessionRecordingReadEvalRequest) WithWorkspace(workspaceID string) *SessionRecordingReadEvalRequest {
+	r.Resource.ID = workspaceID
+	return r
+}
+
+// WithOwner sets the owner username.
+func (r *SessionRecordingReadEvalRequest) WithOwner(owner string) *SessionRecordingReadEvalRequest {
+	r.Resource.Owner = owner
+	return r
+}
+
+// Build validates the request and returns it if all constraints are satisfied.
+func (r *SessionRecordingReadEvalRequest) Build() (*SessionRecordingReadEvalRequest, error) {
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// ToProto serializes the typed request into a gRPC EvaluateRequest.
+// Implements EvalRequest.
+func (r *SessionRecordingReadEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
+	attrs := map[string]string{}
+	if r.Resource.Owner != "" {
+		attrs["owner"] = r.Resource.Owner
+	}
+	return &authzv1.EvaluateRequest{
+		Token:  token,
+		Action: string(SessionActionRecordingRead),
+		Resource: &authzv1.Resource{
+			Type:       "workspace",
+			Id:         r.Resource.ID,
+			Attributes: attrs,
+		},
+	}
+}
+
+// SessionRecordingReadEvalRequestFromProto converts a gRPC EvaluateRequest
+// into a validated SessionRecordingReadEvalRequest.
+func SessionRecordingReadEvalRequestFromProto(req *authzv1.EvaluateRequest) (*SessionRecordingReadEvalRequest, error) {
+	if req == nil {
+		return nil, fmt.Errorf("session:recording:read: EvaluateRequest is nil")
+	}
+	if req.Action != string(SessionActionRecordingRead) {
+		return nil, fmt.Errorf("session:recording:read: action must be %q, got %q", SessionActionRecordingRead, req.Action)
+	}
+	if req.Resource == nil {
+		return nil, fmt.Errorf("session:recording:read: resource is nil")
+	}
+	if req.Resource.Type != "workspace" {
+		return nil, fmt.Errorf("session:recording:read: resource type must be \"workspace\", got %q", req.Resource.Type)
+	}
+	r := &SessionRecordingReadEvalRequest{
+		Resource: WorkspaceResource{
+			ID:    req.Resource.Id,
+			Owner: req.Resource.Attributes["owner"],
+		},
+	}
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// Validate checks the request: if a workspace id is set, owner must also be set.
+// Implements EvalRequest.
+func (r *SessionRecordingReadEvalRequest) Validate() error {
+	if r.Resource.ID != "" && r.Resource.Owner == "" {
+		return fmt.Errorf("session:recording:read: resource attribute \"owner\" is required when workspace id is set")
+	}
+	return nil
+}
+
 const (
 	// ObligationKeyRecord is the key the policy engine writes when expressing a
 	// session recording obligation. The enforcer reads this key and activates
@@ -458,6 +582,12 @@ func init() {
 		Action: string(SessionActionList), Package: "session", Scope: string(SessionActionList),
 		Build: func(ctx CapabilityContext) (EvalRequest, error) {
 			return NewSessionListEvalRequest().WithOwner(ctx.ResourceOwner).Build()
+		},
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		Action: string(SessionActionRecordingRead), Package: "session", Scope: string(SessionActionRecordingRead),
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewSessionRecordingReadEvalRequest().WithOwner(ctx.ResourceOwner).Build()
 		},
 	})
 }

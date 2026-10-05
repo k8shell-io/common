@@ -53,6 +53,7 @@ var expectedCapabilityActions = []string{
 	"token:write",
 	"token:delete",
 	"session:list",
+	"session:recording:read",
 	"workspace:list",
 	"workspace:create:standalone:catalog",
 	"workspace:create:standalone:git",

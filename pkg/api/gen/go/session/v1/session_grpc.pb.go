@@ -31,6 +31,8 @@ const (
 	SessionService_UpsertSession_FullMethodName          = "/session.v1.SessionService/UpsertSession"
 	SessionService_EndSession_FullMethodName             = "/session.v1.SessionService/EndSession"
 	SessionService_GetVersionInfo_FullMethodName         = "/session.v1.SessionService/GetVersionInfo"
+	SessionService_ListSessionRecordings_FullMethodName  = "/session.v1.SessionService/ListSessionRecordings"
+	SessionService_GetSessionRecording_FullMethodName    = "/session.v1.SessionService/GetSessionRecording"
 )
 
 // SessionServiceClient is the client API for SessionService service.
@@ -59,6 +61,13 @@ type SessionServiceClient interface {
 	// released semantic version, the git commit it was built from, and a short
 	// description of what the service does.
 	GetVersionInfo(ctx context.Context, in *v11.GetVersionInfoRequest, opts ...grpc.CallOption) (*v11.GetVersionInfoResponse, error)
+	// ListSessionRecordings returns metadata for the recordings of a session,
+	// ordered by start time, optionally filtered by type and paged. Returns NOT_FOUND when the session does not exist
+	// or is not visible under the request's obligations.
+	ListSessionRecordings(ctx context.Context, in *ListSessionRecordingsRequest, opts ...grpc.CallOption) (*ListSessionRecordingsResponse, error)
+	// GetSessionRecording streams one recording file as stored. The first
+	// message is a RecordingMetadata; every following message is a data chunk.
+	GetSessionRecording(ctx context.Context, in *GetSessionRecordingRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[GetSessionRecordingResponse], error)
 }
 
 type sessionServiceClient struct {
@@ -129,6 +138,35 @@ func (c *sessionServiceClient) GetVersionInfo(ctx context.Context, in *v11.GetVe
 	return out, nil
 }
 
+func (c *sessionServiceClient) ListSessionRecordings(ctx context.Context, in *ListSessionRecordingsRequest, opts ...grpc.CallOption) (*ListSessionRecordingsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListSessionRecordingsResponse)
+	err := c.cc.Invoke(ctx, SessionService_ListSessionRecordings_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *sessionServiceClient) GetSessionRecording(ctx context.Context, in *GetSessionRecordingRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[GetSessionRecordingResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &SessionService_ServiceDesc.Streams[0], SessionService_GetSessionRecording_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[GetSessionRecordingRequest, GetSessionRecordingResponse]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type SessionService_GetSessionRecordingClient = grpc.ServerStreamingClient[GetSessionRecordingResponse]
+
 // SessionServiceServer is the server API for SessionService service.
 // All implementations must embed UnimplementedSessionServiceServer
 // for forward compatibility.
@@ -155,6 +193,13 @@ type SessionServiceServer interface {
 	// released semantic version, the git commit it was built from, and a short
 	// description of what the service does.
 	GetVersionInfo(context.Context, *v11.GetVersionInfoRequest) (*v11.GetVersionInfoResponse, error)
+	// ListSessionRecordings returns metadata for the recordings of a session,
+	// ordered by start time, optionally filtered by type and paged. Returns NOT_FOUND when the session does not exist
+	// or is not visible under the request's obligations.
+	ListSessionRecordings(context.Context, *ListSessionRecordingsRequest) (*ListSessionRecordingsResponse, error)
+	// GetSessionRecording streams one recording file as stored. The first
+	// message is a RecordingMetadata; every following message is a data chunk.
+	GetSessionRecording(*GetSessionRecordingRequest, grpc.ServerStreamingServer[GetSessionRecordingResponse]) error
 	mustEmbedUnimplementedSessionServiceServer()
 }
 
@@ -182,6 +227,12 @@ func (UnimplementedSessionServiceServer) EndSession(context.Context, *EndSession
 }
 func (UnimplementedSessionServiceServer) GetVersionInfo(context.Context, *v11.GetVersionInfoRequest) (*v11.GetVersionInfoResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetVersionInfo not implemented")
+}
+func (UnimplementedSessionServiceServer) ListSessionRecordings(context.Context, *ListSessionRecordingsRequest) (*ListSessionRecordingsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListSessionRecordings not implemented")
+}
+func (UnimplementedSessionServiceServer) GetSessionRecording(*GetSessionRecordingRequest, grpc.ServerStreamingServer[GetSessionRecordingResponse]) error {
+	return status.Error(codes.Unimplemented, "method GetSessionRecording not implemented")
 }
 func (UnimplementedSessionServiceServer) mustEmbedUnimplementedSessionServiceServer() {}
 func (UnimplementedSessionServiceServer) testEmbeddedByValue()                        {}
@@ -312,6 +363,35 @@ func _SessionService_GetVersionInfo_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SessionService_ListSessionRecordings_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListSessionRecordingsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SessionServiceServer).ListSessionRecordings(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SessionService_ListSessionRecordings_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SessionServiceServer).ListSessionRecordings(ctx, req.(*ListSessionRecordingsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SessionService_GetSessionRecording_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetSessionRecordingRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(SessionServiceServer).GetSessionRecording(m, &grpc.GenericServerStream[GetSessionRecordingRequest, GetSessionRecordingResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type SessionService_GetSessionRecordingServer = grpc.ServerStreamingServer[GetSessionRecordingResponse]
+
 // SessionService_ServiceDesc is the grpc.ServiceDesc for SessionService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -343,8 +423,18 @@ var SessionService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "GetVersionInfo",
 			Handler:    _SessionService_GetVersionInfo_Handler,
 		},
+		{
+			MethodName: "ListSessionRecordings",
+			Handler:    _SessionService_ListSessionRecordings_Handler,
+		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "GetSessionRecording",
+			Handler:       _SessionService_GetSessionRecording_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "session/v1/session.proto",
 }
 

@@ -122,6 +122,9 @@ var scopeCatalogSource = []domainSpec{
 			{action: "session:list", label: "List", entries: []entrySpec{
 				{scope: "session:list", label: "List", description: "List a user's shell sessions."},
 			}},
+			{action: "session:recording:read", label: "Read recordings", entries: []entrySpec{
+				{scope: "session:recording:read", label: "Read recordings", description: "List, download and replay session recordings of any type (shell, exec, port-forward, SFTP)."},
+			}},
 		},
 	},
 	{

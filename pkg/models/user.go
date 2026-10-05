@@ -104,6 +104,20 @@ type SSHSession struct {
 	Blueprint   string     `yaml:"blueprint" json:"blueprint"`
 	UpdatedAt   *time.Time `yaml:"updatedAt" json:"updatedAt"`
 	PtyName     string     `yaml:"ptyName" json:"ptyName"`
+	// Recordings references the session's non-exec recordings by start time.
+	// Filled when sessions are listed; ignored when a session is stored.
+	Recordings []SessionRecordingRef `yaml:"recordings,omitempty" json:"recordings,omitempty"`
+	// ExecRecordings is the number of exec recordings, which are not listed
+	// in Recordings. Filled when sessions are listed.
+	ExecRecordings int `yaml:"execRecordings,omitempty" json:"execRecordings,omitempty"`
+}
+
+// SessionRecordingRef identifies one recording of a session.
+type SessionRecordingRef struct {
+	// ID is the recording ID used to fetch details or download the file.
+	ID string `yaml:"id" json:"id"`
+	// Type is the channel type: shell, exec, tcpip or sftp.
+	Type string `yaml:"type" json:"type"`
 }
 
 // Organization represents an organization in the system

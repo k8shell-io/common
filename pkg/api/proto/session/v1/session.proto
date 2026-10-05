@@ -38,6 +38,15 @@ service SessionService {
   // released semantic version, the git commit it was built from, and a short
   // description of what the service does.
   rpc GetVersionInfo(common.v1.GetVersionInfoRequest) returns (common.v1.GetVersionInfoResponse);
+
+  // ListSessionRecordings returns metadata for the recordings of a session,
+  // ordered by start time, optionally filtered by type and paged. Returns NOT_FOUND when the session does not exist
+  // or is not visible under the request's obligations.
+  rpc ListSessionRecordings(ListSessionRecordingsRequest) returns (ListSessionRecordingsResponse);
+
+  // GetSessionRecording streams one recording file as stored. The first
+  // message is a RecordingMetadata; every following message is a data chunk.
+  rpc GetSessionRecording(GetSessionRecordingRequest) returns (stream GetSessionRecordingResponse);
 }
 
 // GetSessionsRequest filters the list of sessions to return.
@@ -96,6 +105,24 @@ message Session {
   string blueprint = 12;
   // updated_at is the time the record was last updated, as a Unix timestamp (seconds).
   int64 updated_at = 13;
+  // recordings references the session's recordings other than exec, ordered
+  // by start time. Exec recordings (one per command) are not listed here as
+  // there can be very many; see exec_recordings. Filled by GetSessions and
+  // QuerySessions; ignored on input. Use ListSessionRecordings (optionally
+  // filtered by type and paged) for details and GetSessionRecording to
+  // download.
+  repeated RecordingRef recordings = 14;
+  // exec_recordings is the number of exec recordings of the session.
+  // Filled by GetSessions and QuerySessions; ignored on input.
+  int32 exec_recordings = 15;
+}
+
+// RecordingRef identifies one recording of a session and its channel type.
+message RecordingRef {
+  // recording_id identifies the recording (see RecordingMetadata).
+  string recording_id = 1;
+  // type is the channel type the recording was made from.
+  RecordingType type = 2;
 }
 
 // Sessions is a list of session records.
@@ -137,6 +164,103 @@ message EndSessionRequest {
   int64 bytes_in = 3;
   // bytes_out is the final total bytes sent to the client.
   int64 bytes_out = 4;
+}
+
+// *** Recording retrieval
+
+// RecordingType is the SSH channel type a recording was made from.
+enum RecordingType {
+  RECORDING_TYPE_UNSPECIFIED = 0;
+  RECORDING_TYPE_SHELL = 1;
+  RECORDING_TYPE_EXEC = 2;
+  RECORDING_TYPE_TCPIP = 3;
+  RECORDING_TYPE_SFTP = 4;
+}
+
+// RecordingFormat is the file format a recording is stored in.
+enum RecordingFormat {
+  RECORDING_FORMAT_UNSPECIFIED = 0;
+  // RECORDING_FORMAT_ASCIINEMA is asciinema v2 (.cast).
+  RECORDING_FORMAT_ASCIINEMA = 1;
+  // RECORDING_FORMAT_PCAPNG is pcap-ng (.pcapng).
+  RECORDING_FORMAT_PCAPNG = 2;
+}
+
+// RecordingMetadata describes one stored recording.
+message RecordingMetadata {
+  // recording_id is the server-generated identifier (UUIDv7) of the recording.
+  string recording_id = 1;
+  // session_id is the SessionService session the recording belongs to.
+  string session_id = 2;
+  // channel_id is the channel the recording was made from. Empty for TCP/IP
+  // recordings, which are shared by all port-forward channels of a session
+  // to the same destination.
+  string channel_id = 3;
+  // type is the channel type.
+  RecordingType type = 4;
+  // format is the file format.
+  RecordingFormat format = 5;
+  // gzip is true when the file is stored gzip-compressed.
+  bool gzip = 6;
+  // size_bytes is the stored file size. Zero while still being written.
+  int64 size_bytes = 7;
+  // started_at is the recording start time as a Unix timestamp (seconds).
+  int64 started_at = 8;
+  // ended_at is the recording end time as a Unix timestamp (seconds).
+  // Zero means the recording is still being written.
+  int64 ended_at = 9;
+  // command is the executed command (exec recordings only).
+  string command = 10;
+  // dst_host is the forwarded destination host (TCP/IP recordings only).
+  string dst_host = 11;
+  // dst_port is the forwarded destination port (TCP/IP recordings only).
+  uint32 dst_port = 12;
+}
+
+// ListSessionRecordingsRequest selects the session whose recordings to list.
+message ListSessionRecordingsRequest {
+  // session_id is the SessionService session ID.
+  string session_id = 1;
+  // obligations carries the authz obligations from the gateway's policy
+  // evaluation (keys "roles", "org", "username", as for session:list) and is
+  // enforced as a mandatory scope. Never accepted from end clients.
+  map<string, string> obligations = 2;
+  // type restricts the result to recordings of this type. Unspecified means
+  // all types.
+  RecordingType type = 3;
+  // limit is the maximum number of recordings to return. 0 selects the
+  // server default; larger values are capped.
+  int32 limit = 4;
+  // offset is the number of matching recordings to skip.
+  int32 offset = 5;
+}
+
+// ListSessionRecordingsResponse lists a session's recordings by start time.
+message ListSessionRecordingsResponse {
+  repeated RecordingMetadata recordings = 1;
+  // total is the number of recordings matching the request's session and
+  // type, regardless of limit and offset.
+  int32 total = 2;
+}
+
+// GetSessionRecordingRequest selects one recording to download.
+message GetSessionRecordingRequest {
+  // recording_id identifies the recording.
+  string recording_id = 1;
+  // offset is the byte offset to start from, for resuming a download.
+  int64 offset = 2;
+  // obligations carries the authz obligations; see ListSessionRecordingsRequest.
+  map<string, string> obligations = 3;
+}
+
+// GetSessionRecordingResponse is one message of a recording download stream.
+message GetSessionRecordingResponse {
+  oneof payload {
+    // metadata is always the first message.
+    RecordingMetadata metadata = 1;
+    // chunk is a block of the stored file, at most 1 MiB.
+    bytes chunk = 2;
+  }
 }
 
 // EndRecordingSessionRequest signals the recording backend to flush and release

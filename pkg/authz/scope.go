@@ -209,6 +209,10 @@ var validExactScopes = map[string]struct{}{
 	// session — flat
 	string(SessionActionList): {},
 
+	// session:recording:read — one scope for every recording type; no
+	// per-type granularity.
+	string(SessionActionRecordingRead): {},
+
 	// user — flat
 	"user:list": {},
 
