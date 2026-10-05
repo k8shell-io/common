@@ -28,7 +28,16 @@ type KVSubscriberOptions struct {
 	MaxAckPending  int
 	FetchBatchSize int
 	FetchMaxWait   time.Duration
+	// InactiveThreshold is how long the server keeps the consumer after the
+	// last client activity before deleting it, so consumers of dead clients
+	// do not accumulate. Defaults to defaultInactiveThreshold.
+	InactiveThreshold time.Duration
 }
+
+// defaultInactiveThreshold must comfortably exceed FetchMaxWait and any brief
+// reconnect; events published while a consumer is gone are missed unless
+// DeliverAll is set.
+const defaultInactiveThreshold = 10 * time.Minute
 
 // KVSubscriber is a NATS JetStream KV bucket subscriber.
 type KVSubscriber struct {
@@ -87,6 +96,9 @@ func setSubscriberDefaults(o *KVSubscriberOptions) {
 	if o.FetchMaxWait <= 0 {
 		o.FetchMaxWait = 2 * time.Second
 	}
+	if o.InactiveThreshold <= 0 {
+		o.InactiveThreshold = defaultInactiveThreshold
+	}
 }
 
 // ensureConsumer makes sure the consumer exists.
@@ -102,6 +114,8 @@ func (s *KVSubscriber) ensureConsumer() error {
 		AckWait:       s.opts.AckWait,
 		MaxAckPending: s.opts.MaxAckPending,
 		FilterSubject: s.filter,
+
+		InactiveThreshold: s.opts.InactiveThreshold,
 	})
 	if err == nil || errors.Is(err, nats.ErrConsumerNameAlreadyInUse) {
 		return nil
@@ -126,6 +140,14 @@ func (s *KVSubscriber) StartPull(ctx context.Context, handler func(context.Conte
 	}
 	s.sub = sub
 	defer sub.Unsubscribe()
+	// On a clean shutdown the consumer is ours alone (per-process durable
+	// name), so remove it rather than waiting for InactiveThreshold. Other
+	// exits keep it so a retry resumes where it left off.
+	defer func() {
+		if ctx.Err() != nil {
+			_ = s.js.DeleteConsumer(s.stream, s.durable)
+		}
+	}()
 
 	batch := s.opts.FetchBatchSize
 	maxWait := s.opts.FetchMaxWait
