@@ -116,8 +116,13 @@ type SSHSession struct {
 type SessionRecordingRef struct {
 	// ID is the recording ID used to fetch details or download the file.
 	ID string `yaml:"id" json:"id"`
-	// Type is the channel type: shell, exec, tcpip or sftp.
+	// Type is the recording type: shell, exec, tcpip, sftp or
+	// vscode_terminal.
 	Type string `yaml:"type" json:"type"`
+	// ParentRecordingID is the recording this one was derived from: for a
+	// vscode_terminal, the session's tcpip pcap-ng recording of the same
+	// destination. Empty for most recordings.
+	ParentRecordingID string `yaml:"parentRecordingId,omitempty" json:"parentRecordingId,omitempty"`
 }
 
 // Organization represents an organization in the system

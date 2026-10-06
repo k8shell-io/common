@@ -67,6 +67,9 @@ type SessionServiceClient interface {
 	ListSessionRecordings(ctx context.Context, in *ListSessionRecordingsRequest, opts ...grpc.CallOption) (*ListSessionRecordingsResponse, error)
 	// GetSessionRecording streams one recording file as stored. The first
 	// message is a RecordingMetadata; every following message is a data chunk.
+	// The metadata is sent for every visible recording, also when its content
+	// cannot be read: an unfinished pcap-ng or gzip recording then ends the
+	// stream with FailedPrecondition after the metadata (ended_at is 0).
 	GetSessionRecording(ctx context.Context, in *GetSessionRecordingRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[GetSessionRecordingResponse], error)
 }
 
@@ -199,6 +202,9 @@ type SessionServiceServer interface {
 	ListSessionRecordings(context.Context, *ListSessionRecordingsRequest) (*ListSessionRecordingsResponse, error)
 	// GetSessionRecording streams one recording file as stored. The first
 	// message is a RecordingMetadata; every following message is a data chunk.
+	// The metadata is sent for every visible recording, also when its content
+	// cannot be read: an unfinished pcap-ng or gzip recording then ends the
+	// stream with FailedPrecondition after the metadata (ended_at is 0).
 	GetSessionRecording(*GetSessionRecordingRequest, grpc.ServerStreamingServer[GetSessionRecordingResponse]) error
 	mustEmbedUnimplementedSessionServiceServer()
 }

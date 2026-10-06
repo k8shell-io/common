@@ -11,6 +11,7 @@ import (
 
 	"github.com/k8shell-io/common/pkg/api/client/session"
 	k8shelldv1 "github.com/k8shell-io/common/pkg/api/gen/go/k8shelld/v1"
+	sessionv1 "github.com/k8shell-io/common/pkg/api/gen/go/session/v1"
 	"github.com/k8shell-io/common/pkg/gapi"
 	"github.com/k8shell-io/common/pkg/logger"
 	"github.com/rs/zerolog"
@@ -37,6 +38,7 @@ type K8shelld struct {
 	counters           *ConnCounters
 	connectionID       string
 	sessionClient      *session.Client
+	recording          RecordingConfig
 	shellRecorder      *Recorder
 	shellRecorderStart time.Time
 }
@@ -103,6 +105,51 @@ func (c *K8shelld) WithConnectionID(connectionID string) *K8shelld {
 	cp := *c
 	cp.connectionID = connectionID
 	return &cp
+}
+
+// RecordingConfig is the client-side recording setup applied to every
+// recording this client starts.
+type RecordingConfig struct {
+	// BufferBytes limits the data each recording queues while it waits to be
+	// sent to the recording service. Data beyond it is dropped (the session
+	// is never slowed down) and reported to the service as a gap. 0 selects
+	// DefaultRecorderBufferBytes.
+	BufferBytes int `yaml:"bufferBytes"`
+	// Shell, Exec, Sftp and Tcpip are the recording options sent with each
+	// stream type. nil leaves the choice to the session service's defaults.
+	Shell *sessionv1.RecordingOptions `yaml:"-"`
+	Exec  *sessionv1.RecordingOptions `yaml:"-"`
+	Sftp  *sessionv1.RecordingOptions `yaml:"-"`
+	Tcpip *sessionv1.RecordingOptions `yaml:"-"`
+}
+
+// WithRecordingConfig returns a copy of the client that applies cfg to the
+// recordings it starts. Like WithConnectionID, the copy shares the gRPC
+// connection and must be made before any Run* method.
+func (c *K8shelld) WithRecordingConfig(cfg RecordingConfig) *K8shelld {
+	cp := *c
+	cp.recording = cfg
+	return &cp
+}
+
+type recordingOptionsKey struct{}
+
+// ContextWithRecordingOptions returns a context that makes the recording a
+// Run* method starts with it use o instead of the client's RecordingConfig
+// options for that stream type. It lets a caller choose options per channel
+// (e.g. from an authz obligation) without copying a client that is already
+// running other channels.
+func ContextWithRecordingOptions(ctx context.Context, o *sessionv1.RecordingOptions) context.Context {
+	return context.WithValue(ctx, recordingOptionsKey{}, o)
+}
+
+// recorderOptions returns the Recorder options for a stream type's options,
+// or for the options set on ctx by ContextWithRecordingOptions.
+func (c *K8shelld) recorderOptions(ctx context.Context, o *sessionv1.RecordingOptions) []RecorderOption {
+	if ctxOpts, ok := ctx.Value(recordingOptionsKey{}).(*sessionv1.RecordingOptions); ok {
+		o = ctxOpts
+	}
+	return []RecorderOption{WithBufferBytes(c.recording.BufferBytes), WithRecordingOptions(o)}
 }
 
 // checkRecording returns an error when recording is requested but cannot be
@@ -276,7 +323,8 @@ func (c *K8shelld) startShellRecording(
 	width, height uint32,
 ) (start time.Time, recorder *Recorder, wrappedRW BufferedReadWriter) {
 	start = time.Now()
-	recorder = NewShellRecorder(ctx, c.sessionClient, sessionID, c.connectionID, userToken, width, height, start, c.log)
+	recorder = NewShellRecorder(ctx, c.sessionClient, sessionID, c.connectionID, userToken, width, height, start, c.log,
+		c.recorderOptions(ctx, c.recording.Shell)...)
 	if recorder != nil {
 		wrappedRW = NewRecordingAdapter(rw, start, recorder.Observe)
 	} else {
@@ -293,7 +341,8 @@ func (c *K8shelld) startExecRecording(
 	sessionID, command string,
 ) (recorder *Recorder, wrappedRW BufferedReadWriter) {
 	start := time.Now()
-	recorder = NewExecRecorder(ctx, c.sessionClient, sessionID, c.connectionID, userToken, command, start, c.log)
+	recorder = NewExecRecorder(ctx, c.sessionClient, sessionID, c.connectionID, userToken, command, start, c.log,
+		c.recorderOptions(ctx, c.recording.Exec)...)
 	if recorder != nil {
 		wrappedRW = NewRecordingAdapter(rw, start, recorder.Observe)
 	} else {
@@ -312,7 +361,8 @@ func (c *K8shelld) startSftpRecording(
 ) (recorder *Recorder, wrappedRW BufferedReadWriter) {
 	start := time.Now()
 	recordCtx := metadata.AppendToOutgoingContext(ctx, "x-connection-affinity", c.connectionID)
-	recorder = NewSftpRecorder(recordCtx, c.sessionClient, sessionID, c.connectionID, userToken, start, c.log)
+	recorder = NewSftpRecorder(recordCtx, c.sessionClient, sessionID, c.connectionID, userToken, start, c.log,
+		c.recorderOptions(ctx, c.recording.Sftp)...)
 	if recorder != nil {
 		wrappedRW = NewBidirectionalRecordingAdapter(rw, start, recorder.Observe, recorder.ObserveInput)
 	} else {
@@ -334,7 +384,8 @@ func (c *K8shelld) startTcpipRecording(
 	start := time.Now()
 	recordCtx := metadata.AppendToOutgoingContext(ctx, "x-connection-affinity", c.connectionID)
 	recorder = NewTcpipRecorder(recordCtx, c.sessionClient, sessionID, c.connectionID, userToken,
-		srcHost, srcPort, dstHost, dstPort, start, c.log)
+		srcHost, srcPort, dstHost, dstPort, start, c.log,
+		c.recorderOptions(ctx, c.recording.Tcpip)...)
 	if recorder != nil {
 		wrappedRW = NewBidirectionalRecordingAdapter(rw, start, recorder.Observe, recorder.ObserveInput)
 	} else {

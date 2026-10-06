@@ -46,6 +46,9 @@ service SessionService {
 
   // GetSessionRecording streams one recording file as stored. The first
   // message is a RecordingMetadata; every following message is a data chunk.
+  // The metadata is sent for every visible recording, also when its content
+  // cannot be read: an unfinished pcap-ng or gzip recording then ends the
+  // stream with FailedPrecondition after the metadata (ended_at is 0).
   rpc GetSessionRecording(GetSessionRecordingRequest) returns (stream GetSessionRecordingResponse);
 }
 
@@ -123,6 +126,9 @@ message RecordingRef {
   string recording_id = 1;
   // type is the channel type the recording was made from.
   RecordingType type = 2;
+  // parent_recording_id is the recording this one was derived from (see
+  // RecordingMetadata). Empty for most recordings.
+  string parent_recording_id = 3;
 }
 
 // Sessions is a list of session records.
@@ -175,6 +181,10 @@ enum RecordingType {
   RECORDING_TYPE_EXEC = 2;
   RECORDING_TYPE_TCPIP = 3;
   RECORDING_TYPE_SFTP = 4;
+  // RECORDING_TYPE_VSCODE_TERMINAL is a VS Code integrated terminal found in
+  // a port-forward that carries a VS Code remote connection, recorded as
+  // asciinema.
+  RECORDING_TYPE_VSCODE_TERMINAL = 5;
 }
 
 // RecordingFormat is the file format a recording is stored in.
@@ -184,6 +194,10 @@ enum RecordingFormat {
   RECORDING_FORMAT_ASCIINEMA = 1;
   // RECORDING_FORMAT_PCAPNG is pcap-ng (.pcapng).
   RECORDING_FORMAT_PCAPNG = 2;
+  // RECORDING_FORMAT_NONE stores no file for the stream's raw data. It is
+  // only valid in RecordingOptions of a TCP/IP stream that records VS Code
+  // terminals, and never appears in RecordingMetadata.
+  RECORDING_FORMAT_NONE = 3;
 }
 
 // RecordingMetadata describes one stored recording.
@@ -193,8 +207,9 @@ message RecordingMetadata {
   // session_id is the SessionService session the recording belongs to.
   string session_id = 2;
   // channel_id is the channel the recording was made from. Empty for TCP/IP
-  // recordings, which are shared by all port-forward channels of a session
-  // to the same destination.
+  // pcap-ng recordings, which are shared by all port-forward channels of a
+  // session to the same destination, and for VS Code terminals; set for
+  // TCP/IP recordings stored per channel (asciinema).
   string channel_id = 3;
   // type is the channel type.
   RecordingType type = 4;
@@ -211,10 +226,37 @@ message RecordingMetadata {
   int64 ended_at = 9;
   // command is the executed command (exec recordings only).
   string command = 10;
-  // dst_host is the forwarded destination host (TCP/IP recordings only).
+  // dst_host is the forwarded destination host (TCP/IP and VS Code
+  // terminal recordings).
   string dst_host = 11;
-  // dst_port is the forwarded destination port (TCP/IP recordings only).
+  // dst_port is the forwarded destination port (TCP/IP and VS Code terminal
+  // recordings).
   uint32 dst_port = 12;
+  // parent_recording_id is the recording this one was derived from. For a
+  // VS Code terminal it is the session's pcap-ng recording of the same
+  // destination (one per session, dst_host and dst_port, shared by all
+  // port-forward channels to it); empty when no pcap-ng was recorded for
+  // that destination.
+  string parent_recording_id = 13;
+  // vscode_terminal describes a RECORDING_TYPE_VSCODE_TERMINAL recording.
+  VscodeTerminalInfo vscode_terminal = 14;
+}
+
+// VscodeTerminalInfo describes a VS Code integrated terminal.
+message VscodeTerminalInfo {
+  // terminal_id is the VS Code persistent terminal ID, unique per VS Code
+  // server. A terminal reattached after a window reload keeps its ID and
+  // gets a new recording.
+  uint32 terminal_id = 1;
+  // title is the terminal's last title (for example "bash").
+  string title = 2;
+  // shell is the executable the terminal runs (for example "/bin/bash").
+  string shell = 3;
+  // exit_code is the shell's exit code. Unset while the terminal runs, or
+  // when the recording ended without the terminal exiting.
+  optional int32 exit_code = 4;
+  // vscode_commit is the commit of the VS Code server.
+  string vscode_commit = 5;
 }
 
 // ListSessionRecordingsRequest selects the session whose recordings to list.
@@ -233,6 +275,10 @@ message ListSessionRecordingsRequest {
   int32 limit = 4;
   // offset is the number of matching recordings to skip.
   int32 offset = 5;
+  // parent_recording_id restricts the result to recordings derived from
+  // this recording (for example the VS Code terminals of a pcap-ng
+  // recording). Empty means no restriction.
+  string parent_recording_id = 6;
 }
 
 // ListSessionRecordingsResponse lists a session's recordings by start time.
@@ -316,6 +362,34 @@ service RecordingService {
 
 // *** Shared recording types
 
+// RecordingOptions is the recording setup chosen by the recording client
+// (ssh-proxy, api-server) for one stream, sent in its header. Unset fields
+// fall back to the session service's recording configuration.
+message RecordingOptions {
+  // format is the file format of the stream's raw data. Unspecified uses the
+  // service's configured format for the stream type. RECORDING_FORMAT_NONE is
+  // only valid for TCP/IP streams with vscode.terminals set.
+  RecordingFormat format = 1;
+  // gzip stores asciinema files gzip-compressed (.cast.gz). pcap-ng files
+  // are never compressed. Unset uses the service default.
+  optional bool gzip = 2;
+  // vscode configures VS Code detection in TCP/IP streams. Ignored for other
+  // stream types.
+  VscodeRecordingOptions vscode = 3;
+}
+
+// VscodeRecordingOptions configures recording of VS Code remote sessions
+// carried by a port-forward.
+message VscodeRecordingOptions {
+  // terminals records each VS Code integrated terminal found in the
+  // port-forward as its own asciinema recording. Unset uses the service
+  // default.
+  optional bool terminals = 1;
+  // record_input includes terminal keystrokes ("i" events) in those
+  // recordings. Unset uses the service default.
+  optional bool record_input = 2;
+}
+
 // DataChunk carries a block of raw channel data with timing information.
 message DataChunk {
   // time_offset_ms is the number of milliseconds elapsed since the recording started_at.
@@ -324,6 +398,11 @@ message DataChunk {
   bytes data = 2;
   // direction indicates which side produced this data.
   Direction direction = 3;
+  // dropped_bytes is the number of bytes in this direction that the
+  // recording client dropped immediately before this chunk because its send
+  // buffer was full. A chunk may carry only dropped_bytes and no data, to
+  // report a gap at the end of the stream.
+  uint64 dropped_bytes = 4;
 }
 
 // TerminalResize records a PTY window-change event.
@@ -357,6 +436,9 @@ message ShellRecordingHeader {
   // recording client sends as SessionId to UpsertSession and EndSession
   // (one per SSH connection or webshell session). Required.
   string connection_id = 6;
+  // options is the recording setup for this stream. Unset uses the
+  // service defaults.
+  RecordingOptions options = 7;
 }
 
 // ShellRecordingFrame is a single unit in a shell recording stream.
@@ -390,6 +472,9 @@ message ExecRecordingHeader {
   // recording client sends as SessionId to UpsertSession and EndSession
   // (one per SSH connection or webshell session). Required.
   string connection_id = 5;
+  // options is the recording setup for this stream. Unset uses the
+  // service defaults.
+  RecordingOptions options = 6;
 }
 
 // ExecRecordingFrame is a single unit in an exec recording stream.
@@ -427,6 +512,9 @@ message TcpipRecordingHeader {
   // recording client sends as SessionId to UpsertSession and EndSession
   // (one per SSH connection or webshell session). Required.
   string connection_id = 8;
+  // options is the recording setup for this stream. Unset uses the
+  // service defaults.
+  RecordingOptions options = 9;
 }
 
 // TcpipRecordingFrame is a single unit in a direct-tcpip recording stream.
@@ -456,6 +544,9 @@ message SftpRecordingHeader {
   // recording client sends as SessionId to UpsertSession and EndSession
   // (one per SSH connection or webshell session). Required.
   string connection_id = 4;
+  // options is the recording setup for this stream. Unset uses the
+  // service defaults.
+  RecordingOptions options = 5;
 }
 
 // SftpRecordingFrame is a single unit in an SFTP recording stream.

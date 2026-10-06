@@ -94,10 +94,11 @@ func FromProtobufSession(pbSession *sessionv1.Session) *models.SSHSession {
 
 // recordingTypes maps model recording types to their protobuf enum.
 var recordingTypes = map[string]sessionv1.RecordingType{
-	"shell": sessionv1.RecordingType_RECORDING_TYPE_SHELL,
-	"exec":  sessionv1.RecordingType_RECORDING_TYPE_EXEC,
-	"tcpip": sessionv1.RecordingType_RECORDING_TYPE_TCPIP,
-	"sftp":  sessionv1.RecordingType_RECORDING_TYPE_SFTP,
+	"shell":           sessionv1.RecordingType_RECORDING_TYPE_SHELL,
+	"exec":            sessionv1.RecordingType_RECORDING_TYPE_EXEC,
+	"tcpip":           sessionv1.RecordingType_RECORDING_TYPE_TCPIP,
+	"sftp":            sessionv1.RecordingType_RECORDING_TYPE_SFTP,
+	"vscode_terminal": sessionv1.RecordingType_RECORDING_TYPE_VSCODE_TERMINAL,
 }
 
 // RecordingTypeToProto converts a recording type name ("shell", "exec",
@@ -123,7 +124,11 @@ func toProtobufRecordingRefs(refs []models.SessionRecordingRef) []*sessionv1.Rec
 	}
 	out := make([]*sessionv1.RecordingRef, len(refs))
 	for i, r := range refs {
-		out[i] = &sessionv1.RecordingRef{RecordingId: r.ID, Type: RecordingTypeToProto(r.Type)}
+		out[i] = &sessionv1.RecordingRef{
+			RecordingId:       r.ID,
+			Type:              RecordingTypeToProto(r.Type),
+			ParentRecordingId: r.ParentRecordingID,
+		}
 	}
 	return out
 }
@@ -135,7 +140,11 @@ func FromProtobufRecordingRefs(refs []*sessionv1.RecordingRef) []models.SessionR
 	}
 	out := make([]models.SessionRecordingRef, len(refs))
 	for i, r := range refs {
-		out[i] = models.SessionRecordingRef{ID: r.GetRecordingId(), Type: RecordingTypeFromProto(r.GetType())}
+		out[i] = models.SessionRecordingRef{
+			ID:                r.GetRecordingId(),
+			Type:              RecordingTypeFromProto(r.GetType()),
+			ParentRecordingID: r.GetParentRecordingId(),
+		}
 	}
 	return out
 }

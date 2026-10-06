@@ -24,7 +24,17 @@ package authz
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
 // Obligations
-//   record  none | shell,exec,direct-tcpip,sftp  (comma-separated channel tokens)
+//   record  none | shell,exec,direct-tcpip,sftp,vscode-terminals,vscode-input
+//           (comma-separated tokens)
+//     shell, exec, direct-tcpip, sftp
+//                       record that channel type's raw data
+//     vscode-terminals  record each VS Code integrated terminal carried by a
+//                       port-forward as its own asciinema recording. Without
+//                       direct-tcpip, the port-forward is recorded for the
+//                       terminals only and no pcap-ng is stored.
+//     vscode-input      also record the terminals' keystrokes; implies
+//                       vscode-terminals
+//   A present record obligation decides every token: an absent token is off.
 //
 // ---
 //
@@ -509,22 +519,42 @@ const (
 	ObligationRecordExec        = "exec"
 	ObligationRecordDirectTCPIP = "direct-tcpip"
 	ObligationRecordSFTP        = "sftp"
+	// ObligationRecordVscodeTerminals records VS Code integrated terminals
+	// carried by direct-tcpip port-forwards.
+	ObligationRecordVscodeTerminals = "vscode-terminals"
+	// ObligationRecordVscodeInput also records those terminals' keystrokes;
+	// it implies ObligationRecordVscodeTerminals.
+	ObligationRecordVscodeInput = "vscode-input"
 )
 
 // RecordObligation is the typed representation of the "record" obligation key
 // returned by the policy engine in a PolicyResult for session:record.
-// Each field corresponds to one recording channel; all default to false.
+// Each field corresponds to one obligation token; all default to false.
 type RecordObligation struct {
 	Shell       bool
 	Exec        bool
 	DirectTCPIP bool
 	SFTP        bool
+	// VscodeTerminals records VS Code integrated terminals in port-forwards,
+	// as their own recordings. It is independent of DirectTCPIP: without it
+	// the port-forward's raw data is not stored.
+	VscodeTerminals bool
+	// VscodeInput includes keystrokes in the VS Code terminal recordings.
+	// When set, VscodeTerminals is set too.
+	VscodeInput bool
+}
+
+// RecordsTCPIP reports whether a direct-tcpip port-forward must be recorded,
+// for its raw data or for the VS Code terminals it carries.
+func (o RecordObligation) RecordsTCPIP() bool {
+	return o.DirectTCPIP || o.VscodeTerminals
 }
 
 // ParseRecordObligation reads the "record" key from the obligations map.
-// The value is a comma-separated list of channel tokens ("shell", "exec",
-// "direct-tcpip", "sftp"); "none" or an unrecognised value leaves all fields
-// false. Returns (obligation, true) when the key is present, (zero, false)
+// The value is a comma-separated list of tokens ("shell", "exec",
+// "direct-tcpip", "sftp", "vscode-terminals", "vscode-input"); "none" or an
+// unrecognised value leaves all fields false. "vscode-input" implies
+// "vscode-terminals". Returns (obligation, true) when the key is present, (zero, false)
 // when the policy did not set a record obligation — the enforcer should then
 // apply its configured default (typically no recording).
 func ParseRecordObligation(obligations map[string]string) (RecordObligation, bool) {
@@ -543,6 +573,11 @@ func ParseRecordObligation(obligations map[string]string) (RecordObligation, boo
 			ob.DirectTCPIP = true
 		case ObligationRecordSFTP:
 			ob.SFTP = true
+		case ObligationRecordVscodeTerminals:
+			ob.VscodeTerminals = true
+		case ObligationRecordVscodeInput:
+			ob.VscodeTerminals = true
+			ob.VscodeInput = true
 		}
 	}
 	return ob, true
