@@ -50,6 +50,23 @@ service SessionService {
   // cannot be read: an unfinished pcap-ng or gzip recording then ends the
   // stream with FailedPrecondition after the metadata (ended_at is 0).
   rpc GetSessionRecording(GetSessionRecordingRequest) returns (stream GetSessionRecordingResponse);
+
+  // ListSessionRecordingCommands returns the commands run in a terminal
+  // recording (RECORDING_TYPE_SHELL or RECORDING_TYPE_VSCODE_TERMINAL), in
+  // the shape of exec recordings: each command line with its start and end
+  // time and its output as plain text, in recording order and paged. Only
+  // command lines entered at a shell prompt are commands; terminal control
+  // sequences, resizes and what full-screen programs (vim, less, top, ...)
+  // show are stripped. Commands are recognized from the shell's
+  // bracketed-paste mode switches and shell-integration sequences (OSC 133,
+  // VS Code OSC 633), and, for shells that emit neither, from Enter
+  // keystrokes when the recording includes input. Output printed before the
+  // first command (such as a login banner) is not returned. An unfinished
+  // plain .cast recording yields the commands recorded so far; an unfinished
+  // gzip recording returns FAILED_PRECONDITION. Other recording types return
+  // INVALID_ARGUMENT. No access check is made: the caller must have
+  // authorized access to the recording.
+  rpc ListSessionRecordingCommands(ListSessionRecordingCommandsRequest) returns (ListSessionRecordingCommandsResponse);
 }
 
 // GetSessionsRequest filters the list of sessions to return.
@@ -307,6 +324,70 @@ message GetSessionRecordingResponse {
     // chunk is a block of the stored file, at most 1 MiB.
     bytes chunk = 2;
   }
+}
+
+// ListSessionRecordingCommandsRequest selects a terminal recording and a
+// page of its commands.
+message ListSessionRecordingCommandsRequest {
+  // recording_id identifies the recording.
+  string recording_id = 1;
+  // limit is the maximum number of commands to return. 0 selects the server
+  // default; larger values are capped.
+  int32 limit = 2;
+  // offset is the number of commands to skip.
+  int32 offset = 3;
+  // max_output_bytes is the maximum size of each command's output. 0
+  // selects the server default; larger values are capped (64 KiB).
+  int32 max_output_bytes = 4;
+}
+
+// RecordingCommand is one command run in a terminal recording.
+message RecordingCommand {
+  // time_offset_ms is when the command was started (Enter pressed), in
+  // milliseconds since the recording's start, the time base of the
+  // recording's asciinema events.
+  int64 time_offset_ms = 1;
+  // end_time_offset_ms is when the command ended (the shell showed its next
+  // prompt), in milliseconds since the recording's start. 0 when the
+  // recording ended first.
+  int64 end_time_offset_ms = 2;
+  // started_at_ms is when the command was started as a Unix timestamp
+  // (milliseconds): the recording's start plus time_offset_ms.
+  int64 started_at_ms = 3;
+  // command is the command line as it was shown on the terminal, without
+  // the prompt and control sequences. A multi-line command (a
+  // here-document or a line continued at the shell's continuation prompt)
+  // is one command, its lines separated by "\n".
+  string command = 4;
+  // output is the command's output as it was shown on the terminal, as text
+  // lines separated by "\n", without control sequences: text overwritten on
+  // screen (progress bars) appears in its final state; leading and trailing
+  // blank lines are removed. At most max_output_bytes, cut at a UTF-8
+  // character boundary.
+  string output = 5;
+  // output_bytes is the size of the whole output.
+  int64 output_bytes = 6;
+  // output_truncated is true when output was cut to max_output_bytes.
+  bool output_truncated = 7;
+  // exit_code is the command's exit code, when the shell reported it
+  // through shell integration.
+  optional int32 exit_code = 8;
+  // fullscreen is true when the command used the terminal's alternate
+  // screen (an editor, pager or other full-screen program); what it showed
+  // there is not part of output.
+  bool fullscreen = 9;
+}
+
+// ListSessionRecordingCommandsResponse is one page of a recording's commands.
+message ListSessionRecordingCommandsResponse {
+  // metadata describes the recording; ended_at is 0 when only the part
+  // recorded so far was read.
+  RecordingMetadata metadata = 1;
+  // commands are the page's commands by start time.
+  repeated RecordingCommand commands = 2;
+  // total is the number of commands in the whole recording, regardless of
+  // limit and offset.
+  int32 total = 3;
 }
 
 // EndRecordingSessionRequest signals the recording backend to flush and release

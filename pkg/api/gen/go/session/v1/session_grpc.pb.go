@@ -25,14 +25,15 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SessionService_GetSessions_FullMethodName            = "/session.v1.SessionService/GetSessions"
-	SessionService_GetSessionsQuerySchema_FullMethodName = "/session.v1.SessionService/GetSessionsQuerySchema"
-	SessionService_QuerySessions_FullMethodName          = "/session.v1.SessionService/QuerySessions"
-	SessionService_UpsertSession_FullMethodName          = "/session.v1.SessionService/UpsertSession"
-	SessionService_EndSession_FullMethodName             = "/session.v1.SessionService/EndSession"
-	SessionService_GetVersionInfo_FullMethodName         = "/session.v1.SessionService/GetVersionInfo"
-	SessionService_ListSessionRecordings_FullMethodName  = "/session.v1.SessionService/ListSessionRecordings"
-	SessionService_GetSessionRecording_FullMethodName    = "/session.v1.SessionService/GetSessionRecording"
+	SessionService_GetSessions_FullMethodName                  = "/session.v1.SessionService/GetSessions"
+	SessionService_GetSessionsQuerySchema_FullMethodName       = "/session.v1.SessionService/GetSessionsQuerySchema"
+	SessionService_QuerySessions_FullMethodName                = "/session.v1.SessionService/QuerySessions"
+	SessionService_UpsertSession_FullMethodName                = "/session.v1.SessionService/UpsertSession"
+	SessionService_EndSession_FullMethodName                   = "/session.v1.SessionService/EndSession"
+	SessionService_GetVersionInfo_FullMethodName               = "/session.v1.SessionService/GetVersionInfo"
+	SessionService_ListSessionRecordings_FullMethodName        = "/session.v1.SessionService/ListSessionRecordings"
+	SessionService_GetSessionRecording_FullMethodName          = "/session.v1.SessionService/GetSessionRecording"
+	SessionService_ListSessionRecordingCommands_FullMethodName = "/session.v1.SessionService/ListSessionRecordingCommands"
 )
 
 // SessionServiceClient is the client API for SessionService service.
@@ -71,6 +72,22 @@ type SessionServiceClient interface {
 	// cannot be read: an unfinished pcap-ng or gzip recording then ends the
 	// stream with FailedPrecondition after the metadata (ended_at is 0).
 	GetSessionRecording(ctx context.Context, in *GetSessionRecordingRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[GetSessionRecordingResponse], error)
+	// ListSessionRecordingCommands returns the commands run in a terminal
+	// recording (RECORDING_TYPE_SHELL or RECORDING_TYPE_VSCODE_TERMINAL), in
+	// the shape of exec recordings: each command line with its start and end
+	// time and its output as plain text, in recording order and paged. Only
+	// command lines entered at a shell prompt are commands; terminal control
+	// sequences, resizes and what full-screen programs (vim, less, top, ...)
+	// show are stripped. Commands are recognized from the shell's
+	// bracketed-paste mode switches and shell-integration sequences (OSC 133,
+	// VS Code OSC 633), and, for shells that emit neither, from Enter
+	// keystrokes when the recording includes input. Output printed before the
+	// first command (such as a login banner) is not returned. An unfinished
+	// plain .cast recording yields the commands recorded so far; an unfinished
+	// gzip recording returns FAILED_PRECONDITION. Other recording types return
+	// INVALID_ARGUMENT. No access check is made: the caller must have
+	// authorized access to the recording.
+	ListSessionRecordingCommands(ctx context.Context, in *ListSessionRecordingCommandsRequest, opts ...grpc.CallOption) (*ListSessionRecordingCommandsResponse, error)
 }
 
 type sessionServiceClient struct {
@@ -170,6 +187,16 @@ func (c *sessionServiceClient) GetSessionRecording(ctx context.Context, in *GetS
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type SessionService_GetSessionRecordingClient = grpc.ServerStreamingClient[GetSessionRecordingResponse]
 
+func (c *sessionServiceClient) ListSessionRecordingCommands(ctx context.Context, in *ListSessionRecordingCommandsRequest, opts ...grpc.CallOption) (*ListSessionRecordingCommandsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListSessionRecordingCommandsResponse)
+	err := c.cc.Invoke(ctx, SessionService_ListSessionRecordingCommands_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SessionServiceServer is the server API for SessionService service.
 // All implementations must embed UnimplementedSessionServiceServer
 // for forward compatibility.
@@ -206,6 +233,22 @@ type SessionServiceServer interface {
 	// cannot be read: an unfinished pcap-ng or gzip recording then ends the
 	// stream with FailedPrecondition after the metadata (ended_at is 0).
 	GetSessionRecording(*GetSessionRecordingRequest, grpc.ServerStreamingServer[GetSessionRecordingResponse]) error
+	// ListSessionRecordingCommands returns the commands run in a terminal
+	// recording (RECORDING_TYPE_SHELL or RECORDING_TYPE_VSCODE_TERMINAL), in
+	// the shape of exec recordings: each command line with its start and end
+	// time and its output as plain text, in recording order and paged. Only
+	// command lines entered at a shell prompt are commands; terminal control
+	// sequences, resizes and what full-screen programs (vim, less, top, ...)
+	// show are stripped. Commands are recognized from the shell's
+	// bracketed-paste mode switches and shell-integration sequences (OSC 133,
+	// VS Code OSC 633), and, for shells that emit neither, from Enter
+	// keystrokes when the recording includes input. Output printed before the
+	// first command (such as a login banner) is not returned. An unfinished
+	// plain .cast recording yields the commands recorded so far; an unfinished
+	// gzip recording returns FAILED_PRECONDITION. Other recording types return
+	// INVALID_ARGUMENT. No access check is made: the caller must have
+	// authorized access to the recording.
+	ListSessionRecordingCommands(context.Context, *ListSessionRecordingCommandsRequest) (*ListSessionRecordingCommandsResponse, error)
 	mustEmbedUnimplementedSessionServiceServer()
 }
 
@@ -239,6 +282,9 @@ func (UnimplementedSessionServiceServer) ListSessionRecordings(context.Context, 
 }
 func (UnimplementedSessionServiceServer) GetSessionRecording(*GetSessionRecordingRequest, grpc.ServerStreamingServer[GetSessionRecordingResponse]) error {
 	return status.Error(codes.Unimplemented, "method GetSessionRecording not implemented")
+}
+func (UnimplementedSessionServiceServer) ListSessionRecordingCommands(context.Context, *ListSessionRecordingCommandsRequest) (*ListSessionRecordingCommandsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListSessionRecordingCommands not implemented")
 }
 func (UnimplementedSessionServiceServer) mustEmbedUnimplementedSessionServiceServer() {}
 func (UnimplementedSessionServiceServer) testEmbeddedByValue()                        {}
@@ -398,6 +444,24 @@ func _SessionService_GetSessionRecording_Handler(srv interface{}, stream grpc.Se
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type SessionService_GetSessionRecordingServer = grpc.ServerStreamingServer[GetSessionRecordingResponse]
 
+func _SessionService_ListSessionRecordingCommands_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListSessionRecordingCommandsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SessionServiceServer).ListSessionRecordingCommands(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SessionService_ListSessionRecordingCommands_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SessionServiceServer).ListSessionRecordingCommands(ctx, req.(*ListSessionRecordingCommandsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SessionService_ServiceDesc is the grpc.ServiceDesc for SessionService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -432,6 +496,10 @@ var SessionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListSessionRecordings",
 			Handler:    _SessionService_ListSessionRecordings_Handler,
+		},
+		{
+			MethodName: "ListSessionRecordingCommands",
+			Handler:    _SessionService_ListSessionRecordingCommands_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
