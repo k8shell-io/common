@@ -12,6 +12,10 @@ import (
 	"github.com/nats-io/nats.go"
 )
 
+// NoBucketTTL as BucketOptions.BucketTTL creates a bucket whose entries never
+// expire. A zero BucketTTL means the default (24h), not "no TTL".
+const NoBucketTTL time.Duration = -1
+
 // BucketOptions holds options for the JetStream cache bucket.
 type BucketOptions struct {
 	Bucket    string           `yaml:"bucket" json:"bucket"`
@@ -85,7 +89,7 @@ func (c *NATSClient) NewKV(bucketOpts BucketOptions) (*JetStreamKV, error) {
 			Bucket:      bucketOpts.Bucket,
 			History:     bucketOpts.History,
 			Storage:     bucketOpts.Storage,
-			TTL:         bucketOpts.BucketTTL,
+			TTL:         max(bucketOpts.BucketTTL, 0),
 			Replicas:    bucketOpts.Replicas,
 			Placement:   nil,
 			Description: "",

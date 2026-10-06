@@ -125,6 +125,9 @@ var scopeCatalogSource = []domainSpec{
 			{action: "session:recording:read", label: "Read recordings", entries: []entrySpec{
 				{scope: "session:recording:read", label: "Read recordings", description: "List, download and replay session recordings of any type (shell, exec, port-forward, SFTP)."},
 			}},
+			{action: "session:recording:override", label: "Override recording", entries: []entrySpec{
+				{scope: "session:recording:override", label: "Override recording", description: "Read, set and clear a workspace's recording override, which replaces the recording policy for its sessions."},
+			}},
 		},
 	},
 	{

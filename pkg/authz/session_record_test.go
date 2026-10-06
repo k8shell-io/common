@@ -3,7 +3,10 @@
 
 package authz
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestParseRecordObligation(t *testing.T) {
 	for name, tc := range map[string]struct {
@@ -38,5 +41,29 @@ func TestRecordObligationRecordsTCPIP(t *testing.T) {
 	}
 	if !(RecordObligation{DirectTCPIP: true}).RecordsTCPIP() {
 		t.Error("direct-tcpip must record tcpip")
+	}
+}
+
+func TestValidateRecordObligation(t *testing.T) {
+	for _, v := range []string{"shell", "shell,exec", "direct-tcpip, sftp", "vscode-input", "none"} {
+		if err := ValidateRecordObligation(v); err != nil {
+			t.Errorf("%q: unexpected error %v", v, err)
+		}
+	}
+	for _, v := range []string{"", "shell,", "bogus", "shell,none", "none,none"} {
+		if err := ValidateRecordObligation(v); err == nil {
+			t.Errorf("%q: expected error", v)
+		}
+	}
+}
+
+func TestRecordObligationTokens(t *testing.T) {
+	if got := (RecordObligation{}).Tokens(); got == nil || len(got) != 0 {
+		t.Fatalf("zero obligation: got %#v, want empty non-nil", got)
+	}
+	ob, _ := ParseRecordObligation(map[string]string{ObligationKeyRecord: "vscode-input,sftp,shell"})
+	got := strings.Join(ob.Tokens(), ",")
+	if want := "shell,sftp,vscode-terminals,vscode-input"; got != want {
+		t.Fatalf("got %q, want %q", got, want)
 	}
 }

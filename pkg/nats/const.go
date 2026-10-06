@@ -30,4 +30,10 @@ const (
 	// because JetStream KV TTL is bucket-wide and the two need very
 	// different lifetimes (short cooldown vs. longer token validity).
 	PASSWORD_RESET_COOLDOWN_BUCKET = "password-reset-cooldown"
+
+	// RECORDING_OVERRIDES_BUCKET holds per-workspace recording overrides,
+	// keyed by workspace name. See RecordingOverride (recordingoverride.go)
+	// for the value type and the producer/consumer contract between
+	// api-server and ssh-proxy. No TTL: an override lasts until deleted.
+	RECORDING_OVERRIDES_BUCKET = "recording-overrides"
 )

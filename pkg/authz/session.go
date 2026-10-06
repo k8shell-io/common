@@ -35,6 +35,9 @@ package authz
 //     vscode-input      also record the terminals' keystrokes; implies
 //                       vscode-terminals
 //   A present record obligation decides every token: an absent token is off.
+//   A workspace's recording override, when one is stored, replaces this
+//   obligation entirely (see session:recording:override and
+//   nats.ResolveRecordObligation); enforcers apply it after evaluating.
 //
 // ---
 //
@@ -96,6 +99,36 @@ package authz
 // forwards them to the session service, which only exposes recordings of
 // sessions that satisfy every present key; a session outside them is
 // indistinguishable from a missing one (NOT_FOUND).
+//
+// ---
+//
+// Contract: session:recording:override
+//
+// Grants reading, setting and clearing a workspace's recording override: a
+// stored "record" value (see nats.RecordingOverride, RECORDING_OVERRIDES_BUCKET)
+// that replaces the session:record obligation for every session to that
+// workspace started afterwards, over SSH (ssh-proxy) and webshell
+// (api-server). One action covers all three operations; there is no separate
+// read permission. It is a real access check: Allowed gates the request.
+// Because an override can switch recording off, policy should grant it
+// narrowly (typically admins only), and not to the workspace owner by default.
+//
+// Resource  type="workspace"
+//   id     workspace name           (required, except in a capability probe)
+//   owner  workspace owner username (required)
+//
+// Context   (none)
+//
+// Subject   injected by the backend from JWT claims (username, roles, email, ...)
+//
+// Obligations  none defined; the enforcer ignores any returned.
+//
+// Scope matrix:
+//   id set,    owner set   → the override of one workspace (every API call)
+//   id empty,  owner set   → capability probe: may the subject override
+//                            workspaces of that owner in general
+//
+// PAT scope: session:recording:override (flat, no per-type granularity).
 
 import (
 	"fmt"
@@ -124,6 +157,14 @@ const (
 	// recording type; the resource fields scope it exactly as for
 	// SessionActionList.
 	SessionActionRecordingRead SessionAction = "session:recording:read"
+
+	// SessionActionRecordingOverride is the action evaluated when reading,
+	// setting or clearing a workspace's recording override (see
+	// nats.RecordingOverride), which replaces the session:record obligation
+	// for every session to that workspace. The resource is always one
+	// workspace (id and owner set), except in a capability probe, which sets
+	// the owner only.
+	SessionActionRecordingOverride SessionAction = "session:recording:override"
 )
 
 // validSessionActions is the set of recognized session actions for fast lookup.
@@ -504,6 +545,86 @@ func (r *SessionRecordingReadEvalRequest) Validate() error {
 	return nil
 }
 
+// SessionRecordingOverrideEvalRequest is the typed authorization request for
+// session:recording:override. The resource is the workspace whose override is
+// read or written.
+type SessionRecordingOverrideEvalRequest struct {
+	Resource WorkspaceResource
+}
+
+var _ EvalRequest = (*SessionRecordingOverrideEvalRequest)(nil)
+
+// NewSessionRecordingOverrideEvalRequest returns a
+// SessionRecordingOverrideEvalRequest for the named workspace. Chain WithOwner,
+// then call Build.
+func NewSessionRecordingOverrideEvalRequest(workspaceID string) *SessionRecordingOverrideEvalRequest {
+	return &SessionRecordingOverrideEvalRequest{Resource: WorkspaceResource{ID: workspaceID}}
+}
+
+// WithOwner sets the workspace owner's username.
+func (r *SessionRecordingOverrideEvalRequest) WithOwner(owner string) *SessionRecordingOverrideEvalRequest {
+	r.Resource.Owner = owner
+	return r
+}
+
+// Build validates the request and returns it if all constraints are satisfied.
+func (r *SessionRecordingOverrideEvalRequest) Build() (*SessionRecordingOverrideEvalRequest, error) {
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// ToProto serializes the typed request into a gRPC EvaluateRequest.
+// Implements EvalRequest.
+func (r *SessionRecordingOverrideEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
+	return &authzv1.EvaluateRequest{
+		Token:  token,
+		Action: string(SessionActionRecordingOverride),
+		Resource: &authzv1.Resource{
+			Type:       "workspace",
+			Id:         r.Resource.ID,
+			Attributes: map[string]string{"owner": r.Resource.Owner},
+		},
+	}
+}
+
+// SessionRecordingOverrideEvalRequestFromProto converts a gRPC EvaluateRequest
+// into a validated SessionRecordingOverrideEvalRequest.
+func SessionRecordingOverrideEvalRequestFromProto(req *authzv1.EvaluateRequest) (*SessionRecordingOverrideEvalRequest, error) {
+	if req == nil {
+		return nil, fmt.Errorf("session:recording:override: EvaluateRequest is nil")
+	}
+	if req.Action != string(SessionActionRecordingOverride) {
+		return nil, fmt.Errorf("session:recording:override: action must be %q, got %q", SessionActionRecordingOverride, req.Action)
+	}
+	if req.Resource == nil {
+		return nil, fmt.Errorf("session:recording:override: resource is nil")
+	}
+	if req.Resource.Type != "workspace" {
+		return nil, fmt.Errorf("session:recording:override: resource type must be \"workspace\", got %q", req.Resource.Type)
+	}
+	r := &SessionRecordingOverrideEvalRequest{
+		Resource: WorkspaceResource{
+			ID:    req.Resource.Id,
+			Owner: req.Resource.Attributes["owner"],
+		},
+	}
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// Validate checks the request: owner is required; the workspace id may be
+// empty only in a capability probe. Implements EvalRequest.
+func (r *SessionRecordingOverrideEvalRequest) Validate() error {
+	if r.Resource.Owner == "" {
+		return fmt.Errorf("session:recording:override: resource attribute \"owner\" is required")
+	}
+	return nil
+}
+
 const (
 	// ObligationKeyRecord is the key the policy engine writes when expressing a
 	// session recording obligation. The enforcer reads this key and activates
@@ -548,6 +669,52 @@ type RecordObligation struct {
 // for its raw data or for the VS Code terminals it carries.
 func (o RecordObligation) RecordsTCPIP() bool {
 	return o.DirectTCPIP || o.VscodeTerminals
+}
+
+// Tokens returns the obligation's set fields as "record" tokens, in the order
+// shell, exec, direct-tcpip, sftp, vscode-terminals, vscode-input. A zero
+// obligation (nothing recorded) yields an empty, non-nil slice.
+func (o RecordObligation) Tokens() []string {
+	tokens := []string{}
+	for _, f := range []struct {
+		set   bool
+		token string
+	}{
+		{o.Shell, ObligationRecordShell},
+		{o.Exec, ObligationRecordExec},
+		{o.DirectTCPIP, ObligationRecordDirectTCPIP},
+		{o.SFTP, ObligationRecordSFTP},
+		{o.VscodeTerminals, ObligationRecordVscodeTerminals},
+		{o.VscodeInput, ObligationRecordVscodeInput},
+	} {
+		if f.set {
+			tokens = append(tokens, f.token)
+		}
+	}
+	return tokens
+}
+
+// ValidateRecordObligation checks a "record" obligation value strictly, for
+// enforcers that accept one from a user rather than from the policy engine:
+// every comma-separated token must be known, at least one must be given, and
+// "none" must stand alone. ParseRecordObligation itself ignores unknown tokens.
+func ValidateRecordObligation(v string) error {
+	tokens := strings.Split(v, ",")
+	for _, t := range tokens {
+		switch strings.TrimSpace(t) {
+		case ObligationRecordShell, ObligationRecordExec, ObligationRecordDirectTCPIP,
+			ObligationRecordSFTP, ObligationRecordVscodeTerminals, ObligationRecordVscodeInput:
+		case ObligationRecordNone:
+			if len(tokens) > 1 {
+				return fmt.Errorf("record: %q cannot be combined with other values", ObligationRecordNone)
+			}
+		case "":
+			return fmt.Errorf("record: empty value")
+		default:
+			return fmt.Errorf("record: unknown value %q", strings.TrimSpace(t))
+		}
+	}
+	return nil
 }
 
 // ParseRecordObligation reads the "record" key from the obligations map.
@@ -617,6 +784,12 @@ func init() {
 		Action: string(SessionActionList), Package: "session", Scope: string(SessionActionList),
 		Build: func(ctx CapabilityContext) (EvalRequest, error) {
 			return NewSessionListEvalRequest().WithOwner(ctx.ResourceOwner).Build()
+		},
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		Action: string(SessionActionRecordingOverride), Package: "session", Scope: string(SessionActionRecordingOverride),
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewSessionRecordingOverrideEvalRequest("").WithOwner(ctx.ResourceOwner).Build()
 		},
 	})
 	registerCapabilityCheck(CapabilityCheck{

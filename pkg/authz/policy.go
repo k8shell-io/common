@@ -199,6 +199,14 @@ func normalizeByDomain(req *authzv1.EvaluateRequest) (*authzv1.EvaluateRequest, 
 		normalized := recReq.ToProto("")
 		normalized.Package = req.Package
 		return normalized, nil
+	case action == string(SessionActionRecordingOverride):
+		overrideReq, err := SessionRecordingOverrideEvalRequestFromProto(req)
+		if err != nil {
+			return nil, err
+		}
+		normalized := overrideReq.ToProto("")
+		normalized.Package = req.Package
+		return normalized, nil
 	case action == "session:record":
 		sessionReq, err := SessionRecordEvalRequestFromProto(req)
 		if err != nil {

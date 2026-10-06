@@ -213,6 +213,10 @@ var validExactScopes = map[string]struct{}{
 	// per-type granularity.
 	string(SessionActionRecordingRead): {},
 
+	// session:recording:override — read, set and clear a workspace's
+	// recording override.
+	string(SessionActionRecordingOverride): {},
+
 	// user — flat
 	"user:list": {},
 
