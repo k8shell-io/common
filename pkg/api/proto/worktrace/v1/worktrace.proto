@@ -1,0 +1,48 @@
+// Copyright 2026 the k8Shell authors.
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+syntax = "proto3";
+
+// Package worktrace.v1 defines the gRPC API of the worktrace controller, which
+// owns the threat-detection rule set and distributes it to the per-node
+// worktrace detector instances.
+package worktrace.v1;
+
+option go_package = "github.com/k8shell-io/common/pkg/api/gen/go/worktrace/v1;worktracev1";
+
+import "common/v1/common.proto";
+
+// WorktraceControllerService is the gRPC API served by the worktrace controller
+// to its detector instances.
+service WorktraceControllerService {
+  // GetVersionInfo returns build and version metadata for the controller.
+  rpc GetVersionInfo(common.v1.GetVersionInfoRequest) returns (common.v1.GetVersionInfoResponse);
+
+  // GetRules returns the current detection rule set. Detectors call it
+  // periodically with the version they currently run; when it still matches,
+  // the controller answers with not_modified and no payload.
+  rpc GetRules(GetRulesRequest) returns (GetRulesResponse);
+}
+
+// GetRulesRequest asks for the current rule set.
+message GetRulesRequest {
+  // current_version is the version of the rule set the caller currently runs,
+  // as returned by an earlier GetRules call. Empty if the caller has none.
+  string current_version = 1;
+  // node_name is the Kubernetes node the detector runs on. Informational
+  // (logging, and a future per-node or per-scope rule selection).
+  string node_name = 2;
+}
+
+// GetRulesResponse carries the current rule set, or just its version.
+message GetRulesResponse {
+  // version identifies the rule set: a content hash of all files, so equal
+  // content always yields an equal version across controller replicas.
+  string version = 1;
+  // not_modified is true when the caller's current_version equals version. In
+  // that case files is empty and the caller keeps its current rules.
+  bool not_modified = 2;
+  // files maps a relative file name (e.g. "other-malicious/reverse_shell.yaml")
+  // to its YAML content. It is always a complete snapshot, never a delta.
+  map<string, bytes> files = 3;
+}
