@@ -37,3 +37,18 @@ const (
 	// api-server and ssh-proxy. No TTL: an override lasts until deleted.
 	RECORDING_OVERRIDES_BUCKET = "recording-overrides"
 )
+
+const (
+	// THREATS_STREAM is the JetStream stream that carries threats reported by
+	// worktrace detectors. The worktrace controller creates it and consumes
+	// it; detectors only publish. See models.ThreatEvent for the payload.
+	THREATS_STREAM = "WORKTRACE_THREATS"
+
+	// THREATS_SUBJECT_PREFIX prefixes every threat subject; the stream binds
+	// THREATS_SUBJECT_PREFIX + ".>".
+	THREATS_SUBJECT_PREFIX = "worktrace.threats"
+
+	// THREATS_CONSUMER is the durable consumer the controller replicas share,
+	// so each threat is handled by exactly one replica.
+	THREATS_CONSUMER = "worktrace-controller"
+)

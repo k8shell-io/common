@@ -16,13 +16,17 @@ import (
 
 // NATSClientConfig holds NATS connection.
 type NATSClientConfig struct {
-	Enabled       bool          `yaml:"enabled" json:"enabled"`
-	URL           string        `yaml:"url" json:"url"`
-	Username      string        `yaml:"username" json:"username"`
-	Password      string        `yaml:"password" json:"password"`
-	Token         string        `yaml:"token"    json:"token"`
-	MaxReconnects int           `yaml:"maxReconnects" json:"maxReconnects"`
-	ReconnectWait time.Duration `yaml:"reconnectWait" json:"reconnectWait"`
+	Enabled       bool   `yaml:"enabled" json:"enabled"`
+	URL           string `yaml:"url" json:"url"`
+	Username      string `yaml:"username" json:"username"`
+	Password      string `yaml:"password" json:"password"`
+	Token         string `yaml:"token"    json:"token"`
+	MaxReconnects int    `yaml:"maxReconnects" json:"maxReconnects"`
+	// RetryOnFailedConnect makes the initial connect return immediately and
+	// keep retrying in the background when the server is unreachable, instead
+	// of failing. For clients that must start without NATS.
+	RetryOnFailedConnect bool          `yaml:"retryOnFailedConnect" json:"retryOnFailedConnect"`
+	ReconnectWait        time.Duration `yaml:"reconnectWait" json:"reconnectWait"`
 }
 
 type NATSClient struct {
@@ -55,6 +59,9 @@ func NatsOptionsFromConfig(name string, cfg NATSClientConfig) []nats.Option {
 		nats.MaxReconnects(cfg.MaxReconnects),
 		nats.ReconnectWait(cfg.ReconnectWait),
 	)
+	if cfg.RetryOnFailedConnect {
+		opts = append(opts, nats.RetryOnFailedConnect(true))
+	}
 	return opts
 }
 
