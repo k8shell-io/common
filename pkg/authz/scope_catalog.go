@@ -269,6 +269,20 @@ var scopeCatalogSource = []domainSpec{
 			}},
 		},
 	},
+	{
+		domain:      "git",
+		label:       "Git",
+		description: "Use git through the API server's git proxy, with the user's stored git credentials. The token itself is never returned.",
+		wildcard:    &entrySpec{scope: "git:*", label: "All git operations"},
+		actions: []actionSpec{
+			{action: "git:fetch", label: "Fetch", entries: []entrySpec{
+				{scope: "git:fetch", label: "Fetch", description: "Clone, fetch, and pull repositories the user holds a git credential for."},
+			}},
+			{action: "git:push", label: "Push", entries: []entrySpec{
+				{scope: "git:push", label: "Push", description: "Push to repositories the user holds a git credential for."},
+			}},
+		},
+	},
 }
 
 // buildEntry converts spec into a ScopeCatalogEntry, deriving Wildcard and

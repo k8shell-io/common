@@ -292,6 +292,14 @@ var validExactScopes = map[string]struct{}{
 	// authenticated user may read them (see the announcement:write contract
 	// doc).
 	"announcement:write": {},
+
+	// git — one entry per git proxy operation (fetch | push). Neither accepts
+	// a constraint: a git proxy request always runs as the token's own
+	// subject, and which repos are reachable is decided by the subject's
+	// stored git credentials, not by the scope (see the git:fetch/git:push
+	// contract in git.go).
+	string(GitActionFetch): {},
+	string(GitActionPush):  {},
 }
 
 // validWildcardPrefixes is the set of prefixes that may appear before ":*".
@@ -312,6 +320,7 @@ var validWildcardPrefixes = map[string]struct{}{
 	"role":                   {}, // list | create | delete
 	"org":                    {}, // list | create | delete | envvar:*
 	"org:envvar":             {}, // read | write
+	"git":                    {}, // fetch | push
 }
 
 // ValidateScope reports whether s is a well-formed, recognized scope string.

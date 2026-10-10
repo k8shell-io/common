@@ -95,6 +95,8 @@ var expectedCapabilityActions = []string{
 	"blueprints:write",
 	"audit:list",
 	"announcement:write",
+	"git:fetch",
+	"git:push",
 }
 
 func TestCapabilityChecksCompleteness(t *testing.T) {
