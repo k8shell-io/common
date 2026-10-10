@@ -7,13 +7,13 @@ import "testing"
 
 func TestGitEvalRequestRoundTrip(t *testing.T) {
 	for _, action := range []GitAction{GitActionFetch, GitActionPush} {
-		req, err := NewGitEvalRequest(action, "github.com/acme/app").WithWorkspace("ws1").Build()
+		req, err := NewGitEvalRequest(action, "github.com/acme/app").WithWorkspace("ws1", "alice").Build()
 		if err != nil {
 			t.Fatalf("%s: Build: %v", action, err)
 		}
 		p := req.ToProto("tok")
 		if p.Action != string(action) || p.Resource.Type != "repo" || p.Resource.Id != "github.com/acme/app" ||
-			p.Resource.Attributes["host"] != "github.com" || p.Context["workspace"] != "ws1" || p.Token != "tok" {
+			p.Resource.Attributes["host"] != "github.com" || p.Context["workspace"] != "ws1" || p.Context["workspace_owner"] != "alice" || p.Token != "tok" {
 			t.Fatalf("%s: unexpected proto %+v", action, p)
 		}
 		back, err := GitEvalRequestFromProto(p)
@@ -42,6 +42,12 @@ func TestGitEvalRequestValidate(t *testing.T) {
 	}
 	if _, err := NewGitEvalRequest(GitActionPush, "").Build(); err == nil {
 		t.Error("empty repo: want error")
+	}
+	if _, err := NewGitEvalRequest(GitActionPush, "github.com/a/b").WithWorkspace("ws1", "").Build(); err == nil {
+		t.Error("workspace without owner: want error")
+	}
+	if _, err := NewGitEvalRequest(GitActionPush, "github.com/a/b").WithWorkspace("", "alice").Build(); err == nil {
+		t.Error("owner without workspace: want error")
 	}
 	p := NewGitEvalRequest(GitActionPush, "github.com/a/b").ToProto("tok")
 	p.Resource.Attributes["host"] = "evil.example"

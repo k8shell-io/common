@@ -15,10 +15,15 @@ package authz
 //         without parsing id.
 //
 // Context
-//   workspace  name of the workspace the request originates from (optional).
-//              Set by the enforcer when it has bound the request to one of
-//              the subject's own workspaces (api-server's git proxy binds by
-//              the caller's pod IP); empty otherwise.
+//   workspace        name of the workspace the request originates from
+//                    (optional). Set by the enforcer when it has bound the
+//                    request to a workspace (api-server's git proxy binds by
+//                    the caller's pod IP); empty otherwise.
+//   workspace_owner  username of that workspace's owner (required when
+//                    workspace is set, absent otherwise). Taken from the
+//                    workspace record, never copied from the subject, so a
+//                    policy can check workspace_owner == subject.username
+//                    itself instead of trusting the enforcer's binding.
 //
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
@@ -72,6 +77,11 @@ type GitContext struct {
 	// Workspace is the name of the workspace the request originates from
 	// (context["workspace"]); empty when the request isn't bound to one.
 	Workspace string
+
+	// WorkspaceOwner is the username of Workspace's owner
+	// (context["workspace_owner"]), taken from the workspace record; set
+	// exactly when Workspace is.
+	WorkspaceOwner string
 }
 
 // GitEvalRequest is the validated, typed model for git:fetch and git:push
@@ -87,7 +97,7 @@ var _ EvalRequest = (*GitEvalRequest)(nil)
 
 // NewGitEvalRequest begins building a GitEvalRequest for the given action
 // and normalized repository id ("host/path"). Host is derived from repo.
-// Call WithWorkspace to attach the originating workspace, then Build to
+// Call WithWorkspace to attach the originating workspace and its owner, then Build to
 // validate and obtain the final struct.
 func NewGitEvalRequest(action GitAction, repo string) *GitEvalRequest {
 	return &GitEvalRequest{
@@ -96,9 +106,11 @@ func NewGitEvalRequest(action GitAction, repo string) *GitEvalRequest {
 	}
 }
 
-// WithWorkspace sets the workspace the request originates from.
-func (r *GitEvalRequest) WithWorkspace(workspace string) *GitEvalRequest {
+// WithWorkspace sets the workspace the request originates from and its
+// owner, as recorded on the workspace itself — not the subject's username.
+func (r *GitEvalRequest) WithWorkspace(workspace, owner string) *GitEvalRequest {
 	r.Context.Workspace = workspace
+	r.Context.WorkspaceOwner = owner
 	return r
 }
 
@@ -125,6 +137,9 @@ func (r *GitEvalRequest) Validate() error {
 	if r.Resource.Host == "" || r.Resource.Host != gitRepoHost(r.Resource.Repo) {
 		return fmt.Errorf("%s: resource host %q does not match repo %q", r.Action, r.Resource.Host, r.Resource.Repo)
 	}
+	if (r.Context.Workspace == "") != (r.Context.WorkspaceOwner == "") {
+		return fmt.Errorf("%s: context workspace and workspace_owner must be set together", r.Action)
+	}
 	return nil
 }
 
@@ -142,7 +157,10 @@ func (r *GitEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
 		},
 	}
 	if r.Context.Workspace != "" {
-		req.Context = map[string]string{"workspace": r.Context.Workspace}
+		req.Context = map[string]string{
+			"workspace":       r.Context.Workspace,
+			"workspace_owner": r.Context.WorkspaceOwner,
+		}
 	}
 	return req
 }
@@ -164,6 +182,7 @@ func GitEvalRequestFromProto(req *authzv1.EvaluateRequest) (*GitEvalRequest, err
 		r.Resource.Host = h
 	}
 	r.Context.Workspace = req.Context["workspace"]
+	r.Context.WorkspaceOwner = req.Context["workspace_owner"]
 	if err := r.Validate(); err != nil {
 		return nil, err
 	}
