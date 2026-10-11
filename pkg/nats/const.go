@@ -36,6 +36,14 @@ const (
 	// for the value type and the producer/consumer contract between
 	// api-server and ssh-proxy. No TTL: an override lasts until deleted.
 	RECORDING_OVERRIDES_BUCKET = "recording-overrides"
+
+	// THREAT_DETECTION_BUCKET holds per-workspace threat detection decisions,
+	// keyed by workspace name: the threat:detect policy result and the
+	// detection override. See ThreatDetection (threatdetection.go) for the
+	// value type and the producer/consumer contract between the provisioner,
+	// api-server and worktrace. No TTL: an entry lasts until its workspace is
+	// deleted.
+	THREAT_DETECTION_BUCKET = "threat-detection"
 )
 
 const (

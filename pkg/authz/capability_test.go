@@ -55,6 +55,7 @@ var expectedCapabilityActions = []string{
 	"session:list",
 	"session:recording:read",
 	"session:recording:override",
+	"threat:detection:override",
 	"workspace:list",
 	"workspace:create:standalone:catalog",
 	"workspace:create:standalone:git",

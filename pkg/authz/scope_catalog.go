@@ -131,6 +131,16 @@ var scopeCatalogSource = []domainSpec{
 		},
 	},
 	{
+		domain:      "threat",
+		label:       "Threat detection",
+		description: "Threat detection by worktrace in workspaces.",
+		actions: []actionSpec{
+			{action: "threat:detection:override", label: "Override detection", entries: []entrySpec{
+				{scope: "threat:detection:override", label: "Override detection", description: "Read, set and clear a workspace's detection override, which replaces the detection policy for the workspace."},
+			}},
+		},
+	},
+	{
 		domain:      "user",
 		label:       "Users",
 		description: "Read and manage user accounts.",

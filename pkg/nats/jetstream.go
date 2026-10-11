@@ -102,6 +102,29 @@ func (c *NATSClient) NewKV(bucketOpts BucketOptions) (*JetStreamKV, error) {
 	return jkv, nil
 }
 
+// OpenKV opens an existing bucket, for consumers that must not create it
+// themselves. It returns nats.ErrBucketNotFound while the bucket is missing.
+func (c *NATSClient) OpenKV(bucket string) (*JetStreamKV, error) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	if c.nc == nil {
+		return nil, fmt.Errorf("NATS connection is not established")
+	}
+	var err error
+	if c.js == nil {
+		c.js, err = c.nc.JetStream()
+		if err != nil {
+			return nil, err
+		}
+	}
+	kv, err := c.js.KeyValue(bucket)
+	if err != nil {
+		return nil, err
+	}
+	return &JetStreamKV{log: c.log, bucketOpts: BucketOptions{Bucket: bucket}, kv: kv}, nil
+}
+
 // Get retrieves raw bytes at key.
 func (c *JetStreamKV) Get(key string) (nats.KeyValueEntry, error) {
 	c.mu.RLock()
@@ -167,6 +190,20 @@ func (c *JetStreamKV) Delete(key string) error {
 		return nats.ErrConnectionClosed
 	}
 	return kv.Delete(key)
+}
+
+// WatchAll watches every key of the bucket. The watcher first delivers the
+// current value of each key, then a nil entry marking the end of that initial
+// snapshot, then every later change (deletes as KeyValueDelete or
+// KeyValuePurge operations). Stop it when done.
+func (c *JetStreamKV) WatchAll(opts ...nats.WatchOpt) (nats.KeyWatcher, error) {
+	c.mu.RLock()
+	kv := c.kv
+	c.mu.RUnlock()
+	if kv == nil {
+		return nil, nats.ErrConnectionClosed
+	}
+	return kv.WatchAll(opts...)
 }
 
 // AcquireLock attempts to acquire a lock at key with TTL.
