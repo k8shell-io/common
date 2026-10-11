@@ -65,9 +65,10 @@ type ThreatDetectionOverride struct {
 	SetAt int64 `json:"setAt,omitempty"`
 }
 
-// ThreatDetectionBucketOptions are the options every producer and consumer
-// opens THREAT_DETECTION_BUCKET with, so whichever creates it creates it the
-// same way.
+// ThreatDetectionBucketOptions are the options THREAT_DETECTION_BUCKET is
+// created with. Only the worktrace controller creates the bucket; producers
+// (provisioner, api-server) open it by name with NATSClient.OpenKV and treat
+// a missing bucket as worktrace not being installed.
 func ThreatDetectionBucketOptions(replicas int) BucketOptions {
 	return BucketOptions{Bucket: THREAT_DETECTION_BUCKET, BucketTTL: NoBucketTTL, Replicas: replicas}
 }
