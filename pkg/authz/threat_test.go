@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/k8shell-io/common/pkg/models"
 	"github.com/k8shell-io/common/pkg/threat"
 )
 
@@ -78,7 +79,8 @@ func TestValidateDetectObligation(t *testing.T) {
 }
 
 func TestThreatDetectEvalRequest(t *testing.T) {
-	r, err := NewThreatDetectEvalRequest("bruckins-85a782e").WithOwner("bruckins").WithBlueprint("dev").
+	r, err := NewThreatDetectEvalRequest("bruckins-85a782e").WithOwner("bruckins").WithBlueprintName("dev").
+		WithBlueprint(&models.Blueprint{Name: "dev"}).
 		WithMode(WorkspaceProvisionModeInject, "k8shell-test").WithWorkload("api", "deployment").Build()
 	if err != nil {
 		t.Fatal(err)
@@ -89,6 +91,25 @@ func TestThreatDetectEvalRequest(t *testing.T) {
 	}
 	if !reflect.DeepEqual(back, r) {
 		t.Errorf("round trip: got %+v, want %+v", back, r)
+	}
+	if back.Context.Blueprint == nil || back.Context.Blueprint.Name != "dev" {
+		t.Errorf("blueprint not carried: %+v", back.Context.Blueprint)
+	}
+
+	// the blueprint is optional and absent from the context when unset
+	noBP, err := NewThreatDetectEvalRequest("ws").WithOwner("u").WithMode(WorkspaceProvisionModeStandalone, "ns").Build()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := noBP.ToProto("tok").Context["blueprint"]; ok {
+		t.Error("blueprint context set without a blueprint")
+	}
+
+	// a malformed blueprint is rejected
+	bad := noBP.ToProto("tok")
+	bad.Context["blueprint"] = "{not: [yaml"
+	if _, err := ThreatDetectEvalRequestFromProto(bad); err == nil {
+		t.Error("malformed blueprint: expected error")
 	}
 
 	for name, b := range map[string]*ThreatDetectEvalRequest{

@@ -20,6 +20,12 @@ package authz
 //   blueprint  blueprint name            (optional)
 //
 // Context
+//   blueprint           YAML-encoded blueprint struct (optional): the full
+//                       blueprint being provisioned, encoded exactly as in
+//                       workspace:provision. Callers should pass the blueprint
+//                       after provisioning patches are applied, so the policy
+//                       sees what actually runs. A missing blueprint means the
+//                       policy can match on the blueprint name only.
 //   mode                standalone | inject  (required)
 //   namespace           namespace the workspace pod runs in (required): the
 //                       provisioner's target namespace for standalone, the
@@ -106,6 +112,10 @@ package authz
 //	    input.context.namespace != ""
 //	}
 //
+//	# the full blueprint, when the caller sent one (same encoding as
+//	# workspace:provision)
+//	blueprint := yaml.unmarshal(input.context.blueprint) if input.context.blueprint
+//
 //	obligations["detect"] := detect if input.action == "threat:detect"
 //
 //	# standalone workspaces: every category
@@ -153,7 +163,9 @@ import (
 	"strings"
 
 	authzv1 "github.com/k8shell-io/common/pkg/api/gen/go/authz/v1"
+	"github.com/k8shell-io/common/pkg/models"
 	"github.com/k8shell-io/common/pkg/threat"
+	"gopkg.in/yaml.v3"
 )
 
 // ThreatAction is the typed representation of a threat policy action.
@@ -177,6 +189,9 @@ const (
 // ThreatDetectContext holds the ambient attributes supplied by the caller in
 // the context map of a threat:detect EvaluateRequest.
 type ThreatDetectContext struct {
+	// Blueprint is the full blueprint being provisioned (optional). It is
+	// carried YAML-encoded in context["blueprint"].
+	Blueprint    *models.Blueprint
 	Mode         WorkspaceProvisionMode
 	Namespace    string
 	WorkloadName string
@@ -206,9 +221,16 @@ func (r *ThreatDetectEvalRequest) WithOwner(owner string) *ThreatDetectEvalReque
 	return r
 }
 
-// WithBlueprint sets the blueprint name on the resource.
-func (r *ThreatDetectEvalRequest) WithBlueprint(blueprint string) *ThreatDetectEvalRequest {
-	r.Resource.Blueprint = blueprint
+// WithBlueprintName sets the blueprint name on the resource attributes.
+func (r *ThreatDetectEvalRequest) WithBlueprintName(name string) *ThreatDetectEvalRequest {
+	r.Resource.Blueprint = name
+	return r
+}
+
+// WithBlueprint sets the full blueprint struct in the context; it is optional.
+// Pass the blueprint after provisioning patches have been applied.
+func (r *ThreatDetectEvalRequest) WithBlueprint(bp *models.Blueprint) *ThreatDetectEvalRequest {
+	r.Context.Blueprint = bp
 	return r
 }
 
@@ -247,6 +269,11 @@ func (r *ThreatDetectEvalRequest) ToProto(token string) *authzv1.EvaluateRequest
 	ctx := map[string]string{
 		"mode":      string(r.Context.Mode),
 		"namespace": r.Context.Namespace,
+	}
+	if r.Context.Blueprint != nil {
+		if data, err := yaml.Marshal(r.Context.Blueprint); err == nil {
+			ctx["blueprint"] = string(data)
+		}
 	}
 	if r.Context.WorkloadName != "" {
 		ctx["workload_name"] = r.Context.WorkloadName
@@ -295,6 +322,13 @@ func ThreatDetectEvalRequestFromProto(req *authzv1.EvaluateRequest) (*ThreatDete
 			WorkloadName: ctx["workload_name"],
 			WorkloadKind: ctx["workload_kind"],
 		},
+	}
+	if raw, ok := ctx["blueprint"]; ok {
+		var bp models.Blueprint
+		if err := yaml.Unmarshal([]byte(raw), &bp); err != nil {
+			return nil, fmt.Errorf("threat:detect: failed to decode blueprint context: %w", err)
+		}
+		r.Context.Blueprint = &bp
 	}
 	if err := r.Validate(); err != nil {
 		return nil, err
