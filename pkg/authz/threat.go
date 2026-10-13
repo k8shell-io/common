@@ -20,11 +20,13 @@ package authz
 //   blueprint  blueprint name            (optional)
 //
 // Context
-//   blueprint           YAML-encoded blueprint struct (optional): the full
-//                       blueprint being provisioned, encoded exactly as in
-//                       workspace:provision. Callers should pass the blueprint
-//                       after provisioning patches are applied, so the policy
-//                       sees what actually runs. A missing blueprint means the
+//   resources           JSON-encoded object (optional): the workspace Helm
+//                       chart as rendered for this provision, one entry per
+//                       Kubernetes document keyed "Kind/name", each the
+//                       document as a plain object. This is what will actually
+//                       be created, so policies should prefer it over the
+//                       blueprint. Secrets are never included and ConfigMaps
+//                       carry no data. A missing resources key means the
 //                       policy can match on the blueprint name only.
 //   mode                standalone | inject  (required)
 //   namespace           namespace the workspace pod runs in (required): the
@@ -112,9 +114,9 @@ package authz
 //	    input.context.namespace != ""
 //	}
 //
-//	# the full blueprint, when the caller sent one (same encoding as
-//	# workspace:provision)
-//	blueprint := yaml.unmarshal(input.context.blueprint) if input.context.blueprint
+//	# the rendered workspace chart, when the caller sent it: documents keyed
+//	# "Kind/name", e.g. resources["Pod/ws-alice"].spec.containers
+//	resources := json.unmarshal(input.context.resources) if input.context.resources
 //
 //	obligations["detect"] := detect if input.action == "threat:detect"
 //
@@ -159,13 +161,12 @@ package authz
 //	}
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
 	authzv1 "github.com/k8shell-io/common/pkg/api/gen/go/authz/v1"
-	"github.com/k8shell-io/common/pkg/models"
 	"github.com/k8shell-io/common/pkg/threat"
-	"gopkg.in/yaml.v3"
 )
 
 // ThreatAction is the typed representation of a threat policy action.
@@ -189,9 +190,9 @@ const (
 // ThreatDetectContext holds the ambient attributes supplied by the caller in
 // the context map of a threat:detect EvaluateRequest.
 type ThreatDetectContext struct {
-	// Blueprint is the full blueprint being provisioned (optional). It is
-	// carried YAML-encoded in context["blueprint"].
-	Blueprint    *models.Blueprint
+	// Resources are the rendered chart documents keyed "Kind/name"
+	// (optional). They are carried JSON-encoded in context["resources"].
+	Resources    map[string]map[string]any
 	Mode         WorkspaceProvisionMode
 	Namespace    string
 	WorkloadName string
@@ -227,10 +228,11 @@ func (r *ThreatDetectEvalRequest) WithBlueprintName(name string) *ThreatDetectEv
 	return r
 }
 
-// WithBlueprint sets the full blueprint struct in the context; it is optional.
-// Pass the blueprint after provisioning patches have been applied.
-func (r *ThreatDetectEvalRequest) WithBlueprint(bp *models.Blueprint) *ThreatDetectEvalRequest {
-	r.Context.Blueprint = bp
+// WithResources sets the rendered chart documents keyed "Kind/name" in the
+// context; it is optional. Callers must leave Secrets out and strip ConfigMap
+// data.
+func (r *ThreatDetectEvalRequest) WithResources(resources map[string]map[string]any) *ThreatDetectEvalRequest {
+	r.Context.Resources = resources
 	return r
 }
 
@@ -270,9 +272,9 @@ func (r *ThreatDetectEvalRequest) ToProto(token string) *authzv1.EvaluateRequest
 		"mode":      string(r.Context.Mode),
 		"namespace": r.Context.Namespace,
 	}
-	if r.Context.Blueprint != nil {
-		if data, err := yaml.Marshal(r.Context.Blueprint); err == nil {
-			ctx["blueprint"] = string(data)
+	if len(r.Context.Resources) > 0 {
+		if data, err := json.Marshal(r.Context.Resources); err == nil {
+			ctx["resources"] = string(data)
 		}
 	}
 	if r.Context.WorkloadName != "" {
@@ -323,12 +325,10 @@ func ThreatDetectEvalRequestFromProto(req *authzv1.EvaluateRequest) (*ThreatDete
 			WorkloadKind: ctx["workload_kind"],
 		},
 	}
-	if raw, ok := ctx["blueprint"]; ok {
-		var bp models.Blueprint
-		if err := yaml.Unmarshal([]byte(raw), &bp); err != nil {
-			return nil, fmt.Errorf("threat:detect: failed to decode blueprint context: %w", err)
+	if raw, ok := ctx["resources"]; ok {
+		if err := json.Unmarshal([]byte(raw), &r.Context.Resources); err != nil {
+			return nil, fmt.Errorf("threat:detect: failed to decode resources context: %w", err)
 		}
-		r.Context.Blueprint = &bp
 	}
 	if err := r.Validate(); err != nil {
 		return nil, err

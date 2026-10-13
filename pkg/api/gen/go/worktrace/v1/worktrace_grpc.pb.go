@@ -9,13 +9,14 @@
 
 // Package worktrace.v1 defines the gRPC API of the worktrace controller, which
 // owns the threat-detection rule set and distributes it to the per-node
-// worktrace detector instances.
+// worktrace detector instances, and serves the threats the detectors reported.
 
 package worktracev1
 
 import (
 	context "context"
 	v1 "github.com/k8shell-io/common/pkg/api/gen/go/common/v1"
+	v11 "github.com/k8shell-io/common/pkg/api/gen/go/query/v1"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -27,8 +28,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	WorktraceControllerService_GetVersionInfo_FullMethodName = "/worktrace.v1.WorktraceControllerService/GetVersionInfo"
-	WorktraceControllerService_GetRules_FullMethodName       = "/worktrace.v1.WorktraceControllerService/GetRules"
+	WorktraceControllerService_GetVersionInfo_FullMethodName        = "/worktrace.v1.WorktraceControllerService/GetVersionInfo"
+	WorktraceControllerService_GetRules_FullMethodName              = "/worktrace.v1.WorktraceControllerService/GetRules"
+	WorktraceControllerService_GetThreatsQuerySchema_FullMethodName = "/worktrace.v1.WorktraceControllerService/GetThreatsQuerySchema"
+	WorktraceControllerService_QueryThreats_FullMethodName          = "/worktrace.v1.WorktraceControllerService/QueryThreats"
 )
 
 // WorktraceControllerServiceClient is the client API for WorktraceControllerService service.
@@ -36,7 +39,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
 // WorktraceControllerService is the gRPC API served by the worktrace controller
-// to its detector instances.
+// to its detector instances (rules) and to other k8shell services (threats).
 type WorktraceControllerServiceClient interface {
 	// GetVersionInfo returns build and version metadata for the controller.
 	GetVersionInfo(ctx context.Context, in *v1.GetVersionInfoRequest, opts ...grpc.CallOption) (*v1.GetVersionInfoResponse, error)
@@ -44,6 +47,17 @@ type WorktraceControllerServiceClient interface {
 	// periodically with the version they currently run; when it still matches,
 	// the controller answers with not_modified and no payload.
 	GetRules(ctx context.Context, in *GetRulesRequest, opts ...grpc.CallOption) (*GetRulesResponse, error)
+	// GetThreatsQuerySchema returns the query.v1.Descriptor advertising which
+	// threat fields are queryable/sortable via QueryThreats, and which
+	// operators are valid on each.
+	GetThreatsQuerySchema(ctx context.Context, in *GetThreatsQuerySchemaRequest, opts ...grpc.CallOption) (*v11.Descriptor, error)
+	// QueryThreats retrieves stored threats matching a generic
+	// query.v1.Payload, as advertised by GetThreatsQuerySchema. Threats are
+	// stored after the controller's deduplication: reported, merged (see
+	// Threat.merged_into), shadow (see Threat.mode) and dedup-summary (see
+	// Threat.occurrences) threats. Fails with UNAVAILABLE when the controller
+	// runs without a threat store.
+	QueryThreats(ctx context.Context, in *QueryThreatsRequest, opts ...grpc.CallOption) (*ThreatList, error)
 }
 
 type worktraceControllerServiceClient struct {
@@ -74,12 +88,32 @@ func (c *worktraceControllerServiceClient) GetRules(ctx context.Context, in *Get
 	return out, nil
 }
 
+func (c *worktraceControllerServiceClient) GetThreatsQuerySchema(ctx context.Context, in *GetThreatsQuerySchemaRequest, opts ...grpc.CallOption) (*v11.Descriptor, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(v11.Descriptor)
+	err := c.cc.Invoke(ctx, WorktraceControllerService_GetThreatsQuerySchema_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *worktraceControllerServiceClient) QueryThreats(ctx context.Context, in *QueryThreatsRequest, opts ...grpc.CallOption) (*ThreatList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ThreatList)
+	err := c.cc.Invoke(ctx, WorktraceControllerService_QueryThreats_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorktraceControllerServiceServer is the server API for WorktraceControllerService service.
 // All implementations must embed UnimplementedWorktraceControllerServiceServer
 // for forward compatibility.
 //
 // WorktraceControllerService is the gRPC API served by the worktrace controller
-// to its detector instances.
+// to its detector instances (rules) and to other k8shell services (threats).
 type WorktraceControllerServiceServer interface {
 	// GetVersionInfo returns build and version metadata for the controller.
 	GetVersionInfo(context.Context, *v1.GetVersionInfoRequest) (*v1.GetVersionInfoResponse, error)
@@ -87,6 +121,17 @@ type WorktraceControllerServiceServer interface {
 	// periodically with the version they currently run; when it still matches,
 	// the controller answers with not_modified and no payload.
 	GetRules(context.Context, *GetRulesRequest) (*GetRulesResponse, error)
+	// GetThreatsQuerySchema returns the query.v1.Descriptor advertising which
+	// threat fields are queryable/sortable via QueryThreats, and which
+	// operators are valid on each.
+	GetThreatsQuerySchema(context.Context, *GetThreatsQuerySchemaRequest) (*v11.Descriptor, error)
+	// QueryThreats retrieves stored threats matching a generic
+	// query.v1.Payload, as advertised by GetThreatsQuerySchema. Threats are
+	// stored after the controller's deduplication: reported, merged (see
+	// Threat.merged_into), shadow (see Threat.mode) and dedup-summary (see
+	// Threat.occurrences) threats. Fails with UNAVAILABLE when the controller
+	// runs without a threat store.
+	QueryThreats(context.Context, *QueryThreatsRequest) (*ThreatList, error)
 	mustEmbedUnimplementedWorktraceControllerServiceServer()
 }
 
@@ -102,6 +147,12 @@ func (UnimplementedWorktraceControllerServiceServer) GetVersionInfo(context.Cont
 }
 func (UnimplementedWorktraceControllerServiceServer) GetRules(context.Context, *GetRulesRequest) (*GetRulesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRules not implemented")
+}
+func (UnimplementedWorktraceControllerServiceServer) GetThreatsQuerySchema(context.Context, *GetThreatsQuerySchemaRequest) (*v11.Descriptor, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetThreatsQuerySchema not implemented")
+}
+func (UnimplementedWorktraceControllerServiceServer) QueryThreats(context.Context, *QueryThreatsRequest) (*ThreatList, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QueryThreats not implemented")
 }
 func (UnimplementedWorktraceControllerServiceServer) mustEmbedUnimplementedWorktraceControllerServiceServer() {
 }
@@ -161,6 +212,42 @@ func _WorktraceControllerService_GetRules_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorktraceControllerService_GetThreatsQuerySchema_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetThreatsQuerySchemaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorktraceControllerServiceServer).GetThreatsQuerySchema(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorktraceControllerService_GetThreatsQuerySchema_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorktraceControllerServiceServer).GetThreatsQuerySchema(ctx, req.(*GetThreatsQuerySchemaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorktraceControllerService_QueryThreats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryThreatsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorktraceControllerServiceServer).QueryThreats(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorktraceControllerService_QueryThreats_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorktraceControllerServiceServer).QueryThreats(ctx, req.(*QueryThreatsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WorktraceControllerService_ServiceDesc is the grpc.ServiceDesc for WorktraceControllerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -175,6 +262,14 @@ var WorktraceControllerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetRules",
 			Handler:    _WorktraceControllerService_GetRules_Handler,
+		},
+		{
+			MethodName: "GetThreatsQuerySchema",
+			Handler:    _WorktraceControllerService_GetThreatsQuerySchema_Handler,
+		},
+		{
+			MethodName: "QueryThreats",
+			Handler:    _WorktraceControllerService_QueryThreats_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

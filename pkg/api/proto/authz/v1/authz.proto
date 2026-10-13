@@ -129,6 +129,7 @@ message AuditRecord {
   string req_id = 2;
   google.protobuf.Timestamp occurred_at = 3;
 
+  // package and action are the EvaluateRequest fields of the same name.
   string package = 4;
   string action = 5;
 
@@ -140,32 +141,28 @@ message AuditRecord {
   // which stay keyed on action.
   string scope = 20;
 
-  string username = 6;
-  repeated string roles = 7;
-  string org = 8;
+  // subject is the caller, taken from the verified JWT claims.
+  AuditSubject subject = 22;
 
-  // pat_preview is the display prefix of the Personal Access Token
-  // exchanged for the caller's JWT, when the request came in that way.
+  // pat_preview mirrors EvaluateRequest.pat_preview: the display prefix of
+  // the Personal Access Token exchanged for the caller's JWT, when the
+  // request came in that way. Caller-asserted; audit-only.
   string pat_preview = 9;
 
-  string resource_type = 10;
-  string resource_id = 11;
-  string resource_owner = 12;
-  map<string, string> resource_attributes = 13;
+  // resource mirrors EvaluateRequest.resource (type, id, attributes; the
+  // resource owner is attributes["owner"]).
+  Resource resource = 23;
 
-  // context carries ambient attributes not present in the JWT or resource —
-  // the same map passed to Evaluate/BatchEvaluate as EvaluateRequest.context
-  // (auth surface, credential type, connect type, ...). scope (above) is
-  // derived from a subset of these keys for display; context itself is
-  // returned in full for investigative completeness.
+  // context mirrors EvaluateRequest.context — ambient attributes not
+  // present in the JWT or resource (auth surface, credential type, connect
+  // type, ...). scope (above) is derived from a subset of these keys for
+  // display. Values longer than the server's audit.maxContextValueBytes are
+  // replaced by a "<truncated: N bytes, sha256:...>" marker.
   map<string, string> context = 21;
 
-  bool allowed = 14;
-  map<string, string> obligations = 15;
-
-  // error is populated when policy evaluation itself failed (compile/eval
-  // error, no result returned), rather than reflecting a normal deny.
-  string error = 16;
+  // result mirrors EvaluateResponse (allowed, reason, obligations), plus
+  // error for evaluations that failed outright.
+  AuditResult result = 24;
 
   // duration_us is how long the OPA evaluation itself took, in microseconds.
   int64 duration_us = 17;
@@ -177,6 +174,33 @@ message AuditRecord {
   // last_occurred_at is the most recent occurrence folded into this row.
   // occurred_at remains the first occurrence.
   google.protobuf.Timestamp last_occurred_at = 19;
+
+  reserved 6, 7, 8, 10, 11, 12, 13, 14, 15, 16;
+  reserved "username", "roles", "org", "resource_type", "resource_id",
+      "resource_owner", "resource_attributes", "allowed", "obligations", "error";
+}
+
+// AuditSubject is the caller of an audited evaluation, from the JWT claims.
+message AuditSubject {
+  string username = 1;
+  repeated string roles = 2;
+  string org = 3;
+}
+
+// AuditResult is the recorded outcome of an evaluation: the
+// EvaluateResponse fields, plus error.
+message AuditResult {
+  bool allowed = 1;
+
+  // reason is the policy's human-readable explanation, as returned in
+  // EvaluateResponse.reason. Empty when evaluation failed.
+  string reason = 2;
+
+  map<string, string> obligations = 3;
+
+  // error is populated when policy evaluation itself failed (compile/eval
+  // error, no result returned), rather than reflecting a normal deny.
+  string error = 4;
 }
 
 // AuditList holds a paginated list of audit records.

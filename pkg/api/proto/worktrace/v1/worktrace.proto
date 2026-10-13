@@ -5,15 +5,18 @@ syntax = "proto3";
 
 // Package worktrace.v1 defines the gRPC API of the worktrace controller, which
 // owns the threat-detection rule set and distributes it to the per-node
-// worktrace detector instances.
+// worktrace detector instances, and serves the threats the detectors reported.
 package worktrace.v1;
 
 option go_package = "github.com/k8shell-io/common/pkg/api/gen/go/worktrace/v1;worktracev1";
 
 import "common/v1/common.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "query/v1/query.proto";
 
 // WorktraceControllerService is the gRPC API served by the worktrace controller
-// to its detector instances.
+// to its detector instances (rules) and to other k8shell services (threats).
 service WorktraceControllerService {
   // GetVersionInfo returns build and version metadata for the controller.
   rpc GetVersionInfo(common.v1.GetVersionInfoRequest) returns (common.v1.GetVersionInfoResponse);
@@ -22,6 +25,19 @@ service WorktraceControllerService {
   // periodically with the version they currently run; when it still matches,
   // the controller answers with not_modified and no payload.
   rpc GetRules(GetRulesRequest) returns (GetRulesResponse);
+
+  // GetThreatsQuerySchema returns the query.v1.Descriptor advertising which
+  // threat fields are queryable/sortable via QueryThreats, and which
+  // operators are valid on each.
+  rpc GetThreatsQuerySchema(GetThreatsQuerySchemaRequest) returns (query.v1.Descriptor);
+
+  // QueryThreats retrieves stored threats matching a generic
+  // query.v1.Payload, as advertised by GetThreatsQuerySchema. Threats are
+  // stored after the controller's deduplication: reported, merged (see
+  // Threat.merged_into), shadow (see Threat.mode) and dedup-summary (see
+  // Threat.occurrences) threats. Fails with UNAVAILABLE when the controller
+  // runs without a threat store.
+  rpc QueryThreats(QueryThreatsRequest) returns (ThreatList);
 }
 
 // GetRulesRequest asks for the current rule set.
@@ -45,4 +61,56 @@ message GetRulesResponse {
   // files maps a relative file name (e.g. "other-malicious/reverse_shell.yaml")
   // to its YAML content. It is always a complete snapshot, never a delta.
   map<string, bytes> files = 3;
+}
+
+// GetThreatsQuerySchemaRequest asks for the threats query descriptor.
+message GetThreatsQuerySchemaRequest {}
+
+// QueryThreatsRequest carries a threats query.
+message QueryThreatsRequest {
+  query.v1.Payload query = 1;
+}
+
+// ThreatList is a page of stored threats.
+message ThreatList {
+  repeated Threat threats = 1;
+}
+
+// Threat is a threat reported by a detector, as stored by the controller.
+message Threat {
+  // id uniquely identifies the threat (the detector's threat ID, or a
+  // generated ID for a dedup summary).
+  string id = 1;
+  // detected_at is when the detector detected the threat.
+  google.protobuf.Timestamp detected_at = 2;
+  // received_at is when the controller stored the threat.
+  google.protobuf.Timestamp received_at = 3;
+  // severity is "low", "medium", "high" or "critical", derived from
+  // confidence by the controller's severity levels at the time it was stored.
+  string severity = 4;
+  double confidence = 5;
+  string title = 6;
+  string description = 7;
+  // detection_pipeline is "direct", "correlation" or "behavioral".
+  string detection_pipeline = 8;
+  // rule_id is the detection rule or attack path that fired; empty for
+  // behavioral anomalies.
+  string rule_id = 9;
+  string namespace = 10;
+  // workspace_id is empty for events without pod context.
+  string workspace_id = 11;
+  string node_name = 12;
+  string container_name = 13;
+  // mode is "shadow" for a threat of a rule rolled out in shadow mode
+  // (recorded, never alerted on); empty otherwise.
+  string mode = 14;
+  // merged_into is the ID of the threat this one was merged into (same
+  // process, within the dedup window); empty for a reported threat.
+  string merged_into = 15;
+  // occurrences is set on a dedup summary: how many threats for the same
+  // rule and workspace its window saw.
+  int32 occurrences = 16;
+  // evidence carries rule-specific details (process, file path, syscall
+  // arguments, ...).
+  google.protobuf.Struct evidence = 17;
 }

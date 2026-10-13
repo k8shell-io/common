@@ -9,12 +9,15 @@
 
 // Package worktrace.v1 defines the gRPC API of the worktrace controller, which
 // owns the threat-detection rule set and distributes it to the per-node
-// worktrace detector instances.
+// worktrace detector instances, and serves the threats the detectors reported.
 
 package worktracev1
 
 import (
-	v1 "github.com/k8shell-io/common/pkg/api/gen/go/common/v1"
+	_struct "github.com/golang/protobuf/ptypes/struct"
+	timestamp "github.com/golang/protobuf/ptypes/timestamp"
+	v11 "github.com/k8shell-io/common/pkg/api/gen/go/common/v1"
+	v1 "github.com/k8shell-io/common/pkg/api/gen/go/query/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -153,11 +156,329 @@ func (x *GetRulesResponse) GetFiles() map[string][]byte {
 	return nil
 }
 
+// GetThreatsQuerySchemaRequest asks for the threats query descriptor.
+type GetThreatsQuerySchemaRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetThreatsQuerySchemaRequest) Reset() {
+	*x = GetThreatsQuerySchemaRequest{}
+	mi := &file_worktrace_v1_worktrace_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetThreatsQuerySchemaRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetThreatsQuerySchemaRequest) ProtoMessage() {}
+
+func (x *GetThreatsQuerySchemaRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_worktrace_v1_worktrace_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetThreatsQuerySchemaRequest.ProtoReflect.Descriptor instead.
+func (*GetThreatsQuerySchemaRequest) Descriptor() ([]byte, []int) {
+	return file_worktrace_v1_worktrace_proto_rawDescGZIP(), []int{2}
+}
+
+// QueryThreatsRequest carries a threats query.
+type QueryThreatsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Query         *v1.Payload            `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *QueryThreatsRequest) Reset() {
+	*x = QueryThreatsRequest{}
+	mi := &file_worktrace_v1_worktrace_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QueryThreatsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QueryThreatsRequest) ProtoMessage() {}
+
+func (x *QueryThreatsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_worktrace_v1_worktrace_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QueryThreatsRequest.ProtoReflect.Descriptor instead.
+func (*QueryThreatsRequest) Descriptor() ([]byte, []int) {
+	return file_worktrace_v1_worktrace_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *QueryThreatsRequest) GetQuery() *v1.Payload {
+	if x != nil {
+		return x.Query
+	}
+	return nil
+}
+
+// ThreatList is a page of stored threats.
+type ThreatList struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Threats       []*Threat              `protobuf:"bytes,1,rep,name=threats,proto3" json:"threats,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ThreatList) Reset() {
+	*x = ThreatList{}
+	mi := &file_worktrace_v1_worktrace_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ThreatList) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ThreatList) ProtoMessage() {}
+
+func (x *ThreatList) ProtoReflect() protoreflect.Message {
+	mi := &file_worktrace_v1_worktrace_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ThreatList.ProtoReflect.Descriptor instead.
+func (*ThreatList) Descriptor() ([]byte, []int) {
+	return file_worktrace_v1_worktrace_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *ThreatList) GetThreats() []*Threat {
+	if x != nil {
+		return x.Threats
+	}
+	return nil
+}
+
+// Threat is a threat reported by a detector, as stored by the controller.
+type Threat struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// id uniquely identifies the threat (the detector's threat ID, or a
+	// generated ID for a dedup summary).
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// detected_at is when the detector detected the threat.
+	DetectedAt *timestamp.Timestamp `protobuf:"bytes,2,opt,name=detected_at,json=detectedAt,proto3" json:"detected_at,omitempty"`
+	// received_at is when the controller stored the threat.
+	ReceivedAt *timestamp.Timestamp `protobuf:"bytes,3,opt,name=received_at,json=receivedAt,proto3" json:"received_at,omitempty"`
+	// severity is "low", "medium", "high" or "critical", derived from
+	// confidence by the controller's severity levels at the time it was stored.
+	Severity    string  `protobuf:"bytes,4,opt,name=severity,proto3" json:"severity,omitempty"`
+	Confidence  float64 `protobuf:"fixed64,5,opt,name=confidence,proto3" json:"confidence,omitempty"`
+	Title       string  `protobuf:"bytes,6,opt,name=title,proto3" json:"title,omitempty"`
+	Description string  `protobuf:"bytes,7,opt,name=description,proto3" json:"description,omitempty"`
+	// detection_pipeline is "direct", "correlation" or "behavioral".
+	DetectionPipeline string `protobuf:"bytes,8,opt,name=detection_pipeline,json=detectionPipeline,proto3" json:"detection_pipeline,omitempty"`
+	// rule_id is the detection rule or attack path that fired; empty for
+	// behavioral anomalies.
+	RuleId    string `protobuf:"bytes,9,opt,name=rule_id,json=ruleId,proto3" json:"rule_id,omitempty"`
+	Namespace string `protobuf:"bytes,10,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	// workspace_id is empty for events without pod context.
+	WorkspaceId   string `protobuf:"bytes,11,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
+	NodeName      string `protobuf:"bytes,12,opt,name=node_name,json=nodeName,proto3" json:"node_name,omitempty"`
+	ContainerName string `protobuf:"bytes,13,opt,name=container_name,json=containerName,proto3" json:"container_name,omitempty"`
+	// mode is "shadow" for a threat of a rule rolled out in shadow mode
+	// (recorded, never alerted on); empty otherwise.
+	Mode string `protobuf:"bytes,14,opt,name=mode,proto3" json:"mode,omitempty"`
+	// merged_into is the ID of the threat this one was merged into (same
+	// process, within the dedup window); empty for a reported threat.
+	MergedInto string `protobuf:"bytes,15,opt,name=merged_into,json=mergedInto,proto3" json:"merged_into,omitempty"`
+	// occurrences is set on a dedup summary: how many threats for the same
+	// rule and workspace its window saw.
+	Occurrences int32 `protobuf:"varint,16,opt,name=occurrences,proto3" json:"occurrences,omitempty"`
+	// evidence carries rule-specific details (process, file path, syscall
+	// arguments, ...).
+	Evidence      *_struct.Struct `protobuf:"bytes,17,opt,name=evidence,proto3" json:"evidence,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Threat) Reset() {
+	*x = Threat{}
+	mi := &file_worktrace_v1_worktrace_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Threat) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Threat) ProtoMessage() {}
+
+func (x *Threat) ProtoReflect() protoreflect.Message {
+	mi := &file_worktrace_v1_worktrace_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Threat.ProtoReflect.Descriptor instead.
+func (*Threat) Descriptor() ([]byte, []int) {
+	return file_worktrace_v1_worktrace_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *Threat) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Threat) GetDetectedAt() *timestamp.Timestamp {
+	if x != nil {
+		return x.DetectedAt
+	}
+	return nil
+}
+
+func (x *Threat) GetReceivedAt() *timestamp.Timestamp {
+	if x != nil {
+		return x.ReceivedAt
+	}
+	return nil
+}
+
+func (x *Threat) GetSeverity() string {
+	if x != nil {
+		return x.Severity
+	}
+	return ""
+}
+
+func (x *Threat) GetConfidence() float64 {
+	if x != nil {
+		return x.Confidence
+	}
+	return 0
+}
+
+func (x *Threat) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *Threat) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *Threat) GetDetectionPipeline() string {
+	if x != nil {
+		return x.DetectionPipeline
+	}
+	return ""
+}
+
+func (x *Threat) GetRuleId() string {
+	if x != nil {
+		return x.RuleId
+	}
+	return ""
+}
+
+func (x *Threat) GetNamespace() string {
+	if x != nil {
+		return x.Namespace
+	}
+	return ""
+}
+
+func (x *Threat) GetWorkspaceId() string {
+	if x != nil {
+		return x.WorkspaceId
+	}
+	return ""
+}
+
+func (x *Threat) GetNodeName() string {
+	if x != nil {
+		return x.NodeName
+	}
+	return ""
+}
+
+func (x *Threat) GetContainerName() string {
+	if x != nil {
+		return x.ContainerName
+	}
+	return ""
+}
+
+func (x *Threat) GetMode() string {
+	if x != nil {
+		return x.Mode
+	}
+	return ""
+}
+
+func (x *Threat) GetMergedInto() string {
+	if x != nil {
+		return x.MergedInto
+	}
+	return ""
+}
+
+func (x *Threat) GetOccurrences() int32 {
+	if x != nil {
+		return x.Occurrences
+	}
+	return 0
+}
+
+func (x *Threat) GetEvidence() *_struct.Struct {
+	if x != nil {
+		return x.Evidence
+	}
+	return nil
+}
+
 var File_worktrace_v1_worktrace_proto protoreflect.FileDescriptor
 
 const file_worktrace_v1_worktrace_proto_rawDesc = "" +
 	"\n" +
-	"\x1cworktrace/v1/worktrace.proto\x12\fworktrace.v1\x1a\x16common/v1/common.proto\"W\n" +
+	"\x1cworktrace/v1/worktrace.proto\x12\fworktrace.v1\x1a\x16common/v1/common.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14query/v1/query.proto\"W\n" +
 	"\x0fGetRulesRequest\x12'\n" +
 	"\x0fcurrent_version\x18\x01 \x01(\tR\x0ecurrentVersion\x12\x1b\n" +
 	"\tnode_name\x18\x02 \x01(\tR\bnodeName\"\xca\x01\n" +
@@ -168,10 +489,42 @@ const file_worktrace_v1_worktrace_proto_rawDesc = "" +
 	"\n" +
 	"FilesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\fR\x05value:\x028\x012\xbe\x01\n" +
+	"\x05value\x18\x02 \x01(\fR\x05value:\x028\x01\"\x1e\n" +
+	"\x1cGetThreatsQuerySchemaRequest\">\n" +
+	"\x13QueryThreatsRequest\x12'\n" +
+	"\x05query\x18\x01 \x01(\v2\x11.query.v1.PayloadR\x05query\"<\n" +
+	"\n" +
+	"ThreatList\x12.\n" +
+	"\athreats\x18\x01 \x03(\v2\x14.worktrace.v1.ThreatR\athreats\"\xdf\x04\n" +
+	"\x06Threat\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12;\n" +
+	"\vdetected_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"detectedAt\x12;\n" +
+	"\vreceived_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"receivedAt\x12\x1a\n" +
+	"\bseverity\x18\x04 \x01(\tR\bseverity\x12\x1e\n" +
+	"\n" +
+	"confidence\x18\x05 \x01(\x01R\n" +
+	"confidence\x12\x14\n" +
+	"\x05title\x18\x06 \x01(\tR\x05title\x12 \n" +
+	"\vdescription\x18\a \x01(\tR\vdescription\x12-\n" +
+	"\x12detection_pipeline\x18\b \x01(\tR\x11detectionPipeline\x12\x17\n" +
+	"\arule_id\x18\t \x01(\tR\x06ruleId\x12\x1c\n" +
+	"\tnamespace\x18\n" +
+	" \x01(\tR\tnamespace\x12!\n" +
+	"\fworkspace_id\x18\v \x01(\tR\vworkspaceId\x12\x1b\n" +
+	"\tnode_name\x18\f \x01(\tR\bnodeName\x12%\n" +
+	"\x0econtainer_name\x18\r \x01(\tR\rcontainerName\x12\x12\n" +
+	"\x04mode\x18\x0e \x01(\tR\x04mode\x12\x1f\n" +
+	"\vmerged_into\x18\x0f \x01(\tR\n" +
+	"mergedInto\x12 \n" +
+	"\voccurrences\x18\x10 \x01(\x05R\voccurrences\x123\n" +
+	"\bevidence\x18\x11 \x01(\v2\x17.google.protobuf.StructR\bevidence2\xe6\x02\n" +
 	"\x1aWorktraceControllerService\x12U\n" +
 	"\x0eGetVersionInfo\x12 .common.v1.GetVersionInfoRequest\x1a!.common.v1.GetVersionInfoResponse\x12I\n" +
-	"\bGetRules\x12\x1d.worktrace.v1.GetRulesRequest\x1a\x1e.worktrace.v1.GetRulesResponseBFZDgithub.com/k8shell-io/common/pkg/api/gen/go/worktrace/v1;worktracev1b\x06proto3"
+	"\bGetRules\x12\x1d.worktrace.v1.GetRulesRequest\x1a\x1e.worktrace.v1.GetRulesResponse\x12Y\n" +
+	"\x15GetThreatsQuerySchema\x12*.worktrace.v1.GetThreatsQuerySchemaRequest\x1a\x14.query.v1.Descriptor\x12K\n" +
+	"\fQueryThreats\x12!.worktrace.v1.QueryThreatsRequest\x1a\x18.worktrace.v1.ThreatListBFZDgithub.com/k8shell-io/common/pkg/api/gen/go/worktrace/v1;worktracev1b\x06proto3"
 
 var (
 	file_worktrace_v1_worktrace_proto_rawDescOnce sync.Once
@@ -185,25 +538,42 @@ func file_worktrace_v1_worktrace_proto_rawDescGZIP() []byte {
 	return file_worktrace_v1_worktrace_proto_rawDescData
 }
 
-var file_worktrace_v1_worktrace_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_worktrace_v1_worktrace_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_worktrace_v1_worktrace_proto_goTypes = []any{
-	(*GetRulesRequest)(nil),           // 0: worktrace.v1.GetRulesRequest
-	(*GetRulesResponse)(nil),          // 1: worktrace.v1.GetRulesResponse
-	nil,                               // 2: worktrace.v1.GetRulesResponse.FilesEntry
-	(*v1.GetVersionInfoRequest)(nil),  // 3: common.v1.GetVersionInfoRequest
-	(*v1.GetVersionInfoResponse)(nil), // 4: common.v1.GetVersionInfoResponse
+	(*GetRulesRequest)(nil),              // 0: worktrace.v1.GetRulesRequest
+	(*GetRulesResponse)(nil),             // 1: worktrace.v1.GetRulesResponse
+	(*GetThreatsQuerySchemaRequest)(nil), // 2: worktrace.v1.GetThreatsQuerySchemaRequest
+	(*QueryThreatsRequest)(nil),          // 3: worktrace.v1.QueryThreatsRequest
+	(*ThreatList)(nil),                   // 4: worktrace.v1.ThreatList
+	(*Threat)(nil),                       // 5: worktrace.v1.Threat
+	nil,                                  // 6: worktrace.v1.GetRulesResponse.FilesEntry
+	(*v1.Payload)(nil),                   // 7: query.v1.Payload
+	(*timestamp.Timestamp)(nil),          // 8: google.protobuf.Timestamp
+	(*_struct.Struct)(nil),               // 9: google.protobuf.Struct
+	(*v11.GetVersionInfoRequest)(nil),    // 10: common.v1.GetVersionInfoRequest
+	(*v11.GetVersionInfoResponse)(nil),   // 11: common.v1.GetVersionInfoResponse
+	(*v1.Descriptor)(nil),                // 12: query.v1.Descriptor
 }
 var file_worktrace_v1_worktrace_proto_depIdxs = []int32{
-	2, // 0: worktrace.v1.GetRulesResponse.files:type_name -> worktrace.v1.GetRulesResponse.FilesEntry
-	3, // 1: worktrace.v1.WorktraceControllerService.GetVersionInfo:input_type -> common.v1.GetVersionInfoRequest
-	0, // 2: worktrace.v1.WorktraceControllerService.GetRules:input_type -> worktrace.v1.GetRulesRequest
-	4, // 3: worktrace.v1.WorktraceControllerService.GetVersionInfo:output_type -> common.v1.GetVersionInfoResponse
-	1, // 4: worktrace.v1.WorktraceControllerService.GetRules:output_type -> worktrace.v1.GetRulesResponse
-	3, // [3:5] is the sub-list for method output_type
-	1, // [1:3] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	6,  // 0: worktrace.v1.GetRulesResponse.files:type_name -> worktrace.v1.GetRulesResponse.FilesEntry
+	7,  // 1: worktrace.v1.QueryThreatsRequest.query:type_name -> query.v1.Payload
+	5,  // 2: worktrace.v1.ThreatList.threats:type_name -> worktrace.v1.Threat
+	8,  // 3: worktrace.v1.Threat.detected_at:type_name -> google.protobuf.Timestamp
+	8,  // 4: worktrace.v1.Threat.received_at:type_name -> google.protobuf.Timestamp
+	9,  // 5: worktrace.v1.Threat.evidence:type_name -> google.protobuf.Struct
+	10, // 6: worktrace.v1.WorktraceControllerService.GetVersionInfo:input_type -> common.v1.GetVersionInfoRequest
+	0,  // 7: worktrace.v1.WorktraceControllerService.GetRules:input_type -> worktrace.v1.GetRulesRequest
+	2,  // 8: worktrace.v1.WorktraceControllerService.GetThreatsQuerySchema:input_type -> worktrace.v1.GetThreatsQuerySchemaRequest
+	3,  // 9: worktrace.v1.WorktraceControllerService.QueryThreats:input_type -> worktrace.v1.QueryThreatsRequest
+	11, // 10: worktrace.v1.WorktraceControllerService.GetVersionInfo:output_type -> common.v1.GetVersionInfoResponse
+	1,  // 11: worktrace.v1.WorktraceControllerService.GetRules:output_type -> worktrace.v1.GetRulesResponse
+	12, // 12: worktrace.v1.WorktraceControllerService.GetThreatsQuerySchema:output_type -> query.v1.Descriptor
+	4,  // 13: worktrace.v1.WorktraceControllerService.QueryThreats:output_type -> worktrace.v1.ThreatList
+	10, // [10:14] is the sub-list for method output_type
+	6,  // [6:10] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_worktrace_v1_worktrace_proto_init() }
@@ -217,7 +587,7 @@ func file_worktrace_v1_worktrace_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_worktrace_v1_worktrace_proto_rawDesc), len(file_worktrace_v1_worktrace_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
