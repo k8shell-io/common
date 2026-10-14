@@ -159,9 +159,17 @@ func (s *KVSubscriber) StartPull(ctx context.Context, handler func(context.Conte
 		default:
 		}
 
-		msgs, err := sub.Fetch(batch, nats.MaxWait(maxWait))
+		// Bound the fetch by ctx, not just MaxWait, so cancellation returns
+		// at once and the deferred DeleteConsumer runs before the process
+		// exits instead of the consumer lingering until InactiveThreshold.
+		fctx, cancel := context.WithTimeout(ctx, maxWait)
+		msgs, err := sub.Fetch(batch, nats.Context(fctx))
+		cancel()
 		if err != nil {
-			if errors.Is(err, nats.ErrTimeout) {
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+			if errors.Is(err, nats.ErrTimeout) || errors.Is(err, context.DeadlineExceeded) {
 				continue
 			}
 			if errors.Is(err, nats.ErrNoResponders) {
@@ -182,6 +190,29 @@ func (s *KVSubscriber) StartPull(ctx context.Context, handler func(context.Conte
 			}
 		}
 	}
+}
+
+// SubscribeKVChanges delivers every write to bucket as it happens, using a
+// plain core NATS subscription on the bucket's subjects ("$KV.<bucket>.>").
+// Unlike NewKVSubscriber it creates no JetStream consumer, so there is no
+// server-side state to leak when the process exits; the server drops the
+// interest with the connection. The trade-off is no replay: writes made while
+// disconnected are missed. Delete and purge events carry an empty Value and
+// the operation in Op. The handler runs on one goroutine per subscription.
+// Unsubscribe the returned subscription when done.
+func (c *NATSClient) SubscribeKVChanges(bucket string, handler func(*KVEvent)) (*nats.Subscription, error) {
+	if bucket == "" {
+		return nil, fmt.Errorf("bucket is required")
+	}
+	c.mu.RLock()
+	nc := c.nc
+	c.mu.RUnlock()
+	if nc == nil {
+		return nil, fmt.Errorf("NATS connection is not established")
+	}
+	return nc.Subscribe("$KV."+bucket+".>", func(m *nats.Msg) {
+		handler(toEvent(bucket, m))
+	})
 }
 
 // Stop unsubscribes from the KV bucket.

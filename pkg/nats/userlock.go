@@ -11,7 +11,7 @@ package nats
 // reads the bucket directly on every request as a fast-path check.
 //
 // ssh-proxy is a consumer: it subscribes to bucket changes (see
-// NATSClient.NewKVSubscriber, which delivers a KVEvent per write) and, on any
+// NATSClient.SubscribeKVChanges, which delivers a KVEvent per write) and, on any
 // event decoding to UserLockState.Locked == true, closes its live SSH
 // connection(s) for that username. It should ignore Locked == false —
 // unlocking a web account doesn't imply an SSH session should be allowed to
