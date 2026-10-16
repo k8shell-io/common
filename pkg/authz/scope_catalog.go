@@ -135,6 +135,9 @@ var scopeCatalogSource = []domainSpec{
 		label:       "Threat detection",
 		description: "Threat detection by worktrace in workspaces.",
 		actions: []actionSpec{
+			{action: "threat:list", label: "List", entries: []entrySpec{
+				{scope: "threat:list", label: "List", description: "Query the threats worktrace detected."},
+			}},
 			{action: "threat:detection:override", label: "Override detection", entries: []entrySpec{
 				{scope: "threat:detection:override", label: "Override detection", description: "Read, set and clear a workspace's detection override, which replaces the detection policy for the workspace."},
 			}},

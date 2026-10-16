@@ -223,6 +223,14 @@ func normalizeByDomain(req *authzv1.EvaluateRequest) (*authzv1.EvaluateRequest, 
 		normalized := detectReq.ToProto("")
 		normalized.Package = req.Package
 		return normalized, nil
+	case action == string(ThreatActionList):
+		listReq, err := ThreatListEvalRequestFromProto(req)
+		if err != nil {
+			return nil, err
+		}
+		normalized := listReq.ToProto("")
+		normalized.Package = req.Package
+		return normalized, nil
 	case action == string(ThreatActionDetectionOverride):
 		overrideReq, err := ThreatDetectionOverrideEvalRequestFromProto(req)
 		if err != nil {

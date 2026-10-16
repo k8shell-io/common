@@ -95,6 +95,7 @@ var expectedCapabilityActions = []string{
 	"blueprints:read",
 	"blueprints:write",
 	"audit:list",
+	"threat:list",
 	"announcement:write",
 	"git:fetch",
 	"git:push",

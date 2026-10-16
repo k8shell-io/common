@@ -217,6 +217,9 @@ var validExactScopes = map[string]struct{}{
 	// recording override.
 	string(SessionActionRecordingOverride): {},
 
+	// threat:list — query the detected threats.
+	string(ThreatActionList): {},
+
 	// threat:detection:override — read, set and clear a workspace's detection
 	// override. (no ThreatActionDetect entry — it only yields obligations and
 	// is evaluated by the provisioner, a path PAT scopes don't reach.)

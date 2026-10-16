@@ -82,6 +82,27 @@ package authz
 //
 // ---
 //
+// Contract: threat:list
+//
+// Grants querying the threats worktrace detected: the query schema and the
+// threat query itself. It is a real access check: Allowed gates the request.
+//
+// Resource  type="threat"
+//   id   (none)
+//
+// Context   (none)
+//
+// Subject   injected by the backend from JWT claims (username, roles, email, ...)
+//
+// Obligations  (policy-defined; forwarded verbatim to the worktrace
+//               controller's QueryThreats as a mandatory constraint on top of
+//               the caller's own query.v1 Filters — the same mechanism
+//               audit:list uses)
+//
+// PAT scope: threat:list (flat).
+//
+// ---
+//
 // Example policy (package threat). The policies are not part of this module;
 // this sketch shows one way to write them against the contracts above.
 //
@@ -185,6 +206,10 @@ const (
 	// one workspace (id and owner set), except in a capability probe, which
 	// sets the owner only.
 	ThreatActionDetectionOverride ThreatAction = "threat:detection:override"
+
+	// ThreatActionList is the action evaluated when querying the threats
+	// worktrace detected (query schema and query).
+	ThreatActionList ThreatAction = "threat:list"
 )
 
 // ThreatDetectContext holds the ambient attributes supplied by the caller in
@@ -440,6 +465,58 @@ func (r *ThreatDetectionOverrideEvalRequest) Validate() error {
 	return nil
 }
 
+// --- threat:list ---
+
+// ThreatListEvalRequest is the validated, typed model for threat:list policy
+// evaluation. No resource id is required; the subject claims determine
+// access.
+type ThreatListEvalRequest struct{}
+
+var _ EvalRequest = (*ThreatListEvalRequest)(nil)
+
+// NewThreatListEvalRequest returns a ThreatListEvalRequest ready to be built.
+func NewThreatListEvalRequest() *ThreatListEvalRequest {
+	return &ThreatListEvalRequest{}
+}
+
+// Build returns the request. It is the required terminator for the builder chain.
+func (r *ThreatListEvalRequest) Build() (*ThreatListEvalRequest, error) {
+	return r, nil
+}
+
+// ToProto serializes the typed request into a gRPC EvaluateRequest, attaching
+// the supplied JWT token.
+// Implements EvalRequest.
+func (r *ThreatListEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
+	return &authzv1.EvaluateRequest{
+		Token:    token,
+		Action:   string(ThreatActionList),
+		Resource: &authzv1.Resource{Type: "threat"},
+	}
+}
+
+// ThreatListEvalRequestFromProto converts a gRPC EvaluateRequest into a
+// validated ThreatListEvalRequest.
+func ThreatListEvalRequestFromProto(req *authzv1.EvaluateRequest) (*ThreatListEvalRequest, error) {
+	if req == nil {
+		return nil, fmt.Errorf("threat:list: EvaluateRequest is nil")
+	}
+	if req.Action != string(ThreatActionList) {
+		return nil, fmt.Errorf("threat:list: action must be %q, got %q", ThreatActionList, req.Action)
+	}
+	if req.Resource == nil {
+		return nil, fmt.Errorf("threat:list: resource is nil")
+	}
+	if req.Resource.Type != "threat" {
+		return nil, fmt.Errorf("threat:list: resource type must be \"threat\", got %q", req.Resource.Type)
+	}
+	return &ThreatListEvalRequest{}, nil
+}
+
+// Validate is a no-op for threat:list; no fields are required.
+// Implements EvalRequest.
+func (r *ThreatListEvalRequest) Validate() error { return nil }
+
 // --- detect obligation ---
 
 const (
@@ -553,10 +630,17 @@ func ParseDetectObligation(obligations map[string]string) (DetectObligation, boo
 	return ob, true
 }
 
-// init registers the capability probe for threat:detection:override.
+// init registers the capability probes for threat:list and
+// threat:detection:override.
 // threat:detect is not a permission (it only yields obligations), so it has
 // no probe. See CapabilityCheck and registerCapabilityCheck in capability.go.
 func init() {
+	registerCapabilityCheck(CapabilityCheck{
+		Action: string(ThreatActionList), Package: "threat", Scope: string(ThreatActionList),
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewThreatListEvalRequest().Build()
+		},
+	})
 	registerCapabilityCheck(CapabilityCheck{
 		Action: string(ThreatActionDetectionOverride), Package: "threat", Scope: string(ThreatActionDetectionOverride),
 		Build: func(ctx CapabilityContext) (EvalRequest, error) {
