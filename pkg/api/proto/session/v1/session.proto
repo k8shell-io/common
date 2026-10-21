@@ -25,6 +25,14 @@ service SessionService {
   // advertised by GetSessionsQuerySchema.
   rpc QuerySessions(QuerySessionsRequest) returns (Sessions);
 
+  // GetLastSessions returns the most recently started session of each given
+  // workspace, at most one per WorkspaceRef, most recent first.
+  // Workspaces are matched on the pair (username, workspace), and sessions
+  // started before a ref's created_at are ignored, so a workspace recreated
+  // under the same name does not inherit its predecessor's sessions.
+  // Workspaces without a matching session are left out of the result.
+  rpc GetLastSessions(GetLastSessionsRequest) returns (Sessions);
+
   // UpsertSession creates or updates a session record.
   // If a session with the given session_id already exists it is updated,
   // otherwise a new record is created.
@@ -135,6 +143,10 @@ message Session {
   // exec_recordings is the number of exec recordings of the session.
   // Filled by GetSessions and QuerySessions; ignored on input.
   int32 exec_recordings = 15;
+  // open is true while the session has not ended (end_time is zero). A
+  // session whose client stopped sending updates is ended by the server
+  // after a timeout. Set on output; ignored on input.
+  bool open = 16;
 }
 
 // RecordingRef identifies one recording of a session and its channel type.
@@ -163,6 +175,27 @@ message GetSessionsQuerySchemaRequest {}
 // by GetSessionsQuerySchema.
 message QuerySessionsRequest {
   query.v1.Payload query = 1;
+}
+
+// WorkspaceRef identifies one workspace by its owner and name.
+message WorkspaceRef {
+  // username is the workspace owner. Required.
+  string username = 1;
+  // workspace is the workspace name. Required.
+  string workspace = 2;
+  // created_at is the workspace creation time as a Unix timestamp (seconds).
+  // Sessions started before it are ignored. Zero means unknown: all sessions
+  // of the (username, workspace) pair match.
+  int64 created_at = 3;
+}
+
+// GetLastSessionsRequest lists the workspaces whose last session to return.
+message GetLastSessionsRequest {
+  // workspaces are the workspaces to look up, at most 1000. Duplicates are
+  // allowed and yield one session.
+  repeated WorkspaceRef workspaces = 1;
+  // obligations carries the authz obligations; see ListSessionRecordingsRequest.
+  map<string, string> obligations = 2;
 }
 
 // UpsertSessionRequest carries the full session record to create or update.

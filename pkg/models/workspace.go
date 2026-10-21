@@ -104,6 +104,17 @@ type WorkspaceDetails struct {
 	// is derived from pod-name order and can shift when a pod is replaced.
 	ReplicaIndex *int32 `json:"replicaIndex,omitempty" example:"0"`
 	ReplicaCount *int32 `json:"replicaCount,omitempty" example:"3"`
+	// BlueprintRevision is the content revision of the blueprint the
+	// workspace was provisioned from (see BlueprintSummary.Revision). Empty
+	// for a workspace provisioned before revisions were recorded.
+	BlueprintRevision string `json:"blueprintRevision,omitempty" example:"3f9c1a2b7d4e"`
+	// BlueprintOutdated reports whether Blueprint's current revision differs
+	// from BlueprintRevision, i.e. whether a re-provision would change the
+	// workspace's blueprint. Nil when that cannot be determined: no recorded
+	// revision, the blueprint no longer exists, or the workspace was built
+	// from a repository's k8shell file, whose current content the
+	// provisioner does not track.
+	BlueprintOutdated *bool `json:"blueprintOutdated,omitempty" example:"false"`
 }
 
 type WorkspaceStreamEventType string

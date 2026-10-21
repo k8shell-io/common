@@ -55,6 +55,7 @@ func ToProtobufSession(session *models.SSHSession) *sessionv1.Session {
 		Recordings:     toProtobufRecordingRefs(session.Recordings),
 		ExecRecordings: int32(min(session.ExecRecordings, math.MaxInt32)), // #nosec G115 -- clamped
 		UpdatedAt:      updatedAt,
+		Open:           session.EndTime == nil,
 	}
 }
 

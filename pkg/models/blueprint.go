@@ -91,6 +91,10 @@ type BlueprintSummary struct {
 	// blueprint it is the source file's last-modified time (equal to
 	// CreatedAt).
 	UpdatedAt time.Time `json:"updatedAt"`
+	// Revision is a short content hash of the blueprint fully merged with its
+	// inherited templates. It changes whenever the blueprint's effective
+	// content changes, including through a change to any ancestor template.
+	Revision string `json:"revision,omitempty"`
 }
 
 // BlueprintValidation reports whether a submitted blueprint is valid, lists
@@ -128,6 +132,10 @@ type OrgBlueprint struct {
 	IsTemplate  bool      `json:"isTemplate,omitempty"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
+	// Revision is the blueprint's merged-content revision (see
+	// BlueprintSummary.Revision). It is computed by the provisioner, not
+	// stored in the database.
+	Revision string `json:"revision,omitempty"`
 }
 
 // OrgBlueprintWriteRequest is the HTTP request body shared by POST /blueprints

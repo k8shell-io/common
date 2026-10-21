@@ -396,6 +396,8 @@ func WorkspaceDetailsToProto(m *models.WorkspaceDetails) *commonv1.WorkspaceDeta
 		WorkloadName:         m.WorkloadName,
 		ReplicaIndex:         copyInt32(m.ReplicaIndex),
 		ReplicaCount:         copyInt32(m.ReplicaCount),
+		BlueprintRevision:    m.BlueprintRevision,
+		BlueprintOutdated:    copyBool(m.BlueprintOutdated),
 	}
 }
 
@@ -505,6 +507,8 @@ func ProtoToWorkspaceDetails(pb *commonv1.WorkspaceDetails) *models.WorkspaceDet
 		WorkloadName:         pb.GetWorkloadName(),
 		ReplicaIndex:         copyInt32(pb.ReplicaIndex),
 		ReplicaCount:         copyInt32(pb.ReplicaCount),
+		BlueprintRevision:    pb.GetBlueprintRevision(),
+		BlueprintOutdated:    copyBool(pb.BlueprintOutdated),
 	}
 }
 
@@ -522,6 +526,7 @@ func BlueprintSummaryToProto(m *models.BlueprintSummary) *commonv1.BlueprintSumm
 		Template:    m.Template,
 		CreatedAt:   timestamppb.New(m.CreatedAt),
 		UpdatedAt:   timestamppb.New(m.UpdatedAt),
+		Revision:    m.Revision,
 	}
 }
 
@@ -539,6 +544,7 @@ func ProtoToBlueprintSummary(pb *commonv1.BlueprintSummary) *models.BlueprintSum
 		Template:    pb.GetTemplate(),
 		CreatedAt:   pb.GetCreatedAt().AsTime(),
 		UpdatedAt:   pb.GetUpdatedAt().AsTime(),
+		Revision:    pb.GetRevision(),
 	}
 }
 
@@ -593,6 +599,7 @@ func OrgBlueprintToProto(m *models.OrgBlueprint) *provisionerv1.OrgBlueprint {
 		IsTemplate:  m.IsTemplate,
 		CreatedAt:   createdAt,
 		UpdatedAt:   updatedAt,
+		Revision:    m.Revision,
 	}
 }
 
@@ -607,6 +614,7 @@ func ProtoToOrgBlueprint(pb *provisionerv1.OrgBlueprint) *models.OrgBlueprint {
 		Description: pb.GetDescription(),
 		YAML:        pb.GetYaml(),
 		IsTemplate:  pb.GetIsTemplate(),
+		Revision:    pb.GetRevision(),
 	}
 	if pb.GetCreatedAt() != nil {
 		m.CreatedAt = pb.GetCreatedAt().AsTime()

@@ -294,6 +294,17 @@ message WorkspaceDetails {
   // applied, e.g. because another workspace of the organization holds it.
   // Empty when the alias was applied or the blueprint declares none.
   string web_proxy_alias_message = 31;
+  // blueprint_revision is the content revision of the blueprint the
+  // workspace was provisioned from (see BlueprintSummary.revision). Empty
+  // for a workspace provisioned before revisions were recorded.
+  string blueprint_revision = 32;
+  // blueprint_outdated reports whether the blueprint's current revision
+  // differs from blueprint_revision, i.e. whether a re-provision would change
+  // the workspace's blueprint. Unset when that cannot be determined: no
+  // recorded revision, the blueprint no longer exists, or the workspace was
+  // built from a repository's k8shell file, whose current content the
+  // provisioner does not track.
+  optional bool blueprint_outdated = 33;
 }
 
 // BlueprintSummary is a lightweight representation of a blueprint used in
@@ -325,6 +336,10 @@ message BlueprintSummary {
   // blueprint it is the source file's last-modified time (equal to
   // created_at).
   google.protobuf.Timestamp updated_at = 8;
+  // revision is a short content hash of the blueprint fully merged with its
+  // inherited templates. It changes whenever the blueprint's effective
+  // content changes, including through a change to any ancestor template.
+  string revision = 9;
 }
 
 // GetVersionInfoRequest is the input to the GetVersionInfo RPC that every

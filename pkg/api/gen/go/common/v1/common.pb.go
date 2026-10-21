@@ -1066,8 +1066,19 @@ type WorkspaceDetails struct {
 	// applied, e.g. because another workspace of the organization holds it.
 	// Empty when the alias was applied or the blueprint declares none.
 	WebProxyAliasMessage string `protobuf:"bytes,31,opt,name=web_proxy_alias_message,json=webProxyAliasMessage,proto3" json:"web_proxy_alias_message,omitempty"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
+	// blueprint_revision is the content revision of the blueprint the
+	// workspace was provisioned from (see BlueprintSummary.revision). Empty
+	// for a workspace provisioned before revisions were recorded.
+	BlueprintRevision string `protobuf:"bytes,32,opt,name=blueprint_revision,json=blueprintRevision,proto3" json:"blueprint_revision,omitempty"`
+	// blueprint_outdated reports whether the blueprint's current revision
+	// differs from blueprint_revision, i.e. whether a re-provision would change
+	// the workspace's blueprint. Unset when that cannot be determined: no
+	// recorded revision, the blueprint no longer exists, or the workspace was
+	// built from a repository's k8shell file, whose current content the
+	// provisioner does not track.
+	BlueprintOutdated *bool `protobuf:"varint,33,opt,name=blueprint_outdated,json=blueprintOutdated,proto3,oneof" json:"blueprint_outdated,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *WorkspaceDetails) Reset() {
@@ -1317,6 +1328,20 @@ func (x *WorkspaceDetails) GetWebProxyAliasMessage() string {
 	return ""
 }
 
+func (x *WorkspaceDetails) GetBlueprintRevision() string {
+	if x != nil {
+		return x.BlueprintRevision
+	}
+	return ""
+}
+
+func (x *WorkspaceDetails) GetBlueprintOutdated() bool {
+	if x != nil && x.BlueprintOutdated != nil {
+		return *x.BlueprintOutdated
+	}
+	return false
+}
+
 // BlueprintSummary is a lightweight representation of a blueprint used in
 // listing responses.
 type BlueprintSummary struct {
@@ -1346,7 +1371,11 @@ type BlueprintSummary struct {
 	// database blueprint this is the row's last-update time; for a file-based
 	// blueprint it is the source file's last-modified time (equal to
 	// created_at).
-	UpdatedAt     *timestamp.Timestamp `protobuf:"bytes,8,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	UpdatedAt *timestamp.Timestamp `protobuf:"bytes,8,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	// revision is a short content hash of the blueprint fully merged with its
+	// inherited templates. It changes whenever the blueprint's effective
+	// content changes, including through a change to any ancestor template.
+	Revision      string `protobuf:"bytes,9,opt,name=revision,proto3" json:"revision,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1435,6 +1464,13 @@ func (x *BlueprintSummary) GetUpdatedAt() *timestamp.Timestamp {
 		return x.UpdatedAt
 	}
 	return nil
+}
+
+func (x *BlueprintSummary) GetRevision() string {
+	if x != nil {
+		return x.Revision
+	}
+	return ""
 }
 
 // GetVersionInfoRequest is the input to the GetVersionInfo RPC that every
@@ -1637,7 +1673,8 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"\fmatch_labels\x18\x01 \x03(\v2,.common.v1.PodLabelSelector.MatchLabelsEntryR\vmatchLabels\x1a>\n" +
 	"\x10MatchLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x8c\t\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x86\n" +
+	"\n" +
 	"\x10WorkspaceDetails\x12E\n" +
 	"\x10workspace_status\x18\x01 \x01(\v2\x1a.common.v1.WorkspaceStatusR\x0fworkspaceStatus\x12\x1f\n" +
 	"\vapp_version\x18\x02 \x01(\tR\n" +
@@ -1674,9 +1711,12 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"\x0eweb_proxy_port\x18\x1c \x01(\x05R\fwebProxyPort\x12&\n" +
 	"\x0fweb_proxy_roles\x18\x1d \x03(\tR\rwebProxyRoles\x12&\n" +
 	"\x0fweb_proxy_alias\x18\x1e \x01(\tR\rwebProxyAlias\x125\n" +
-	"\x17web_proxy_alias_message\x18\x1f \x01(\tR\x14webProxyAliasMessageB\x10\n" +
+	"\x17web_proxy_alias_message\x18\x1f \x01(\tR\x14webProxyAliasMessage\x12-\n" +
+	"\x12blueprint_revision\x18  \x01(\tR\x11blueprintRevision\x122\n" +
+	"\x12blueprint_outdated\x18! \x01(\bH\x02R\x11blueprintOutdated\x88\x01\x01B\x10\n" +
 	"\x0e_replica_indexB\x10\n" +
-	"\x0e_replica_count\"\xaa\x02\n" +
+	"\x0e_replica_countB\x15\n" +
+	"\x13_blueprint_outdated\"\xc6\x02\n" +
 	"\x10BlueprintSummary\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x1f\n" +
@@ -1688,7 +1728,8 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\x17\n" +
+	"updated_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12\x1a\n" +
+	"\brevision\x18\t \x01(\tR\brevision\"\x17\n" +
 	"\x15GetVersionInfoRequest\"q\n" +
 	"\x16GetVersionInfoResponse\x12\x18\n" +
 	"\aversion\x18\x01 \x01(\tR\aversion\x12\x1b\n" +

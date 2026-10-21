@@ -361,8 +361,12 @@ type Session struct {
 	// exec_recordings is the number of exec recordings of the session.
 	// Filled by GetSessions and QuerySessions; ignored on input.
 	ExecRecordings int32 `protobuf:"varint,15,opt,name=exec_recordings,json=execRecordings,proto3" json:"exec_recordings,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// open is true while the session has not ended (end_time is zero). A
+	// session whose client stopped sending updates is ended by the server
+	// after a timeout. Set on output; ignored on input.
+	Open          bool `protobuf:"varint,16,opt,name=open,proto3" json:"open,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Session) Reset() {
@@ -498,6 +502,13 @@ func (x *Session) GetExecRecordings() int32 {
 		return x.ExecRecordings
 	}
 	return 0
+}
+
+func (x *Session) GetOpen() bool {
+	if x != nil {
+		return x.Open
+	}
+	return false
 }
 
 // RecordingRef identifies one recording of a session and its channel type.
@@ -696,6 +707,128 @@ func (x *QuerySessionsRequest) GetQuery() *v1.Payload {
 	return nil
 }
 
+// WorkspaceRef identifies one workspace by its owner and name.
+type WorkspaceRef struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// username is the workspace owner. Required.
+	Username string `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+	// workspace is the workspace name. Required.
+	Workspace string `protobuf:"bytes,2,opt,name=workspace,proto3" json:"workspace,omitempty"`
+	// created_at is the workspace creation time as a Unix timestamp (seconds).
+	// Sessions started before it are ignored. Zero means unknown: all sessions
+	// of the (username, workspace) pair match.
+	CreatedAt     int64 `protobuf:"varint,3,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WorkspaceRef) Reset() {
+	*x = WorkspaceRef{}
+	mi := &file_session_v1_session_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WorkspaceRef) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WorkspaceRef) ProtoMessage() {}
+
+func (x *WorkspaceRef) ProtoReflect() protoreflect.Message {
+	mi := &file_session_v1_session_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WorkspaceRef.ProtoReflect.Descriptor instead.
+func (*WorkspaceRef) Descriptor() ([]byte, []int) {
+	return file_session_v1_session_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *WorkspaceRef) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *WorkspaceRef) GetWorkspace() string {
+	if x != nil {
+		return x.Workspace
+	}
+	return ""
+}
+
+func (x *WorkspaceRef) GetCreatedAt() int64 {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return 0
+}
+
+// GetLastSessionsRequest lists the workspaces whose last session to return.
+type GetLastSessionsRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// workspaces are the workspaces to look up, at most 1000. Duplicates are
+	// allowed and yield one session.
+	Workspaces []*WorkspaceRef `protobuf:"bytes,1,rep,name=workspaces,proto3" json:"workspaces,omitempty"`
+	// obligations carries the authz obligations; see ListSessionRecordingsRequest.
+	Obligations   map[string]string `protobuf:"bytes,2,rep,name=obligations,proto3" json:"obligations,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetLastSessionsRequest) Reset() {
+	*x = GetLastSessionsRequest{}
+	mi := &file_session_v1_session_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetLastSessionsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetLastSessionsRequest) ProtoMessage() {}
+
+func (x *GetLastSessionsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_session_v1_session_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetLastSessionsRequest.ProtoReflect.Descriptor instead.
+func (*GetLastSessionsRequest) Descriptor() ([]byte, []int) {
+	return file_session_v1_session_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *GetLastSessionsRequest) GetWorkspaces() []*WorkspaceRef {
+	if x != nil {
+		return x.Workspaces
+	}
+	return nil
+}
+
+func (x *GetLastSessionsRequest) GetObligations() map[string]string {
+	if x != nil {
+		return x.Obligations
+	}
+	return nil
+}
+
 // UpsertSessionRequest carries the full session record to create or update.
 type UpsertSessionRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -707,7 +840,7 @@ type UpsertSessionRequest struct {
 
 func (x *UpsertSessionRequest) Reset() {
 	*x = UpsertSessionRequest{}
-	mi := &file_session_v1_session_proto_msgTypes[6]
+	mi := &file_session_v1_session_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -719,7 +852,7 @@ func (x *UpsertSessionRequest) String() string {
 func (*UpsertSessionRequest) ProtoMessage() {}
 
 func (x *UpsertSessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_session_v1_session_proto_msgTypes[6]
+	mi := &file_session_v1_session_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -732,7 +865,7 @@ func (x *UpsertSessionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpsertSessionRequest.ProtoReflect.Descriptor instead.
 func (*UpsertSessionRequest) Descriptor() ([]byte, []int) {
-	return file_session_v1_session_proto_rawDescGZIP(), []int{6}
+	return file_session_v1_session_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *UpsertSessionRequest) GetSession() *Session {
@@ -753,7 +886,7 @@ type UpsertSessionResponse struct {
 
 func (x *UpsertSessionResponse) Reset() {
 	*x = UpsertSessionResponse{}
-	mi := &file_session_v1_session_proto_msgTypes[7]
+	mi := &file_session_v1_session_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -765,7 +898,7 @@ func (x *UpsertSessionResponse) String() string {
 func (*UpsertSessionResponse) ProtoMessage() {}
 
 func (x *UpsertSessionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_session_v1_session_proto_msgTypes[7]
+	mi := &file_session_v1_session_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -778,7 +911,7 @@ func (x *UpsertSessionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpsertSessionResponse.ProtoReflect.Descriptor instead.
 func (*UpsertSessionResponse) Descriptor() ([]byte, []int) {
-	return file_session_v1_session_proto_rawDescGZIP(), []int{7}
+	return file_session_v1_session_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *UpsertSessionResponse) GetSession() *Session {
@@ -805,7 +938,7 @@ type EndSessionRequest struct {
 
 func (x *EndSessionRequest) Reset() {
 	*x = EndSessionRequest{}
-	mi := &file_session_v1_session_proto_msgTypes[8]
+	mi := &file_session_v1_session_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -817,7 +950,7 @@ func (x *EndSessionRequest) String() string {
 func (*EndSessionRequest) ProtoMessage() {}
 
 func (x *EndSessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_session_v1_session_proto_msgTypes[8]
+	mi := &file_session_v1_session_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -830,7 +963,7 @@ func (x *EndSessionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EndSessionRequest.ProtoReflect.Descriptor instead.
 func (*EndSessionRequest) Descriptor() ([]byte, []int) {
-	return file_session_v1_session_proto_rawDescGZIP(), []int{8}
+	return file_session_v1_session_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *EndSessionRequest) GetSessionId() string {
@@ -908,7 +1041,7 @@ type RecordingMetadata struct {
 
 func (x *RecordingMetadata) Reset() {
 	*x = RecordingMetadata{}
-	mi := &file_session_v1_session_proto_msgTypes[9]
+	mi := &file_session_v1_session_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -920,7 +1053,7 @@ func (x *RecordingMetadata) String() string {
 func (*RecordingMetadata) ProtoMessage() {}
 
 func (x *RecordingMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_session_v1_session_proto_msgTypes[9]
+	mi := &file_session_v1_session_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -933,7 +1066,7 @@ func (x *RecordingMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RecordingMetadata.ProtoReflect.Descriptor instead.
 func (*RecordingMetadata) Descriptor() ([]byte, []int) {
-	return file_session_v1_session_proto_rawDescGZIP(), []int{9}
+	return file_session_v1_session_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *RecordingMetadata) GetRecordingId() string {
@@ -1056,7 +1189,7 @@ type VscodeTerminalInfo struct {
 
 func (x *VscodeTerminalInfo) Reset() {
 	*x = VscodeTerminalInfo{}
-	mi := &file_session_v1_session_proto_msgTypes[10]
+	mi := &file_session_v1_session_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1068,7 +1201,7 @@ func (x *VscodeTerminalInfo) String() string {
 func (*VscodeTerminalInfo) ProtoMessage() {}
 
 func (x *VscodeTerminalInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_session_v1_session_proto_msgTypes[10]
+	mi := &file_session_v1_session_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1081,7 +1214,7 @@ func (x *VscodeTerminalInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VscodeTerminalInfo.ProtoReflect.Descriptor instead.
 func (*VscodeTerminalInfo) Descriptor() ([]byte, []int) {
-	return file_session_v1_session_proto_rawDescGZIP(), []int{10}
+	return file_session_v1_session_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *VscodeTerminalInfo) GetTerminalId() uint32 {
@@ -1146,7 +1279,7 @@ type ListSessionRecordingsRequest struct {
 
 func (x *ListSessionRecordingsRequest) Reset() {
 	*x = ListSessionRecordingsRequest{}
-	mi := &file_session_v1_session_proto_msgTypes[11]
+	mi := &file_session_v1_session_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1158,7 +1291,7 @@ func (x *ListSessionRecordingsRequest) String() string {
 func (*ListSessionRecordingsRequest) ProtoMessage() {}
 
 func (x *ListSessionRecordingsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_session_v1_session_proto_msgTypes[11]
+	mi := &file_session_v1_session_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1171,7 +1304,7 @@ func (x *ListSessionRecordingsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSessionRecordingsRequest.ProtoReflect.Descriptor instead.
 func (*ListSessionRecordingsRequest) Descriptor() ([]byte, []int) {
-	return file_session_v1_session_proto_rawDescGZIP(), []int{11}
+	return file_session_v1_session_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *ListSessionRecordingsRequest) GetSessionId() string {
@@ -1229,7 +1362,7 @@ type ListSessionRecordingsResponse struct {
 
 func (x *ListSessionRecordingsResponse) Reset() {
 	*x = ListSessionRecordingsResponse{}
-	mi := &file_session_v1_session_proto_msgTypes[12]
+	mi := &file_session_v1_session_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1241,7 +1374,7 @@ func (x *ListSessionRecordingsResponse) String() string {
 func (*ListSessionRecordingsResponse) ProtoMessage() {}
 
 func (x *ListSessionRecordingsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_session_v1_session_proto_msgTypes[12]
+	mi := &file_session_v1_session_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1254,7 +1387,7 @@ func (x *ListSessionRecordingsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSessionRecordingsResponse.ProtoReflect.Descriptor instead.
 func (*ListSessionRecordingsResponse) Descriptor() ([]byte, []int) {
-	return file_session_v1_session_proto_rawDescGZIP(), []int{12}
+	return file_session_v1_session_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ListSessionRecordingsResponse) GetRecordings() []*RecordingMetadata {
@@ -1286,7 +1419,7 @@ type GetSessionRecordingRequest struct {
 
 func (x *GetSessionRecordingRequest) Reset() {
 	*x = GetSessionRecordingRequest{}
-	mi := &file_session_v1_session_proto_msgTypes[13]
+	mi := &file_session_v1_session_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1298,7 +1431,7 @@ func (x *GetSessionRecordingRequest) String() string {
 func (*GetSessionRecordingRequest) ProtoMessage() {}
 
 func (x *GetSessionRecordingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_session_v1_session_proto_msgTypes[13]
+	mi := &file_session_v1_session_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1311,7 +1444,7 @@ func (x *GetSessionRecordingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSessionRecordingRequest.ProtoReflect.Descriptor instead.
 func (*GetSessionRecordingRequest) Descriptor() ([]byte, []int) {
-	return file_session_v1_session_proto_rawDescGZIP(), []int{13}
+	return file_session_v1_session_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *GetSessionRecordingRequest) GetRecordingId() string {
@@ -1349,7 +1482,7 @@ type GetSessionRecordingResponse struct {
 
 func (x *GetSessionRecordingResponse) Reset() {
 	*x = GetSessionRecordingResponse{}
-	mi := &file_session_v1_session_proto_msgTypes[14]
+	mi := &file_session_v1_session_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1361,7 +1494,7 @@ func (x *GetSessionRecordingResponse) String() string {
 func (*GetSessionRecordingResponse) ProtoMessage() {}
 
 func (x *GetSessionRecordingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_session_v1_session_proto_msgTypes[14]
+	mi := &file_session_v1_session_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1374,7 +1507,7 @@ func (x *GetSessionRecordingResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSessionRecordingResponse.ProtoReflect.Descriptor instead.
 func (*GetSessionRecordingResponse) Descriptor() ([]byte, []int) {
-	return file_session_v1_session_proto_rawDescGZIP(), []int{14}
+	return file_session_v1_session_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *GetSessionRecordingResponse) GetPayload() isGetSessionRecordingResponse_Payload {
@@ -1440,7 +1573,7 @@ type ListSessionRecordingCommandsRequest struct {
 
 func (x *ListSessionRecordingCommandsRequest) Reset() {
 	*x = ListSessionRecordingCommandsRequest{}
-	mi := &file_session_v1_session_proto_msgTypes[15]
+	mi := &file_session_v1_session_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1452,7 +1585,7 @@ func (x *ListSessionRecordingCommandsRequest) String() string {
 func (*ListSessionRecordingCommandsRequest) ProtoMessage() {}
 
 func (x *ListSessionRecordingCommandsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_session_v1_session_proto_msgTypes[15]
+	mi := &file_session_v1_session_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1465,7 +1598,7 @@ func (x *ListSessionRecordingCommandsRequest) ProtoReflect() protoreflect.Messag
 
 // Deprecated: Use ListSessionRecordingCommandsRequest.ProtoReflect.Descriptor instead.
 func (*ListSessionRecordingCommandsRequest) Descriptor() ([]byte, []int) {
-	return file_session_v1_session_proto_rawDescGZIP(), []int{15}
+	return file_session_v1_session_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *ListSessionRecordingCommandsRequest) GetRecordingId() string {
@@ -1538,7 +1671,7 @@ type RecordingCommand struct {
 
 func (x *RecordingCommand) Reset() {
 	*x = RecordingCommand{}
-	mi := &file_session_v1_session_proto_msgTypes[16]
+	mi := &file_session_v1_session_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1550,7 +1683,7 @@ func (x *RecordingCommand) String() string {
 func (*RecordingCommand) ProtoMessage() {}
 
 func (x *RecordingCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_session_v1_session_proto_msgTypes[16]
+	mi := &file_session_v1_session_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1563,7 +1696,7 @@ func (x *RecordingCommand) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RecordingCommand.ProtoReflect.Descriptor instead.
 func (*RecordingCommand) Descriptor() ([]byte, []int) {
-	return file_session_v1_session_proto_rawDescGZIP(), []int{16}
+	return file_session_v1_session_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *RecordingCommand) GetTimeOffsetMs() int64 {
@@ -1646,7 +1779,7 @@ type ListSessionRecordingCommandsResponse struct {
 
 func (x *ListSessionRecordingCommandsResponse) Reset() {
 	*x = ListSessionRecordingCommandsResponse{}
-	mi := &file_session_v1_session_proto_msgTypes[17]
+	mi := &file_session_v1_session_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1658,7 +1791,7 @@ func (x *ListSessionRecordingCommandsResponse) String() string {
 func (*ListSessionRecordingCommandsResponse) ProtoMessage() {}
 
 func (x *ListSessionRecordingCommandsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_session_v1_session_proto_msgTypes[17]
+	mi := &file_session_v1_session_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1671,7 +1804,7 @@ func (x *ListSessionRecordingCommandsResponse) ProtoReflect() protoreflect.Messa
 
 // Deprecated: Use ListSessionRecordingCommandsResponse.ProtoReflect.Descriptor instead.
 func (*ListSessionRecordingCommandsResponse) Descriptor() ([]byte, []int) {
-	return file_session_v1_session_proto_rawDescGZIP(), []int{17}
+	return file_session_v1_session_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *ListSessionRecordingCommandsResponse) GetMetadata() *RecordingMetadata {
@@ -1711,7 +1844,7 @@ type EndRecordingSessionRequest struct {
 
 func (x *EndRecordingSessionRequest) Reset() {
 	*x = EndRecordingSessionRequest{}
-	mi := &file_session_v1_session_proto_msgTypes[18]
+	mi := &file_session_v1_session_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1723,7 +1856,7 @@ func (x *EndRecordingSessionRequest) String() string {
 func (*EndRecordingSessionRequest) ProtoMessage() {}
 
 func (x *EndRecordingSessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_session_v1_session_proto_msgTypes[18]
+	mi := &file_session_v1_session_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1736,7 +1869,7 @@ func (x *EndRecordingSessionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EndRecordingSessionRequest.ProtoReflect.Descriptor instead.
 func (*EndRecordingSessionRequest) Descriptor() ([]byte, []int) {
-	return file_session_v1_session_proto_rawDescGZIP(), []int{18}
+	return file_session_v1_session_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *EndRecordingSessionRequest) GetConnectionId() string {
@@ -1774,7 +1907,7 @@ type RecordingOptions struct {
 
 func (x *RecordingOptions) Reset() {
 	*x = RecordingOptions{}
-	mi := &file_session_v1_session_proto_msgTypes[19]
+	mi := &file_session_v1_session_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1786,7 +1919,7 @@ func (x *RecordingOptions) String() string {
 func (*RecordingOptions) ProtoMessage() {}
 
 func (x *RecordingOptions) ProtoReflect() protoreflect.Message {
-	mi := &file_session_v1_session_proto_msgTypes[19]
+	mi := &file_session_v1_session_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1799,7 +1932,7 @@ func (x *RecordingOptions) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RecordingOptions.ProtoReflect.Descriptor instead.
 func (*RecordingOptions) Descriptor() ([]byte, []int) {
-	return file_session_v1_session_proto_rawDescGZIP(), []int{19}
+	return file_session_v1_session_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *RecordingOptions) GetFormat() RecordingFormat {
@@ -1840,7 +1973,7 @@ type VscodeRecordingOptions struct {
 
 func (x *VscodeRecordingOptions) Reset() {
 	*x = VscodeRecordingOptions{}
-	mi := &file_session_v1_session_proto_msgTypes[20]
+	mi := &file_session_v1_session_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1852,7 +1985,7 @@ func (x *VscodeRecordingOptions) String() string {
 func (*VscodeRecordingOptions) ProtoMessage() {}
 
 func (x *VscodeRecordingOptions) ProtoReflect() protoreflect.Message {
-	mi := &file_session_v1_session_proto_msgTypes[20]
+	mi := &file_session_v1_session_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1865,7 +1998,7 @@ func (x *VscodeRecordingOptions) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VscodeRecordingOptions.ProtoReflect.Descriptor instead.
 func (*VscodeRecordingOptions) Descriptor() ([]byte, []int) {
-	return file_session_v1_session_proto_rawDescGZIP(), []int{20}
+	return file_session_v1_session_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *VscodeRecordingOptions) GetTerminals() bool {
@@ -1902,7 +2035,7 @@ type DataChunk struct {
 
 func (x *DataChunk) Reset() {
 	*x = DataChunk{}
-	mi := &file_session_v1_session_proto_msgTypes[21]
+	mi := &file_session_v1_session_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1914,7 +2047,7 @@ func (x *DataChunk) String() string {
 func (*DataChunk) ProtoMessage() {}
 
 func (x *DataChunk) ProtoReflect() protoreflect.Message {
-	mi := &file_session_v1_session_proto_msgTypes[21]
+	mi := &file_session_v1_session_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1927,7 +2060,7 @@ func (x *DataChunk) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DataChunk.ProtoReflect.Descriptor instead.
 func (*DataChunk) Descriptor() ([]byte, []int) {
-	return file_session_v1_session_proto_rawDescGZIP(), []int{21}
+	return file_session_v1_session_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *DataChunk) GetTimeOffsetMs() int64 {
@@ -1973,7 +2106,7 @@ type TerminalResize struct {
 
 func (x *TerminalResize) Reset() {
 	*x = TerminalResize{}
-	mi := &file_session_v1_session_proto_msgTypes[22]
+	mi := &file_session_v1_session_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1985,7 +2118,7 @@ func (x *TerminalResize) String() string {
 func (*TerminalResize) ProtoMessage() {}
 
 func (x *TerminalResize) ProtoReflect() protoreflect.Message {
-	mi := &file_session_v1_session_proto_msgTypes[22]
+	mi := &file_session_v1_session_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1998,7 +2131,7 @@ func (x *TerminalResize) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TerminalResize.ProtoReflect.Descriptor instead.
 func (*TerminalResize) Descriptor() ([]byte, []int) {
-	return file_session_v1_session_proto_rawDescGZIP(), []int{22}
+	return file_session_v1_session_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *TerminalResize) GetTimeOffsetMs() int64 {
@@ -2051,7 +2184,7 @@ type ShellRecordingHeader struct {
 
 func (x *ShellRecordingHeader) Reset() {
 	*x = ShellRecordingHeader{}
-	mi := &file_session_v1_session_proto_msgTypes[23]
+	mi := &file_session_v1_session_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2063,7 +2196,7 @@ func (x *ShellRecordingHeader) String() string {
 func (*ShellRecordingHeader) ProtoMessage() {}
 
 func (x *ShellRecordingHeader) ProtoReflect() protoreflect.Message {
-	mi := &file_session_v1_session_proto_msgTypes[23]
+	mi := &file_session_v1_session_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2076,7 +2209,7 @@ func (x *ShellRecordingHeader) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ShellRecordingHeader.ProtoReflect.Descriptor instead.
 func (*ShellRecordingHeader) Descriptor() ([]byte, []int) {
-	return file_session_v1_session_proto_rawDescGZIP(), []int{23}
+	return file_session_v1_session_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *ShellRecordingHeader) GetSessionId() string {
@@ -2143,7 +2276,7 @@ type ShellRecordingFrame struct {
 
 func (x *ShellRecordingFrame) Reset() {
 	*x = ShellRecordingFrame{}
-	mi := &file_session_v1_session_proto_msgTypes[24]
+	mi := &file_session_v1_session_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2155,7 +2288,7 @@ func (x *ShellRecordingFrame) String() string {
 func (*ShellRecordingFrame) ProtoMessage() {}
 
 func (x *ShellRecordingFrame) ProtoReflect() protoreflect.Message {
-	mi := &file_session_v1_session_proto_msgTypes[24]
+	mi := &file_session_v1_session_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2168,7 +2301,7 @@ func (x *ShellRecordingFrame) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ShellRecordingFrame.ProtoReflect.Descriptor instead.
 func (*ShellRecordingFrame) Descriptor() ([]byte, []int) {
-	return file_session_v1_session_proto_rawDescGZIP(), []int{24}
+	return file_session_v1_session_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *ShellRecordingFrame) GetPayload() isShellRecordingFrame_Payload {
@@ -2257,7 +2390,7 @@ type ExecRecordingHeader struct {
 
 func (x *ExecRecordingHeader) Reset() {
 	*x = ExecRecordingHeader{}
-	mi := &file_session_v1_session_proto_msgTypes[25]
+	mi := &file_session_v1_session_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2269,7 +2402,7 @@ func (x *ExecRecordingHeader) String() string {
 func (*ExecRecordingHeader) ProtoMessage() {}
 
 func (x *ExecRecordingHeader) ProtoReflect() protoreflect.Message {
-	mi := &file_session_v1_session_proto_msgTypes[25]
+	mi := &file_session_v1_session_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2282,7 +2415,7 @@ func (x *ExecRecordingHeader) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecRecordingHeader.ProtoReflect.Descriptor instead.
 func (*ExecRecordingHeader) Descriptor() ([]byte, []int) {
-	return file_session_v1_session_proto_rawDescGZIP(), []int{25}
+	return file_session_v1_session_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *ExecRecordingHeader) GetSessionId() string {
@@ -2341,7 +2474,7 @@ type ExecRecordingFrame struct {
 
 func (x *ExecRecordingFrame) Reset() {
 	*x = ExecRecordingFrame{}
-	mi := &file_session_v1_session_proto_msgTypes[26]
+	mi := &file_session_v1_session_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2353,7 +2486,7 @@ func (x *ExecRecordingFrame) String() string {
 func (*ExecRecordingFrame) ProtoMessage() {}
 
 func (x *ExecRecordingFrame) ProtoReflect() protoreflect.Message {
-	mi := &file_session_v1_session_proto_msgTypes[26]
+	mi := &file_session_v1_session_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2366,7 +2499,7 @@ func (x *ExecRecordingFrame) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecRecordingFrame.ProtoReflect.Descriptor instead.
 func (*ExecRecordingFrame) Descriptor() ([]byte, []int) {
-	return file_session_v1_session_proto_rawDescGZIP(), []int{26}
+	return file_session_v1_session_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *ExecRecordingFrame) GetPayload() isExecRecordingFrame_Payload {
@@ -2445,7 +2578,7 @@ type TcpipRecordingHeader struct {
 
 func (x *TcpipRecordingHeader) Reset() {
 	*x = TcpipRecordingHeader{}
-	mi := &file_session_v1_session_proto_msgTypes[27]
+	mi := &file_session_v1_session_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2457,7 +2590,7 @@ func (x *TcpipRecordingHeader) String() string {
 func (*TcpipRecordingHeader) ProtoMessage() {}
 
 func (x *TcpipRecordingHeader) ProtoReflect() protoreflect.Message {
-	mi := &file_session_v1_session_proto_msgTypes[27]
+	mi := &file_session_v1_session_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2470,7 +2603,7 @@ func (x *TcpipRecordingHeader) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TcpipRecordingHeader.ProtoReflect.Descriptor instead.
 func (*TcpipRecordingHeader) Descriptor() ([]byte, []int) {
-	return file_session_v1_session_proto_rawDescGZIP(), []int{27}
+	return file_session_v1_session_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *TcpipRecordingHeader) GetSessionId() string {
@@ -2550,7 +2683,7 @@ type TcpipRecordingFrame struct {
 
 func (x *TcpipRecordingFrame) Reset() {
 	*x = TcpipRecordingFrame{}
-	mi := &file_session_v1_session_proto_msgTypes[28]
+	mi := &file_session_v1_session_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2562,7 +2695,7 @@ func (x *TcpipRecordingFrame) String() string {
 func (*TcpipRecordingFrame) ProtoMessage() {}
 
 func (x *TcpipRecordingFrame) ProtoReflect() protoreflect.Message {
-	mi := &file_session_v1_session_proto_msgTypes[28]
+	mi := &file_session_v1_session_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2575,7 +2708,7 @@ func (x *TcpipRecordingFrame) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TcpipRecordingFrame.ProtoReflect.Descriptor instead.
 func (*TcpipRecordingFrame) Descriptor() ([]byte, []int) {
-	return file_session_v1_session_proto_rawDescGZIP(), []int{28}
+	return file_session_v1_session_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *TcpipRecordingFrame) GetPayload() isTcpipRecordingFrame_Payload {
@@ -2646,7 +2779,7 @@ type SftpRecordingHeader struct {
 
 func (x *SftpRecordingHeader) Reset() {
 	*x = SftpRecordingHeader{}
-	mi := &file_session_v1_session_proto_msgTypes[29]
+	mi := &file_session_v1_session_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2658,7 +2791,7 @@ func (x *SftpRecordingHeader) String() string {
 func (*SftpRecordingHeader) ProtoMessage() {}
 
 func (x *SftpRecordingHeader) ProtoReflect() protoreflect.Message {
-	mi := &file_session_v1_session_proto_msgTypes[29]
+	mi := &file_session_v1_session_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2671,7 +2804,7 @@ func (x *SftpRecordingHeader) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SftpRecordingHeader.ProtoReflect.Descriptor instead.
 func (*SftpRecordingHeader) Descriptor() ([]byte, []int) {
-	return file_session_v1_session_proto_rawDescGZIP(), []int{29}
+	return file_session_v1_session_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *SftpRecordingHeader) GetSessionId() string {
@@ -2723,7 +2856,7 @@ type SftpRecordingFrame struct {
 
 func (x *SftpRecordingFrame) Reset() {
 	*x = SftpRecordingFrame{}
-	mi := &file_session_v1_session_proto_msgTypes[30]
+	mi := &file_session_v1_session_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2735,7 +2868,7 @@ func (x *SftpRecordingFrame) String() string {
 func (*SftpRecordingFrame) ProtoMessage() {}
 
 func (x *SftpRecordingFrame) ProtoReflect() protoreflect.Message {
-	mi := &file_session_v1_session_proto_msgTypes[30]
+	mi := &file_session_v1_session_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2748,7 +2881,7 @@ func (x *SftpRecordingFrame) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SftpRecordingFrame.ProtoReflect.Descriptor instead.
 func (*SftpRecordingFrame) Descriptor() ([]byte, []int) {
-	return file_session_v1_session_proto_rawDescGZIP(), []int{30}
+	return file_session_v1_session_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *SftpRecordingFrame) GetPayload() isSftpRecordingFrame_Payload {
@@ -2810,7 +2943,7 @@ const file_session_v1_session_proto_rawDesc = "" +
 	"\areverse\x18\x06 \x01(\bR\areverse\x12\x14\n" +
 	"\x05roles\x18\a \x03(\tR\x05roles\x12\x10\n" +
 	"\x03org\x18\b \x01(\tR\x03org\x12\x15\n" +
-	"\x06last_n\x18\t \x01(\x05R\x05lastN\"\xec\x03\n" +
+	"\x06last_n\x18\t \x01(\x05R\x05lastN\"\x80\x04\n" +
 	"\aSession\x12\x1d\n" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1a\n" +
@@ -2834,7 +2967,8 @@ const file_session_v1_session_proto_rawDesc = "" +
 	"\n" +
 	"recordings\x18\x0e \x03(\v2\x18.session.v1.RecordingRefR\n" +
 	"recordings\x12'\n" +
-	"\x0fexec_recordings\x18\x0f \x01(\x05R\x0eexecRecordings\"\x90\x01\n" +
+	"\x0fexec_recordings\x18\x0f \x01(\x05R\x0eexecRecordings\x12\x12\n" +
+	"\x04open\x18\x10 \x01(\bR\x04open\"\x90\x01\n" +
 	"\fRecordingRef\x12!\n" +
 	"\frecording_id\x18\x01 \x01(\tR\vrecordingId\x12-\n" +
 	"\x04type\x18\x02 \x01(\x0e2\x19.session.v1.RecordingTypeR\x04type\x12.\n" +
@@ -2843,7 +2977,20 @@ const file_session_v1_session_proto_rawDesc = "" +
 	"\bsessions\x18\x01 \x03(\v2\x13.session.v1.SessionR\bsessions\"\x1f\n" +
 	"\x1dGetSessionsQuerySchemaRequest\"?\n" +
 	"\x14QuerySessionsRequest\x12'\n" +
-	"\x05query\x18\x01 \x01(\v2\x11.query.v1.PayloadR\x05query\"E\n" +
+	"\x05query\x18\x01 \x01(\v2\x11.query.v1.PayloadR\x05query\"g\n" +
+	"\fWorkspaceRef\x12\x1a\n" +
+	"\busername\x18\x01 \x01(\tR\busername\x12\x1c\n" +
+	"\tworkspace\x18\x02 \x01(\tR\tworkspace\x12\x1d\n" +
+	"\n" +
+	"created_at\x18\x03 \x01(\x03R\tcreatedAt\"\xe9\x01\n" +
+	"\x16GetLastSessionsRequest\x128\n" +
+	"\n" +
+	"workspaces\x18\x01 \x03(\v2\x18.session.v1.WorkspaceRefR\n" +
+	"workspaces\x12U\n" +
+	"\vobligations\x18\x02 \x03(\v23.session.v1.GetLastSessionsRequest.ObligationsEntryR\vobligations\x1a>\n" +
+	"\x10ObligationsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"E\n" +
 	"\x14UpsertSessionRequest\x12-\n" +
 	"\asession\x18\x01 \x01(\v2\x13.session.v1.SessionR\asession\"F\n" +
 	"\x15UpsertSessionResponse\x12-\n" +
@@ -3030,11 +3177,12 @@ const file_session_v1_session_proto_rawDesc = "" +
 	"\x15RECORDING_FORMAT_NONE\x10\x03*6\n" +
 	"\tDirection\x12\x14\n" +
 	"\x10DIRECTION_OUTPUT\x10\x00\x12\x13\n" +
-	"\x0fDIRECTION_INPUT\x10\x012\xc7\x06\n" +
+	"\x0fDIRECTION_INPUT\x10\x012\x94\a\n" +
 	"\x0eSessionService\x12C\n" +
 	"\vGetSessions\x12\x1e.session.v1.GetSessionsRequest\x1a\x14.session.v1.Sessions\x12Y\n" +
 	"\x16GetSessionsQuerySchema\x12).session.v1.GetSessionsQuerySchemaRequest\x1a\x14.query.v1.Descriptor\x12G\n" +
-	"\rQuerySessions\x12 .session.v1.QuerySessionsRequest\x1a\x14.session.v1.Sessions\x12T\n" +
+	"\rQuerySessions\x12 .session.v1.QuerySessionsRequest\x1a\x14.session.v1.Sessions\x12K\n" +
+	"\x0fGetLastSessions\x12\".session.v1.GetLastSessionsRequest\x1a\x14.session.v1.Sessions\x12T\n" +
 	"\rUpsertSession\x12 .session.v1.UpsertSessionRequest\x1a!.session.v1.UpsertSessionResponse\x12C\n" +
 	"\n" +
 	"EndSession\x12\x1d.session.v1.EndSessionRequest\x1a\x16.google.protobuf.Empty\x12U\n" +
@@ -3062,7 +3210,7 @@ func file_session_v1_session_proto_rawDescGZIP() []byte {
 }
 
 var file_session_v1_session_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_session_v1_session_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
+var file_session_v1_session_proto_msgTypes = make([]protoimpl.MessageInfo, 36)
 var file_session_v1_session_proto_goTypes = []any{
 	(RecordingType)(0),                           // 0: session.v1.RecordingType
 	(RecordingFormat)(0),                         // 1: session.v1.RecordingFormat
@@ -3073,105 +3221,112 @@ var file_session_v1_session_proto_goTypes = []any{
 	(*Sessions)(nil),                             // 6: session.v1.Sessions
 	(*GetSessionsQuerySchemaRequest)(nil),        // 7: session.v1.GetSessionsQuerySchemaRequest
 	(*QuerySessionsRequest)(nil),                 // 8: session.v1.QuerySessionsRequest
-	(*UpsertSessionRequest)(nil),                 // 9: session.v1.UpsertSessionRequest
-	(*UpsertSessionResponse)(nil),                // 10: session.v1.UpsertSessionResponse
-	(*EndSessionRequest)(nil),                    // 11: session.v1.EndSessionRequest
-	(*RecordingMetadata)(nil),                    // 12: session.v1.RecordingMetadata
-	(*VscodeTerminalInfo)(nil),                   // 13: session.v1.VscodeTerminalInfo
-	(*ListSessionRecordingsRequest)(nil),         // 14: session.v1.ListSessionRecordingsRequest
-	(*ListSessionRecordingsResponse)(nil),        // 15: session.v1.ListSessionRecordingsResponse
-	(*GetSessionRecordingRequest)(nil),           // 16: session.v1.GetSessionRecordingRequest
-	(*GetSessionRecordingResponse)(nil),          // 17: session.v1.GetSessionRecordingResponse
-	(*ListSessionRecordingCommandsRequest)(nil),  // 18: session.v1.ListSessionRecordingCommandsRequest
-	(*RecordingCommand)(nil),                     // 19: session.v1.RecordingCommand
-	(*ListSessionRecordingCommandsResponse)(nil), // 20: session.v1.ListSessionRecordingCommandsResponse
-	(*EndRecordingSessionRequest)(nil),           // 21: session.v1.EndRecordingSessionRequest
-	(*RecordingOptions)(nil),                     // 22: session.v1.RecordingOptions
-	(*VscodeRecordingOptions)(nil),               // 23: session.v1.VscodeRecordingOptions
-	(*DataChunk)(nil),                            // 24: session.v1.DataChunk
-	(*TerminalResize)(nil),                       // 25: session.v1.TerminalResize
-	(*ShellRecordingHeader)(nil),                 // 26: session.v1.ShellRecordingHeader
-	(*ShellRecordingFrame)(nil),                  // 27: session.v1.ShellRecordingFrame
-	(*ExecRecordingHeader)(nil),                  // 28: session.v1.ExecRecordingHeader
-	(*ExecRecordingFrame)(nil),                   // 29: session.v1.ExecRecordingFrame
-	(*TcpipRecordingHeader)(nil),                 // 30: session.v1.TcpipRecordingHeader
-	(*TcpipRecordingFrame)(nil),                  // 31: session.v1.TcpipRecordingFrame
-	(*SftpRecordingHeader)(nil),                  // 32: session.v1.SftpRecordingHeader
-	(*SftpRecordingFrame)(nil),                   // 33: session.v1.SftpRecordingFrame
-	nil,                                          // 34: session.v1.ListSessionRecordingsRequest.ObligationsEntry
-	nil,                                          // 35: session.v1.GetSessionRecordingRequest.ObligationsEntry
-	(*v1.Payload)(nil),                           // 36: query.v1.Payload
-	(*v11.GetVersionInfoRequest)(nil),            // 37: common.v1.GetVersionInfoRequest
-	(*v1.Descriptor)(nil),                        // 38: query.v1.Descriptor
-	(*empty.Empty)(nil),                          // 39: google.protobuf.Empty
-	(*v11.GetVersionInfoResponse)(nil),           // 40: common.v1.GetVersionInfoResponse
+	(*WorkspaceRef)(nil),                         // 9: session.v1.WorkspaceRef
+	(*GetLastSessionsRequest)(nil),               // 10: session.v1.GetLastSessionsRequest
+	(*UpsertSessionRequest)(nil),                 // 11: session.v1.UpsertSessionRequest
+	(*UpsertSessionResponse)(nil),                // 12: session.v1.UpsertSessionResponse
+	(*EndSessionRequest)(nil),                    // 13: session.v1.EndSessionRequest
+	(*RecordingMetadata)(nil),                    // 14: session.v1.RecordingMetadata
+	(*VscodeTerminalInfo)(nil),                   // 15: session.v1.VscodeTerminalInfo
+	(*ListSessionRecordingsRequest)(nil),         // 16: session.v1.ListSessionRecordingsRequest
+	(*ListSessionRecordingsResponse)(nil),        // 17: session.v1.ListSessionRecordingsResponse
+	(*GetSessionRecordingRequest)(nil),           // 18: session.v1.GetSessionRecordingRequest
+	(*GetSessionRecordingResponse)(nil),          // 19: session.v1.GetSessionRecordingResponse
+	(*ListSessionRecordingCommandsRequest)(nil),  // 20: session.v1.ListSessionRecordingCommandsRequest
+	(*RecordingCommand)(nil),                     // 21: session.v1.RecordingCommand
+	(*ListSessionRecordingCommandsResponse)(nil), // 22: session.v1.ListSessionRecordingCommandsResponse
+	(*EndRecordingSessionRequest)(nil),           // 23: session.v1.EndRecordingSessionRequest
+	(*RecordingOptions)(nil),                     // 24: session.v1.RecordingOptions
+	(*VscodeRecordingOptions)(nil),               // 25: session.v1.VscodeRecordingOptions
+	(*DataChunk)(nil),                            // 26: session.v1.DataChunk
+	(*TerminalResize)(nil),                       // 27: session.v1.TerminalResize
+	(*ShellRecordingHeader)(nil),                 // 28: session.v1.ShellRecordingHeader
+	(*ShellRecordingFrame)(nil),                  // 29: session.v1.ShellRecordingFrame
+	(*ExecRecordingHeader)(nil),                  // 30: session.v1.ExecRecordingHeader
+	(*ExecRecordingFrame)(nil),                   // 31: session.v1.ExecRecordingFrame
+	(*TcpipRecordingHeader)(nil),                 // 32: session.v1.TcpipRecordingHeader
+	(*TcpipRecordingFrame)(nil),                  // 33: session.v1.TcpipRecordingFrame
+	(*SftpRecordingHeader)(nil),                  // 34: session.v1.SftpRecordingHeader
+	(*SftpRecordingFrame)(nil),                   // 35: session.v1.SftpRecordingFrame
+	nil,                                          // 36: session.v1.GetLastSessionsRequest.ObligationsEntry
+	nil,                                          // 37: session.v1.ListSessionRecordingsRequest.ObligationsEntry
+	nil,                                          // 38: session.v1.GetSessionRecordingRequest.ObligationsEntry
+	(*v1.Payload)(nil),                           // 39: query.v1.Payload
+	(*v11.GetVersionInfoRequest)(nil),            // 40: common.v1.GetVersionInfoRequest
+	(*v1.Descriptor)(nil),                        // 41: query.v1.Descriptor
+	(*empty.Empty)(nil),                          // 42: google.protobuf.Empty
+	(*v11.GetVersionInfoResponse)(nil),           // 43: common.v1.GetVersionInfoResponse
 }
 var file_session_v1_session_proto_depIdxs = []int32{
 	5,  // 0: session.v1.Session.recordings:type_name -> session.v1.RecordingRef
 	0,  // 1: session.v1.RecordingRef.type:type_name -> session.v1.RecordingType
 	4,  // 2: session.v1.Sessions.sessions:type_name -> session.v1.Session
-	36, // 3: session.v1.QuerySessionsRequest.query:type_name -> query.v1.Payload
-	4,  // 4: session.v1.UpsertSessionRequest.session:type_name -> session.v1.Session
-	4,  // 5: session.v1.UpsertSessionResponse.session:type_name -> session.v1.Session
-	0,  // 6: session.v1.RecordingMetadata.type:type_name -> session.v1.RecordingType
-	1,  // 7: session.v1.RecordingMetadata.format:type_name -> session.v1.RecordingFormat
-	13, // 8: session.v1.RecordingMetadata.vscode_terminal:type_name -> session.v1.VscodeTerminalInfo
-	34, // 9: session.v1.ListSessionRecordingsRequest.obligations:type_name -> session.v1.ListSessionRecordingsRequest.ObligationsEntry
-	0,  // 10: session.v1.ListSessionRecordingsRequest.type:type_name -> session.v1.RecordingType
-	12, // 11: session.v1.ListSessionRecordingsResponse.recordings:type_name -> session.v1.RecordingMetadata
-	35, // 12: session.v1.GetSessionRecordingRequest.obligations:type_name -> session.v1.GetSessionRecordingRequest.ObligationsEntry
-	12, // 13: session.v1.GetSessionRecordingResponse.metadata:type_name -> session.v1.RecordingMetadata
-	12, // 14: session.v1.ListSessionRecordingCommandsResponse.metadata:type_name -> session.v1.RecordingMetadata
-	19, // 15: session.v1.ListSessionRecordingCommandsResponse.commands:type_name -> session.v1.RecordingCommand
-	1,  // 16: session.v1.RecordingOptions.format:type_name -> session.v1.RecordingFormat
-	23, // 17: session.v1.RecordingOptions.vscode:type_name -> session.v1.VscodeRecordingOptions
-	2,  // 18: session.v1.DataChunk.direction:type_name -> session.v1.Direction
-	22, // 19: session.v1.ShellRecordingHeader.options:type_name -> session.v1.RecordingOptions
-	26, // 20: session.v1.ShellRecordingFrame.header:type_name -> session.v1.ShellRecordingHeader
-	24, // 21: session.v1.ShellRecordingFrame.chunk:type_name -> session.v1.DataChunk
-	25, // 22: session.v1.ShellRecordingFrame.resize:type_name -> session.v1.TerminalResize
-	22, // 23: session.v1.ExecRecordingHeader.options:type_name -> session.v1.RecordingOptions
-	28, // 24: session.v1.ExecRecordingFrame.header:type_name -> session.v1.ExecRecordingHeader
-	24, // 25: session.v1.ExecRecordingFrame.chunk:type_name -> session.v1.DataChunk
-	22, // 26: session.v1.TcpipRecordingHeader.options:type_name -> session.v1.RecordingOptions
-	30, // 27: session.v1.TcpipRecordingFrame.header:type_name -> session.v1.TcpipRecordingHeader
-	24, // 28: session.v1.TcpipRecordingFrame.chunk:type_name -> session.v1.DataChunk
-	22, // 29: session.v1.SftpRecordingHeader.options:type_name -> session.v1.RecordingOptions
-	32, // 30: session.v1.SftpRecordingFrame.header:type_name -> session.v1.SftpRecordingHeader
-	24, // 31: session.v1.SftpRecordingFrame.chunk:type_name -> session.v1.DataChunk
-	3,  // 32: session.v1.SessionService.GetSessions:input_type -> session.v1.GetSessionsRequest
-	7,  // 33: session.v1.SessionService.GetSessionsQuerySchema:input_type -> session.v1.GetSessionsQuerySchemaRequest
-	8,  // 34: session.v1.SessionService.QuerySessions:input_type -> session.v1.QuerySessionsRequest
-	9,  // 35: session.v1.SessionService.UpsertSession:input_type -> session.v1.UpsertSessionRequest
-	11, // 36: session.v1.SessionService.EndSession:input_type -> session.v1.EndSessionRequest
-	37, // 37: session.v1.SessionService.GetVersionInfo:input_type -> common.v1.GetVersionInfoRequest
-	14, // 38: session.v1.SessionService.ListSessionRecordings:input_type -> session.v1.ListSessionRecordingsRequest
-	16, // 39: session.v1.SessionService.GetSessionRecording:input_type -> session.v1.GetSessionRecordingRequest
-	18, // 40: session.v1.SessionService.ListSessionRecordingCommands:input_type -> session.v1.ListSessionRecordingCommandsRequest
-	27, // 41: session.v1.RecordingService.StreamShellRecording:input_type -> session.v1.ShellRecordingFrame
-	29, // 42: session.v1.RecordingService.StreamExecRecording:input_type -> session.v1.ExecRecordingFrame
-	31, // 43: session.v1.RecordingService.StreamTcpipRecording:input_type -> session.v1.TcpipRecordingFrame
-	33, // 44: session.v1.RecordingService.StreamSftpRecording:input_type -> session.v1.SftpRecordingFrame
-	21, // 45: session.v1.RecordingService.EndRecordingSession:input_type -> session.v1.EndRecordingSessionRequest
-	6,  // 46: session.v1.SessionService.GetSessions:output_type -> session.v1.Sessions
-	38, // 47: session.v1.SessionService.GetSessionsQuerySchema:output_type -> query.v1.Descriptor
-	6,  // 48: session.v1.SessionService.QuerySessions:output_type -> session.v1.Sessions
-	10, // 49: session.v1.SessionService.UpsertSession:output_type -> session.v1.UpsertSessionResponse
-	39, // 50: session.v1.SessionService.EndSession:output_type -> google.protobuf.Empty
-	40, // 51: session.v1.SessionService.GetVersionInfo:output_type -> common.v1.GetVersionInfoResponse
-	15, // 52: session.v1.SessionService.ListSessionRecordings:output_type -> session.v1.ListSessionRecordingsResponse
-	17, // 53: session.v1.SessionService.GetSessionRecording:output_type -> session.v1.GetSessionRecordingResponse
-	20, // 54: session.v1.SessionService.ListSessionRecordingCommands:output_type -> session.v1.ListSessionRecordingCommandsResponse
-	39, // 55: session.v1.RecordingService.StreamShellRecording:output_type -> google.protobuf.Empty
-	39, // 56: session.v1.RecordingService.StreamExecRecording:output_type -> google.protobuf.Empty
-	39, // 57: session.v1.RecordingService.StreamTcpipRecording:output_type -> google.protobuf.Empty
-	39, // 58: session.v1.RecordingService.StreamSftpRecording:output_type -> google.protobuf.Empty
-	39, // 59: session.v1.RecordingService.EndRecordingSession:output_type -> google.protobuf.Empty
-	46, // [46:60] is the sub-list for method output_type
-	32, // [32:46] is the sub-list for method input_type
-	32, // [32:32] is the sub-list for extension type_name
-	32, // [32:32] is the sub-list for extension extendee
-	0,  // [0:32] is the sub-list for field type_name
+	39, // 3: session.v1.QuerySessionsRequest.query:type_name -> query.v1.Payload
+	9,  // 4: session.v1.GetLastSessionsRequest.workspaces:type_name -> session.v1.WorkspaceRef
+	36, // 5: session.v1.GetLastSessionsRequest.obligations:type_name -> session.v1.GetLastSessionsRequest.ObligationsEntry
+	4,  // 6: session.v1.UpsertSessionRequest.session:type_name -> session.v1.Session
+	4,  // 7: session.v1.UpsertSessionResponse.session:type_name -> session.v1.Session
+	0,  // 8: session.v1.RecordingMetadata.type:type_name -> session.v1.RecordingType
+	1,  // 9: session.v1.RecordingMetadata.format:type_name -> session.v1.RecordingFormat
+	15, // 10: session.v1.RecordingMetadata.vscode_terminal:type_name -> session.v1.VscodeTerminalInfo
+	37, // 11: session.v1.ListSessionRecordingsRequest.obligations:type_name -> session.v1.ListSessionRecordingsRequest.ObligationsEntry
+	0,  // 12: session.v1.ListSessionRecordingsRequest.type:type_name -> session.v1.RecordingType
+	14, // 13: session.v1.ListSessionRecordingsResponse.recordings:type_name -> session.v1.RecordingMetadata
+	38, // 14: session.v1.GetSessionRecordingRequest.obligations:type_name -> session.v1.GetSessionRecordingRequest.ObligationsEntry
+	14, // 15: session.v1.GetSessionRecordingResponse.metadata:type_name -> session.v1.RecordingMetadata
+	14, // 16: session.v1.ListSessionRecordingCommandsResponse.metadata:type_name -> session.v1.RecordingMetadata
+	21, // 17: session.v1.ListSessionRecordingCommandsResponse.commands:type_name -> session.v1.RecordingCommand
+	1,  // 18: session.v1.RecordingOptions.format:type_name -> session.v1.RecordingFormat
+	25, // 19: session.v1.RecordingOptions.vscode:type_name -> session.v1.VscodeRecordingOptions
+	2,  // 20: session.v1.DataChunk.direction:type_name -> session.v1.Direction
+	24, // 21: session.v1.ShellRecordingHeader.options:type_name -> session.v1.RecordingOptions
+	28, // 22: session.v1.ShellRecordingFrame.header:type_name -> session.v1.ShellRecordingHeader
+	26, // 23: session.v1.ShellRecordingFrame.chunk:type_name -> session.v1.DataChunk
+	27, // 24: session.v1.ShellRecordingFrame.resize:type_name -> session.v1.TerminalResize
+	24, // 25: session.v1.ExecRecordingHeader.options:type_name -> session.v1.RecordingOptions
+	30, // 26: session.v1.ExecRecordingFrame.header:type_name -> session.v1.ExecRecordingHeader
+	26, // 27: session.v1.ExecRecordingFrame.chunk:type_name -> session.v1.DataChunk
+	24, // 28: session.v1.TcpipRecordingHeader.options:type_name -> session.v1.RecordingOptions
+	32, // 29: session.v1.TcpipRecordingFrame.header:type_name -> session.v1.TcpipRecordingHeader
+	26, // 30: session.v1.TcpipRecordingFrame.chunk:type_name -> session.v1.DataChunk
+	24, // 31: session.v1.SftpRecordingHeader.options:type_name -> session.v1.RecordingOptions
+	34, // 32: session.v1.SftpRecordingFrame.header:type_name -> session.v1.SftpRecordingHeader
+	26, // 33: session.v1.SftpRecordingFrame.chunk:type_name -> session.v1.DataChunk
+	3,  // 34: session.v1.SessionService.GetSessions:input_type -> session.v1.GetSessionsRequest
+	7,  // 35: session.v1.SessionService.GetSessionsQuerySchema:input_type -> session.v1.GetSessionsQuerySchemaRequest
+	8,  // 36: session.v1.SessionService.QuerySessions:input_type -> session.v1.QuerySessionsRequest
+	10, // 37: session.v1.SessionService.GetLastSessions:input_type -> session.v1.GetLastSessionsRequest
+	11, // 38: session.v1.SessionService.UpsertSession:input_type -> session.v1.UpsertSessionRequest
+	13, // 39: session.v1.SessionService.EndSession:input_type -> session.v1.EndSessionRequest
+	40, // 40: session.v1.SessionService.GetVersionInfo:input_type -> common.v1.GetVersionInfoRequest
+	16, // 41: session.v1.SessionService.ListSessionRecordings:input_type -> session.v1.ListSessionRecordingsRequest
+	18, // 42: session.v1.SessionService.GetSessionRecording:input_type -> session.v1.GetSessionRecordingRequest
+	20, // 43: session.v1.SessionService.ListSessionRecordingCommands:input_type -> session.v1.ListSessionRecordingCommandsRequest
+	29, // 44: session.v1.RecordingService.StreamShellRecording:input_type -> session.v1.ShellRecordingFrame
+	31, // 45: session.v1.RecordingService.StreamExecRecording:input_type -> session.v1.ExecRecordingFrame
+	33, // 46: session.v1.RecordingService.StreamTcpipRecording:input_type -> session.v1.TcpipRecordingFrame
+	35, // 47: session.v1.RecordingService.StreamSftpRecording:input_type -> session.v1.SftpRecordingFrame
+	23, // 48: session.v1.RecordingService.EndRecordingSession:input_type -> session.v1.EndRecordingSessionRequest
+	6,  // 49: session.v1.SessionService.GetSessions:output_type -> session.v1.Sessions
+	41, // 50: session.v1.SessionService.GetSessionsQuerySchema:output_type -> query.v1.Descriptor
+	6,  // 51: session.v1.SessionService.QuerySessions:output_type -> session.v1.Sessions
+	6,  // 52: session.v1.SessionService.GetLastSessions:output_type -> session.v1.Sessions
+	12, // 53: session.v1.SessionService.UpsertSession:output_type -> session.v1.UpsertSessionResponse
+	42, // 54: session.v1.SessionService.EndSession:output_type -> google.protobuf.Empty
+	43, // 55: session.v1.SessionService.GetVersionInfo:output_type -> common.v1.GetVersionInfoResponse
+	17, // 56: session.v1.SessionService.ListSessionRecordings:output_type -> session.v1.ListSessionRecordingsResponse
+	19, // 57: session.v1.SessionService.GetSessionRecording:output_type -> session.v1.GetSessionRecordingResponse
+	22, // 58: session.v1.SessionService.ListSessionRecordingCommands:output_type -> session.v1.ListSessionRecordingCommandsResponse
+	42, // 59: session.v1.RecordingService.StreamShellRecording:output_type -> google.protobuf.Empty
+	42, // 60: session.v1.RecordingService.StreamExecRecording:output_type -> google.protobuf.Empty
+	42, // 61: session.v1.RecordingService.StreamTcpipRecording:output_type -> google.protobuf.Empty
+	42, // 62: session.v1.RecordingService.StreamSftpRecording:output_type -> google.protobuf.Empty
+	42, // 63: session.v1.RecordingService.EndRecordingSession:output_type -> google.protobuf.Empty
+	49, // [49:64] is the sub-list for method output_type
+	34, // [34:49] is the sub-list for method input_type
+	34, // [34:34] is the sub-list for extension type_name
+	34, // [34:34] is the sub-list for extension extendee
+	0,  // [0:34] is the sub-list for field type_name
 }
 
 func init() { file_session_v1_session_proto_init() }
@@ -3179,28 +3334,28 @@ func file_session_v1_session_proto_init() {
 	if File_session_v1_session_proto != nil {
 		return
 	}
-	file_session_v1_session_proto_msgTypes[10].OneofWrappers = []any{}
-	file_session_v1_session_proto_msgTypes[14].OneofWrappers = []any{
+	file_session_v1_session_proto_msgTypes[12].OneofWrappers = []any{}
+	file_session_v1_session_proto_msgTypes[16].OneofWrappers = []any{
 		(*GetSessionRecordingResponse_Metadata)(nil),
 		(*GetSessionRecordingResponse_Chunk)(nil),
 	}
-	file_session_v1_session_proto_msgTypes[16].OneofWrappers = []any{}
-	file_session_v1_session_proto_msgTypes[19].OneofWrappers = []any{}
-	file_session_v1_session_proto_msgTypes[20].OneofWrappers = []any{}
-	file_session_v1_session_proto_msgTypes[24].OneofWrappers = []any{
+	file_session_v1_session_proto_msgTypes[18].OneofWrappers = []any{}
+	file_session_v1_session_proto_msgTypes[21].OneofWrappers = []any{}
+	file_session_v1_session_proto_msgTypes[22].OneofWrappers = []any{}
+	file_session_v1_session_proto_msgTypes[26].OneofWrappers = []any{
 		(*ShellRecordingFrame_Header)(nil),
 		(*ShellRecordingFrame_Chunk)(nil),
 		(*ShellRecordingFrame_Resize)(nil),
 	}
-	file_session_v1_session_proto_msgTypes[26].OneofWrappers = []any{
+	file_session_v1_session_proto_msgTypes[28].OneofWrappers = []any{
 		(*ExecRecordingFrame_Header)(nil),
 		(*ExecRecordingFrame_Chunk)(nil),
 	}
-	file_session_v1_session_proto_msgTypes[28].OneofWrappers = []any{
+	file_session_v1_session_proto_msgTypes[30].OneofWrappers = []any{
 		(*TcpipRecordingFrame_Header)(nil),
 		(*TcpipRecordingFrame_Chunk)(nil),
 	}
-	file_session_v1_session_proto_msgTypes[30].OneofWrappers = []any{
+	file_session_v1_session_proto_msgTypes[32].OneofWrappers = []any{
 		(*SftpRecordingFrame_Header)(nil),
 		(*SftpRecordingFrame_Chunk)(nil),
 	}
@@ -3210,7 +3365,7 @@ func file_session_v1_session_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_session_v1_session_proto_rawDesc), len(file_session_v1_session_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   33,
+			NumMessages:   36,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

@@ -691,10 +691,15 @@ func (x *GetBlueprintRequest) GetOrg() string {
 // own_blueprint (plus whatever the user changed), so unmodified inherited
 // values are not pinned onto the child blueprint.
 type GetBlueprintResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Blueprint     []byte                 `protobuf:"bytes,1,opt,name=blueprint,proto3" json:"blueprint,omitempty"`                           // raw blueprint YAML content, merged with Template
-	OwnBlueprint  []byte                 `protobuf:"bytes,2,opt,name=own_blueprint,json=ownBlueprint,proto3" json:"own_blueprint,omitempty"` // raw YAML content defined directly on this blueprint
-	Template      string                 `protobuf:"bytes,3,opt,name=template,proto3" json:"template,omitempty"`                             // name of the immediate parent Template, if any
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	Blueprint    []byte                 `protobuf:"bytes,1,opt,name=blueprint,proto3" json:"blueprint,omitempty"`                           // raw blueprint YAML content, merged with Template
+	OwnBlueprint []byte                 `protobuf:"bytes,2,opt,name=own_blueprint,json=ownBlueprint,proto3" json:"own_blueprint,omitempty"` // raw YAML content defined directly on this blueprint
+	Template     string                 `protobuf:"bytes,3,opt,name=template,proto3" json:"template,omitempty"`                             // name of the immediate parent Template, if any
+	// revision is a short content hash of blueprint (the merged content), see
+	// common.v1.BlueprintSummary.revision. Pass it back as
+	// UpdateBlueprintRequest.expected_revision to update with optimistic
+	// concurrency control.
+	Revision      string `protobuf:"bytes,4,opt,name=revision,proto3" json:"revision,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -746,6 +751,13 @@ func (x *GetBlueprintResponse) GetOwnBlueprint() []byte {
 func (x *GetBlueprintResponse) GetTemplate() string {
 	if x != nil {
 		return x.Template
+	}
+	return ""
+}
+
+func (x *GetBlueprintResponse) GetRevision() string {
+	if x != nil {
+		return x.Revision
 	}
 	return ""
 }
@@ -981,10 +993,13 @@ type OrgBlueprint struct {
 	// blueprint loaded from disk. An org blueprint may inherit from a
 	// file-based Template or from an org-scoped Template in its own org, but
 	// never from another org's blueprint.
-	Yaml          []byte               `protobuf:"bytes,4,opt,name=yaml,proto3" json:"yaml,omitempty"`
-	IsTemplate    bool                 `protobuf:"varint,5,opt,name=is_template,json=isTemplate,proto3" json:"is_template,omitempty"`
-	CreatedAt     *timestamp.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     *timestamp.Timestamp `protobuf:"bytes,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	Yaml       []byte               `protobuf:"bytes,4,opt,name=yaml,proto3" json:"yaml,omitempty"`
+	IsTemplate bool                 `protobuf:"varint,5,opt,name=is_template,json=isTemplate,proto3" json:"is_template,omitempty"`
+	CreatedAt  *timestamp.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt  *timestamp.Timestamp `protobuf:"bytes,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	// revision is a short content hash of the blueprint merged with its
+	// inherited templates, see common.v1.BlueprintSummary.revision.
+	Revision      string `protobuf:"bytes,8,opt,name=revision,proto3" json:"revision,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1068,6 +1083,13 @@ func (x *OrgBlueprint) GetUpdatedAt() *timestamp.Timestamp {
 	return nil
 }
 
+func (x *OrgBlueprint) GetRevision() string {
+	if x != nil {
+		return x.Revision
+	}
+	return ""
+}
+
 // CreateBlueprintRequest registers a new org-scoped blueprint from a YAML
 // document. name, description and is_template are read from the document;
 // org is the only other input.
@@ -1127,11 +1149,16 @@ func (x *CreateBlueprintRequest) GetYaml() []byte {
 // blueprint, identified by org plus the name read from the submitted YAML
 // document. yaml is replaced wholesale.
 type UpdateBlueprintRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Org           string                 `protobuf:"bytes,1,opt,name=org,proto3" json:"org,omitempty"`   // required
-	Yaml          []byte                 `protobuf:"bytes,2,opt,name=yaml,proto3" json:"yaml,omitempty"` // required
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Org   string                 `protobuf:"bytes,1,opt,name=org,proto3" json:"org,omitempty"`   // required
+	Yaml  []byte                 `protobuf:"bytes,2,opt,name=yaml,proto3" json:"yaml,omitempty"` // required
+	// expected_revision, when set, makes the update conditional: it is applied
+	// only if the blueprint's current revision (see OrgBlueprint.revision)
+	// still equals it, and fails with ABORTED otherwise. Empty updates
+	// unconditionally.
+	ExpectedRevision string `protobuf:"bytes,3,opt,name=expected_revision,json=expectedRevision,proto3" json:"expected_revision,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *UpdateBlueprintRequest) Reset() {
@@ -1176,6 +1203,13 @@ func (x *UpdateBlueprintRequest) GetYaml() []byte {
 		return x.Yaml
 	}
 	return nil
+}
+
+func (x *UpdateBlueprintRequest) GetExpectedRevision() string {
+	if x != nil {
+		return x.ExpectedRevision
+	}
+	return ""
 }
 
 // DeleteBlueprintRequest identifies the org-scoped blueprint to remove, by
@@ -2692,10 +2726,17 @@ type InjectWorkload struct {
 	// The strings are passed through exactly as the workload declares them and
 	// are not validated or normalised; a workload declaring neither is still
 	// injectable and simply reports these empty.
-	RepoSource    string `protobuf:"bytes,10,opt,name=repo_source,json=repoSource,proto3" json:"repo_source,omitempty"`
-	RepoRevision  string `protobuf:"bytes,11,opt,name=repo_revision,json=repoRevision,proto3" json:"repo_revision,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	RepoSource   string `protobuf:"bytes,10,opt,name=repo_source,json=repoSource,proto3" json:"repo_source,omitempty"`
+	RepoRevision string `protobuf:"bytes,11,opt,name=repo_revision,json=repoRevision,proto3" json:"repo_revision,omitempty"`
+	// blueprint_revision is the content revision of the blueprint the
+	// injected workspace was created from (see
+	// common.v1.BlueprintSummary.revision). Not to be confused with
+	// repo_revision, which describes the workload's own source. Empty unless
+	// injected is true, and for a workspace injected before revisions were
+	// recorded.
+	BlueprintRevision string `protobuf:"bytes,12,opt,name=blueprint_revision,json=blueprintRevision,proto3" json:"blueprint_revision,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *InjectWorkload) Reset() {
@@ -2805,6 +2846,13 @@ func (x *InjectWorkload) GetRepoRevision() string {
 	return ""
 }
 
+func (x *InjectWorkload) GetBlueprintRevision() string {
+	if x != nil {
+		return x.BlueprintRevision
+	}
+	return ""
+}
+
 // ListInjectWorkloadsResponse lists the injectable workloads found.
 type ListInjectWorkloadsResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -2894,11 +2942,12 @@ const file_provisioner_v1_provisioner_proto_rawDesc = "" +
 	"blueprints\";\n" +
 	"\x13GetBlueprintRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x10\n" +
-	"\x03org\x18\x02 \x01(\tR\x03org\"u\n" +
+	"\x03org\x18\x02 \x01(\tR\x03org\"\x91\x01\n" +
 	"\x14GetBlueprintResponse\x12\x1c\n" +
 	"\tblueprint\x18\x01 \x01(\fR\tblueprint\x12#\n" +
 	"\rown_blueprint\x18\x02 \x01(\fR\fownBlueprint\x12\x1a\n" +
-	"\btemplate\x18\x03 \x01(\tR\btemplate\"@\n" +
+	"\btemplate\x18\x03 \x01(\tR\btemplate\x12\x1a\n" +
+	"\brevision\x18\x04 \x01(\tR\brevision\"@\n" +
 	"\x18ValidateBlueprintRequest\x12\x12\n" +
 	"\x04yaml\x18\x01 \x01(\fR\x04yaml\x12\x10\n" +
 	"\x03org\x18\x02 \x01(\tR\x03org\"\xa2\x01\n" +
@@ -2910,7 +2959,7 @@ const file_provisioner_v1_provisioner_proto_rawDesc = "" +
 	"\x04line\x18\x01 \x01(\x05R\x04line\x12\x16\n" +
 	"\x06column\x18\x02 \x01(\x05R\x06column\x12\x14\n" +
 	"\x05field\x18\x03 \x01(\tR\x05field\x12\x18\n" +
-	"\amessage\x18\x04 \x01(\tR\amessage\"\x81\x02\n" +
+	"\amessage\x18\x04 \x01(\tR\amessage\"\x9d\x02\n" +
 	"\fOrgBlueprint\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x10\n" +
 	"\x03org\x18\x02 \x01(\tR\x03org\x12 \n" +
@@ -2921,13 +2970,15 @@ const file_provisioner_v1_provisioner_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\">\n" +
+	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12\x1a\n" +
+	"\brevision\x18\b \x01(\tR\brevision\">\n" +
 	"\x16CreateBlueprintRequest\x12\x10\n" +
 	"\x03org\x18\x01 \x01(\tR\x03org\x12\x12\n" +
-	"\x04yaml\x18\x02 \x01(\fR\x04yaml\">\n" +
+	"\x04yaml\x18\x02 \x01(\fR\x04yaml\"k\n" +
 	"\x16UpdateBlueprintRequest\x12\x10\n" +
 	"\x03org\x18\x01 \x01(\tR\x03org\x12\x12\n" +
-	"\x04yaml\x18\x02 \x01(\fR\x04yaml\">\n" +
+	"\x04yaml\x18\x02 \x01(\fR\x04yaml\x12+\n" +
+	"\x11expected_revision\x18\x03 \x01(\tR\x10expectedRevision\">\n" +
 	"\x16DeleteBlueprintRequest\x12\x10\n" +
 	"\x03org\x18\x01 \x01(\tR\x03org\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\"3\n" +
@@ -3023,7 +3074,7 @@ const file_provisioner_v1_provisioner_proto_rawDesc = "" +
 	"\fcluster_wide\x18\x02 \x01(\bR\vclusterWide\"P\n" +
 	"\x1aListInjectWorkloadsRequest\x12\x1c\n" +
 	"\tnamespace\x18\x01 \x01(\tR\tnamespace\x12\x14\n" +
-	"\x05kinds\x18\x02 \x03(\tR\x05kinds\"\xd0\x02\n" +
+	"\x05kinds\x18\x02 \x03(\tR\x05kinds\"\xff\x02\n" +
 	"\x0eInjectWorkload\x12\x1c\n" +
 	"\tnamespace\x18\x01 \x01(\tR\tnamespace\x12\x12\n" +
 	"\x04kind\x18\x02 \x01(\tR\x04kind\x12\x12\n" +
@@ -3037,7 +3088,8 @@ const file_provisioner_v1_provisioner_proto_rawDesc = "" +
 	"\vrepo_source\x18\n" +
 	" \x01(\tR\n" +
 	"repoSource\x12#\n" +
-	"\rrepo_revision\x18\v \x01(\tR\frepoRevision\"[\n" +
+	"\rrepo_revision\x18\v \x01(\tR\frepoRevision\x12-\n" +
+	"\x12blueprint_revision\x18\f \x01(\tR\x11blueprintRevision\"[\n" +
 	"\x1bListInjectWorkloadsResponse\x12<\n" +
 	"\tworkloads\x18\x01 \x03(\v2\x1e.provisioner.v1.InjectWorkloadR\tworkloads2\x91\x13\n" +
 	"\x12ProvisionerService\x12\\\n" +

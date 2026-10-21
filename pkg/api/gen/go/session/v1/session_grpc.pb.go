@@ -28,6 +28,7 @@ const (
 	SessionService_GetSessions_FullMethodName                  = "/session.v1.SessionService/GetSessions"
 	SessionService_GetSessionsQuerySchema_FullMethodName       = "/session.v1.SessionService/GetSessionsQuerySchema"
 	SessionService_QuerySessions_FullMethodName                = "/session.v1.SessionService/QuerySessions"
+	SessionService_GetLastSessions_FullMethodName              = "/session.v1.SessionService/GetLastSessions"
 	SessionService_UpsertSession_FullMethodName                = "/session.v1.SessionService/UpsertSession"
 	SessionService_EndSession_FullMethodName                   = "/session.v1.SessionService/EndSession"
 	SessionService_GetVersionInfo_FullMethodName               = "/session.v1.SessionService/GetVersionInfo"
@@ -51,6 +52,13 @@ type SessionServiceClient interface {
 	// QuerySessions retrieves sessions matching a generic query.v1.Payload, as
 	// advertised by GetSessionsQuerySchema.
 	QuerySessions(ctx context.Context, in *QuerySessionsRequest, opts ...grpc.CallOption) (*Sessions, error)
+	// GetLastSessions returns the most recently started session of each given
+	// workspace, at most one per WorkspaceRef, most recent first.
+	// Workspaces are matched on the pair (username, workspace), and sessions
+	// started before a ref's created_at are ignored, so a workspace recreated
+	// under the same name does not inherit its predecessor's sessions.
+	// Workspaces without a matching session are left out of the result.
+	GetLastSessions(ctx context.Context, in *GetLastSessionsRequest, opts ...grpc.CallOption) (*Sessions, error)
 	// UpsertSession creates or updates a session record.
 	// If a session with the given session_id already exists it is updated,
 	// otherwise a new record is created.
@@ -122,6 +130,16 @@ func (c *sessionServiceClient) QuerySessions(ctx context.Context, in *QuerySessi
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Sessions)
 	err := c.cc.Invoke(ctx, SessionService_QuerySessions_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *sessionServiceClient) GetLastSessions(ctx context.Context, in *GetLastSessionsRequest, opts ...grpc.CallOption) (*Sessions, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Sessions)
+	err := c.cc.Invoke(ctx, SessionService_GetLastSessions_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -212,6 +230,13 @@ type SessionServiceServer interface {
 	// QuerySessions retrieves sessions matching a generic query.v1.Payload, as
 	// advertised by GetSessionsQuerySchema.
 	QuerySessions(context.Context, *QuerySessionsRequest) (*Sessions, error)
+	// GetLastSessions returns the most recently started session of each given
+	// workspace, at most one per WorkspaceRef, most recent first.
+	// Workspaces are matched on the pair (username, workspace), and sessions
+	// started before a ref's created_at are ignored, so a workspace recreated
+	// under the same name does not inherit its predecessor's sessions.
+	// Workspaces without a matching session are left out of the result.
+	GetLastSessions(context.Context, *GetLastSessionsRequest) (*Sessions, error)
 	// UpsertSession creates or updates a session record.
 	// If a session with the given session_id already exists it is updated,
 	// otherwise a new record is created.
@@ -267,6 +292,9 @@ func (UnimplementedSessionServiceServer) GetSessionsQuerySchema(context.Context,
 }
 func (UnimplementedSessionServiceServer) QuerySessions(context.Context, *QuerySessionsRequest) (*Sessions, error) {
 	return nil, status.Error(codes.Unimplemented, "method QuerySessions not implemented")
+}
+func (UnimplementedSessionServiceServer) GetLastSessions(context.Context, *GetLastSessionsRequest) (*Sessions, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetLastSessions not implemented")
 }
 func (UnimplementedSessionServiceServer) UpsertSession(context.Context, *UpsertSessionRequest) (*UpsertSessionResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpsertSession not implemented")
@@ -357,6 +385,24 @@ func _SessionService_QuerySessions_Handler(srv interface{}, ctx context.Context,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SessionServiceServer).QuerySessions(ctx, req.(*QuerySessionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SessionService_GetLastSessions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetLastSessionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SessionServiceServer).GetLastSessions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SessionService_GetLastSessions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SessionServiceServer).GetLastSessions(ctx, req.(*GetLastSessionsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -480,6 +526,10 @@ var SessionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "QuerySessions",
 			Handler:    _SessionService_QuerySessions_Handler,
+		},
+		{
+			MethodName: "GetLastSessions",
+			Handler:    _SessionService_GetLastSessions_Handler,
 		},
 		{
 			MethodName: "UpsertSession",

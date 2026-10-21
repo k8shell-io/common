@@ -250,6 +250,11 @@ message GetBlueprintResponse {
   bytes blueprint = 1;     // raw blueprint YAML content, merged with Template
   bytes own_blueprint = 2; // raw YAML content defined directly on this blueprint
   string template = 3;     // name of the immediate parent Template, if any
+  // revision is a short content hash of blueprint (the merged content), see
+  // common.v1.BlueprintSummary.revision. Pass it back as
+  // UpdateBlueprintRequest.expected_revision to update with optimistic
+  // concurrency control.
+  string revision = 4;
 }
 
 // ValidateBlueprintRequest carries a standalone blueprint YAML document to
@@ -328,6 +333,10 @@ message OrgBlueprint {
 
   google.protobuf.Timestamp created_at = 6;
   google.protobuf.Timestamp updated_at = 7;
+
+  // revision is a short content hash of the blueprint merged with its
+  // inherited templates, see common.v1.BlueprintSummary.revision.
+  string revision = 8;
 }
 
 // CreateBlueprintRequest registers a new org-scoped blueprint from a YAML
@@ -344,6 +353,12 @@ message CreateBlueprintRequest {
 message UpdateBlueprintRequest {
   string org  = 1; // required
   bytes  yaml = 2; // required
+
+  // expected_revision, when set, makes the update conditional: it is applied
+  // only if the blueprint's current revision (see OrgBlueprint.revision)
+  // still equals it, and fails with ABORTED otherwise. Empty updates
+  // unconditionally.
+  string expected_revision = 3;
 }
 
 // DeleteBlueprintRequest identifies the org-scoped blueprint to remove, by
@@ -653,6 +668,13 @@ message InjectWorkload {
   // injectable and simply reports these empty.
   string repo_source = 10;
   string repo_revision = 11;
+  // blueprint_revision is the content revision of the blueprint the
+  // injected workspace was created from (see
+  // common.v1.BlueprintSummary.revision). Not to be confused with
+  // repo_revision, which describes the workload's own source. Empty unless
+  // injected is true, and for a workspace injected before revisions were
+  // recorded.
+  string blueprint_revision = 12;
 }
 
 // ListInjectWorkloadsResponse lists the injectable workloads found.
