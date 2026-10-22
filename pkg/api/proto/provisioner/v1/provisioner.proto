@@ -138,6 +138,18 @@ service ProvisionerService {
   // workload must be ejected before anyone else can inject into it.
   rpc ListInjectWorkloads(ListInjectWorkloadsRequest) returns (ListInjectWorkloadsResponse);
 
+  // DiffWorkspaceBlueprint compares the blueprint a workspace was provisioned
+  // from with what its blueprint resolves to now, as aligned side-by-side
+  // rows a client can render directly. The left side is recovered from the
+  // workspace's stored Helm values and the right side is the current
+  // blueprint evaluated for the workspace's owner. Values that are not part
+  // of the blueprint (provisioner-internal keys, injected environment
+  // variables, defaulted DNS identity) are removed from both sides and
+  // secret-looking values are redacted. Returns FailedPrecondition for a
+  // workspace provisioned from a repository's k8shell file, and NotFound when
+  // the workspace or its blueprint no longer exists.
+  rpc DiffWorkspaceBlueprint(DiffWorkspaceBlueprintRequest) returns (DiffWorkspaceBlueprintResponse);
+
   // GetVersionInfo returns build and version metadata for this service: its
   // released semantic version, the git commit it was built from, and a short
   // description of what the service does.
@@ -614,6 +626,63 @@ message ListInjectNamespacesResponse {
   // namespaces that exist in the cluster right now rather than a fixed
   // allow-list, and may include system namespaces.
   bool cluster_wide = 2;
+}
+
+// DiffWorkspaceBlueprintRequest identifies the workspace to diff.
+message DiffWorkspaceBlueprintRequest {
+  // workspace is the unique name of the workspace.
+  string workspace = 1;
+}
+
+// BlueprintDiffOp classifies one row of a side-by-side blueprint diff.
+enum BlueprintDiffOp {
+  BLUEPRINT_DIFF_OP_UNSPECIFIED = 0;
+  // EQUAL: the line is identical on both sides.
+  BLUEPRINT_DIFF_OP_EQUAL = 1;
+  // REMOVED: the line exists only in the workspace (left side).
+  BLUEPRINT_DIFF_OP_REMOVED = 2;
+  // ADDED: the line exists only in the current blueprint (right side).
+  BLUEPRINT_DIFF_OP_ADDED = 3;
+  // CHANGED: both sides hold a line at this position and they differ.
+  BLUEPRINT_DIFF_OP_CHANGED = 4;
+}
+
+// BlueprintDiffRow is one aligned row of a side-by-side diff. The left
+// fields are empty (and left_line 0) for an ADDED row; the right fields are
+// empty (and right_line 0) for a REMOVED row.
+message BlueprintDiffRow {
+  BlueprintDiffOp op = 1;
+  // left_line is the 1-based line number in workspace_yaml, or 0.
+  int32 left_line = 2;
+  string left_text = 3;
+  // right_line is the 1-based line number in blueprint_yaml, or 0.
+  int32 right_line = 4;
+  string right_text = 5;
+}
+
+// DiffWorkspaceBlueprintResponse is the side-by-side diff of a workspace's
+// blueprint against its current blueprint.
+message DiffWorkspaceBlueprintResponse {
+  // identical is true when both sides render to the same YAML; rows is then
+  // all EQUAL.
+  bool identical = 1;
+  // workspace_revision is the blueprint revision the workspace was
+  // provisioned from, empty when it was not recorded.
+  string workspace_revision = 2;
+  // blueprint_revision is the current revision of the workspace's blueprint.
+  string blueprint_revision = 3;
+  // workspace_yaml is the blueprint recovered from the workspace's stored
+  // values, normalized and redacted.
+  string workspace_yaml = 4;
+  // blueprint_yaml is the workspace's blueprint as it resolves now,
+  // normalized and redacted the same way.
+  string blueprint_yaml = 5;
+  // rows is the full document aligned for side-by-side display, in order.
+  repeated BlueprintDiffRow rows = 6;
+  // added, removed and changed count the rows of each non-EQUAL op.
+  int32 added = 7;
+  int32 removed = 8;
+  int32 changed = 9;
 }
 
 // ListInjectWorkloadsRequest selects which workloads to list.

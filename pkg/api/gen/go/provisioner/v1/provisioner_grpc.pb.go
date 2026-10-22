@@ -51,6 +51,7 @@ const (
 	ProvisionerService_EjectWorkspace_FullMethodName           = "/provisioner.v1.ProvisionerService/EjectWorkspace"
 	ProvisionerService_ListInjectNamespaces_FullMethodName     = "/provisioner.v1.ProvisionerService/ListInjectNamespaces"
 	ProvisionerService_ListInjectWorkloads_FullMethodName      = "/provisioner.v1.ProvisionerService/ListInjectWorkloads"
+	ProvisionerService_DiffWorkspaceBlueprint_FullMethodName   = "/provisioner.v1.ProvisionerService/DiffWorkspaceBlueprint"
 	ProvisionerService_GetVersionInfo_FullMethodName           = "/provisioner.v1.ProvisionerService/GetVersionInfo"
 )
 
@@ -159,6 +160,17 @@ type ProvisionerServiceClient interface {
 	// who owns it. A workload hosts at most one workspace, so an occupied
 	// workload must be ejected before anyone else can inject into it.
 	ListInjectWorkloads(ctx context.Context, in *ListInjectWorkloadsRequest, opts ...grpc.CallOption) (*ListInjectWorkloadsResponse, error)
+	// DiffWorkspaceBlueprint compares the blueprint a workspace was provisioned
+	// from with what its blueprint resolves to now, as aligned side-by-side
+	// rows a client can render directly. The left side is recovered from the
+	// workspace's stored Helm values and the right side is the current
+	// blueprint evaluated for the workspace's owner. Values that are not part
+	// of the blueprint (provisioner-internal keys, injected environment
+	// variables, defaulted DNS identity) are removed from both sides and
+	// secret-looking values are redacted. Returns FailedPrecondition for a
+	// workspace provisioned from a repository's k8shell file, and NotFound when
+	// the workspace or its blueprint no longer exists.
+	DiffWorkspaceBlueprint(ctx context.Context, in *DiffWorkspaceBlueprintRequest, opts ...grpc.CallOption) (*DiffWorkspaceBlueprintResponse, error)
 	// GetVersionInfo returns build and version metadata for this service: its
 	// released semantic version, the git commit it was built from, and a short
 	// description of what the service does.
@@ -421,6 +433,16 @@ func (c *provisionerServiceClient) ListInjectWorkloads(ctx context.Context, in *
 	return out, nil
 }
 
+func (c *provisionerServiceClient) DiffWorkspaceBlueprint(ctx context.Context, in *DiffWorkspaceBlueprintRequest, opts ...grpc.CallOption) (*DiffWorkspaceBlueprintResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DiffWorkspaceBlueprintResponse)
+	err := c.cc.Invoke(ctx, ProvisionerService_DiffWorkspaceBlueprint_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *provisionerServiceClient) GetVersionInfo(ctx context.Context, in *v1.GetVersionInfoRequest, opts ...grpc.CallOption) (*v1.GetVersionInfoResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(v1.GetVersionInfoResponse)
@@ -536,6 +558,17 @@ type ProvisionerServiceServer interface {
 	// who owns it. A workload hosts at most one workspace, so an occupied
 	// workload must be ejected before anyone else can inject into it.
 	ListInjectWorkloads(context.Context, *ListInjectWorkloadsRequest) (*ListInjectWorkloadsResponse, error)
+	// DiffWorkspaceBlueprint compares the blueprint a workspace was provisioned
+	// from with what its blueprint resolves to now, as aligned side-by-side
+	// rows a client can render directly. The left side is recovered from the
+	// workspace's stored Helm values and the right side is the current
+	// blueprint evaluated for the workspace's owner. Values that are not part
+	// of the blueprint (provisioner-internal keys, injected environment
+	// variables, defaulted DNS identity) are removed from both sides and
+	// secret-looking values are redacted. Returns FailedPrecondition for a
+	// workspace provisioned from a repository's k8shell file, and NotFound when
+	// the workspace or its blueprint no longer exists.
+	DiffWorkspaceBlueprint(context.Context, *DiffWorkspaceBlueprintRequest) (*DiffWorkspaceBlueprintResponse, error)
 	// GetVersionInfo returns build and version metadata for this service: its
 	// released semantic version, the git commit it was built from, and a short
 	// description of what the service does.
@@ -618,6 +651,9 @@ func (UnimplementedProvisionerServiceServer) ListInjectNamespaces(context.Contex
 }
 func (UnimplementedProvisionerServiceServer) ListInjectWorkloads(context.Context, *ListInjectWorkloadsRequest) (*ListInjectWorkloadsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListInjectWorkloads not implemented")
+}
+func (UnimplementedProvisionerServiceServer) DiffWorkspaceBlueprint(context.Context, *DiffWorkspaceBlueprintRequest) (*DiffWorkspaceBlueprintResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DiffWorkspaceBlueprint not implemented")
 }
 func (UnimplementedProvisionerServiceServer) GetVersionInfo(context.Context, *v1.GetVersionInfoRequest) (*v1.GetVersionInfoResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetVersionInfo not implemented")
@@ -1043,6 +1079,24 @@ func _ProvisionerService_ListInjectWorkloads_Handler(srv interface{}, ctx contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProvisionerService_DiffWorkspaceBlueprint_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DiffWorkspaceBlueprintRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProvisionerServiceServer).DiffWorkspaceBlueprint(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProvisionerService_DiffWorkspaceBlueprint_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProvisionerServiceServer).DiffWorkspaceBlueprint(ctx, req.(*DiffWorkspaceBlueprintRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ProvisionerService_GetVersionInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(v1.GetVersionInfoRequest)
 	if err := dec(in); err != nil {
@@ -1151,6 +1205,10 @@ var ProvisionerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListInjectWorkloads",
 			Handler:    _ProvisionerService_ListInjectWorkloads_Handler,
+		},
+		{
+			MethodName: "DiffWorkspaceBlueprint",
+			Handler:    _ProvisionerService_DiffWorkspaceBlueprint_Handler,
 		},
 		{
 			MethodName: "GetVersionInfo",
