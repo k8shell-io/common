@@ -1,6 +1,6 @@
 module github.com/k8shell-io/common
 
-go 1.26.10
+go 1.27.3
 
 require (
 	github.com/coreos/go-oidc/v3 v3.21.0

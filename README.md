@@ -149,7 +149,7 @@ pkg/
 
 ## Prerequisites
 
-- Go 1.24+
+- Go 1.27+
 - [`buf`](https://buf.build/docs/installation) (recommended) **or** `protoc` with `protoc-gen-go` and `protoc-gen-go-grpc` plugins — only required to regenerate stubs from proto sources
 
 ## Code generation
