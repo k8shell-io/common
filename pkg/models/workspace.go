@@ -20,6 +20,9 @@ const (
 	WorkspaceStatusStopping     WorkspaceStatusMessage = "Stopping"
 	WorkspaceStatusTerminating  WorkspaceStatusMessage = "Terminating"
 	WorkspaceStatusStopped      WorkspaceStatusMessage = "Stopped"
+	// WorkspaceStatusNodeLost means the workspace pod is being deleted but its
+	// node is unreachable, so the deletion cannot finish until the node returns.
+	WorkspaceStatusNodeLost WorkspaceStatusMessage = "NodeLost"
 	WorkspaceStatusError        WorkspaceStatusMessage = "Error"
 	WorkspaceStatusUnknown      WorkspaceStatusMessage = "Unknown"
 )
