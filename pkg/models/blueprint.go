@@ -12,16 +12,18 @@ import (
 
 // Blueprint represents a single blueprint configuration
 type Blueprint struct {
-	Metadata             BlueprintMetadata      `yaml:"metadata" json:"metadata"`
-	Name                 string                 `yaml:"name" json:"name" validate:"required,min=1,max=40" jsonschema:"required"`
-	Description          string                 `yaml:"description,omitempty" json:"description,omitempty" validate:"max=500"`
-	IsTemplate           bool                   `yaml:"isTemplate,omitempty" json:"isTemplate,omitempty" default:"false"`
-	Splash               string                 `yaml:"splash,omitempty" json:"splash,omitempty"`
-	Template             string                 `yaml:"template" json:"template"`
-	Hostname             string                 `yaml:"hostname,omitempty" json:"hostname,omitempty" validate:"omitempty,plainhostname"`
-	Subdomain            string                 `yaml:"subdomain,omitempty" json:"subdomain,omitempty" validate:"omitempty,plainhostname"`
-	Image                string                 `yaml:"image" json:"image" validate:"required" jsonschema:"required"`
-	ImagePullPolicy      string                 `yaml:"imagePullPolicy,omitempty" json:"imagePullPolicy,omitempty" validate:"omitempty,oneof=Always Never IfNotPresent" jsonschema:"enum=Always,enum=Never,enum=IfNotPresent"`
+	Metadata        BlueprintMetadata `yaml:"metadata" json:"metadata"`
+	Name            string            `yaml:"name" json:"name" validate:"required,min=1,max=40" jsonschema:"required"`
+	Description     string            `yaml:"description,omitempty" json:"description,omitempty" validate:"max=500"`
+	IsTemplate      bool              `yaml:"isTemplate,omitempty" json:"isTemplate,omitempty" default:"false"`
+	Splash          string            `yaml:"splash,omitempty" json:"splash,omitempty"`
+	Template        string            `yaml:"template" json:"template"`
+	Hostname        string            `yaml:"hostname,omitempty" json:"hostname,omitempty" validate:"omitempty,plainhostname"`
+	Subdomain       string            `yaml:"subdomain,omitempty" json:"subdomain,omitempty" validate:"omitempty,plainhostname"`
+	Image           string            `yaml:"image" json:"image" validate:"required" jsonschema:"required"`
+	ImagePullPolicy string            `yaml:"imagePullPolicy,omitempty" json:"imagePullPolicy,omitempty" validate:"omitempty,oneof=Always Never IfNotPresent" jsonschema:"enum=Always,enum=Never,enum=IfNotPresent"`
+	// RuntimeClassName sets the pod's runtimeClassName (e.g. kata-qemu).
+	RuntimeClassName     string                 `yaml:"runtimeClassName,omitempty" json:"runtimeClassName,omitempty" validate:"omitempty,plainhostname"`
 	K8shelld             K8shelld               `yaml:"k8shelld" json:"k8shelld" validate:"required" jsonschema:"required"`
 	Env                  map[string]string      `yaml:"env,omitempty" json:"env,omitempty" default:"{}"`
 	Network              Network                `yaml:"network,omitempty" json:"network,omitempty" default:"{networkPolicyClass:workspace}"`
@@ -233,18 +235,71 @@ type WebProxy struct {
 type Resources struct {
 	CPU    string `yaml:"cpu" json:"cpu" validate:"required" jsonschema:"required"`
 	Memory string `yaml:"memory" json:"memory" validate:"required" jsonschema:"required"`
+	// Overcommit derives the container requests from the limits. Only the
+	// workspace level resources use it; it applies to the main container and the
+	// podman sidecar.
+	Overcommit *Overcommit `yaml:"overcommit,omitempty" json:"overcommit,omitempty"`
+}
+
+// Overcommit is the ratio between a limit and the request derived from it, per
+// resource (request = limit / ratio). An unset ratio keeps the default fixed
+// request.
+type Overcommit struct {
+	CPU    *float64 `yaml:"cpu,omitempty" json:"cpu,omitempty" validate:"omitempty,gte=1"`
+	Memory *float64 `yaml:"memory,omitempty" json:"memory,omitempty" validate:"omitempty,gte=1"`
 }
 
 // Podman represents Podman configuration
 type Podman struct {
-	Enabled                 bool                   `yaml:"enabled" json:"enabled" default:"false"`
-	Image                   string                 `yaml:"image" json:"image" validate:"required_if=Enabled true"`
-	Resources               Resources              `yaml:"resources" json:"resources" default:"{cpu:500m,memory:512Mi}"`
+	Enabled bool `yaml:"enabled" json:"enabled" default:"false"`
+	// Profile selects a built-in set of defaults for the podman sidecar.
+	Profile   string    `yaml:"profile,omitempty" json:"profile,omitempty" validate:"omitempty,oneof=privileged rootless kata" jsonschema:"enum=privileged,enum=rootless,enum=kata"`
+	Image     string    `yaml:"image" json:"image" validate:"required_if=Enabled true"`
+	Resources Resources `yaml:"resources" json:"resources" default:"{cpu:500m,memory:512Mi}"`
+	// StartupScript is a shell snippet run as root before the podman service starts.
+	StartupScript string `yaml:"startupScript,omitempty" json:"startupScript,omitempty"`
+	// InitContainers are extra init containers run before the workspace starts.
+	InitContainers []PodmanInitContainer `yaml:"initContainers,omitempty" json:"initContainers,omitempty" validate:"omitempty,dive"`
+	// SocketMedium sets the emptyDir medium of the podman socket volume.
+	SocketMedium string `yaml:"socketMedium,omitempty" json:"socketMedium,omitempty" validate:"omitempty,oneof=Memory" jsonschema:"enum=Memory"`
+	// CacheTrimSeconds drops the guest's page cache every so many seconds so a
+	// VM-based runtime class (e.g. Kata) returns cold cache to the host. Needs
+	// runtimeClassName, since in a plain container it would drop the node's cache.
+	// Unset takes the profile default; 0 disables it.
+	CacheTrimSeconds *int `yaml:"cacheTrimSeconds,omitempty" json:"cacheTrimSeconds,omitempty"`
+	// StorageImage keeps the podman graph storage in a loop-mounted ext4 image
+	// (mode file) or on a raw block volume (mode block).
+	StorageImage            *PodmanStorageImage    `yaml:"storageImage,omitempty" json:"storageImage,omitempty"`
 	CreateDockerSockSymlink bool                   `yaml:"createDockerSockSymlink" json:"createDockerSockSymlink" default:"false"`
 	ParentStorages          bool                   `yaml:"parentStorages" json:"parentStorages" default:"true"`
 	ExtFiles                map[string]string      `yaml:"extFiles,omitempty" json:"extFiles,omitempty" default:"{}"`
 	Storages                map[string]Storage     `yaml:"storages,omitempty" json:"storages,omitempty" default:"{}"`
 	SecurityContext         map[string]interface{} `yaml:"securityContext,omitempty" json:"securityContext,omitempty" default:"{}"`
+}
+
+// PodmanInitContainer is an extra init container of the workspace pod.
+type PodmanInitContainer struct {
+	Name    string   `yaml:"name" json:"name" validate:"required,plainhostname"`
+	Image   string   `yaml:"image" json:"image" validate:"required"`
+	Command []string `yaml:"command" json:"command" validate:"required,min=1"`
+	// Storages lists the names of podman storages to mount.
+	Storages []string `yaml:"storages,omitempty" json:"storages,omitempty"`
+}
+
+// PodmanStorageImage configures how podman storage sits on a podman volume.
+type PodmanStorageImage struct {
+	// Mode is file (sparse ext4 image on a filesystem volume) or block (raw block volume).
+	Mode string `yaml:"mode" json:"mode" validate:"required,oneof=file block" jsonschema:"enum=file,enum=block"`
+	// Storage is the name of the podman storage holding the image or device. Defaults to graphdb.
+	Storage string `yaml:"storage,omitempty" json:"storage,omitempty" default:"graphdb"`
+	// DiskPath is where the volume is mounted (file) or the device appears (block).
+	DiskPath string `yaml:"diskPath,omitempty" json:"diskPath,omitempty" validate:"omitempty,startswith=/"`
+	// MountPath is where the ext4 filesystem is mounted. Defaults to /var/lib/containers/storage.
+	MountPath string `yaml:"mountPath,omitempty" json:"mountPath,omitempty" validate:"omitempty,startswith=/"`
+	// Size is the image size for mode file. Defaults to 90% of the claim.
+	Size string `yaml:"size,omitempty" json:"size,omitempty"`
+	// InitImage provides mkfs.ext4 for mode file.
+	InitImage string `yaml:"initImage,omitempty" json:"initImage,omitempty"`
 }
 
 // Storage represents storage configuration
