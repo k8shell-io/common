@@ -398,6 +398,7 @@ func WorkspaceDetailsToProto(m *models.WorkspaceDetails) *commonv1.WorkspaceDeta
 		ReplicaCount:         copyInt32(m.ReplicaCount),
 		BlueprintRevision:    m.BlueprintRevision,
 		BlueprintOutdated:    copyBool(m.BlueprintOutdated),
+		Runtime:              m.Runtime,
 	}
 }
 
@@ -508,6 +509,7 @@ func ProtoToWorkspaceDetails(pb *commonv1.WorkspaceDetails) *models.WorkspaceDet
 		ReplicaIndex:         copyInt32(pb.ReplicaIndex),
 		ReplicaCount:         copyInt32(pb.ReplicaCount),
 		BlueprintRevision:    pb.GetBlueprintRevision(),
+		Runtime:              pb.GetRuntime(),
 		BlueprintOutdated:    copyBool(pb.BlueprintOutdated),
 	}
 }

@@ -305,6 +305,10 @@ message WorkspaceDetails {
   // built from a repository's k8shell file, whose current content the
   // provisioner does not track.
   optional bool blueprint_outdated = 33;
+  // runtime is the Kubernetes runtime class the workspace pod runs in, e.g.
+  // "kata-qemu" for a Kata VM. Empty when the pod uses the cluster's default
+  // runtime. Independent of workspace_type.
+  string runtime = 34;
 }
 
 // BlueprintSummary is a lightweight representation of a blueprint used in

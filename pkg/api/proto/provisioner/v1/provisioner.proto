@@ -41,6 +41,11 @@ service ProvisionerService {
   // as advertised by GetWorkspacesQuerySchema.
   rpc QueryWorkspaces(QueryWorkspacesRequest) returns (GetWorkspacesResponse);
 
+  // GetNodeSelectorOptions returns, for each node selector key the provisioner
+  // is configured with, the values currently present on cluster nodes and how
+  // many nodes carry each one.
+  rpc GetNodeSelectorOptions(GetNodeSelectorOptionsRequest) returns (GetNodeSelectorOptionsResponse);
+
   // ListBlueprints returns a summary of every blueprint the provisioner
   // knows about, regardless of user: the file-based global blueprints and
   // every org-scoped database blueprint. Each summary carries its org (empty
@@ -210,6 +215,43 @@ message GetWorkspacesQuerySchemaRequest {}
 // advertised by GetWorkspacesQuerySchema.
 message QueryWorkspacesRequest {
   query.v1.Payload query = 1;
+}
+
+// GetNodeSelectorOptionsRequest requests the discovered node selector options.
+// It carries no fields today; left as a message rather than
+// google.protobuf.Empty so parameters can be added later without changing the
+// RPC signature.
+message GetNodeSelectorOptionsRequest {}
+
+// NodeSelectorValue is one value of a node selector key and the nodes that
+// carry it.
+message NodeSelectorValue {
+  // value is the label value found on one or more nodes.
+  string value = 1;
+  // node_count is the number of nodes labelled with the key and this value.
+  int32 node_count = 2;
+  // ready_count is how many of those nodes have a Ready condition of True.
+  int32 ready_count = 3;
+  // schedulable_count is how many of those nodes are Ready and not cordoned
+  // (spec.unschedulable). Taints are not considered: nodes reserved for an
+  // org are expected to be tainted.
+  int32 schedulable_count = 4;
+}
+
+// NodeSelectorKey is a configured node selector key with its discovered
+// values.
+message NodeSelectorKey {
+  // key is the node label key, e.g. "k8shell.io/pool".
+  string key = 1;
+  // values are the values found on nodes, sorted by value. Empty when no node
+  // carries the key.
+  repeated NodeSelectorValue values = 2;
+}
+
+// GetNodeSelectorOptionsResponse lists every configured key, in configuration
+// order.
+message GetNodeSelectorOptionsResponse {
+  repeated NodeSelectorKey keys = 1;
 }
 
 // ListBlueprintsRequest requests a summary of every blueprint the

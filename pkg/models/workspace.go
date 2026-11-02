@@ -118,6 +118,10 @@ type WorkspaceDetails struct {
 	// from a repository's k8shell file, whose current content the
 	// provisioner does not track.
 	BlueprintOutdated *bool `json:"blueprintOutdated,omitempty" example:"false"`
+	// Runtime is the Kubernetes runtime class the workspace pod runs in (e.g.
+	// "kata-qemu"). Empty when the pod uses the cluster's default runtime.
+	// It is independent of WorkspaceType.
+	Runtime string `json:"runtime,omitempty" example:"kata-qemu"`
 }
 
 type WorkspaceStreamEventType string
