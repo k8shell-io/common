@@ -142,6 +142,11 @@ type Organization struct {
 	// every k8Shell deployment is seeded with. Computed from Name, not
 	// stored.
 	ReadOnly bool `yaml:"readOnly" json:"readOnly"`
+
+	// NodeSelectors is the desired Kubernetes nodeSelector for the org's
+	// workspaces (label key -> single value). Desired state only; never
+	// counts or readiness.
+	NodeSelectors map[string]string `yaml:"nodeSelectors" json:"nodeSelectors"`
 }
 
 // ProviderInfo holds information about a identity provider

@@ -107,6 +107,13 @@ type OrganizationUpdateRequest struct {
 	Description *string `json:"description,omitempty"`
 }
 
+// OrganizationNodeSelectorsUpdateRequest is the HTTP request body for PUT
+// /organizations/{name}/nodeselectors. NodeSelectors replaces the org's
+// stored map wholesale; an empty map clears it.
+type OrganizationNodeSelectorsUpdateRequest struct {
+	NodeSelectors map[string]string `json:"nodeSelectors"`
+}
+
 // UserKeysRequest is the HTTP request body for adding SSH public keys on a user.
 // Note: proto counterpart is identityv1.UserAuthKeysRequest.
 type UserKeysRequest struct {

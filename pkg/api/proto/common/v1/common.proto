@@ -309,6 +309,13 @@ message WorkspaceDetails {
   // "kata-qemu" for a Kata VM. Empty when the pod uses the cluster's default
   // runtime. Independent of workspace_type.
   string runtime = 34;
+  // node_selectors is the node placement constraint applied to the workspace
+  // pod, key to label value. A comma-separated value means the node may carry
+  // any one of the listed values. Empty when the pod can run on any node.
+  map<string, string> node_selectors = 35;
+  // node_name is the node the workspace pod is scheduled on. Empty while the
+  // pod is not yet scheduled and for a stopped workspace.
+  string node_name = 36;
 }
 
 // BlueprintSummary is a lightweight representation of a blueprint used in

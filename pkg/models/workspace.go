@@ -122,6 +122,13 @@ type WorkspaceDetails struct {
 	// "kata-qemu"). Empty when the pod uses the cluster's default runtime.
 	// It is independent of WorkspaceType.
 	Runtime string `json:"runtime,omitempty" example:"kata-qemu"`
+	// NodeSelectors is the node placement constraint applied to the workspace
+	// pod, key to label value. A comma-separated value means the node may carry
+	// any one of the listed values. Empty when the pod can run on any node.
+	NodeSelectors map[string]string `json:"nodeSelectors,omitempty"`
+	// NodeName is the node the workspace pod is scheduled on. Empty while the
+	// pod is not yet scheduled and for a stopped workspace.
+	NodeName string `json:"nodeName,omitempty" example:"worker-1"`
 }
 
 type WorkspaceStreamEventType string

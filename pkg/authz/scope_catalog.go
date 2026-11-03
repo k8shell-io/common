@@ -247,6 +247,9 @@ var scopeCatalogSource = []domainSpec{
 				{scope: "org:envvar:read", label: "Read", description: "List or read an organization's environment variables."},
 				{scope: "org:envvar:write", label: "Write", description: "Add, update, or remove an organization's environment variables."},
 			}},
+			{action: "org:node:write", label: "Node selectors", entries: []entrySpec{
+				{scope: "org:node:write", label: "Write", description: "Set an organization's node selectors."},
+			}},
 		},
 	},
 	{

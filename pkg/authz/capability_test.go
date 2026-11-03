@@ -92,6 +92,7 @@ var expectedCapabilityActions = []string{
 	"org:update",
 	"org:envvar:read",
 	"org:envvar:write",
+	"org:node:write",
 	"blueprints:read",
 	"blueprints:write",
 	"audit:list",

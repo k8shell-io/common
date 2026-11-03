@@ -299,11 +299,19 @@ message Organization {
   int32           user_count      = 5;  // total number of users in this org
 
   // read_only is true for the built-in "default" organization only: it
-  // cannot be updated or deleted, since it's the fallback organization every
-  // k8Shell deployment is seeded with. UpdateOrganization/DeleteOrganization
-  // reject any attempt against it with FailedPrecondition. Computed from
+  // cannot be deleted and its description cannot be updated, since it's the
+  // fallback organization every k8Shell deployment is seeded with.
+  // DeleteOrganization, and UpdateOrganization of anything but node_selectors,
+  // are rejected against it with FailedPrecondition. Computed from
   // name, not stored.
   bool read_only = 6;
+
+  // node_selectors is the desired Kubernetes nodeSelector for this
+  // organization's workspaces: label key -> value. A value may list several
+  // allowed values separated by commas (e.g. "gpu,highmem"), which the
+  // provisioner expands. Desired state only — never counts or
+  // readiness of matching nodes. Empty when none is configured.
+  map<string, string> node_selectors = 7;
 }
 
 // OrganizationList holds a list of organizations.
@@ -340,11 +348,20 @@ message CreateOrganizationRequest {
   string description = 2;
 }
 
-// UpdateOrganizationRequest partially updates an organization's description.
-// Name is immutable and used only to identify the organization.
+// NodeSelectors wraps a node selector map so UpdateOrganizationRequest can
+// distinguish "not sent" (leave unchanged) from "sent empty" (clear).
+message NodeSelectors {
+  map<string, string> values = 1;
+}
+
+// UpdateOrganizationRequest partially updates an organization's description
+// and/or node selectors. Name is immutable and used only to identify the
+// organization. Each optional field left unset is left unchanged; node_selectors
+// set with empty values clears them, otherwise it replaces them wholesale.
 message UpdateOrganizationRequest {
-  string                      name        = 1;
-  google.protobuf.StringValue description = 2;
+  string                      name           = 1;
+  google.protobuf.StringValue description    = 2;
+  optional NodeSelectors      node_selectors = 3;
 }
 
 // DeleteOrganizationRequest identifies the organization to remove from the registry.

@@ -1080,7 +1080,14 @@ type WorkspaceDetails struct {
 	// runtime is the Kubernetes runtime class the workspace pod runs in, e.g.
 	// "kata-qemu" for a Kata VM. Empty when the pod uses the cluster's default
 	// runtime. Independent of workspace_type.
-	Runtime       string `protobuf:"bytes,34,opt,name=runtime,proto3" json:"runtime,omitempty"`
+	Runtime string `protobuf:"bytes,34,opt,name=runtime,proto3" json:"runtime,omitempty"`
+	// node_selectors is the node placement constraint applied to the workspace
+	// pod, key to label value. A comma-separated value means the node may carry
+	// any one of the listed values. Empty when the pod can run on any node.
+	NodeSelectors map[string]string `protobuf:"bytes,35,rep,name=node_selectors,json=nodeSelectors,proto3" json:"node_selectors,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// node_name is the node the workspace pod is scheduled on. Empty while the
+	// pod is not yet scheduled and for a stopped workspace.
+	NodeName      string `protobuf:"bytes,36,opt,name=node_name,json=nodeName,proto3" json:"node_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1349,6 +1356,20 @@ func (x *WorkspaceDetails) GetBlueprintOutdated() bool {
 func (x *WorkspaceDetails) GetRuntime() string {
 	if x != nil {
 		return x.Runtime
+	}
+	return ""
+}
+
+func (x *WorkspaceDetails) GetNodeSelectors() map[string]string {
+	if x != nil {
+		return x.NodeSelectors
+	}
+	return nil
+}
+
+func (x *WorkspaceDetails) GetNodeName() string {
+	if x != nil {
+		return x.NodeName
 	}
 	return ""
 }
@@ -1684,8 +1705,7 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"\fmatch_labels\x18\x01 \x03(\v2,.common.v1.PodLabelSelector.MatchLabelsEntryR\vmatchLabels\x1a>\n" +
 	"\x10MatchLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xa0\n" +
-	"\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xd6\v\n" +
 	"\x10WorkspaceDetails\x12E\n" +
 	"\x10workspace_status\x18\x01 \x01(\v2\x1a.common.v1.WorkspaceStatusR\x0fworkspaceStatus\x12\x1f\n" +
 	"\vapp_version\x18\x02 \x01(\tR\n" +
@@ -1725,7 +1745,12 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"\x17web_proxy_alias_message\x18\x1f \x01(\tR\x14webProxyAliasMessage\x12-\n" +
 	"\x12blueprint_revision\x18  \x01(\tR\x11blueprintRevision\x122\n" +
 	"\x12blueprint_outdated\x18! \x01(\bH\x02R\x11blueprintOutdated\x88\x01\x01\x12\x18\n" +
-	"\aruntime\x18\" \x01(\tR\aruntimeB\x10\n" +
+	"\aruntime\x18\" \x01(\tR\aruntime\x12U\n" +
+	"\x0enode_selectors\x18# \x03(\v2..common.v1.WorkspaceDetails.NodeSelectorsEntryR\rnodeSelectors\x12\x1b\n" +
+	"\tnode_name\x18$ \x01(\tR\bnodeName\x1a@\n" +
+	"\x12NodeSelectorsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\x10\n" +
 	"\x0e_replica_indexB\x10\n" +
 	"\x0e_replica_countB\x15\n" +
 	"\x13_blueprint_outdated\"\xc6\x02\n" +
@@ -1760,7 +1785,7 @@ func file_common_v1_common_proto_rawDescGZIP() []byte {
 	return file_common_v1_common_proto_rawDescData
 }
 
-var file_common_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_common_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_common_v1_common_proto_goTypes = []any{
 	(*User)(nil),                   // 0: common.v1.User
 	(*UserCredential)(nil),         // 1: common.v1.UserCredential
@@ -1777,26 +1802,28 @@ var file_common_v1_common_proto_goTypes = []any{
 	(*GetVersionInfoRequest)(nil),  // 12: common.v1.GetVersionInfoRequest
 	(*GetVersionInfoResponse)(nil), // 13: common.v1.GetVersionInfoResponse
 	nil,                            // 14: common.v1.PodLabelSelector.MatchLabelsEntry
-	(*timestamppb.Timestamp)(nil),  // 15: google.protobuf.Timestamp
+	nil,                            // 15: common.v1.WorkspaceDetails.NodeSelectorsEntry
+	(*timestamppb.Timestamp)(nil),  // 16: google.protobuf.Timestamp
 }
 var file_common_v1_common_proto_depIdxs = []int32{
-	15, // 0: common.v1.User.expires_at:type_name -> google.protobuf.Timestamp
-	15, // 1: common.v1.UserCredential.created_at:type_name -> google.protobuf.Timestamp
-	15, // 2: common.v1.UserCredential.updated_at:type_name -> google.protobuf.Timestamp
-	15, // 3: common.v1.UserCredential.expires_at:type_name -> google.protobuf.Timestamp
-	15, // 4: common.v1.UserCredential.last_used_at:type_name -> google.protobuf.Timestamp
+	16, // 0: common.v1.User.expires_at:type_name -> google.protobuf.Timestamp
+	16, // 1: common.v1.UserCredential.created_at:type_name -> google.protobuf.Timestamp
+	16, // 2: common.v1.UserCredential.updated_at:type_name -> google.protobuf.Timestamp
+	16, // 3: common.v1.UserCredential.expires_at:type_name -> google.protobuf.Timestamp
+	16, // 4: common.v1.UserCredential.last_used_at:type_name -> google.protobuf.Timestamp
 	6,  // 5: common.v1.UserResult.onboard_rule:type_name -> common.v1.OnboardUserRule
-	15, // 6: common.v1.WorkspaceStatus.created:type_name -> google.protobuf.Timestamp
+	16, // 6: common.v1.WorkspaceStatus.created:type_name -> google.protobuf.Timestamp
 	14, // 7: common.v1.PodLabelSelector.match_labels:type_name -> common.v1.PodLabelSelector.MatchLabelsEntry
 	8,  // 8: common.v1.WorkspaceDetails.workspace_status:type_name -> common.v1.WorkspaceStatus
 	9,  // 9: common.v1.WorkspaceDetails.allow_egress_to_pods:type_name -> common.v1.PodLabelSelector
-	15, // 10: common.v1.BlueprintSummary.created_at:type_name -> google.protobuf.Timestamp
-	15, // 11: common.v1.BlueprintSummary.updated_at:type_name -> google.protobuf.Timestamp
-	12, // [12:12] is the sub-list for method output_type
-	12, // [12:12] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	15, // 10: common.v1.WorkspaceDetails.node_selectors:type_name -> common.v1.WorkspaceDetails.NodeSelectorsEntry
+	16, // 11: common.v1.BlueprintSummary.created_at:type_name -> google.protobuf.Timestamp
+	16, // 12: common.v1.BlueprintSummary.updated_at:type_name -> google.protobuf.Timestamp
+	13, // [13:13] is the sub-list for method output_type
+	13, // [13:13] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_common_v1_common_proto_init() }
@@ -1812,7 +1839,7 @@ func file_common_v1_common_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_common_v1_common_proto_rawDesc), len(file_common_v1_common_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   15,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

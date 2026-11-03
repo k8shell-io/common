@@ -122,6 +122,28 @@ package authz
 // organization's description, so bundling it with environment-variable
 // writes would let anyone who can redescribe an org also push
 // secrets/values into every workspace in it.
+//
+// ---
+//
+// Contract: org:node:write
+//
+// Resource  type="org"
+//   id   organization name (required)
+//
+// Context   (none)
+//
+// Subject   injected by the backend from JWT claims (username, roles, email, ...)
+//
+// Obligations  (none) — allow/deny only
+//
+// Covers replacing an organization's node selectors. There is deliberately
+// no org:node:read: an org's current selectors are returned with the
+// organization, and the node selector options (the keys the provisioner is
+// configured with and the values present on cluster nodes) are listed for
+// anyone with org:read on that organization, so an org admin can see what is
+// selectable. Writing is kept off org:update so an org admin who can edit an
+// org's description cannot also steer its workspaces onto particular nodes;
+// the policy is expected to grant it to global admins only.
 
 import (
 	"fmt"
@@ -620,6 +642,80 @@ func (r *OrganizationEnvVarWriteEvalRequest) Validate() error {
 	return nil
 }
 
+// OrganizationNodeWriteEvalRequest is the validated, typed model for
+// org:node:write policy evaluation — setting an organization's node
+// selectors. Use
+// NewOrganizationNodeWriteEvalRequest to start building, then call Build to
+// get a validated instance.
+type OrganizationNodeWriteEvalRequest struct {
+	Resource OrganizationResource
+}
+
+var _ EvalRequest = (*OrganizationNodeWriteEvalRequest)(nil)
+
+// NewOrganizationNodeWriteEvalRequest begins building an
+// OrganizationNodeWriteEvalRequest for the given organization name. Call
+// Build to validate and obtain the final struct.
+func NewOrganizationNodeWriteEvalRequest(name string) *OrganizationNodeWriteEvalRequest {
+	return &OrganizationNodeWriteEvalRequest{Resource: OrganizationResource{ID: name}}
+}
+
+// Build validates the request and returns it if all constraints are satisfied.
+// It is the required terminator for the builder chain.
+func (r *OrganizationNodeWriteEvalRequest) Build() (*OrganizationNodeWriteEvalRequest, error) {
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// ToProto serializes the typed request into a gRPC EvaluateRequest, attaching
+// the supplied JWT token.
+// Implements EvalRequest.
+func (r *OrganizationNodeWriteEvalRequest) ToProto(token string) *authzv1.EvaluateRequest {
+	return &authzv1.EvaluateRequest{
+		Token:  token,
+		Action: "org:node:write",
+		Resource: &authzv1.Resource{
+			Type: "org",
+			Id:   r.Resource.ID,
+		},
+	}
+}
+
+// OrganizationNodeWriteEvalRequestFromProto converts a gRPC EvaluateRequest
+// into a validated OrganizationNodeWriteEvalRequest.
+func OrganizationNodeWriteEvalRequestFromProto(req *authzv1.EvaluateRequest) (*OrganizationNodeWriteEvalRequest, error) {
+	if req == nil {
+		return nil, fmt.Errorf("org:node:write: EvaluateRequest is nil")
+	}
+	if req.Action != "org:node:write" {
+		return nil, fmt.Errorf("org:node:write: action must be \"org:node:write\", got %q", req.Action)
+	}
+	if req.Resource == nil {
+		return nil, fmt.Errorf("org:node:write: resource is nil")
+	}
+	if req.Resource.Type != "org" {
+		return nil, fmt.Errorf("org:node:write: resource type must be \"org\", got %q", req.Resource.Type)
+	}
+	r := &OrganizationNodeWriteEvalRequest{
+		Resource: OrganizationResource{ID: req.Resource.Id},
+	}
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// Validate checks the request against the org:node:write contract.
+// Implements EvalRequest.
+func (r *OrganizationNodeWriteEvalRequest) Validate() error {
+	if r.Resource.ID == "" {
+		return fmt.Errorf("org:node:write: resource ID (organization name) is required")
+	}
+	return nil
+}
+
 // init registers a capability probe for every org domain action. See
 // CapabilityCheck and registerCapabilityCheck in capability.go.
 func init() {
@@ -663,6 +759,12 @@ func init() {
 		Action: "org:envvar:write", Package: "org", Scope: "org:envvar:write",
 		Build: func(ctx CapabilityContext) (EvalRequest, error) {
 			return NewOrganizationEnvVarWriteEvalRequest(capabilityWildcardOrg).Build()
+		},
+	})
+	registerCapabilityCheck(CapabilityCheck{
+		Action: "org:node:write", Package: "org", Scope: "org:node:write",
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewOrganizationNodeWriteEvalRequest(capabilityWildcardOrg).Build()
 		},
 	})
 }

@@ -1998,11 +1998,18 @@ type Organization struct {
 	AdminUsernames []string `protobuf:"bytes,4,rep,name=admin_usernames,json=adminUsernames,proto3" json:"admin_usernames,omitempty"` // users in this org holding the "org-admin" role
 	UserCount      int32    `protobuf:"varint,5,opt,name=user_count,json=userCount,proto3" json:"user_count,omitempty"`               // total number of users in this org
 	// read_only is true for the built-in "default" organization only: it
-	// cannot be updated or deleted, since it's the fallback organization every
-	// k8Shell deployment is seeded with. UpdateOrganization/DeleteOrganization
-	// reject any attempt against it with FailedPrecondition. Computed from
+	// cannot be deleted and its description cannot be updated, since it's the
+	// fallback organization every k8Shell deployment is seeded with.
+	// DeleteOrganization, and UpdateOrganization of anything but node_selectors,
+	// are rejected against it with FailedPrecondition. Computed from
 	// name, not stored.
-	ReadOnly      bool `protobuf:"varint,6,opt,name=read_only,json=readOnly,proto3" json:"read_only,omitempty"`
+	ReadOnly bool `protobuf:"varint,6,opt,name=read_only,json=readOnly,proto3" json:"read_only,omitempty"`
+	// node_selectors is the desired Kubernetes nodeSelector for this
+	// organization's workspaces: label key -> value. A value may list several
+	// allowed values separated by commas (e.g. "gpu,highmem"), which the
+	// provisioner expands. Desired state only — never counts or
+	// readiness of matching nodes. Empty when none is configured.
+	NodeSelectors map[string]string `protobuf:"bytes,7,rep,name=node_selectors,json=nodeSelectors,proto3" json:"node_selectors,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2077,6 +2084,13 @@ func (x *Organization) GetReadOnly() bool {
 		return x.ReadOnly
 	}
 	return false
+}
+
+func (x *Organization) GetNodeSelectors() map[string]string {
+	if x != nil {
+		return x.NodeSelectors
+	}
+	return nil
 }
 
 // OrganizationList holds a list of organizations.
@@ -2348,19 +2362,68 @@ func (x *CreateOrganizationRequest) GetDescription() string {
 	return ""
 }
 
-// UpdateOrganizationRequest partially updates an organization's description.
-// Name is immutable and used only to identify the organization.
+// NodeSelectors wraps a node selector map so UpdateOrganizationRequest can
+// distinguish "not sent" (leave unchanged) from "sent empty" (clear).
+type NodeSelectors struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Values        map[string]string      `protobuf:"bytes,1,rep,name=values,proto3" json:"values,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *NodeSelectors) Reset() {
+	*x = NodeSelectors{}
+	mi := &file_identity_v1_types_proto_msgTypes[42]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NodeSelectors) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NodeSelectors) ProtoMessage() {}
+
+func (x *NodeSelectors) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_types_proto_msgTypes[42]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NodeSelectors.ProtoReflect.Descriptor instead.
+func (*NodeSelectors) Descriptor() ([]byte, []int) {
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{42}
+}
+
+func (x *NodeSelectors) GetValues() map[string]string {
+	if x != nil {
+		return x.Values
+	}
+	return nil
+}
+
+// UpdateOrganizationRequest partially updates an organization's description
+// and/or node selectors. Name is immutable and used only to identify the
+// organization. Each optional field left unset is left unchanged; node_selectors
+// set with empty values clears them, otherwise it replaces them wholesale.
 type UpdateOrganizationRequest struct {
 	state         protoimpl.MessageState  `protogen:"open.v1"`
 	Name          string                  `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	Description   *wrapperspb.StringValue `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	NodeSelectors *NodeSelectors          `protobuf:"bytes,3,opt,name=node_selectors,json=nodeSelectors,proto3,oneof" json:"node_selectors,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *UpdateOrganizationRequest) Reset() {
 	*x = UpdateOrganizationRequest{}
-	mi := &file_identity_v1_types_proto_msgTypes[42]
+	mi := &file_identity_v1_types_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2372,7 +2435,7 @@ func (x *UpdateOrganizationRequest) String() string {
 func (*UpdateOrganizationRequest) ProtoMessage() {}
 
 func (x *UpdateOrganizationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[42]
+	mi := &file_identity_v1_types_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2385,7 +2448,7 @@ func (x *UpdateOrganizationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateOrganizationRequest.ProtoReflect.Descriptor instead.
 func (*UpdateOrganizationRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{42}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *UpdateOrganizationRequest) GetName() string {
@@ -2402,6 +2465,13 @@ func (x *UpdateOrganizationRequest) GetDescription() *wrapperspb.StringValue {
 	return nil
 }
 
+func (x *UpdateOrganizationRequest) GetNodeSelectors() *NodeSelectors {
+	if x != nil {
+		return x.NodeSelectors
+	}
+	return nil
+}
+
 // DeleteOrganizationRequest identifies the organization to remove from the registry.
 type DeleteOrganizationRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -2412,7 +2482,7 @@ type DeleteOrganizationRequest struct {
 
 func (x *DeleteOrganizationRequest) Reset() {
 	*x = DeleteOrganizationRequest{}
-	mi := &file_identity_v1_types_proto_msgTypes[43]
+	mi := &file_identity_v1_types_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2424,7 +2494,7 @@ func (x *DeleteOrganizationRequest) String() string {
 func (*DeleteOrganizationRequest) ProtoMessage() {}
 
 func (x *DeleteOrganizationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[43]
+	mi := &file_identity_v1_types_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2437,7 +2507,7 @@ func (x *DeleteOrganizationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteOrganizationRequest.ProtoReflect.Descriptor instead.
 func (*DeleteOrganizationRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{43}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *DeleteOrganizationRequest) GetName() string {
@@ -2457,7 +2527,7 @@ type DeleteOrganizationResponse struct {
 
 func (x *DeleteOrganizationResponse) Reset() {
 	*x = DeleteOrganizationResponse{}
-	mi := &file_identity_v1_types_proto_msgTypes[44]
+	mi := &file_identity_v1_types_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2469,7 +2539,7 @@ func (x *DeleteOrganizationResponse) String() string {
 func (*DeleteOrganizationResponse) ProtoMessage() {}
 
 func (x *DeleteOrganizationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[44]
+	mi := &file_identity_v1_types_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2482,7 +2552,7 @@ func (x *DeleteOrganizationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteOrganizationResponse.ProtoReflect.Descriptor instead.
 func (*DeleteOrganizationResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{44}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *DeleteOrganizationResponse) GetSuccess() bool {
@@ -2542,7 +2612,7 @@ type OnboardRule struct {
 
 func (x *OnboardRule) Reset() {
 	*x = OnboardRule{}
-	mi := &file_identity_v1_types_proto_msgTypes[45]
+	mi := &file_identity_v1_types_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2554,7 +2624,7 @@ func (x *OnboardRule) String() string {
 func (*OnboardRule) ProtoMessage() {}
 
 func (x *OnboardRule) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[45]
+	mi := &file_identity_v1_types_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2567,7 +2637,7 @@ func (x *OnboardRule) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OnboardRule.ProtoReflect.Descriptor instead.
 func (*OnboardRule) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{45}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *OnboardRule) GetId() int32 {
@@ -2699,7 +2769,7 @@ type OnboardRuleList struct {
 
 func (x *OnboardRuleList) Reset() {
 	*x = OnboardRuleList{}
-	mi := &file_identity_v1_types_proto_msgTypes[46]
+	mi := &file_identity_v1_types_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2711,7 +2781,7 @@ func (x *OnboardRuleList) String() string {
 func (*OnboardRuleList) ProtoMessage() {}
 
 func (x *OnboardRuleList) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[46]
+	mi := &file_identity_v1_types_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2724,7 +2794,7 @@ func (x *OnboardRuleList) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OnboardRuleList.ProtoReflect.Descriptor instead.
 func (*OnboardRuleList) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{46}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *OnboardRuleList) GetRules() []*OnboardRule {
@@ -2751,7 +2821,7 @@ type CreateOnboardRuleRequest struct {
 
 func (x *CreateOnboardRuleRequest) Reset() {
 	*x = CreateOnboardRuleRequest{}
-	mi := &file_identity_v1_types_proto_msgTypes[47]
+	mi := &file_identity_v1_types_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2763,7 +2833,7 @@ func (x *CreateOnboardRuleRequest) String() string {
 func (*CreateOnboardRuleRequest) ProtoMessage() {}
 
 func (x *CreateOnboardRuleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[47]
+	mi := &file_identity_v1_types_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2776,7 +2846,7 @@ func (x *CreateOnboardRuleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateOnboardRuleRequest.ProtoReflect.Descriptor instead.
 func (*CreateOnboardRuleRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{47}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *CreateOnboardRuleRequest) GetIdp() string {
@@ -2860,7 +2930,7 @@ type UpdateOnboardRuleRequest struct {
 
 func (x *UpdateOnboardRuleRequest) Reset() {
 	*x = UpdateOnboardRuleRequest{}
-	mi := &file_identity_v1_types_proto_msgTypes[48]
+	mi := &file_identity_v1_types_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2872,7 +2942,7 @@ func (x *UpdateOnboardRuleRequest) String() string {
 func (*UpdateOnboardRuleRequest) ProtoMessage() {}
 
 func (x *UpdateOnboardRuleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[48]
+	mi := &file_identity_v1_types_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2885,7 +2955,7 @@ func (x *UpdateOnboardRuleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateOnboardRuleRequest.ProtoReflect.Descriptor instead.
 func (*UpdateOnboardRuleRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{48}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *UpdateOnboardRuleRequest) GetId() int32 {
@@ -2961,7 +3031,7 @@ type DeleteOnboardRuleRequest struct {
 
 func (x *DeleteOnboardRuleRequest) Reset() {
 	*x = DeleteOnboardRuleRequest{}
-	mi := &file_identity_v1_types_proto_msgTypes[49]
+	mi := &file_identity_v1_types_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2973,7 +3043,7 @@ func (x *DeleteOnboardRuleRequest) String() string {
 func (*DeleteOnboardRuleRequest) ProtoMessage() {}
 
 func (x *DeleteOnboardRuleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[49]
+	mi := &file_identity_v1_types_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2986,7 +3056,7 @@ func (x *DeleteOnboardRuleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteOnboardRuleRequest.ProtoReflect.Descriptor instead.
 func (*DeleteOnboardRuleRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{49}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *DeleteOnboardRuleRequest) GetId() int32 {
@@ -3006,7 +3076,7 @@ type DeleteOnboardRuleResponse struct {
 
 func (x *DeleteOnboardRuleResponse) Reset() {
 	*x = DeleteOnboardRuleResponse{}
-	mi := &file_identity_v1_types_proto_msgTypes[50]
+	mi := &file_identity_v1_types_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3018,7 +3088,7 @@ func (x *DeleteOnboardRuleResponse) String() string {
 func (*DeleteOnboardRuleResponse) ProtoMessage() {}
 
 func (x *DeleteOnboardRuleResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[50]
+	mi := &file_identity_v1_types_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3031,7 +3101,7 @@ func (x *DeleteOnboardRuleResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteOnboardRuleResponse.ProtoReflect.Descriptor instead.
 func (*DeleteOnboardRuleResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{50}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *DeleteOnboardRuleResponse) GetSuccess() bool {
@@ -3052,7 +3122,7 @@ type GetOnboardRulesQuerySchemaRequest struct {
 
 func (x *GetOnboardRulesQuerySchemaRequest) Reset() {
 	*x = GetOnboardRulesQuerySchemaRequest{}
-	mi := &file_identity_v1_types_proto_msgTypes[51]
+	mi := &file_identity_v1_types_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3064,7 +3134,7 @@ func (x *GetOnboardRulesQuerySchemaRequest) String() string {
 func (*GetOnboardRulesQuerySchemaRequest) ProtoMessage() {}
 
 func (x *GetOnboardRulesQuerySchemaRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[51]
+	mi := &file_identity_v1_types_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3077,7 +3147,7 @@ func (x *GetOnboardRulesQuerySchemaRequest) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use GetOnboardRulesQuerySchemaRequest.ProtoReflect.Descriptor instead.
 func (*GetOnboardRulesQuerySchemaRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{51}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{52}
 }
 
 // QueryOnboardRulesRequest carries a generic query against the fields
@@ -3093,7 +3163,7 @@ type QueryOnboardRulesRequest struct {
 
 func (x *QueryOnboardRulesRequest) Reset() {
 	*x = QueryOnboardRulesRequest{}
-	mi := &file_identity_v1_types_proto_msgTypes[52]
+	mi := &file_identity_v1_types_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3105,7 +3175,7 @@ func (x *QueryOnboardRulesRequest) String() string {
 func (*QueryOnboardRulesRequest) ProtoMessage() {}
 
 func (x *QueryOnboardRulesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[52]
+	mi := &file_identity_v1_types_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3118,7 +3188,7 @@ func (x *QueryOnboardRulesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryOnboardRulesRequest.ProtoReflect.Descriptor instead.
 func (*QueryOnboardRulesRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{52}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *QueryOnboardRulesRequest) GetQuery() *v11.Payload {
@@ -3141,7 +3211,7 @@ type ApproveOnboardRuleRequest struct {
 
 func (x *ApproveOnboardRuleRequest) Reset() {
 	*x = ApproveOnboardRuleRequest{}
-	mi := &file_identity_v1_types_proto_msgTypes[53]
+	mi := &file_identity_v1_types_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3153,7 +3223,7 @@ func (x *ApproveOnboardRuleRequest) String() string {
 func (*ApproveOnboardRuleRequest) ProtoMessage() {}
 
 func (x *ApproveOnboardRuleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[53]
+	mi := &file_identity_v1_types_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3166,7 +3236,7 @@ func (x *ApproveOnboardRuleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ApproveOnboardRuleRequest.ProtoReflect.Descriptor instead.
 func (*ApproveOnboardRuleRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{53}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{54}
 }
 
 func (x *ApproveOnboardRuleRequest) GetId() int32 {
@@ -3197,7 +3267,7 @@ type RejectOnboardRuleRequest struct {
 
 func (x *RejectOnboardRuleRequest) Reset() {
 	*x = RejectOnboardRuleRequest{}
-	mi := &file_identity_v1_types_proto_msgTypes[54]
+	mi := &file_identity_v1_types_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3209,7 +3279,7 @@ func (x *RejectOnboardRuleRequest) String() string {
 func (*RejectOnboardRuleRequest) ProtoMessage() {}
 
 func (x *RejectOnboardRuleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[54]
+	mi := &file_identity_v1_types_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3222,7 +3292,7 @@ func (x *RejectOnboardRuleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RejectOnboardRuleRequest.ProtoReflect.Descriptor instead.
 func (*RejectOnboardRuleRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{54}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{55}
 }
 
 func (x *RejectOnboardRuleRequest) GetId() int32 {
@@ -3257,7 +3327,7 @@ type UserAuthKeysRequest struct {
 
 func (x *UserAuthKeysRequest) Reset() {
 	*x = UserAuthKeysRequest{}
-	mi := &file_identity_v1_types_proto_msgTypes[55]
+	mi := &file_identity_v1_types_proto_msgTypes[56]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3269,7 +3339,7 @@ func (x *UserAuthKeysRequest) String() string {
 func (*UserAuthKeysRequest) ProtoMessage() {}
 
 func (x *UserAuthKeysRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[55]
+	mi := &file_identity_v1_types_proto_msgTypes[56]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3282,7 +3352,7 @@ func (x *UserAuthKeysRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserAuthKeysRequest.ProtoReflect.Descriptor instead.
 func (*UserAuthKeysRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{55}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{56}
 }
 
 func (x *UserAuthKeysRequest) GetUsername() string {
@@ -3312,7 +3382,7 @@ type UserAuthKey struct {
 
 func (x *UserAuthKey) Reset() {
 	*x = UserAuthKey{}
-	mi := &file_identity_v1_types_proto_msgTypes[56]
+	mi := &file_identity_v1_types_proto_msgTypes[57]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3324,7 +3394,7 @@ func (x *UserAuthKey) String() string {
 func (*UserAuthKey) ProtoMessage() {}
 
 func (x *UserAuthKey) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[56]
+	mi := &file_identity_v1_types_proto_msgTypes[57]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3337,7 +3407,7 @@ func (x *UserAuthKey) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserAuthKey.ProtoReflect.Descriptor instead.
 func (*UserAuthKey) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{56}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{57}
 }
 
 func (x *UserAuthKey) GetKey() string {
@@ -3364,7 +3434,7 @@ type ListUserAuthKeysResponse struct {
 
 func (x *ListUserAuthKeysResponse) Reset() {
 	*x = ListUserAuthKeysResponse{}
-	mi := &file_identity_v1_types_proto_msgTypes[57]
+	mi := &file_identity_v1_types_proto_msgTypes[58]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3376,7 +3446,7 @@ func (x *ListUserAuthKeysResponse) String() string {
 func (*ListUserAuthKeysResponse) ProtoMessage() {}
 
 func (x *ListUserAuthKeysResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[57]
+	mi := &file_identity_v1_types_proto_msgTypes[58]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3389,7 +3459,7 @@ func (x *ListUserAuthKeysResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListUserAuthKeysResponse.ProtoReflect.Descriptor instead.
 func (*ListUserAuthKeysResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{57}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{58}
 }
 
 func (x *ListUserAuthKeysResponse) GetAuthKeys() []*UserAuthKey {
@@ -3422,7 +3492,7 @@ type AccessTokenInfo struct {
 
 func (x *AccessTokenInfo) Reset() {
 	*x = AccessTokenInfo{}
-	mi := &file_identity_v1_types_proto_msgTypes[58]
+	mi := &file_identity_v1_types_proto_msgTypes[59]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3434,7 +3504,7 @@ func (x *AccessTokenInfo) String() string {
 func (*AccessTokenInfo) ProtoMessage() {}
 
 func (x *AccessTokenInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[58]
+	mi := &file_identity_v1_types_proto_msgTypes[59]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3447,7 +3517,7 @@ func (x *AccessTokenInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AccessTokenInfo.ProtoReflect.Descriptor instead.
 func (*AccessTokenInfo) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{58}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{59}
 }
 
 func (x *AccessTokenInfo) GetId() int64 {
@@ -3539,7 +3609,7 @@ type EnvVar struct {
 
 func (x *EnvVar) Reset() {
 	*x = EnvVar{}
-	mi := &file_identity_v1_types_proto_msgTypes[59]
+	mi := &file_identity_v1_types_proto_msgTypes[60]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3551,7 +3621,7 @@ func (x *EnvVar) String() string {
 func (*EnvVar) ProtoMessage() {}
 
 func (x *EnvVar) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[59]
+	mi := &file_identity_v1_types_proto_msgTypes[60]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3564,7 +3634,7 @@ func (x *EnvVar) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EnvVar.ProtoReflect.Descriptor instead.
 func (*EnvVar) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{59}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{60}
 }
 
 func (x *EnvVar) GetKey() string {
@@ -3626,7 +3696,7 @@ type EnvVarList struct {
 
 func (x *EnvVarList) Reset() {
 	*x = EnvVarList{}
-	mi := &file_identity_v1_types_proto_msgTypes[60]
+	mi := &file_identity_v1_types_proto_msgTypes[61]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3638,7 +3708,7 @@ func (x *EnvVarList) String() string {
 func (*EnvVarList) ProtoMessage() {}
 
 func (x *EnvVarList) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[60]
+	mi := &file_identity_v1_types_proto_msgTypes[61]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3651,7 +3721,7 @@ func (x *EnvVarList) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EnvVarList.ProtoReflect.Descriptor instead.
 func (*EnvVarList) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{60}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{61}
 }
 
 func (x *EnvVarList) GetEnvVars() []*EnvVar {
@@ -3673,7 +3743,7 @@ type AnnouncementTranslation struct {
 
 func (x *AnnouncementTranslation) Reset() {
 	*x = AnnouncementTranslation{}
-	mi := &file_identity_v1_types_proto_msgTypes[61]
+	mi := &file_identity_v1_types_proto_msgTypes[62]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3685,7 +3755,7 @@ func (x *AnnouncementTranslation) String() string {
 func (*AnnouncementTranslation) ProtoMessage() {}
 
 func (x *AnnouncementTranslation) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[61]
+	mi := &file_identity_v1_types_proto_msgTypes[62]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3698,7 +3768,7 @@ func (x *AnnouncementTranslation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AnnouncementTranslation.ProtoReflect.Descriptor instead.
 func (*AnnouncementTranslation) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{61}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{62}
 }
 
 func (x *AnnouncementTranslation) GetLang() string {
@@ -3767,7 +3837,7 @@ type Announcement struct {
 
 func (x *Announcement) Reset() {
 	*x = Announcement{}
-	mi := &file_identity_v1_types_proto_msgTypes[62]
+	mi := &file_identity_v1_types_proto_msgTypes[63]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3779,7 +3849,7 @@ func (x *Announcement) String() string {
 func (*Announcement) ProtoMessage() {}
 
 func (x *Announcement) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[62]
+	mi := &file_identity_v1_types_proto_msgTypes[63]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3792,7 +3862,7 @@ func (x *Announcement) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Announcement.ProtoReflect.Descriptor instead.
 func (*Announcement) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{62}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{63}
 }
 
 func (x *Announcement) GetId() int32 {
@@ -3910,7 +3980,7 @@ type AnnouncementList struct {
 
 func (x *AnnouncementList) Reset() {
 	*x = AnnouncementList{}
-	mi := &file_identity_v1_types_proto_msgTypes[63]
+	mi := &file_identity_v1_types_proto_msgTypes[64]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3922,7 +3992,7 @@ func (x *AnnouncementList) String() string {
 func (*AnnouncementList) ProtoMessage() {}
 
 func (x *AnnouncementList) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_types_proto_msgTypes[63]
+	mi := &file_identity_v1_types_proto_msgTypes[64]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3935,7 +4005,7 @@ func (x *AnnouncementList) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AnnouncementList.ProtoReflect.Descriptor instead.
 func (*AnnouncementList) Descriptor() ([]byte, []int) {
-	return file_identity_v1_types_proto_rawDescGZIP(), []int{63}
+	return file_identity_v1_types_proto_rawDescGZIP(), []int{64}
 }
 
 func (x *AnnouncementList) GetAnnouncements() []*Announcement {
@@ -4073,7 +4143,7 @@ const file_identity_v1_types_proto_rawDesc = "" +
 	"\x03org\x18\x02 \x01(\tR\x03org\x12\x1e\n" +
 	"\n" +
 	"blueprints\x18\x03 \x03(\tR\n" +
-	"blueprints\"\xe4\x01\n" +
+	"blueprints\"\xfb\x02\n" +
 	"\fOrganization\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x129\n" +
@@ -4082,7 +4152,11 @@ const file_identity_v1_types_proto_rawDesc = "" +
 	"\x0fadmin_usernames\x18\x04 \x03(\tR\x0eadminUsernames\x12\x1d\n" +
 	"\n" +
 	"user_count\x18\x05 \x01(\x05R\tuserCount\x12\x1b\n" +
-	"\tread_only\x18\x06 \x01(\bR\breadOnly\"S\n" +
+	"\tread_only\x18\x06 \x01(\bR\breadOnly\x12S\n" +
+	"\x0enode_selectors\x18\a \x03(\v2,.identity.v1.Organization.NodeSelectorsEntryR\rnodeSelectors\x1a@\n" +
+	"\x12NodeSelectorsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"S\n" +
 	"\x10OrganizationList\x12?\n" +
 	"\rorganizations\x18\x01 \x03(\v2\x19.identity.v1.OrganizationR\rorganizations\"\x1a\n" +
 	"\x18ListOrganizationsRequest\",\n" +
@@ -4093,10 +4167,17 @@ const file_identity_v1_types_proto_rawDesc = "" +
 	"\x05query\x18\x01 \x01(\v2\x11.query.v1.PayloadR\x05query\"Q\n" +
 	"\x19CreateOrganizationRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
-	"\vdescription\x18\x02 \x01(\tR\vdescription\"o\n" +
+	"\vdescription\x18\x02 \x01(\tR\vdescription\"\x8a\x01\n" +
+	"\rNodeSelectors\x12>\n" +
+	"\x06values\x18\x01 \x03(\v2&.identity.v1.NodeSelectors.ValuesEntryR\x06values\x1a9\n" +
+	"\vValuesEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xca\x01\n" +
 	"\x19UpdateOrganizationRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12>\n" +
-	"\vdescription\x18\x02 \x01(\v2\x1c.google.protobuf.StringValueR\vdescription\"/\n" +
+	"\vdescription\x18\x02 \x01(\v2\x1c.google.protobuf.StringValueR\vdescription\x12F\n" +
+	"\x0enode_selectors\x18\x03 \x01(\v2\x1a.identity.v1.NodeSelectorsH\x00R\rnodeSelectors\x88\x01\x01B\x11\n" +
+	"\x0f_node_selectors\"/\n" +
 	"\x19DeleteOrganizationRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\"6\n" +
 	"\x1aDeleteOrganizationResponse\x12\x18\n" +
@@ -4234,7 +4315,7 @@ func file_identity_v1_types_proto_rawDescGZIP() []byte {
 	return file_identity_v1_types_proto_rawDescData
 }
 
-var file_identity_v1_types_proto_msgTypes = make([]protoimpl.MessageInfo, 64)
+var file_identity_v1_types_proto_msgTypes = make([]protoimpl.MessageInfo, 67)
 var file_identity_v1_types_proto_goTypes = []any{
 	(*Username)(nil),                           // 0: identity.v1.Username
 	(*UserStr)(nil),                            // 1: identity.v1.UserStr
@@ -4278,74 +4359,80 @@ var file_identity_v1_types_proto_goTypes = []any{
 	(*GetOrganizationsQuerySchemaRequest)(nil), // 39: identity.v1.GetOrganizationsQuerySchemaRequest
 	(*QueryOrganizationsRequest)(nil),          // 40: identity.v1.QueryOrganizationsRequest
 	(*CreateOrganizationRequest)(nil),          // 41: identity.v1.CreateOrganizationRequest
-	(*UpdateOrganizationRequest)(nil),          // 42: identity.v1.UpdateOrganizationRequest
-	(*DeleteOrganizationRequest)(nil),          // 43: identity.v1.DeleteOrganizationRequest
-	(*DeleteOrganizationResponse)(nil),         // 44: identity.v1.DeleteOrganizationResponse
-	(*OnboardRule)(nil),                        // 45: identity.v1.OnboardRule
-	(*OnboardRuleList)(nil),                    // 46: identity.v1.OnboardRuleList
-	(*CreateOnboardRuleRequest)(nil),           // 47: identity.v1.CreateOnboardRuleRequest
-	(*UpdateOnboardRuleRequest)(nil),           // 48: identity.v1.UpdateOnboardRuleRequest
-	(*DeleteOnboardRuleRequest)(nil),           // 49: identity.v1.DeleteOnboardRuleRequest
-	(*DeleteOnboardRuleResponse)(nil),          // 50: identity.v1.DeleteOnboardRuleResponse
-	(*GetOnboardRulesQuerySchemaRequest)(nil),  // 51: identity.v1.GetOnboardRulesQuerySchemaRequest
-	(*QueryOnboardRulesRequest)(nil),           // 52: identity.v1.QueryOnboardRulesRequest
-	(*ApproveOnboardRuleRequest)(nil),          // 53: identity.v1.ApproveOnboardRuleRequest
-	(*RejectOnboardRuleRequest)(nil),           // 54: identity.v1.RejectOnboardRuleRequest
-	(*UserAuthKeysRequest)(nil),                // 55: identity.v1.UserAuthKeysRequest
-	(*UserAuthKey)(nil),                        // 56: identity.v1.UserAuthKey
-	(*ListUserAuthKeysResponse)(nil),           // 57: identity.v1.ListUserAuthKeysResponse
-	(*AccessTokenInfo)(nil),                    // 58: identity.v1.AccessTokenInfo
-	(*EnvVar)(nil),                             // 59: identity.v1.EnvVar
-	(*EnvVarList)(nil),                         // 60: identity.v1.EnvVarList
-	(*AnnouncementTranslation)(nil),            // 61: identity.v1.AnnouncementTranslation
-	(*Announcement)(nil),                       // 62: identity.v1.Announcement
-	(*AnnouncementList)(nil),                   // 63: identity.v1.AnnouncementList
-	(*v1.User)(nil),                            // 64: common.v1.User
-	(*v11.Payload)(nil),                        // 65: query.v1.Payload
-	(*v1.GetVersionInfoResponse)(nil),          // 66: common.v1.GetVersionInfoResponse
-	(*timestamppb.Timestamp)(nil),              // 67: google.protobuf.Timestamp
-	(*wrapperspb.StringValue)(nil),             // 68: google.protobuf.StringValue
+	(*NodeSelectors)(nil),                      // 42: identity.v1.NodeSelectors
+	(*UpdateOrganizationRequest)(nil),          // 43: identity.v1.UpdateOrganizationRequest
+	(*DeleteOrganizationRequest)(nil),          // 44: identity.v1.DeleteOrganizationRequest
+	(*DeleteOrganizationResponse)(nil),         // 45: identity.v1.DeleteOrganizationResponse
+	(*OnboardRule)(nil),                        // 46: identity.v1.OnboardRule
+	(*OnboardRuleList)(nil),                    // 47: identity.v1.OnboardRuleList
+	(*CreateOnboardRuleRequest)(nil),           // 48: identity.v1.CreateOnboardRuleRequest
+	(*UpdateOnboardRuleRequest)(nil),           // 49: identity.v1.UpdateOnboardRuleRequest
+	(*DeleteOnboardRuleRequest)(nil),           // 50: identity.v1.DeleteOnboardRuleRequest
+	(*DeleteOnboardRuleResponse)(nil),          // 51: identity.v1.DeleteOnboardRuleResponse
+	(*GetOnboardRulesQuerySchemaRequest)(nil),  // 52: identity.v1.GetOnboardRulesQuerySchemaRequest
+	(*QueryOnboardRulesRequest)(nil),           // 53: identity.v1.QueryOnboardRulesRequest
+	(*ApproveOnboardRuleRequest)(nil),          // 54: identity.v1.ApproveOnboardRuleRequest
+	(*RejectOnboardRuleRequest)(nil),           // 55: identity.v1.RejectOnboardRuleRequest
+	(*UserAuthKeysRequest)(nil),                // 56: identity.v1.UserAuthKeysRequest
+	(*UserAuthKey)(nil),                        // 57: identity.v1.UserAuthKey
+	(*ListUserAuthKeysResponse)(nil),           // 58: identity.v1.ListUserAuthKeysResponse
+	(*AccessTokenInfo)(nil),                    // 59: identity.v1.AccessTokenInfo
+	(*EnvVar)(nil),                             // 60: identity.v1.EnvVar
+	(*EnvVarList)(nil),                         // 61: identity.v1.EnvVarList
+	(*AnnouncementTranslation)(nil),            // 62: identity.v1.AnnouncementTranslation
+	(*Announcement)(nil),                       // 63: identity.v1.Announcement
+	(*AnnouncementList)(nil),                   // 64: identity.v1.AnnouncementList
+	nil,                                        // 65: identity.v1.Organization.NodeSelectorsEntry
+	nil,                                        // 66: identity.v1.NodeSelectors.ValuesEntry
+	(*v1.User)(nil),                            // 67: common.v1.User
+	(*v11.Payload)(nil),                        // 68: query.v1.Payload
+	(*v1.GetVersionInfoResponse)(nil),          // 69: common.v1.GetVersionInfoResponse
+	(*timestamppb.Timestamp)(nil),              // 70: google.protobuf.Timestamp
+	(*wrapperspb.StringValue)(nil),             // 71: google.protobuf.StringValue
 }
 var file_identity_v1_types_proto_depIdxs = []int32{
-	64, // 0: identity.v1.UserList.users:type_name -> common.v1.User
-	65, // 1: identity.v1.QueryUsersRequest.query:type_name -> query.v1.Payload
-	64, // 2: identity.v1.GetUsersResponse.users:type_name -> common.v1.User
-	64, // 3: identity.v1.AuthUserResponse.user:type_name -> common.v1.User
+	67, // 0: identity.v1.UserList.users:type_name -> common.v1.User
+	68, // 1: identity.v1.QueryUsersRequest.query:type_name -> query.v1.Payload
+	67, // 2: identity.v1.GetUsersResponse.users:type_name -> common.v1.User
+	67, // 3: identity.v1.AuthUserResponse.user:type_name -> common.v1.User
 	19, // 4: identity.v1.RepoOwnerList.owners:type_name -> identity.v1.RepoOwner
 	22, // 5: identity.v1.RepoList.repos:type_name -> identity.v1.Repo
-	66, // 6: identity.v1.IdentityProviderInfo.version_info:type_name -> common.v1.GetVersionInfoResponse
-	67, // 7: identity.v1.Role.created_at:type_name -> google.protobuf.Timestamp
+	69, // 6: identity.v1.IdentityProviderInfo.version_info:type_name -> common.v1.GetVersionInfoResponse
+	70, // 7: identity.v1.Role.created_at:type_name -> google.protobuf.Timestamp
 	26, // 8: identity.v1.RoleList.roles:type_name -> identity.v1.Role
-	68, // 9: identity.v1.UpdateRoleRequest.description:type_name -> google.protobuf.StringValue
-	67, // 10: identity.v1.Organization.created_at:type_name -> google.protobuf.Timestamp
-	35, // 11: identity.v1.OrganizationList.organizations:type_name -> identity.v1.Organization
-	65, // 12: identity.v1.QueryOrganizationsRequest.query:type_name -> query.v1.Payload
-	68, // 13: identity.v1.UpdateOrganizationRequest.description:type_name -> google.protobuf.StringValue
-	67, // 14: identity.v1.OnboardRule.requested_at:type_name -> google.protobuf.Timestamp
-	67, // 15: identity.v1.OnboardRule.decided_at:type_name -> google.protobuf.Timestamp
-	67, // 16: identity.v1.OnboardRule.created_at:type_name -> google.protobuf.Timestamp
-	67, // 17: identity.v1.OnboardRule.updated_at:type_name -> google.protobuf.Timestamp
-	45, // 18: identity.v1.OnboardRuleList.rules:type_name -> identity.v1.OnboardRule
-	65, // 19: identity.v1.QueryOnboardRulesRequest.query:type_name -> query.v1.Payload
-	56, // 20: identity.v1.ListUserAuthKeysResponse.auth_keys:type_name -> identity.v1.UserAuthKey
-	67, // 21: identity.v1.AccessTokenInfo.expires_at:type_name -> google.protobuf.Timestamp
-	67, // 22: identity.v1.AccessTokenInfo.created_at:type_name -> google.protobuf.Timestamp
-	67, // 23: identity.v1.AccessTokenInfo.last_used_at:type_name -> google.protobuf.Timestamp
-	67, // 24: identity.v1.EnvVar.created_at:type_name -> google.protobuf.Timestamp
-	67, // 25: identity.v1.EnvVar.updated_at:type_name -> google.protobuf.Timestamp
-	59, // 26: identity.v1.EnvVarList.env_vars:type_name -> identity.v1.EnvVar
-	61, // 27: identity.v1.Announcement.translations:type_name -> identity.v1.AnnouncementTranslation
-	67, // 28: identity.v1.Announcement.starts_at:type_name -> google.protobuf.Timestamp
-	67, // 29: identity.v1.Announcement.ends_at:type_name -> google.protobuf.Timestamp
-	67, // 30: identity.v1.Announcement.created_at:type_name -> google.protobuf.Timestamp
-	67, // 31: identity.v1.Announcement.updated_at:type_name -> google.protobuf.Timestamp
-	67, // 32: identity.v1.Announcement.read_at:type_name -> google.protobuf.Timestamp
-	62, // 33: identity.v1.AnnouncementList.announcements:type_name -> identity.v1.Announcement
-	34, // [34:34] is the sub-list for method output_type
-	34, // [34:34] is the sub-list for method input_type
-	34, // [34:34] is the sub-list for extension type_name
-	34, // [34:34] is the sub-list for extension extendee
-	0,  // [0:34] is the sub-list for field type_name
+	71, // 9: identity.v1.UpdateRoleRequest.description:type_name -> google.protobuf.StringValue
+	70, // 10: identity.v1.Organization.created_at:type_name -> google.protobuf.Timestamp
+	65, // 11: identity.v1.Organization.node_selectors:type_name -> identity.v1.Organization.NodeSelectorsEntry
+	35, // 12: identity.v1.OrganizationList.organizations:type_name -> identity.v1.Organization
+	68, // 13: identity.v1.QueryOrganizationsRequest.query:type_name -> query.v1.Payload
+	66, // 14: identity.v1.NodeSelectors.values:type_name -> identity.v1.NodeSelectors.ValuesEntry
+	71, // 15: identity.v1.UpdateOrganizationRequest.description:type_name -> google.protobuf.StringValue
+	42, // 16: identity.v1.UpdateOrganizationRequest.node_selectors:type_name -> identity.v1.NodeSelectors
+	70, // 17: identity.v1.OnboardRule.requested_at:type_name -> google.protobuf.Timestamp
+	70, // 18: identity.v1.OnboardRule.decided_at:type_name -> google.protobuf.Timestamp
+	70, // 19: identity.v1.OnboardRule.created_at:type_name -> google.protobuf.Timestamp
+	70, // 20: identity.v1.OnboardRule.updated_at:type_name -> google.protobuf.Timestamp
+	46, // 21: identity.v1.OnboardRuleList.rules:type_name -> identity.v1.OnboardRule
+	68, // 22: identity.v1.QueryOnboardRulesRequest.query:type_name -> query.v1.Payload
+	57, // 23: identity.v1.ListUserAuthKeysResponse.auth_keys:type_name -> identity.v1.UserAuthKey
+	70, // 24: identity.v1.AccessTokenInfo.expires_at:type_name -> google.protobuf.Timestamp
+	70, // 25: identity.v1.AccessTokenInfo.created_at:type_name -> google.protobuf.Timestamp
+	70, // 26: identity.v1.AccessTokenInfo.last_used_at:type_name -> google.protobuf.Timestamp
+	70, // 27: identity.v1.EnvVar.created_at:type_name -> google.protobuf.Timestamp
+	70, // 28: identity.v1.EnvVar.updated_at:type_name -> google.protobuf.Timestamp
+	60, // 29: identity.v1.EnvVarList.env_vars:type_name -> identity.v1.EnvVar
+	62, // 30: identity.v1.Announcement.translations:type_name -> identity.v1.AnnouncementTranslation
+	70, // 31: identity.v1.Announcement.starts_at:type_name -> google.protobuf.Timestamp
+	70, // 32: identity.v1.Announcement.ends_at:type_name -> google.protobuf.Timestamp
+	70, // 33: identity.v1.Announcement.created_at:type_name -> google.protobuf.Timestamp
+	70, // 34: identity.v1.Announcement.updated_at:type_name -> google.protobuf.Timestamp
+	70, // 35: identity.v1.Announcement.read_at:type_name -> google.protobuf.Timestamp
+	63, // 36: identity.v1.AnnouncementList.announcements:type_name -> identity.v1.Announcement
+	37, // [37:37] is the sub-list for method output_type
+	37, // [37:37] is the sub-list for method input_type
+	37, // [37:37] is the sub-list for extension type_name
+	37, // [37:37] is the sub-list for extension extendee
+	0,  // [0:37] is the sub-list for field type_name
 }
 
 func init() { file_identity_v1_types_proto_init() }
@@ -4353,13 +4440,14 @@ func file_identity_v1_types_proto_init() {
 	if File_identity_v1_types_proto != nil {
 		return
 	}
+	file_identity_v1_types_proto_msgTypes[43].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_identity_v1_types_proto_rawDesc), len(file_identity_v1_types_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   64,
+			NumMessages:   67,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

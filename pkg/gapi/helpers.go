@@ -1,6 +1,7 @@
 package gapi
 
 import (
+	"maps"
 	"time"
 
 	commonv1 "github.com/k8shell-io/common/pkg/api/gen/go/common/v1"
@@ -399,6 +400,8 @@ func WorkspaceDetailsToProto(m *models.WorkspaceDetails) *commonv1.WorkspaceDeta
 		BlueprintRevision:    m.BlueprintRevision,
 		BlueprintOutdated:    copyBool(m.BlueprintOutdated),
 		Runtime:              m.Runtime,
+		NodeSelectors:        maps.Clone(m.NodeSelectors),
+		NodeName:             m.NodeName,
 	}
 }
 
@@ -510,6 +513,8 @@ func ProtoToWorkspaceDetails(pb *commonv1.WorkspaceDetails) *models.WorkspaceDet
 		ReplicaCount:         copyInt32(pb.ReplicaCount),
 		BlueprintRevision:    pb.GetBlueprintRevision(),
 		Runtime:              pb.GetRuntime(),
+		NodeSelectors:        maps.Clone(pb.GetNodeSelectors()),
+		NodeName:             pb.GetNodeName(),
 		BlueprintOutdated:    copyBool(pb.BlueprintOutdated),
 	}
 }
@@ -683,4 +688,23 @@ func ProtoToRepo(pb *identityv1.Repo) *models.Repo {
 		DefaultBranch: pb.GetDefaultBranch(),
 		HTMLURL:       pb.GetHtmlUrl(),
 	}
+}
+
+// ProtoToNodeSelectorOptions converts a GetNodeSelectorOptionsResponse to its
+// Go model. Keys and values are never nil, so they marshal as [] not null.
+func ProtoToNodeSelectorOptions(pb *provisionerv1.GetNodeSelectorOptionsResponse) *models.NodeSelectorOptions {
+	out := &models.NodeSelectorOptions{Keys: make([]models.NodeSelectorKey, 0, len(pb.GetKeys()))}
+	for _, k := range pb.GetKeys() {
+		key := models.NodeSelectorKey{Key: k.GetKey(), Values: make([]models.NodeSelectorValue, 0, len(k.GetValues()))}
+		for _, v := range k.GetValues() {
+			key.Values = append(key.Values, models.NodeSelectorValue{
+				Value:            v.GetValue(),
+				NodeCount:        v.GetNodeCount(),
+				ReadyCount:       v.GetReadyCount(),
+				SchedulableCount: v.GetSchedulableCount(),
+			})
+		}
+		out.Keys = append(out.Keys, key)
+	}
+	return out
 }
