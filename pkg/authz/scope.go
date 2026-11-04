@@ -287,8 +287,9 @@ var validExactScopes = map[string]struct{}{
 	"org:envvar:read":  {},
 	"org:envvar:write": {},
 
-	// org:node — write only; reading an org's node selectors and listing the
-	// node selector options ride on org:read
+	// org:node — write only; reading an org's node selectors rides on org:read, as
+	// does the node selector options listing (narrowed to the org's own
+	// selectors unless org:node:write is also held)
 	"org:node:write": {},
 
 	// blueprint — flat (read covers the catalog + single-blueprint GETs;

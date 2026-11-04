@@ -138,10 +138,11 @@ package authz
 //
 // Covers replacing an organization's node selectors. There is deliberately
 // no org:node:read: an org's current selectors are returned with the
-// organization, and the node selector options (the keys the provisioner is
-// configured with and the values present on cluster nodes) are listed for
-// anyone with org:read on that organization, so an org admin can see what is
-// selectable. Writing is kept off org:update so an org admin who can edit an
+// organization, and the node selector options listing is available to anyone
+// with org:read on that organization, but narrowed by api-server to the keys
+// and values the organization has set unless the caller also holds
+// org:node:write (which is what reveals the rest of the cluster's labels and
+// node counts). Writing is kept off org:update so an org admin who can edit an
 // org's description cannot also steer its workspaces onto particular nodes;
 // the policy is expected to grant it to global admins only.
 
