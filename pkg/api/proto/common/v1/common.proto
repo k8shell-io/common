@@ -316,6 +316,31 @@ message WorkspaceDetails {
   // node_name is the node the workspace pod is scheduled on. Empty while the
   // pod is not yet scheduled and for a stopped workspace.
   string node_name = 36;
+  // schedule is the run schedule the workspace was provisioned with. Unset
+  // when its blueprint declares none.
+  WorkspaceSchedule schedule = 37;
+}
+
+// WorkspaceSchedule is the effective run schedule of a workspace, as resolved
+// from its blueprint when it was provisioned. All fields are optional.
+message WorkspaceSchedule {
+  // from is the earliest time the workspace could be provisioned.
+  google.protobuf.Timestamp from = 1;
+  // to is the time the workspace expires and its stop grace period begins.
+  google.protobuf.Timestamp to = 2;
+  // stop_grace is the period between to and the stop, as a duration string
+  // such as "15m".
+  string stop_grace = 3;
+  // terminate_grace is the period a stopped workspace is kept before it is
+  // terminated, as a duration string such as "7d". Empty means never.
+  string terminate_grace = 4;
+  // stops_at is when the workspace pod is stopped: to plus stop_grace. Unset
+  // when to is unset.
+  google.protobuf.Timestamp stops_at = 5;
+  // terminates_at is when the stopped workspace is terminated: to plus
+  // stop_grace plus terminate_grace. Unset when to or terminate_grace is
+  // unset.
+  google.protobuf.Timestamp terminates_at = 6;
 }
 
 // BlueprintSummary is a lightweight representation of a blueprint used in

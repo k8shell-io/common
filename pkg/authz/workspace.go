@@ -111,8 +111,13 @@ package authz
 //   owner  owner username (required)
 //
 // Context
-//   data_type  cpu | memory | network  (required) — which mutable slice of
-//              the workspace's runtime configuration this request changes.
+//   data_type  cpu | memory | network | schedule  (required) — which mutable
+//              slice of the workspace's runtime configuration this request
+//              changes. schedule covers overriding a running workspace's
+//              expiry (to) and grace periods, or reverting to the blueprint's
+//              schedule; the provisioner does not authorize it, so this
+//              contract is the only gate. There is no obligation capping how
+//              far "to" may move.
 //              A request that touches several slices at once (e.g. a resize
 //              that changes both CPU and memory) is evaluated once per
 //              data_type and applied only if every evaluation allows it.
@@ -120,6 +125,26 @@ package authz
 // Subject   injected by the backend from JWT claims (username, roles, email, ...)
 //
 // Obligations  (none) — allow/deny only
+//
+// ---
+//
+// Contract: workspace:start:force
+//
+// Resource  type="workspace"
+//   id     workspace name (required)
+//   owner  owner username (required)
+//
+// Context   (none)
+//
+// Subject   injected by the backend from JWT claims (username, roles, email, ...)
+//
+// Obligations  (none) — allow/deny only
+//
+// Never gates the start itself (the route's own authz does). api-server
+// evaluates it on every workspace start and sets force on the provisioner's
+// StartWorkspace only when allowed, so an authorized caller can start a
+// workspace stopped by schedule expiry without telling it apart from a manual
+// stop. The provisioner does not authorize force, so this is the only gate.
 //
 // ---
 //
@@ -215,14 +240,19 @@ const (
 	// blueprint before provisioning proceeds.
 	WorkspaceActionProvision WorkspaceAction = "workspace:provision"
 
-	WorkspaceActionList    WorkspaceAction = "workspace:list"
-	WorkspaceActionCreate  WorkspaceAction = "workspace:create"
-	WorkspaceActionRead    WorkspaceAction = "workspace:read"
-	WorkspaceActionUpdate  WorkspaceAction = "workspace:update"
-	WorkspaceActionDelete  WorkspaceAction = "workspace:delete"
-	WorkspaceActionConnect WorkspaceAction = "workspace:connect"
-	WorkspaceActionFiles   WorkspaceAction = "workspace:files"
-	WorkspaceActionApp     WorkspaceAction = "workspace:app"
+	WorkspaceActionList   WorkspaceAction = "workspace:list"
+	WorkspaceActionCreate WorkspaceAction = "workspace:create"
+	WorkspaceActionRead   WorkspaceAction = "workspace:read"
+	WorkspaceActionUpdate WorkspaceAction = "workspace:update"
+	WorkspaceActionDelete WorkspaceAction = "workspace:delete"
+	// WorkspaceActionStartForce is evaluated alongside the right to start a
+	// workspace, to decide whether the start may be forced: started although
+	// its schedule does not allow it (after its expiry has passed). It never
+	// gates the start itself.
+	WorkspaceActionStartForce WorkspaceAction = "workspace:start:force"
+	WorkspaceActionConnect    WorkspaceAction = "workspace:connect"
+	WorkspaceActionFiles      WorkspaceAction = "workspace:files"
+	WorkspaceActionApp        WorkspaceAction = "workspace:app"
 )
 
 // WorkspaceDataType identifies which mutable slice of a workspace's runtime
@@ -240,16 +270,19 @@ const (
 	// WorkspaceDataTypeNetwork covers a change to the workspace's network
 	// policy class and/or egress rules.
 	WorkspaceDataTypeNetwork WorkspaceDataType = "network"
+	// WorkspaceDataTypeSchedule covers an override of the workspace's run
+	// schedule (expiry and grace periods), or its revert to the blueprint's.
+	WorkspaceDataTypeSchedule WorkspaceDataType = "schedule"
 )
 
 // validateWorkspaceDataType checks dt against the workspace:update data types.
 func validateWorkspaceDataType(dt WorkspaceDataType) error {
 	switch dt {
-	case WorkspaceDataTypeCPU, WorkspaceDataTypeMemory, WorkspaceDataTypeNetwork:
+	case WorkspaceDataTypeCPU, WorkspaceDataTypeMemory, WorkspaceDataTypeNetwork, WorkspaceDataTypeSchedule:
 		return nil
 	default:
-		return fmt.Errorf("workspace:update: context \"data_type\" must be %q, %q, or %q, got %q",
-			WorkspaceDataTypeCPU, WorkspaceDataTypeMemory, WorkspaceDataTypeNetwork, dt)
+		return fmt.Errorf("workspace:update: context \"data_type\" must be %q, %q, %q, or %q, got %q",
+			WorkspaceDataTypeCPU, WorkspaceDataTypeMemory, WorkspaceDataTypeNetwork, WorkspaceDataTypeSchedule, dt)
 	}
 }
 
@@ -718,10 +751,10 @@ func (r *WorkspaceOwnerEvalRequest) Validate() error {
 	return nil
 }
 
-// --- workspace:read and workspace:delete ---
+// --- workspace:read, workspace:delete and workspace:start:force ---
 
 // WorkspaceAccessEvalRequest is the validated, typed model for workspace:read
-// and workspace:delete. The resource id is the workspace name; the owner
+// workspace:delete and workspace:start:force. The resource id is the workspace name; the owner
 // attribute identifies who owns it.
 type WorkspaceAccessEvalRequest struct {
 	Action   WorkspaceAction
@@ -729,8 +762,9 @@ type WorkspaceAccessEvalRequest struct {
 }
 
 var validWorkspaceAccessActions = map[WorkspaceAction]struct{}{
-	WorkspaceActionRead:   {},
-	WorkspaceActionDelete: {},
+	WorkspaceActionRead:       {},
+	WorkspaceActionDelete:     {},
+	WorkspaceActionStartForce: {},
 }
 
 var _ EvalRequest = (*WorkspaceAccessEvalRequest)(nil)
@@ -796,7 +830,8 @@ func WorkspaceAccessEvalRequestFromProto(req *authzv1.EvaluateRequest) (*Workspa
 	return r, nil
 }
 
-// Validate checks the request against the workspace:read / workspace:delete contract.
+// Validate checks the request against the workspace:read / workspace:delete /
+// workspace:start:force contract.
 // Implements EvalRequest.
 func (r *WorkspaceAccessEvalRequest) Validate() error {
 	if _, ok := validWorkspaceAccessActions[r.Action]; !ok {
@@ -816,8 +851,8 @@ func (r *WorkspaceAccessEvalRequest) Validate() error {
 // WorkspaceUpdateEvalRequest is the validated, typed model for
 // workspace:update. The resource id is the workspace name; the owner
 // attribute identifies who owns it; the data_type context says which slice
-// of the workspace's runtime configuration (cpu | memory | network) is being
-// changed.
+// of the workspace's runtime configuration (cpu | memory | network |
+// schedule) is being changed.
 type WorkspaceUpdateEvalRequest struct {
 	Resource WorkspaceResource
 	DataType WorkspaceDataType
@@ -1409,7 +1444,7 @@ func init() {
 		},
 	})
 	for _, dt := range []WorkspaceDataType{
-		WorkspaceDataTypeCPU, WorkspaceDataTypeMemory, WorkspaceDataTypeNetwork,
+		WorkspaceDataTypeCPU, WorkspaceDataTypeMemory, WorkspaceDataTypeNetwork, WorkspaceDataTypeSchedule,
 	} {
 		dt := dt
 		registerCapabilityCheck(CapabilityCheck{
@@ -1422,6 +1457,12 @@ func init() {
 			},
 		})
 	}
+	registerCapabilityCheck(CapabilityCheck{
+		Action: string(WorkspaceActionStartForce), Package: "workspace", Scope: string(WorkspaceActionStartForce),
+		Build: func(ctx CapabilityContext) (EvalRequest, error) {
+			return NewWorkspaceAccessEvalRequest(WorkspaceActionStartForce, capabilityWildcardWorkspace).WithOwner(ctx.ResourceOwner).Build()
+		},
+	})
 	registerCapabilityCheck(CapabilityCheck{
 		Action: string(WorkspaceActionDelete), Package: "workspace", Scope: string(WorkspaceActionDelete),
 		Build: func(ctx CapabilityContext) (EvalRequest, error) {

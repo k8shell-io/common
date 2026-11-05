@@ -2445,6 +2445,148 @@ func (x *WorkspaceNetworkRules) GetWebProxyAlias() string {
 	return ""
 }
 
+// SetWorkspaceScheduleRequest identifies the workspace and the schedule
+// values to change. A field that is not set keeps its current value; a field
+// set to the empty string clears it (no expiry, no grace period). Either
+// set at least one field or set revert, not both.
+type SetWorkspaceScheduleRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// workspace is the name of the workspace.
+	Workspace string `protobuf:"bytes,1,opt,name=workspace,proto3" json:"workspace,omitempty"`
+	// to is the new expiry as an RFC 3339 timestamp, or "" for none.
+	To *string `protobuf:"bytes,2,opt,name=to,proto3,oneof" json:"to,omitempty"`
+	// stop_grace is the new stop grace period such as "15m", or "" for none.
+	StopGrace *string `protobuf:"bytes,3,opt,name=stop_grace,json=stopGrace,proto3,oneof" json:"stop_grace,omitempty"`
+	// terminate_grace is the new terminate grace period such as "7d", or ""
+	// to never terminate.
+	TerminateGrace *string `protobuf:"bytes,4,opt,name=terminate_grace,json=terminateGrace,proto3,oneof" json:"terminate_grace,omitempty"`
+	// revert drops the override and restores the blueprint's schedule.
+	Revert        bool `protobuf:"varint,5,opt,name=revert,proto3" json:"revert,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetWorkspaceScheduleRequest) Reset() {
+	*x = SetWorkspaceScheduleRequest{}
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[39]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetWorkspaceScheduleRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetWorkspaceScheduleRequest) ProtoMessage() {}
+
+func (x *SetWorkspaceScheduleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[39]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetWorkspaceScheduleRequest.ProtoReflect.Descriptor instead.
+func (*SetWorkspaceScheduleRequest) Descriptor() ([]byte, []int) {
+	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{39}
+}
+
+func (x *SetWorkspaceScheduleRequest) GetWorkspace() string {
+	if x != nil {
+		return x.Workspace
+	}
+	return ""
+}
+
+func (x *SetWorkspaceScheduleRequest) GetTo() string {
+	if x != nil && x.To != nil {
+		return *x.To
+	}
+	return ""
+}
+
+func (x *SetWorkspaceScheduleRequest) GetStopGrace() string {
+	if x != nil && x.StopGrace != nil {
+		return *x.StopGrace
+	}
+	return ""
+}
+
+func (x *SetWorkspaceScheduleRequest) GetTerminateGrace() string {
+	if x != nil && x.TerminateGrace != nil {
+		return *x.TerminateGrace
+	}
+	return ""
+}
+
+func (x *SetWorkspaceScheduleRequest) GetRevert() bool {
+	if x != nil {
+		return x.Revert
+	}
+	return false
+}
+
+// SetWorkspaceScheduleResponse reports the schedule in effect afterwards.
+type SetWorkspaceScheduleResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// message is a human-readable summary.
+	Message string `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	// schedule is the workspace's schedule after the change; unset when the
+	// workspace has none.
+	Schedule      *v1.WorkspaceSchedule `protobuf:"bytes,2,opt,name=schedule,proto3" json:"schedule,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetWorkspaceScheduleResponse) Reset() {
+	*x = SetWorkspaceScheduleResponse{}
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[40]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetWorkspaceScheduleResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetWorkspaceScheduleResponse) ProtoMessage() {}
+
+func (x *SetWorkspaceScheduleResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[40]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetWorkspaceScheduleResponse.ProtoReflect.Descriptor instead.
+func (*SetWorkspaceScheduleResponse) Descriptor() ([]byte, []int) {
+	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{40}
+}
+
+func (x *SetWorkspaceScheduleResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *SetWorkspaceScheduleResponse) GetSchedule() *v1.WorkspaceSchedule {
+	if x != nil {
+		return x.Schedule
+	}
+	return nil
+}
+
 // UpdateWorkspaceResourcesRequest identifies the workspace to update and
 // carries the resource and/or network changes to apply. At least one of
 // resources or network must be set.
@@ -2463,7 +2605,7 @@ type UpdateWorkspaceResourcesRequest struct {
 
 func (x *UpdateWorkspaceResourcesRequest) Reset() {
 	*x = UpdateWorkspaceResourcesRequest{}
-	mi := &file_provisioner_v1_provisioner_proto_msgTypes[39]
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2475,7 +2617,7 @@ func (x *UpdateWorkspaceResourcesRequest) String() string {
 func (*UpdateWorkspaceResourcesRequest) ProtoMessage() {}
 
 func (x *UpdateWorkspaceResourcesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_provisioner_v1_provisioner_proto_msgTypes[39]
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2488,7 +2630,7 @@ func (x *UpdateWorkspaceResourcesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateWorkspaceResourcesRequest.ProtoReflect.Descriptor instead.
 func (*UpdateWorkspaceResourcesRequest) Descriptor() ([]byte, []int) {
-	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{39}
+	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *UpdateWorkspaceResourcesRequest) GetWorkspace() string {
@@ -2537,7 +2679,7 @@ type UpdateWorkspaceResourcesResponse struct {
 
 func (x *UpdateWorkspaceResourcesResponse) Reset() {
 	*x = UpdateWorkspaceResourcesResponse{}
-	mi := &file_provisioner_v1_provisioner_proto_msgTypes[40]
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2549,7 +2691,7 @@ func (x *UpdateWorkspaceResourcesResponse) String() string {
 func (*UpdateWorkspaceResourcesResponse) ProtoMessage() {}
 
 func (x *UpdateWorkspaceResourcesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_provisioner_v1_provisioner_proto_msgTypes[40]
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2562,7 +2704,7 @@ func (x *UpdateWorkspaceResourcesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateWorkspaceResourcesResponse.ProtoReflect.Descriptor instead.
 func (*UpdateWorkspaceResourcesResponse) Descriptor() ([]byte, []int) {
-	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{40}
+	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *UpdateWorkspaceResourcesResponse) GetMessage() string {
@@ -2617,14 +2759,32 @@ type StartWorkspaceRequest struct {
 	// send_progress controls whether progress in percents are streamed.
 	SendProgress bool `protobuf:"varint,3,opt,name=send_progress,json=sendProgress,proto3" json:"send_progress,omitempty"`
 	// send_events controls whether Kubernetes object events are included in the stream.
-	SendEvents    bool `protobuf:"varint,4,opt,name=send_events,json=sendEvents,proto3" json:"send_events,omitempty"`
+	SendEvents bool `protobuf:"varint,4,opt,name=send_events,json=sendEvents,proto3" json:"send_events,omitempty"`
+	// force starts the workspace although its schedule does not allow it, i.e.
+	// after its expiry ("to") has passed. The provisioner does not authorize the
+	// caller; the calling service must restrict who may set this.
+	//
+	// A workspace past its expiry would be stopped again within moments, so a
+	// forced start of one gives it a new expiry, applied as a schedule override
+	// (see SetWorkspaceSchedule) before the pod starts: "to" when given,
+	// otherwise the provisioner's configured default (schedule.forceStartDuration,
+	// one hour by default) from now. The new expiry is what the workspace's stop
+	// and terminate times follow. A workspace whose expiry has not passed is
+	// started as it is, unless "to" is given.
+	Force bool `protobuf:"varint,5,opt,name=force,proto3" json:"force,omitempty"`
+	// to is the new expiry used with force: an RFC 3339 timestamp, or a local
+	// time such as "2026-11-14 19:00" in the blueprint's time zone, which must
+	// lie in the future. The empty string removes the expiry. When not set, a
+	// workspace past its expiry gets the configured default. Ignored without
+	// force.
+	To            *string `protobuf:"bytes,6,opt,name=to,proto3,oneof" json:"to,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *StartWorkspaceRequest) Reset() {
 	*x = StartWorkspaceRequest{}
-	mi := &file_provisioner_v1_provisioner_proto_msgTypes[41]
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2636,7 +2796,7 @@ func (x *StartWorkspaceRequest) String() string {
 func (*StartWorkspaceRequest) ProtoMessage() {}
 
 func (x *StartWorkspaceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_provisioner_v1_provisioner_proto_msgTypes[41]
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2649,7 +2809,7 @@ func (x *StartWorkspaceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartWorkspaceRequest.ProtoReflect.Descriptor instead.
 func (*StartWorkspaceRequest) Descriptor() ([]byte, []int) {
-	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{41}
+	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *StartWorkspaceRequest) GetWorkspace() string {
@@ -2680,6 +2840,20 @@ func (x *StartWorkspaceRequest) GetSendEvents() bool {
 	return false
 }
 
+func (x *StartWorkspaceRequest) GetForce() bool {
+	if x != nil {
+		return x.Force
+	}
+	return false
+}
+
+func (x *StartWorkspaceRequest) GetTo() string {
+	if x != nil && x.To != nil {
+		return *x.To
+	}
+	return ""
+}
+
 // EjectWorkspaceRequest identifies the workload from which to eject a workspace.
 type EjectWorkspaceRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -2700,7 +2874,7 @@ type EjectWorkspaceRequest struct {
 
 func (x *EjectWorkspaceRequest) Reset() {
 	*x = EjectWorkspaceRequest{}
-	mi := &file_provisioner_v1_provisioner_proto_msgTypes[42]
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2712,7 +2886,7 @@ func (x *EjectWorkspaceRequest) String() string {
 func (*EjectWorkspaceRequest) ProtoMessage() {}
 
 func (x *EjectWorkspaceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_provisioner_v1_provisioner_proto_msgTypes[42]
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2725,7 +2899,7 @@ func (x *EjectWorkspaceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EjectWorkspaceRequest.ProtoReflect.Descriptor instead.
 func (*EjectWorkspaceRequest) Descriptor() ([]byte, []int) {
-	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{42}
+	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *EjectWorkspaceRequest) GetUserstr() string {
@@ -2774,7 +2948,7 @@ type EjectWorkspaceResponse struct {
 
 func (x *EjectWorkspaceResponse) Reset() {
 	*x = EjectWorkspaceResponse{}
-	mi := &file_provisioner_v1_provisioner_proto_msgTypes[43]
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2786,7 +2960,7 @@ func (x *EjectWorkspaceResponse) String() string {
 func (*EjectWorkspaceResponse) ProtoMessage() {}
 
 func (x *EjectWorkspaceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_provisioner_v1_provisioner_proto_msgTypes[43]
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2799,7 +2973,7 @@ func (x *EjectWorkspaceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EjectWorkspaceResponse.ProtoReflect.Descriptor instead.
 func (*EjectWorkspaceResponse) Descriptor() ([]byte, []int) {
-	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{43}
+	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *EjectWorkspaceResponse) GetWorkspace() string {
@@ -2820,7 +2994,7 @@ type ListInjectNamespacesRequest struct {
 
 func (x *ListInjectNamespacesRequest) Reset() {
 	*x = ListInjectNamespacesRequest{}
-	mi := &file_provisioner_v1_provisioner_proto_msgTypes[44]
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2832,7 +3006,7 @@ func (x *ListInjectNamespacesRequest) String() string {
 func (*ListInjectNamespacesRequest) ProtoMessage() {}
 
 func (x *ListInjectNamespacesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_provisioner_v1_provisioner_proto_msgTypes[44]
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2845,7 +3019,7 @@ func (x *ListInjectNamespacesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListInjectNamespacesRequest.ProtoReflect.Descriptor instead.
 func (*ListInjectNamespacesRequest) Descriptor() ([]byte, []int) {
-	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{44}
+	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{46}
 }
 
 // ListInjectNamespacesResponse lists the namespaces open to injection.
@@ -2865,7 +3039,7 @@ type ListInjectNamespacesResponse struct {
 
 func (x *ListInjectNamespacesResponse) Reset() {
 	*x = ListInjectNamespacesResponse{}
-	mi := &file_provisioner_v1_provisioner_proto_msgTypes[45]
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2877,7 +3051,7 @@ func (x *ListInjectNamespacesResponse) String() string {
 func (*ListInjectNamespacesResponse) ProtoMessage() {}
 
 func (x *ListInjectNamespacesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_provisioner_v1_provisioner_proto_msgTypes[45]
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2890,7 +3064,7 @@ func (x *ListInjectNamespacesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListInjectNamespacesResponse.ProtoReflect.Descriptor instead.
 func (*ListInjectNamespacesResponse) Descriptor() ([]byte, []int) {
-	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{45}
+	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *ListInjectNamespacesResponse) GetNamespaces() []string {
@@ -2918,7 +3092,7 @@ type DiffWorkspaceBlueprintRequest struct {
 
 func (x *DiffWorkspaceBlueprintRequest) Reset() {
 	*x = DiffWorkspaceBlueprintRequest{}
-	mi := &file_provisioner_v1_provisioner_proto_msgTypes[46]
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2930,7 +3104,7 @@ func (x *DiffWorkspaceBlueprintRequest) String() string {
 func (*DiffWorkspaceBlueprintRequest) ProtoMessage() {}
 
 func (x *DiffWorkspaceBlueprintRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_provisioner_v1_provisioner_proto_msgTypes[46]
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2943,7 +3117,7 @@ func (x *DiffWorkspaceBlueprintRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DiffWorkspaceBlueprintRequest.ProtoReflect.Descriptor instead.
 func (*DiffWorkspaceBlueprintRequest) Descriptor() ([]byte, []int) {
-	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{46}
+	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *DiffWorkspaceBlueprintRequest) GetWorkspace() string {
@@ -2971,7 +3145,7 @@ type BlueprintDiffRow struct {
 
 func (x *BlueprintDiffRow) Reset() {
 	*x = BlueprintDiffRow{}
-	mi := &file_provisioner_v1_provisioner_proto_msgTypes[47]
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2983,7 +3157,7 @@ func (x *BlueprintDiffRow) String() string {
 func (*BlueprintDiffRow) ProtoMessage() {}
 
 func (x *BlueprintDiffRow) ProtoReflect() protoreflect.Message {
-	mi := &file_provisioner_v1_provisioner_proto_msgTypes[47]
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2996,7 +3170,7 @@ func (x *BlueprintDiffRow) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BlueprintDiffRow.ProtoReflect.Descriptor instead.
 func (*BlueprintDiffRow) Descriptor() ([]byte, []int) {
-	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{47}
+	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *BlueprintDiffRow) GetOp() BlueprintDiffOp {
@@ -3064,7 +3238,7 @@ type DiffWorkspaceBlueprintResponse struct {
 
 func (x *DiffWorkspaceBlueprintResponse) Reset() {
 	*x = DiffWorkspaceBlueprintResponse{}
-	mi := &file_provisioner_v1_provisioner_proto_msgTypes[48]
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3076,7 +3250,7 @@ func (x *DiffWorkspaceBlueprintResponse) String() string {
 func (*DiffWorkspaceBlueprintResponse) ProtoMessage() {}
 
 func (x *DiffWorkspaceBlueprintResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_provisioner_v1_provisioner_proto_msgTypes[48]
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3089,7 +3263,7 @@ func (x *DiffWorkspaceBlueprintResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DiffWorkspaceBlueprintResponse.ProtoReflect.Descriptor instead.
 func (*DiffWorkspaceBlueprintResponse) Descriptor() ([]byte, []int) {
-	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{48}
+	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *DiffWorkspaceBlueprintResponse) GetIdentical() bool {
@@ -3171,7 +3345,7 @@ type ListInjectWorkloadsRequest struct {
 
 func (x *ListInjectWorkloadsRequest) Reset() {
 	*x = ListInjectWorkloadsRequest{}
-	mi := &file_provisioner_v1_provisioner_proto_msgTypes[49]
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3183,7 +3357,7 @@ func (x *ListInjectWorkloadsRequest) String() string {
 func (*ListInjectWorkloadsRequest) ProtoMessage() {}
 
 func (x *ListInjectWorkloadsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_provisioner_v1_provisioner_proto_msgTypes[49]
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3196,7 +3370,7 @@ func (x *ListInjectWorkloadsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListInjectWorkloadsRequest.ProtoReflect.Descriptor instead.
 func (*ListInjectWorkloadsRequest) Descriptor() ([]byte, []int) {
-	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{49}
+	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *ListInjectWorkloadsRequest) GetNamespace() string {
@@ -3268,7 +3442,7 @@ type InjectWorkload struct {
 
 func (x *InjectWorkload) Reset() {
 	*x = InjectWorkload{}
-	mi := &file_provisioner_v1_provisioner_proto_msgTypes[50]
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3280,7 +3454,7 @@ func (x *InjectWorkload) String() string {
 func (*InjectWorkload) ProtoMessage() {}
 
 func (x *InjectWorkload) ProtoReflect() protoreflect.Message {
-	mi := &file_provisioner_v1_provisioner_proto_msgTypes[50]
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3293,7 +3467,7 @@ func (x *InjectWorkload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InjectWorkload.ProtoReflect.Descriptor instead.
 func (*InjectWorkload) Descriptor() ([]byte, []int) {
-	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{50}
+	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *InjectWorkload) GetNamespace() string {
@@ -3392,7 +3566,7 @@ type ListInjectWorkloadsResponse struct {
 
 func (x *ListInjectWorkloadsResponse) Reset() {
 	*x = ListInjectWorkloadsResponse{}
-	mi := &file_provisioner_v1_provisioner_proto_msgTypes[51]
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3404,7 +3578,7 @@ func (x *ListInjectWorkloadsResponse) String() string {
 func (*ListInjectWorkloadsResponse) ProtoMessage() {}
 
 func (x *ListInjectWorkloadsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_provisioner_v1_provisioner_proto_msgTypes[51]
+	mi := &file_provisioner_v1_provisioner_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3417,7 +3591,7 @@ func (x *ListInjectWorkloadsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListInjectWorkloadsResponse.ProtoReflect.Descriptor instead.
 func (*ListInjectWorkloadsResponse) Descriptor() ([]byte, []int) {
-	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{51}
+	return file_provisioner_v1_provisioner_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *ListInjectWorkloadsResponse) GetWorkloads() []*InjectWorkload {
@@ -3579,7 +3753,20 @@ const file_provisioner_v1_provisioner_proto_rawDesc = "" +
 	"\x0eweb_proxy_port\x18\x06 \x01(\x05R\fwebProxyPort\x12&\n" +
 	"\x0fweb_proxy_roles\x18\a \x03(\tR\rwebProxyRoles\x12+\n" +
 	"\x0fweb_proxy_alias\x18\b \x01(\tH\x00R\rwebProxyAlias\x88\x01\x01B\x12\n" +
-	"\x10_web_proxy_alias\"\xc7\x01\n" +
+	"\x10_web_proxy_alias\"\xe4\x01\n" +
+	"\x1bSetWorkspaceScheduleRequest\x12\x1c\n" +
+	"\tworkspace\x18\x01 \x01(\tR\tworkspace\x12\x13\n" +
+	"\x02to\x18\x02 \x01(\tH\x00R\x02to\x88\x01\x01\x12\"\n" +
+	"\n" +
+	"stop_grace\x18\x03 \x01(\tH\x01R\tstopGrace\x88\x01\x01\x12,\n" +
+	"\x0fterminate_grace\x18\x04 \x01(\tH\x02R\x0eterminateGrace\x88\x01\x01\x12\x16\n" +
+	"\x06revert\x18\x05 \x01(\bR\x06revertB\x05\n" +
+	"\x03_toB\r\n" +
+	"\v_stop_graceB\x12\n" +
+	"\x10_terminate_grace\"r\n" +
+	"\x1cSetWorkspaceScheduleResponse\x12\x18\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage\x128\n" +
+	"\bschedule\x18\x02 \x01(\v2\x1c.common.v1.WorkspaceScheduleR\bschedule\"\xc7\x01\n" +
 	"\x1fUpdateWorkspaceResourcesRequest\x12\x1c\n" +
 	"\tworkspace\x18\x01 \x01(\tR\tworkspace\x12E\n" +
 	"\tresources\x18\x02 \x01(\v2'.provisioner.v1.WorkspaceResourceLimitsR\tresources\x12?\n" +
@@ -3591,13 +3778,16 @@ const file_provisioner_v1_provisioner_proto_rawDesc = "" +
 	"\x0eapplied_memory\x18\x03 \x01(\tR\rappliedMemory\x12?\n" +
 	"\x1capplied_network_policy_class\x18\x04 \x01(\tR\x19appliedNetworkPolicyClass\x123\n" +
 	"\x16applied_web_proxy_port\x18\x05 \x01(\x05R\x13appliedWebProxyPort\x125\n" +
-	"\x17applied_web_proxy_alias\x18\x06 \x01(\tR\x14appliedWebProxyAlias\"\x95\x01\n" +
+	"\x17applied_web_proxy_alias\x18\x06 \x01(\tR\x14appliedWebProxyAlias\"\xc7\x01\n" +
 	"\x15StartWorkspaceRequest\x12\x1c\n" +
 	"\tworkspace\x18\x01 \x01(\tR\tworkspace\x12\x18\n" +
 	"\atimeout\x18\x02 \x01(\x05R\atimeout\x12#\n" +
 	"\rsend_progress\x18\x03 \x01(\bR\fsendProgress\x12\x1f\n" +
 	"\vsend_events\x18\x04 \x01(\bR\n" +
-	"sendEvents\"\xc2\x01\n" +
+	"sendEvents\x12\x14\n" +
+	"\x05force\x18\x05 \x01(\bR\x05force\x12\x13\n" +
+	"\x02to\x18\x06 \x01(\tH\x00R\x02to\x88\x01\x01B\x05\n" +
+	"\x03_to\"\xc2\x01\n" +
 	"\x15EjectWorkspaceRequest\x12\x18\n" +
 	"\auserstr\x18\x01 \x01(\tR\auserstr\x12\x1c\n" +
 	"\tnamespace\x18\x02 \x01(\tR\tnamespace\x12#\n" +
@@ -3657,7 +3847,7 @@ const file_provisioner_v1_provisioner_proto_rawDesc = "" +
 	"\x17BLUEPRINT_DIFF_OP_EQUAL\x10\x01\x12\x1d\n" +
 	"\x19BLUEPRINT_DIFF_OP_REMOVED\x10\x02\x12\x1b\n" +
 	"\x17BLUEPRINT_DIFF_OP_ADDED\x10\x03\x12\x1d\n" +
-	"\x19BLUEPRINT_DIFF_OP_CHANGED\x10\x042\x83\x15\n" +
+	"\x19BLUEPRINT_DIFF_OP_CHANGED\x10\x042\xf6\x15\n" +
 	"\x12ProvisionerService\x12\\\n" +
 	"\rGetWorkspaces\x12$.provisioner.v1.GetWorkspacesRequest\x1a%.provisioner.v1.GetWorkspacesResponse\x12R\n" +
 	"\rFindWorkspace\x12$.provisioner.v1.FindWorkspaceRequest\x1a\x1b.common.v1.WorkspaceDetails\x12`\n" +
@@ -3678,7 +3868,8 @@ const file_provisioner_v1_provisioner_proto_rawDesc = "" +
 	"\x0fDeleteWorkspace\x12&.provisioner.v1.DeleteWorkspaceRequest\x1a'.provisioner.v1.DeleteWorkspaceResponse\x12q\n" +
 	"\x14DeleteUserWorkspaces\x12+.provisioner.v1.DeleteUserWorkspacesRequest\x1a,.provisioner.v1.DeleteUserWorkspacesResponse\x12\\\n" +
 	"\rStopWorkspace\x12$.provisioner.v1.StopWorkspaceRequest\x1a%.provisioner.v1.StopWorkspaceResponse\x12}\n" +
-	"\x18UpdateWorkspaceResources\x12/.provisioner.v1.UpdateWorkspaceResourcesRequest\x1a0.provisioner.v1.UpdateWorkspaceResourcesResponse\x12k\n" +
+	"\x18UpdateWorkspaceResources\x12/.provisioner.v1.UpdateWorkspaceResourcesRequest\x1a0.provisioner.v1.UpdateWorkspaceResourcesResponse\x12q\n" +
+	"\x14SetWorkspaceSchedule\x12+.provisioner.v1.SetWorkspaceScheduleRequest\x1a,.provisioner.v1.SetWorkspaceScheduleResponse\x12k\n" +
 	"\x14StartWorkspaceStream\x12%.provisioner.v1.StartWorkspaceRequest\x1a*.provisioner.v1.ProvisionWorkspaceResponse0\x01\x12_\n" +
 	"\x0eEjectWorkspace\x12%.provisioner.v1.EjectWorkspaceRequest\x1a&.provisioner.v1.EjectWorkspaceResponse\x12q\n" +
 	"\x14ListInjectNamespaces\x12+.provisioner.v1.ListInjectNamespacesRequest\x1a,.provisioner.v1.ListInjectNamespacesResponse\x12n\n" +
@@ -3699,7 +3890,7 @@ func file_provisioner_v1_provisioner_proto_rawDescGZIP() []byte {
 }
 
 var file_provisioner_v1_provisioner_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_provisioner_v1_provisioner_proto_msgTypes = make([]protoimpl.MessageInfo, 53)
+var file_provisioner_v1_provisioner_proto_msgTypes = make([]protoimpl.MessageInfo, 55)
 var file_provisioner_v1_provisioner_proto_goTypes = []any{
 	(BlueprintDiffOp)(0),                     // 0: provisioner.v1.BlueprintDiffOp
 	(*FindWorkspaceRequest)(nil),             // 1: provisioner.v1.FindWorkspaceRequest
@@ -3741,105 +3932,111 @@ var file_provisioner_v1_provisioner_proto_goTypes = []any{
 	(*WorkspaceResourceLimits)(nil),          // 37: provisioner.v1.WorkspaceResourceLimits
 	(*WorkspacePodSelector)(nil),             // 38: provisioner.v1.WorkspacePodSelector
 	(*WorkspaceNetworkRules)(nil),            // 39: provisioner.v1.WorkspaceNetworkRules
-	(*UpdateWorkspaceResourcesRequest)(nil),  // 40: provisioner.v1.UpdateWorkspaceResourcesRequest
-	(*UpdateWorkspaceResourcesResponse)(nil), // 41: provisioner.v1.UpdateWorkspaceResourcesResponse
-	(*StartWorkspaceRequest)(nil),            // 42: provisioner.v1.StartWorkspaceRequest
-	(*EjectWorkspaceRequest)(nil),            // 43: provisioner.v1.EjectWorkspaceRequest
-	(*EjectWorkspaceResponse)(nil),           // 44: provisioner.v1.EjectWorkspaceResponse
-	(*ListInjectNamespacesRequest)(nil),      // 45: provisioner.v1.ListInjectNamespacesRequest
-	(*ListInjectNamespacesResponse)(nil),     // 46: provisioner.v1.ListInjectNamespacesResponse
-	(*DiffWorkspaceBlueprintRequest)(nil),    // 47: provisioner.v1.DiffWorkspaceBlueprintRequest
-	(*BlueprintDiffRow)(nil),                 // 48: provisioner.v1.BlueprintDiffRow
-	(*DiffWorkspaceBlueprintResponse)(nil),   // 49: provisioner.v1.DiffWorkspaceBlueprintResponse
-	(*ListInjectWorkloadsRequest)(nil),       // 50: provisioner.v1.ListInjectWorkloadsRequest
-	(*InjectWorkload)(nil),                   // 51: provisioner.v1.InjectWorkload
-	(*ListInjectWorkloadsResponse)(nil),      // 52: provisioner.v1.ListInjectWorkloadsResponse
-	nil,                                      // 53: provisioner.v1.WorkspacePodSelector.MatchLabelsEntry
-	(*v1.WorkspaceDetails)(nil),              // 54: common.v1.WorkspaceDetails
-	(*v11.Payload)(nil),                      // 55: query.v1.Payload
-	(*v1.BlueprintSummary)(nil),              // 56: common.v1.BlueprintSummary
-	(*timestamppb.Timestamp)(nil),            // 57: google.protobuf.Timestamp
-	(*v1.GetVersionInfoRequest)(nil),         // 58: common.v1.GetVersionInfoRequest
-	(*v11.Descriptor)(nil),                   // 59: query.v1.Descriptor
-	(*v1.GetVersionInfoResponse)(nil),        // 60: common.v1.GetVersionInfoResponse
+	(*SetWorkspaceScheduleRequest)(nil),      // 40: provisioner.v1.SetWorkspaceScheduleRequest
+	(*SetWorkspaceScheduleResponse)(nil),     // 41: provisioner.v1.SetWorkspaceScheduleResponse
+	(*UpdateWorkspaceResourcesRequest)(nil),  // 42: provisioner.v1.UpdateWorkspaceResourcesRequest
+	(*UpdateWorkspaceResourcesResponse)(nil), // 43: provisioner.v1.UpdateWorkspaceResourcesResponse
+	(*StartWorkspaceRequest)(nil),            // 44: provisioner.v1.StartWorkspaceRequest
+	(*EjectWorkspaceRequest)(nil),            // 45: provisioner.v1.EjectWorkspaceRequest
+	(*EjectWorkspaceResponse)(nil),           // 46: provisioner.v1.EjectWorkspaceResponse
+	(*ListInjectNamespacesRequest)(nil),      // 47: provisioner.v1.ListInjectNamespacesRequest
+	(*ListInjectNamespacesResponse)(nil),     // 48: provisioner.v1.ListInjectNamespacesResponse
+	(*DiffWorkspaceBlueprintRequest)(nil),    // 49: provisioner.v1.DiffWorkspaceBlueprintRequest
+	(*BlueprintDiffRow)(nil),                 // 50: provisioner.v1.BlueprintDiffRow
+	(*DiffWorkspaceBlueprintResponse)(nil),   // 51: provisioner.v1.DiffWorkspaceBlueprintResponse
+	(*ListInjectWorkloadsRequest)(nil),       // 52: provisioner.v1.ListInjectWorkloadsRequest
+	(*InjectWorkload)(nil),                   // 53: provisioner.v1.InjectWorkload
+	(*ListInjectWorkloadsResponse)(nil),      // 54: provisioner.v1.ListInjectWorkloadsResponse
+	nil,                                      // 55: provisioner.v1.WorkspacePodSelector.MatchLabelsEntry
+	(*v1.WorkspaceDetails)(nil),              // 56: common.v1.WorkspaceDetails
+	(*v11.Payload)(nil),                      // 57: query.v1.Payload
+	(*v1.BlueprintSummary)(nil),              // 58: common.v1.BlueprintSummary
+	(*timestamppb.Timestamp)(nil),            // 59: google.protobuf.Timestamp
+	(*v1.WorkspaceSchedule)(nil),             // 60: common.v1.WorkspaceSchedule
+	(*v1.GetVersionInfoRequest)(nil),         // 61: common.v1.GetVersionInfoRequest
+	(*v11.Descriptor)(nil),                   // 62: query.v1.Descriptor
+	(*v1.GetVersionInfoResponse)(nil),        // 63: common.v1.GetVersionInfoResponse
 }
 var file_provisioner_v1_provisioner_proto_depIdxs = []int32{
-	54, // 0: provisioner.v1.GetWorkspacesResponse.workspaces:type_name -> common.v1.WorkspaceDetails
-	55, // 1: provisioner.v1.QueryWorkspacesRequest.query:type_name -> query.v1.Payload
+	56, // 0: provisioner.v1.GetWorkspacesResponse.workspaces:type_name -> common.v1.WorkspaceDetails
+	57, // 1: provisioner.v1.QueryWorkspacesRequest.query:type_name -> query.v1.Payload
 	9,  // 2: provisioner.v1.NodeSelectorKey.values:type_name -> provisioner.v1.NodeSelectorValue
 	10, // 3: provisioner.v1.GetNodeSelectorOptionsResponse.keys:type_name -> provisioner.v1.NodeSelectorKey
-	56, // 4: provisioner.v1.ListBlueprintsResponse.blueprints:type_name -> common.v1.BlueprintSummary
-	55, // 5: provisioner.v1.QueryBlueprintsRequest.query:type_name -> query.v1.Payload
-	56, // 6: provisioner.v1.QueryBlueprintsResponse.blueprints:type_name -> common.v1.BlueprintSummary
+	58, // 4: provisioner.v1.ListBlueprintsResponse.blueprints:type_name -> common.v1.BlueprintSummary
+	57, // 5: provisioner.v1.QueryBlueprintsRequest.query:type_name -> query.v1.Payload
+	58, // 6: provisioner.v1.QueryBlueprintsResponse.blueprints:type_name -> common.v1.BlueprintSummary
 	21, // 7: provisioner.v1.ValidateBlueprintResponse.errors:type_name -> provisioner.v1.BlueprintValidationError
-	57, // 8: provisioner.v1.OrgBlueprint.created_at:type_name -> google.protobuf.Timestamp
-	57, // 9: provisioner.v1.OrgBlueprint.updated_at:type_name -> google.protobuf.Timestamp
+	59, // 8: provisioner.v1.OrgBlueprint.created_at:type_name -> google.protobuf.Timestamp
+	59, // 9: provisioner.v1.OrgBlueprint.updated_at:type_name -> google.protobuf.Timestamp
 	29, // 10: provisioner.v1.ProvisionWorkspaceResponse.handshake:type_name -> provisioner.v1.HandshakeResponse
 	30, // 11: provisioner.v1.ProvisionWorkspaceResponse.event:type_name -> provisioner.v1.ProvisionEvent
-	53, // 12: provisioner.v1.WorkspacePodSelector.match_labels:type_name -> provisioner.v1.WorkspacePodSelector.MatchLabelsEntry
+	55, // 12: provisioner.v1.WorkspacePodSelector.match_labels:type_name -> provisioner.v1.WorkspacePodSelector.MatchLabelsEntry
 	38, // 13: provisioner.v1.WorkspaceNetworkRules.allow_egress_to_pods:type_name -> provisioner.v1.WorkspacePodSelector
-	37, // 14: provisioner.v1.UpdateWorkspaceResourcesRequest.resources:type_name -> provisioner.v1.WorkspaceResourceLimits
-	39, // 15: provisioner.v1.UpdateWorkspaceResourcesRequest.network:type_name -> provisioner.v1.WorkspaceNetworkRules
-	0,  // 16: provisioner.v1.BlueprintDiffRow.op:type_name -> provisioner.v1.BlueprintDiffOp
-	48, // 17: provisioner.v1.DiffWorkspaceBlueprintResponse.rows:type_name -> provisioner.v1.BlueprintDiffRow
-	51, // 18: provisioner.v1.ListInjectWorkloadsResponse.workloads:type_name -> provisioner.v1.InjectWorkload
-	3,  // 19: provisioner.v1.ProvisionerService.GetWorkspaces:input_type -> provisioner.v1.GetWorkspacesRequest
-	1,  // 20: provisioner.v1.ProvisionerService.FindWorkspace:input_type -> provisioner.v1.FindWorkspaceRequest
-	2,  // 21: provisioner.v1.ProvisionerService.FindWorkspaceByAlias:input_type -> provisioner.v1.FindWorkspaceByAliasRequest
-	4,  // 22: provisioner.v1.ProvisionerService.GetWorkspacesByUserStr:input_type -> provisioner.v1.GetWorkspacesByUserStrRequest
-	6,  // 23: provisioner.v1.ProvisionerService.GetWorkspacesQuerySchema:input_type -> provisioner.v1.GetWorkspacesQuerySchemaRequest
-	7,  // 24: provisioner.v1.ProvisionerService.QueryWorkspaces:input_type -> provisioner.v1.QueryWorkspacesRequest
-	8,  // 25: provisioner.v1.ProvisionerService.GetNodeSelectorOptions:input_type -> provisioner.v1.GetNodeSelectorOptionsRequest
-	12, // 26: provisioner.v1.ProvisionerService.ListBlueprints:input_type -> provisioner.v1.ListBlueprintsRequest
-	14, // 27: provisioner.v1.ProvisionerService.GetBlueprintsQuerySchema:input_type -> provisioner.v1.GetBlueprintsQuerySchemaRequest
-	15, // 28: provisioner.v1.ProvisionerService.QueryBlueprints:input_type -> provisioner.v1.QueryBlueprintsRequest
-	17, // 29: provisioner.v1.ProvisionerService.GetBlueprint:input_type -> provisioner.v1.GetBlueprintRequest
-	19, // 30: provisioner.v1.ProvisionerService.ValidateBlueprint:input_type -> provisioner.v1.ValidateBlueprintRequest
-	23, // 31: provisioner.v1.ProvisionerService.CreateBlueprint:input_type -> provisioner.v1.CreateBlueprintRequest
-	24, // 32: provisioner.v1.ProvisionerService.UpdateBlueprint:input_type -> provisioner.v1.UpdateBlueprintRequest
-	25, // 33: provisioner.v1.ProvisionerService.DeleteBlueprint:input_type -> provisioner.v1.DeleteBlueprintRequest
-	27, // 34: provisioner.v1.ProvisionerService.ProvisionWorkspaceStream:input_type -> provisioner.v1.ProvisionWorkspaceRequest
-	31, // 35: provisioner.v1.ProvisionerService.DeleteWorkspace:input_type -> provisioner.v1.DeleteWorkspaceRequest
-	33, // 36: provisioner.v1.ProvisionerService.DeleteUserWorkspaces:input_type -> provisioner.v1.DeleteUserWorkspacesRequest
-	35, // 37: provisioner.v1.ProvisionerService.StopWorkspace:input_type -> provisioner.v1.StopWorkspaceRequest
-	40, // 38: provisioner.v1.ProvisionerService.UpdateWorkspaceResources:input_type -> provisioner.v1.UpdateWorkspaceResourcesRequest
-	42, // 39: provisioner.v1.ProvisionerService.StartWorkspaceStream:input_type -> provisioner.v1.StartWorkspaceRequest
-	43, // 40: provisioner.v1.ProvisionerService.EjectWorkspace:input_type -> provisioner.v1.EjectWorkspaceRequest
-	45, // 41: provisioner.v1.ProvisionerService.ListInjectNamespaces:input_type -> provisioner.v1.ListInjectNamespacesRequest
-	50, // 42: provisioner.v1.ProvisionerService.ListInjectWorkloads:input_type -> provisioner.v1.ListInjectWorkloadsRequest
-	47, // 43: provisioner.v1.ProvisionerService.DiffWorkspaceBlueprint:input_type -> provisioner.v1.DiffWorkspaceBlueprintRequest
-	58, // 44: provisioner.v1.ProvisionerService.GetVersionInfo:input_type -> common.v1.GetVersionInfoRequest
-	5,  // 45: provisioner.v1.ProvisionerService.GetWorkspaces:output_type -> provisioner.v1.GetWorkspacesResponse
-	54, // 46: provisioner.v1.ProvisionerService.FindWorkspace:output_type -> common.v1.WorkspaceDetails
-	54, // 47: provisioner.v1.ProvisionerService.FindWorkspaceByAlias:output_type -> common.v1.WorkspaceDetails
-	5,  // 48: provisioner.v1.ProvisionerService.GetWorkspacesByUserStr:output_type -> provisioner.v1.GetWorkspacesResponse
-	59, // 49: provisioner.v1.ProvisionerService.GetWorkspacesQuerySchema:output_type -> query.v1.Descriptor
-	5,  // 50: provisioner.v1.ProvisionerService.QueryWorkspaces:output_type -> provisioner.v1.GetWorkspacesResponse
-	11, // 51: provisioner.v1.ProvisionerService.GetNodeSelectorOptions:output_type -> provisioner.v1.GetNodeSelectorOptionsResponse
-	13, // 52: provisioner.v1.ProvisionerService.ListBlueprints:output_type -> provisioner.v1.ListBlueprintsResponse
-	59, // 53: provisioner.v1.ProvisionerService.GetBlueprintsQuerySchema:output_type -> query.v1.Descriptor
-	16, // 54: provisioner.v1.ProvisionerService.QueryBlueprints:output_type -> provisioner.v1.QueryBlueprintsResponse
-	18, // 55: provisioner.v1.ProvisionerService.GetBlueprint:output_type -> provisioner.v1.GetBlueprintResponse
-	20, // 56: provisioner.v1.ProvisionerService.ValidateBlueprint:output_type -> provisioner.v1.ValidateBlueprintResponse
-	22, // 57: provisioner.v1.ProvisionerService.CreateBlueprint:output_type -> provisioner.v1.OrgBlueprint
-	22, // 58: provisioner.v1.ProvisionerService.UpdateBlueprint:output_type -> provisioner.v1.OrgBlueprint
-	26, // 59: provisioner.v1.ProvisionerService.DeleteBlueprint:output_type -> provisioner.v1.DeleteBlueprintResponse
-	28, // 60: provisioner.v1.ProvisionerService.ProvisionWorkspaceStream:output_type -> provisioner.v1.ProvisionWorkspaceResponse
-	32, // 61: provisioner.v1.ProvisionerService.DeleteWorkspace:output_type -> provisioner.v1.DeleteWorkspaceResponse
-	34, // 62: provisioner.v1.ProvisionerService.DeleteUserWorkspaces:output_type -> provisioner.v1.DeleteUserWorkspacesResponse
-	36, // 63: provisioner.v1.ProvisionerService.StopWorkspace:output_type -> provisioner.v1.StopWorkspaceResponse
-	41, // 64: provisioner.v1.ProvisionerService.UpdateWorkspaceResources:output_type -> provisioner.v1.UpdateWorkspaceResourcesResponse
-	28, // 65: provisioner.v1.ProvisionerService.StartWorkspaceStream:output_type -> provisioner.v1.ProvisionWorkspaceResponse
-	44, // 66: provisioner.v1.ProvisionerService.EjectWorkspace:output_type -> provisioner.v1.EjectWorkspaceResponse
-	46, // 67: provisioner.v1.ProvisionerService.ListInjectNamespaces:output_type -> provisioner.v1.ListInjectNamespacesResponse
-	52, // 68: provisioner.v1.ProvisionerService.ListInjectWorkloads:output_type -> provisioner.v1.ListInjectWorkloadsResponse
-	49, // 69: provisioner.v1.ProvisionerService.DiffWorkspaceBlueprint:output_type -> provisioner.v1.DiffWorkspaceBlueprintResponse
-	60, // 70: provisioner.v1.ProvisionerService.GetVersionInfo:output_type -> common.v1.GetVersionInfoResponse
-	45, // [45:71] is the sub-list for method output_type
-	19, // [19:45] is the sub-list for method input_type
-	19, // [19:19] is the sub-list for extension type_name
-	19, // [19:19] is the sub-list for extension extendee
-	0,  // [0:19] is the sub-list for field type_name
+	60, // 14: provisioner.v1.SetWorkspaceScheduleResponse.schedule:type_name -> common.v1.WorkspaceSchedule
+	37, // 15: provisioner.v1.UpdateWorkspaceResourcesRequest.resources:type_name -> provisioner.v1.WorkspaceResourceLimits
+	39, // 16: provisioner.v1.UpdateWorkspaceResourcesRequest.network:type_name -> provisioner.v1.WorkspaceNetworkRules
+	0,  // 17: provisioner.v1.BlueprintDiffRow.op:type_name -> provisioner.v1.BlueprintDiffOp
+	50, // 18: provisioner.v1.DiffWorkspaceBlueprintResponse.rows:type_name -> provisioner.v1.BlueprintDiffRow
+	53, // 19: provisioner.v1.ListInjectWorkloadsResponse.workloads:type_name -> provisioner.v1.InjectWorkload
+	3,  // 20: provisioner.v1.ProvisionerService.GetWorkspaces:input_type -> provisioner.v1.GetWorkspacesRequest
+	1,  // 21: provisioner.v1.ProvisionerService.FindWorkspace:input_type -> provisioner.v1.FindWorkspaceRequest
+	2,  // 22: provisioner.v1.ProvisionerService.FindWorkspaceByAlias:input_type -> provisioner.v1.FindWorkspaceByAliasRequest
+	4,  // 23: provisioner.v1.ProvisionerService.GetWorkspacesByUserStr:input_type -> provisioner.v1.GetWorkspacesByUserStrRequest
+	6,  // 24: provisioner.v1.ProvisionerService.GetWorkspacesQuerySchema:input_type -> provisioner.v1.GetWorkspacesQuerySchemaRequest
+	7,  // 25: provisioner.v1.ProvisionerService.QueryWorkspaces:input_type -> provisioner.v1.QueryWorkspacesRequest
+	8,  // 26: provisioner.v1.ProvisionerService.GetNodeSelectorOptions:input_type -> provisioner.v1.GetNodeSelectorOptionsRequest
+	12, // 27: provisioner.v1.ProvisionerService.ListBlueprints:input_type -> provisioner.v1.ListBlueprintsRequest
+	14, // 28: provisioner.v1.ProvisionerService.GetBlueprintsQuerySchema:input_type -> provisioner.v1.GetBlueprintsQuerySchemaRequest
+	15, // 29: provisioner.v1.ProvisionerService.QueryBlueprints:input_type -> provisioner.v1.QueryBlueprintsRequest
+	17, // 30: provisioner.v1.ProvisionerService.GetBlueprint:input_type -> provisioner.v1.GetBlueprintRequest
+	19, // 31: provisioner.v1.ProvisionerService.ValidateBlueprint:input_type -> provisioner.v1.ValidateBlueprintRequest
+	23, // 32: provisioner.v1.ProvisionerService.CreateBlueprint:input_type -> provisioner.v1.CreateBlueprintRequest
+	24, // 33: provisioner.v1.ProvisionerService.UpdateBlueprint:input_type -> provisioner.v1.UpdateBlueprintRequest
+	25, // 34: provisioner.v1.ProvisionerService.DeleteBlueprint:input_type -> provisioner.v1.DeleteBlueprintRequest
+	27, // 35: provisioner.v1.ProvisionerService.ProvisionWorkspaceStream:input_type -> provisioner.v1.ProvisionWorkspaceRequest
+	31, // 36: provisioner.v1.ProvisionerService.DeleteWorkspace:input_type -> provisioner.v1.DeleteWorkspaceRequest
+	33, // 37: provisioner.v1.ProvisionerService.DeleteUserWorkspaces:input_type -> provisioner.v1.DeleteUserWorkspacesRequest
+	35, // 38: provisioner.v1.ProvisionerService.StopWorkspace:input_type -> provisioner.v1.StopWorkspaceRequest
+	42, // 39: provisioner.v1.ProvisionerService.UpdateWorkspaceResources:input_type -> provisioner.v1.UpdateWorkspaceResourcesRequest
+	40, // 40: provisioner.v1.ProvisionerService.SetWorkspaceSchedule:input_type -> provisioner.v1.SetWorkspaceScheduleRequest
+	44, // 41: provisioner.v1.ProvisionerService.StartWorkspaceStream:input_type -> provisioner.v1.StartWorkspaceRequest
+	45, // 42: provisioner.v1.ProvisionerService.EjectWorkspace:input_type -> provisioner.v1.EjectWorkspaceRequest
+	47, // 43: provisioner.v1.ProvisionerService.ListInjectNamespaces:input_type -> provisioner.v1.ListInjectNamespacesRequest
+	52, // 44: provisioner.v1.ProvisionerService.ListInjectWorkloads:input_type -> provisioner.v1.ListInjectWorkloadsRequest
+	49, // 45: provisioner.v1.ProvisionerService.DiffWorkspaceBlueprint:input_type -> provisioner.v1.DiffWorkspaceBlueprintRequest
+	61, // 46: provisioner.v1.ProvisionerService.GetVersionInfo:input_type -> common.v1.GetVersionInfoRequest
+	5,  // 47: provisioner.v1.ProvisionerService.GetWorkspaces:output_type -> provisioner.v1.GetWorkspacesResponse
+	56, // 48: provisioner.v1.ProvisionerService.FindWorkspace:output_type -> common.v1.WorkspaceDetails
+	56, // 49: provisioner.v1.ProvisionerService.FindWorkspaceByAlias:output_type -> common.v1.WorkspaceDetails
+	5,  // 50: provisioner.v1.ProvisionerService.GetWorkspacesByUserStr:output_type -> provisioner.v1.GetWorkspacesResponse
+	62, // 51: provisioner.v1.ProvisionerService.GetWorkspacesQuerySchema:output_type -> query.v1.Descriptor
+	5,  // 52: provisioner.v1.ProvisionerService.QueryWorkspaces:output_type -> provisioner.v1.GetWorkspacesResponse
+	11, // 53: provisioner.v1.ProvisionerService.GetNodeSelectorOptions:output_type -> provisioner.v1.GetNodeSelectorOptionsResponse
+	13, // 54: provisioner.v1.ProvisionerService.ListBlueprints:output_type -> provisioner.v1.ListBlueprintsResponse
+	62, // 55: provisioner.v1.ProvisionerService.GetBlueprintsQuerySchema:output_type -> query.v1.Descriptor
+	16, // 56: provisioner.v1.ProvisionerService.QueryBlueprints:output_type -> provisioner.v1.QueryBlueprintsResponse
+	18, // 57: provisioner.v1.ProvisionerService.GetBlueprint:output_type -> provisioner.v1.GetBlueprintResponse
+	20, // 58: provisioner.v1.ProvisionerService.ValidateBlueprint:output_type -> provisioner.v1.ValidateBlueprintResponse
+	22, // 59: provisioner.v1.ProvisionerService.CreateBlueprint:output_type -> provisioner.v1.OrgBlueprint
+	22, // 60: provisioner.v1.ProvisionerService.UpdateBlueprint:output_type -> provisioner.v1.OrgBlueprint
+	26, // 61: provisioner.v1.ProvisionerService.DeleteBlueprint:output_type -> provisioner.v1.DeleteBlueprintResponse
+	28, // 62: provisioner.v1.ProvisionerService.ProvisionWorkspaceStream:output_type -> provisioner.v1.ProvisionWorkspaceResponse
+	32, // 63: provisioner.v1.ProvisionerService.DeleteWorkspace:output_type -> provisioner.v1.DeleteWorkspaceResponse
+	34, // 64: provisioner.v1.ProvisionerService.DeleteUserWorkspaces:output_type -> provisioner.v1.DeleteUserWorkspacesResponse
+	36, // 65: provisioner.v1.ProvisionerService.StopWorkspace:output_type -> provisioner.v1.StopWorkspaceResponse
+	43, // 66: provisioner.v1.ProvisionerService.UpdateWorkspaceResources:output_type -> provisioner.v1.UpdateWorkspaceResourcesResponse
+	41, // 67: provisioner.v1.ProvisionerService.SetWorkspaceSchedule:output_type -> provisioner.v1.SetWorkspaceScheduleResponse
+	28, // 68: provisioner.v1.ProvisionerService.StartWorkspaceStream:output_type -> provisioner.v1.ProvisionWorkspaceResponse
+	46, // 69: provisioner.v1.ProvisionerService.EjectWorkspace:output_type -> provisioner.v1.EjectWorkspaceResponse
+	48, // 70: provisioner.v1.ProvisionerService.ListInjectNamespaces:output_type -> provisioner.v1.ListInjectNamespacesResponse
+	54, // 71: provisioner.v1.ProvisionerService.ListInjectWorkloads:output_type -> provisioner.v1.ListInjectWorkloadsResponse
+	51, // 72: provisioner.v1.ProvisionerService.DiffWorkspaceBlueprint:output_type -> provisioner.v1.DiffWorkspaceBlueprintResponse
+	63, // 73: provisioner.v1.ProvisionerService.GetVersionInfo:output_type -> common.v1.GetVersionInfoResponse
+	47, // [47:74] is the sub-list for method output_type
+	20, // [20:47] is the sub-list for method input_type
+	20, // [20:20] is the sub-list for extension type_name
+	20, // [20:20] is the sub-list for extension extendee
+	0,  // [0:20] is the sub-list for field type_name
 }
 
 func init() { file_provisioner_v1_provisioner_proto_init() }
@@ -3852,13 +4049,15 @@ func file_provisioner_v1_provisioner_proto_init() {
 		(*ProvisionWorkspaceResponse_Event)(nil),
 	}
 	file_provisioner_v1_provisioner_proto_msgTypes[38].OneofWrappers = []any{}
+	file_provisioner_v1_provisioner_proto_msgTypes[39].OneofWrappers = []any{}
+	file_provisioner_v1_provisioner_proto_msgTypes[43].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_provisioner_v1_provisioner_proto_rawDesc), len(file_provisioner_v1_provisioner_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   53,
+			NumMessages:   55,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

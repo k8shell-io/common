@@ -402,7 +402,53 @@ func WorkspaceDetailsToProto(m *models.WorkspaceDetails) *commonv1.WorkspaceDeta
 		Runtime:              m.Runtime,
 		NodeSelectors:        maps.Clone(m.NodeSelectors),
 		NodeName:             m.NodeName,
+		Schedule:             WorkspaceScheduleToProto(m.Schedule),
 	}
+}
+
+// WorkspaceScheduleToProto converts a workspace schedule to its protobuf message.
+func WorkspaceScheduleToProto(s *models.WorkspaceSchedule) *commonv1.WorkspaceSchedule {
+	if s == nil {
+		return nil
+	}
+	return &commonv1.WorkspaceSchedule{
+		From:           timePtrToProto(s.From),
+		To:             timePtrToProto(s.To),
+		StopGrace:      s.StopGrace,
+		TerminateGrace: s.TerminateGrace,
+		StopsAt:        timePtrToProto(s.StopsAt),
+		TerminatesAt:   timePtrToProto(s.TerminatesAt),
+	}
+}
+
+// WorkspaceScheduleFromProto converts a protobuf workspace schedule to its model.
+func WorkspaceScheduleFromProto(pb *commonv1.WorkspaceSchedule) *models.WorkspaceSchedule {
+	if pb == nil {
+		return nil
+	}
+	return &models.WorkspaceSchedule{
+		From:           timePtrFromProto(pb.GetFrom()),
+		To:             timePtrFromProto(pb.GetTo()),
+		StopGrace:      pb.GetStopGrace(),
+		TerminateGrace: pb.GetTerminateGrace(),
+		StopsAt:        timePtrFromProto(pb.GetStopsAt()),
+		TerminatesAt:   timePtrFromProto(pb.GetTerminatesAt()),
+	}
+}
+
+func timePtrToProto(t *time.Time) *timestamppb.Timestamp {
+	if t == nil {
+		return nil
+	}
+	return timestamppb.New(*t)
+}
+
+func timePtrFromProto(ts *timestamppb.Timestamp) *time.Time {
+	if ts == nil {
+		return nil
+	}
+	t := ts.AsTime()
+	return &t
 }
 
 // copyInt32 duplicates an optional int32 so that the model and the protobuf
@@ -516,6 +562,7 @@ func ProtoToWorkspaceDetails(pb *commonv1.WorkspaceDetails) *models.WorkspaceDet
 		NodeSelectors:        maps.Clone(pb.GetNodeSelectors()),
 		NodeName:             pb.GetNodeName(),
 		BlueprintOutdated:    copyBool(pb.BlueprintOutdated),
+		Schedule:             WorkspaceScheduleFromProto(pb.GetSchedule()),
 	}
 }
 

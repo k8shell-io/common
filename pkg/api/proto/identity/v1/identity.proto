@@ -409,6 +409,15 @@ service IdentityService {
   // as an informational counter). Identity does not interpret data beyond
   // enforcing its size cap.
   rpc PutUserSettings (PutUserSettingsRequest) returns (PutUserSettingsResponse);
+
+  // NotifyUser sends a one-off message to a single user, by email to the
+  // address on the user's account. Unlike an announcement it is addressed to
+  // one user and is not stored for reading later. It is meant for service
+  // callers (e.g. the provisioner warning that a workspace is about to stop).
+  // Delivery is best effort: a successful response means the message was
+  // accepted for sending, not that it arrived. NotFound when the user does
+  // not exist; FailedPrecondition when the user has no email address.
+  rpc NotifyUser (NotifyUserRequest) returns (NotifyUserResponse);
 }
 
 // Messages
@@ -983,3 +992,25 @@ message PutUserSettingsResponse {
   int32                      version    = 1;
   google.protobuf.Timestamp  updated_at = 2;
 }
+
+// NotifyUserRequest is the message NotifyUser sends. title becomes the email
+// subject and body its plain-text content; the caller supplies both already
+// worded, identity only delivers them.
+message NotifyUserRequest {
+  // username is the recipient.
+  string username = 1;
+  // title is the short subject line. Required.
+  string title = 2;
+  // body is the plain-text message. Required.
+  string body = 3;
+  // category tells what the message is about, as a dotted name such as
+  // "workspace.stop-warning", "workspace.stopped" or "workspace.terminated".
+  // It lets identity apply per-category policy (templates, rate limits,
+  // opt-outs) without parsing the text. Required.
+  string category = 4;
+  // workspace is the workspace the message is about, if any. Informational.
+  string workspace = 5;
+}
+
+// NotifyUserResponse reports that the message was accepted for sending.
+message NotifyUserResponse {}

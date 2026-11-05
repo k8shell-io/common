@@ -113,7 +113,7 @@ var scopeConstrainablePrefixes = map[string]struct{}{
 	"workspace":         {}, // enables "workspace:*:self"
 	"workspace:create":  {},
 	"workspace:read":    {},
-	"workspace:update":  {}, // cpu | memory | network
+	"workspace:update":  {}, // cpu | memory | network | schedule
 	"workspace:delete":  {},
 	"workspace:files":   {},
 	"workspace:connect": {}, // webshell | webfiles | proxy
@@ -180,12 +180,16 @@ var validExactScopes = map[string]struct{}{
 	string(WorkspaceActionDelete): {},
 	string(WorkspaceActionFiles):  {},
 
-	// workspace:update — one entry per data type (cpu | memory | network),
+	// workspace:start:force — start a workspace past its schedule expiry.
+	string(WorkspaceActionStartForce): {},
+
+	// workspace:update — one entry per data type (cpu | memory | network | schedule),
 	// so a token can be scoped to resize a workspace without also being able
 	// to rewrite its egress rules.
-	string(WorkspaceActionUpdate) + ":" + string(WorkspaceDataTypeCPU):     {},
-	string(WorkspaceActionUpdate) + ":" + string(WorkspaceDataTypeMemory):  {},
-	string(WorkspaceActionUpdate) + ":" + string(WorkspaceDataTypeNetwork): {},
+	string(WorkspaceActionUpdate) + ":" + string(WorkspaceDataTypeCPU):      {},
+	string(WorkspaceActionUpdate) + ":" + string(WorkspaceDataTypeMemory):   {},
+	string(WorkspaceActionUpdate) + ":" + string(WorkspaceDataTypeNetwork):  {},
+	string(WorkspaceActionUpdate) + ":" + string(WorkspaceDataTypeSchedule): {},
 
 	// workspace:connect — one entry per connect type. There is no portforward
 	// type: the port-forward proxy is gated on network.webProxy.allowedRoles,
@@ -320,7 +324,7 @@ var validExactScopes = map[string]struct{}{
 // is no value in "workspace:provision:*" when there are no qualifiers.
 var validWildcardPrefixes = map[string]struct{}{
 	"workspace":              {}, // all workspace actions
-	"workspace:update":       {}, // cpu | memory | network
+	"workspace:update":       {}, // cpu | memory | network | schedule
 	"workspace:connect":      {}, // webshell | webfiles | proxy
 	"workspace:app":          {}, // install | start | stop
 	"session":                {}, // all session actions

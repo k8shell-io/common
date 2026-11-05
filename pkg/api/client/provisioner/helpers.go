@@ -53,11 +53,20 @@ func (c *Client) ProvisionHandshake(ctx context.Context, us userstr.UserStr, tim
 // StartHandshake reads the first stream event that needs to be handshake, for
 // resuming a previously stopped workspace.
 func (c *Client) StartHandshake(ctx context.Context, workspaceName string, timeout int32) (jobWorkspaceName string, jobID string, stream grpc.ServerStreamingClient[provisionerv1.ProvisionWorkspaceResponse], err error) {
+	return c.StartHandshakeForce(ctx, workspaceName, timeout, false)
+}
+
+// StartHandshakeForce is StartHandshake with the provisioner's force flag: a
+// forced start also starts a workspace past its schedule expiry, giving it the
+// provisioner's default new expiry (no "to" is sent). The provisioner does not
+// authorize force, so callers must only pass true for an authorized user.
+func (c *Client) StartHandshakeForce(ctx context.Context, workspaceName string, timeout int32, force bool) (jobWorkspaceName string, jobID string, stream grpc.ServerStreamingClient[provisionerv1.ProvisionWorkspaceResponse], err error) {
 	stream, err = c.StartWorkspaceStream(ctx, &provisionerv1.StartWorkspaceRequest{
 		Workspace:    workspaceName,
 		SendProgress: true,
 		SendEvents:   true,
 		Timeout:      timeout,
+		Force:        force,
 	})
 	if err != nil {
 		return "", "", nil, fmt.Errorf("failed to start workspace stream: %w", err)

@@ -4250,6 +4250,130 @@ func (x *PutUserSettingsResponse) GetUpdatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+// NotifyUserRequest is the message NotifyUser sends. title becomes the email
+// subject and body its plain-text content; the caller supplies both already
+// worded, identity only delivers them.
+type NotifyUserRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// username is the recipient.
+	Username string `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+	// title is the short subject line. Required.
+	Title string `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	// body is the plain-text message. Required.
+	Body string `protobuf:"bytes,3,opt,name=body,proto3" json:"body,omitempty"`
+	// category tells what the message is about, as a dotted name such as
+	// "workspace.stop-warning", "workspace.stopped" or "workspace.terminated".
+	// It lets identity apply per-category policy (templates, rate limits,
+	// opt-outs) without parsing the text. Required.
+	Category string `protobuf:"bytes,4,opt,name=category,proto3" json:"category,omitempty"`
+	// workspace is the workspace the message is about, if any. Informational.
+	Workspace     string `protobuf:"bytes,5,opt,name=workspace,proto3" json:"workspace,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *NotifyUserRequest) Reset() {
+	*x = NotifyUserRequest{}
+	mi := &file_identity_v1_identity_proto_msgTypes[73]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NotifyUserRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NotifyUserRequest) ProtoMessage() {}
+
+func (x *NotifyUserRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[73]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NotifyUserRequest.ProtoReflect.Descriptor instead.
+func (*NotifyUserRequest) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{73}
+}
+
+func (x *NotifyUserRequest) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *NotifyUserRequest) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *NotifyUserRequest) GetBody() string {
+	if x != nil {
+		return x.Body
+	}
+	return ""
+}
+
+func (x *NotifyUserRequest) GetCategory() string {
+	if x != nil {
+		return x.Category
+	}
+	return ""
+}
+
+func (x *NotifyUserRequest) GetWorkspace() string {
+	if x != nil {
+		return x.Workspace
+	}
+	return ""
+}
+
+// NotifyUserResponse reports that the message was accepted for sending.
+type NotifyUserResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *NotifyUserResponse) Reset() {
+	*x = NotifyUserResponse{}
+	mi := &file_identity_v1_identity_proto_msgTypes[74]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NotifyUserResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NotifyUserResponse) ProtoMessage() {}
+
+func (x *NotifyUserResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[74]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NotifyUserResponse.ProtoReflect.Descriptor instead.
+func (*NotifyUserResponse) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{74}
+}
+
 var File_identity_v1_identity_proto protoreflect.FileDescriptor
 
 const file_identity_v1_identity_proto_rawDesc = "" +
@@ -4524,11 +4648,18 @@ const file_identity_v1_identity_proto_rawDesc = "" +
 	"\x17PutUserSettingsResponse\x12\x18\n" +
 	"\aversion\x18\x01 \x01(\x05R\aversion\x129\n" +
 	"\n" +
-	"updated_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt*h\n" +
+	"updated_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\x93\x01\n" +
+	"\x11NotifyUserRequest\x12\x1a\n" +
+	"\busername\x18\x01 \x01(\tR\busername\x12\x14\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x12\x12\n" +
+	"\x04body\x18\x03 \x01(\tR\x04body\x12\x1a\n" +
+	"\bcategory\x18\x04 \x01(\tR\bcategory\x12\x1c\n" +
+	"\tworkspace\x18\x05 \x01(\tR\tworkspace\"\x14\n" +
+	"\x12NotifyUserResponse*h\n" +
 	"\rAuthKeyFormat\x12\x1f\n" +
 	"\x1bAUTH_KEY_FORMAT_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16AUTH_KEY_FORMAT_NORMAL\x10\x01\x12\x1a\n" +
-	"\x16AUTH_KEY_FORMAT_DIGEST\x10\x022\xac=\n" +
+	"\x16AUTH_KEY_FORMAT_DIGEST\x10\x022\xfb=\n" +
 	"\x0fIdentityService\x129\n" +
 	"\bFindUser\x12\x1c.identity.v1.FindUserRequest\x1a\x0f.common.v1.User\x12?\n" +
 	"\bGetUsers\x12\x1c.identity.v1.GetUsersRequest\x1a\x15.identity.v1.UserList\x12T\n" +
@@ -4623,7 +4754,9 @@ const file_identity_v1_identity_proto_rawDesc = "" +
 	"\x12QueryAnnouncements\x12&.identity.v1.QueryAnnouncementsRequest\x1a\x1d.identity.v1.AnnouncementList\x12U\n" +
 	"\x0eGetVersionInfo\x12 .common.v1.GetVersionInfoRequest\x1a!.common.v1.GetVersionInfoResponse\x12\\\n" +
 	"\x0fGetUserSettings\x12#.identity.v1.GetUserSettingsRequest\x1a$.identity.v1.GetUserSettingsResponse\x12\\\n" +
-	"\x0fPutUserSettings\x12#.identity.v1.PutUserSettingsRequest\x1a$.identity.v1.PutUserSettingsResponseBDZBgithub.com/k8shell-io/common/pkg/api/gen/go/identity/v1;identityv1b\x06proto3"
+	"\x0fPutUserSettings\x12#.identity.v1.PutUserSettingsRequest\x1a$.identity.v1.PutUserSettingsResponse\x12M\n" +
+	"\n" +
+	"NotifyUser\x12\x1e.identity.v1.NotifyUserRequest\x1a\x1f.identity.v1.NotifyUserResponseBDZBgithub.com/k8shell-io/common/pkg/api/gen/go/identity/v1;identityv1b\x06proto3"
 
 var (
 	file_identity_v1_identity_proto_rawDescOnce sync.Once
@@ -4638,7 +4771,7 @@ func file_identity_v1_identity_proto_rawDescGZIP() []byte {
 }
 
 var file_identity_v1_identity_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_identity_v1_identity_proto_msgTypes = make([]protoimpl.MessageInfo, 73)
+var file_identity_v1_identity_proto_msgTypes = make([]protoimpl.MessageInfo, 75)
 var file_identity_v1_identity_proto_goTypes = []any{
 	(AuthKeyFormat)(0),                            // 0: identity.v1.AuthKeyFormat
 	(*ListUserAuthKeysRequest)(nil),               // 1: identity.v1.ListUserAuthKeysRequest
@@ -4714,140 +4847,142 @@ var file_identity_v1_identity_proto_goTypes = []any{
 	(*GetUserSettingsResponse)(nil),               // 71: identity.v1.GetUserSettingsResponse
 	(*PutUserSettingsRequest)(nil),                // 72: identity.v1.PutUserSettingsRequest
 	(*PutUserSettingsResponse)(nil),               // 73: identity.v1.PutUserSettingsResponse
-	(*wrapperspb.StringValue)(nil),                // 74: google.protobuf.StringValue
-	(*wrapperspb.BoolValue)(nil),                  // 75: google.protobuf.BoolValue
-	(*wrapperspb.UInt32Value)(nil),                // 76: google.protobuf.UInt32Value
-	(*v1.UserCredential)(nil),                     // 77: common.v1.UserCredential
-	(*IdentityProviderInfo)(nil),                  // 78: identity.v1.IdentityProviderInfo
-	(*timestamppb.Timestamp)(nil),                 // 79: google.protobuf.Timestamp
-	(*AccessTokenInfo)(nil),                       // 80: identity.v1.AccessTokenInfo
-	(*durationpb.Duration)(nil),                   // 81: google.protobuf.Duration
-	(*v1.User)(nil),                               // 82: common.v1.User
-	(*AnnouncementTranslation)(nil),               // 83: identity.v1.AnnouncementTranslation
-	(*v11.Payload)(nil),                           // 84: query.v1.Payload
-	(*FindUserRequest)(nil),                       // 85: identity.v1.FindUserRequest
-	(*GetUsersRequest)(nil),                       // 86: identity.v1.GetUsersRequest
-	(*GetUsersQuerySchemaRequest)(nil),            // 87: identity.v1.GetUsersQuerySchemaRequest
-	(*QueryUsersRequest)(nil),                     // 88: identity.v1.QueryUsersRequest
-	(*Username)(nil),                              // 89: identity.v1.Username
-	(*OnboardUserDeviceFlowRequest)(nil),          // 90: identity.v1.OnboardUserDeviceFlowRequest
-	(*OnboardUserWebFlowRequest)(nil),             // 91: identity.v1.OnboardUserWebFlowRequest
-	(*CompleteUserWebFlowRequest)(nil),            // 92: identity.v1.CompleteUserWebFlowRequest
-	(*AuthUserPublicKeyRequest)(nil),              // 93: identity.v1.AuthUserPublicKeyRequest
-	(*AuthUserPasswordRequest)(nil),               // 94: identity.v1.AuthUserPasswordRequest
-	(*UserStr)(nil),                               // 95: identity.v1.UserStr
-	(*UserRolesRequest)(nil),                      // 96: identity.v1.UserRolesRequest
-	(*ListRolesRequest)(nil),                      // 97: identity.v1.ListRolesRequest
-	(*ListGlobalRolesRequest)(nil),                // 98: identity.v1.ListGlobalRolesRequest
-	(*CreateRoleRequest)(nil),                     // 99: identity.v1.CreateRoleRequest
-	(*UpdateRoleRequest)(nil),                     // 100: identity.v1.UpdateRoleRequest
-	(*DeleteRoleRequest)(nil),                     // 101: identity.v1.DeleteRoleRequest
-	(*RoleBlueprintsRequest)(nil),                 // 102: identity.v1.RoleBlueprintsRequest
-	(*ListOrganizationsRequest)(nil),              // 103: identity.v1.ListOrganizationsRequest
-	(*GetOrganizationRequest)(nil),                // 104: identity.v1.GetOrganizationRequest
-	(*GetOrganizationsQuerySchemaRequest)(nil),    // 105: identity.v1.GetOrganizationsQuerySchemaRequest
-	(*QueryOrganizationsRequest)(nil),             // 106: identity.v1.QueryOrganizationsRequest
-	(*CreateOrganizationRequest)(nil),             // 107: identity.v1.CreateOrganizationRequest
-	(*UpdateOrganizationRequest)(nil),             // 108: identity.v1.UpdateOrganizationRequest
-	(*DeleteOrganizationRequest)(nil),             // 109: identity.v1.DeleteOrganizationRequest
-	(*GetOnboardRulesQuerySchemaRequest)(nil),     // 110: identity.v1.GetOnboardRulesQuerySchemaRequest
-	(*QueryOnboardRulesRequest)(nil),              // 111: identity.v1.QueryOnboardRulesRequest
-	(*CreateOnboardRuleRequest)(nil),              // 112: identity.v1.CreateOnboardRuleRequest
-	(*UpdateOnboardRuleRequest)(nil),              // 113: identity.v1.UpdateOnboardRuleRequest
-	(*DeleteOnboardRuleRequest)(nil),              // 114: identity.v1.DeleteOnboardRuleRequest
-	(*ApproveOnboardRuleRequest)(nil),             // 115: identity.v1.ApproveOnboardRuleRequest
-	(*RejectOnboardRuleRequest)(nil),              // 116: identity.v1.RejectOnboardRuleRequest
-	(*UserAuthKeysRequest)(nil),                   // 117: identity.v1.UserAuthKeysRequest
-	(*ListReposRequest)(nil),                      // 118: identity.v1.ListReposRequest
-	(*v1.GetVersionInfoRequest)(nil),              // 119: common.v1.GetVersionInfoRequest
-	(*UserList)(nil),                              // 120: identity.v1.UserList
-	(*v11.Descriptor)(nil),                        // 121: query.v1.Descriptor
-	(*v1.UserOnboardCapability)(nil),              // 122: common.v1.UserOnboardCapability
-	(*v1.OnboardUserDeviceFlow)(nil),              // 123: common.v1.OnboardUserDeviceFlow
-	(*v1.OnboardUserWebFlow)(nil),                 // 124: common.v1.OnboardUserWebFlow
-	(*AuthUserResponse)(nil),                      // 125: identity.v1.AuthUserResponse
-	(*PasswordLockoutStatus)(nil),                 // 126: identity.v1.PasswordLockoutStatus
-	(*ClearPasswordLockoutResponse)(nil),          // 127: identity.v1.ClearPasswordLockoutResponse
-	(*Blueprint)(nil),                             // 128: identity.v1.Blueprint
-	(*RoleList)(nil),                              // 129: identity.v1.RoleList
-	(*Role)(nil),                                  // 130: identity.v1.Role
-	(*DeleteRoleResponse)(nil),                    // 131: identity.v1.DeleteRoleResponse
-	(*OrganizationList)(nil),                      // 132: identity.v1.OrganizationList
-	(*Organization)(nil),                          // 133: identity.v1.Organization
-	(*DeleteOrganizationResponse)(nil),            // 134: identity.v1.DeleteOrganizationResponse
-	(*OnboardRuleList)(nil),                       // 135: identity.v1.OnboardRuleList
-	(*OnboardRule)(nil),                           // 136: identity.v1.OnboardRule
-	(*DeleteOnboardRuleResponse)(nil),             // 137: identity.v1.DeleteOnboardRuleResponse
-	(*ListUserAuthKeysResponse)(nil),              // 138: identity.v1.ListUserAuthKeysResponse
-	(*RepoOwnerList)(nil),                         // 139: identity.v1.RepoOwnerList
-	(*RepoList)(nil),                              // 140: identity.v1.RepoList
-	(*EnvVarList)(nil),                            // 141: identity.v1.EnvVarList
-	(*EnvVar)(nil),                                // 142: identity.v1.EnvVar
-	(*Announcement)(nil),                          // 143: identity.v1.Announcement
-	(*AnnouncementList)(nil),                      // 144: identity.v1.AnnouncementList
-	(*v1.GetVersionInfoResponse)(nil),             // 145: common.v1.GetVersionInfoResponse
+	(*NotifyUserRequest)(nil),                     // 74: identity.v1.NotifyUserRequest
+	(*NotifyUserResponse)(nil),                    // 75: identity.v1.NotifyUserResponse
+	(*wrapperspb.StringValue)(nil),                // 76: google.protobuf.StringValue
+	(*wrapperspb.BoolValue)(nil),                  // 77: google.protobuf.BoolValue
+	(*wrapperspb.UInt32Value)(nil),                // 78: google.protobuf.UInt32Value
+	(*v1.UserCredential)(nil),                     // 79: common.v1.UserCredential
+	(*IdentityProviderInfo)(nil),                  // 80: identity.v1.IdentityProviderInfo
+	(*timestamppb.Timestamp)(nil),                 // 81: google.protobuf.Timestamp
+	(*AccessTokenInfo)(nil),                       // 82: identity.v1.AccessTokenInfo
+	(*durationpb.Duration)(nil),                   // 83: google.protobuf.Duration
+	(*v1.User)(nil),                               // 84: common.v1.User
+	(*AnnouncementTranslation)(nil),               // 85: identity.v1.AnnouncementTranslation
+	(*v11.Payload)(nil),                           // 86: query.v1.Payload
+	(*FindUserRequest)(nil),                       // 87: identity.v1.FindUserRequest
+	(*GetUsersRequest)(nil),                       // 88: identity.v1.GetUsersRequest
+	(*GetUsersQuerySchemaRequest)(nil),            // 89: identity.v1.GetUsersQuerySchemaRequest
+	(*QueryUsersRequest)(nil),                     // 90: identity.v1.QueryUsersRequest
+	(*Username)(nil),                              // 91: identity.v1.Username
+	(*OnboardUserDeviceFlowRequest)(nil),          // 92: identity.v1.OnboardUserDeviceFlowRequest
+	(*OnboardUserWebFlowRequest)(nil),             // 93: identity.v1.OnboardUserWebFlowRequest
+	(*CompleteUserWebFlowRequest)(nil),            // 94: identity.v1.CompleteUserWebFlowRequest
+	(*AuthUserPublicKeyRequest)(nil),              // 95: identity.v1.AuthUserPublicKeyRequest
+	(*AuthUserPasswordRequest)(nil),               // 96: identity.v1.AuthUserPasswordRequest
+	(*UserStr)(nil),                               // 97: identity.v1.UserStr
+	(*UserRolesRequest)(nil),                      // 98: identity.v1.UserRolesRequest
+	(*ListRolesRequest)(nil),                      // 99: identity.v1.ListRolesRequest
+	(*ListGlobalRolesRequest)(nil),                // 100: identity.v1.ListGlobalRolesRequest
+	(*CreateRoleRequest)(nil),                     // 101: identity.v1.CreateRoleRequest
+	(*UpdateRoleRequest)(nil),                     // 102: identity.v1.UpdateRoleRequest
+	(*DeleteRoleRequest)(nil),                     // 103: identity.v1.DeleteRoleRequest
+	(*RoleBlueprintsRequest)(nil),                 // 104: identity.v1.RoleBlueprintsRequest
+	(*ListOrganizationsRequest)(nil),              // 105: identity.v1.ListOrganizationsRequest
+	(*GetOrganizationRequest)(nil),                // 106: identity.v1.GetOrganizationRequest
+	(*GetOrganizationsQuerySchemaRequest)(nil),    // 107: identity.v1.GetOrganizationsQuerySchemaRequest
+	(*QueryOrganizationsRequest)(nil),             // 108: identity.v1.QueryOrganizationsRequest
+	(*CreateOrganizationRequest)(nil),             // 109: identity.v1.CreateOrganizationRequest
+	(*UpdateOrganizationRequest)(nil),             // 110: identity.v1.UpdateOrganizationRequest
+	(*DeleteOrganizationRequest)(nil),             // 111: identity.v1.DeleteOrganizationRequest
+	(*GetOnboardRulesQuerySchemaRequest)(nil),     // 112: identity.v1.GetOnboardRulesQuerySchemaRequest
+	(*QueryOnboardRulesRequest)(nil),              // 113: identity.v1.QueryOnboardRulesRequest
+	(*CreateOnboardRuleRequest)(nil),              // 114: identity.v1.CreateOnboardRuleRequest
+	(*UpdateOnboardRuleRequest)(nil),              // 115: identity.v1.UpdateOnboardRuleRequest
+	(*DeleteOnboardRuleRequest)(nil),              // 116: identity.v1.DeleteOnboardRuleRequest
+	(*ApproveOnboardRuleRequest)(nil),             // 117: identity.v1.ApproveOnboardRuleRequest
+	(*RejectOnboardRuleRequest)(nil),              // 118: identity.v1.RejectOnboardRuleRequest
+	(*UserAuthKeysRequest)(nil),                   // 119: identity.v1.UserAuthKeysRequest
+	(*ListReposRequest)(nil),                      // 120: identity.v1.ListReposRequest
+	(*v1.GetVersionInfoRequest)(nil),              // 121: common.v1.GetVersionInfoRequest
+	(*UserList)(nil),                              // 122: identity.v1.UserList
+	(*v11.Descriptor)(nil),                        // 123: query.v1.Descriptor
+	(*v1.UserOnboardCapability)(nil),              // 124: common.v1.UserOnboardCapability
+	(*v1.OnboardUserDeviceFlow)(nil),              // 125: common.v1.OnboardUserDeviceFlow
+	(*v1.OnboardUserWebFlow)(nil),                 // 126: common.v1.OnboardUserWebFlow
+	(*AuthUserResponse)(nil),                      // 127: identity.v1.AuthUserResponse
+	(*PasswordLockoutStatus)(nil),                 // 128: identity.v1.PasswordLockoutStatus
+	(*ClearPasswordLockoutResponse)(nil),          // 129: identity.v1.ClearPasswordLockoutResponse
+	(*Blueprint)(nil),                             // 130: identity.v1.Blueprint
+	(*RoleList)(nil),                              // 131: identity.v1.RoleList
+	(*Role)(nil),                                  // 132: identity.v1.Role
+	(*DeleteRoleResponse)(nil),                    // 133: identity.v1.DeleteRoleResponse
+	(*OrganizationList)(nil),                      // 134: identity.v1.OrganizationList
+	(*Organization)(nil),                          // 135: identity.v1.Organization
+	(*DeleteOrganizationResponse)(nil),            // 136: identity.v1.DeleteOrganizationResponse
+	(*OnboardRuleList)(nil),                       // 137: identity.v1.OnboardRuleList
+	(*OnboardRule)(nil),                           // 138: identity.v1.OnboardRule
+	(*DeleteOnboardRuleResponse)(nil),             // 139: identity.v1.DeleteOnboardRuleResponse
+	(*ListUserAuthKeysResponse)(nil),              // 140: identity.v1.ListUserAuthKeysResponse
+	(*RepoOwnerList)(nil),                         // 141: identity.v1.RepoOwnerList
+	(*RepoList)(nil),                              // 142: identity.v1.RepoList
+	(*EnvVarList)(nil),                            // 143: identity.v1.EnvVarList
+	(*EnvVar)(nil),                                // 144: identity.v1.EnvVar
+	(*Announcement)(nil),                          // 145: identity.v1.Announcement
+	(*AnnouncementList)(nil),                      // 146: identity.v1.AnnouncementList
+	(*v1.GetVersionInfoResponse)(nil),             // 147: common.v1.GetVersionInfoResponse
 }
 var file_identity_v1_identity_proto_depIdxs = []int32{
 	0,   // 0: identity.v1.ListUserAuthKeysRequest.format:type_name -> identity.v1.AuthKeyFormat
-	74,  // 1: identity.v1.UpdateUserRequest.fullname:type_name -> google.protobuf.StringValue
-	75,  // 2: identity.v1.UpdateUserRequest.sudo:type_name -> google.protobuf.BoolValue
-	75,  // 3: identity.v1.UpdateUserRequest.locked:type_name -> google.protobuf.BoolValue
-	74,  // 4: identity.v1.UpdateUserRequest.org:type_name -> google.protobuf.StringValue
-	74,  // 5: identity.v1.UpdateUserRequest.email:type_name -> google.protobuf.StringValue
-	76,  // 6: identity.v1.UpdateUserRequest.uid:type_name -> google.protobuf.UInt32Value
-	76,  // 7: identity.v1.UpdateUserRequest.gid:type_name -> google.protobuf.UInt32Value
-	74,  // 8: identity.v1.UpdateUserRequest.shell:type_name -> google.protobuf.StringValue
-	77,  // 9: identity.v1.ListUserCredentialsResponse.credentials:type_name -> common.v1.UserCredential
-	77,  // 10: identity.v1.AddKubernetesUserCredentialResponse.credential:type_name -> common.v1.UserCredential
-	77,  // 11: identity.v1.AddGitUserCredentialResponse.credential:type_name -> common.v1.UserCredential
-	77,  // 12: identity.v1.AddRegistryUserCredentialResponse.credential:type_name -> common.v1.UserCredential
-	74,  // 13: identity.v1.UpdateUserCredentialRequest.scope:type_name -> google.protobuf.StringValue
-	74,  // 14: identity.v1.UpdateUserCredentialRequest.subject:type_name -> google.protobuf.StringValue
-	74,  // 15: identity.v1.UpdateUserCredentialRequest.secret:type_name -> google.protobuf.StringValue
-	75,  // 16: identity.v1.UpdateUserCredentialRequest.active:type_name -> google.protobuf.BoolValue
-	77,  // 17: identity.v1.UpdateUserCredentialResponse.credential:type_name -> common.v1.UserCredential
-	78,  // 18: identity.v1.GetAvailableIdentityProvidersResponse.providers:type_name -> identity.v1.IdentityProviderInfo
-	79,  // 19: identity.v1.CreateAccessTokenRequest.expires_at:type_name -> google.protobuf.Timestamp
-	75,  // 20: identity.v1.CreateAccessTokenRequest.active:type_name -> google.protobuf.BoolValue
-	75,  // 21: identity.v1.UpdateAccessTokenRequest.active:type_name -> google.protobuf.BoolValue
+	76,  // 1: identity.v1.UpdateUserRequest.fullname:type_name -> google.protobuf.StringValue
+	77,  // 2: identity.v1.UpdateUserRequest.sudo:type_name -> google.protobuf.BoolValue
+	77,  // 3: identity.v1.UpdateUserRequest.locked:type_name -> google.protobuf.BoolValue
+	76,  // 4: identity.v1.UpdateUserRequest.org:type_name -> google.protobuf.StringValue
+	76,  // 5: identity.v1.UpdateUserRequest.email:type_name -> google.protobuf.StringValue
+	78,  // 6: identity.v1.UpdateUserRequest.uid:type_name -> google.protobuf.UInt32Value
+	78,  // 7: identity.v1.UpdateUserRequest.gid:type_name -> google.protobuf.UInt32Value
+	76,  // 8: identity.v1.UpdateUserRequest.shell:type_name -> google.protobuf.StringValue
+	79,  // 9: identity.v1.ListUserCredentialsResponse.credentials:type_name -> common.v1.UserCredential
+	79,  // 10: identity.v1.AddKubernetesUserCredentialResponse.credential:type_name -> common.v1.UserCredential
+	79,  // 11: identity.v1.AddGitUserCredentialResponse.credential:type_name -> common.v1.UserCredential
+	79,  // 12: identity.v1.AddRegistryUserCredentialResponse.credential:type_name -> common.v1.UserCredential
+	76,  // 13: identity.v1.UpdateUserCredentialRequest.scope:type_name -> google.protobuf.StringValue
+	76,  // 14: identity.v1.UpdateUserCredentialRequest.subject:type_name -> google.protobuf.StringValue
+	76,  // 15: identity.v1.UpdateUserCredentialRequest.secret:type_name -> google.protobuf.StringValue
+	77,  // 16: identity.v1.UpdateUserCredentialRequest.active:type_name -> google.protobuf.BoolValue
+	79,  // 17: identity.v1.UpdateUserCredentialResponse.credential:type_name -> common.v1.UserCredential
+	80,  // 18: identity.v1.GetAvailableIdentityProvidersResponse.providers:type_name -> identity.v1.IdentityProviderInfo
+	81,  // 19: identity.v1.CreateAccessTokenRequest.expires_at:type_name -> google.protobuf.Timestamp
+	77,  // 20: identity.v1.CreateAccessTokenRequest.active:type_name -> google.protobuf.BoolValue
+	77,  // 21: identity.v1.UpdateAccessTokenRequest.active:type_name -> google.protobuf.BoolValue
 	36,  // 22: identity.v1.UpdateAccessTokenRequest.scopes:type_name -> identity.v1.AccessTokenScopes
-	80,  // 23: identity.v1.UpdateAccessTokenResponse.token:type_name -> identity.v1.AccessTokenInfo
-	80,  // 24: identity.v1.ListAccessTokensResponse.tokens:type_name -> identity.v1.AccessTokenInfo
-	81,  // 25: identity.v1.ResolveAccessTokenRequest.expiry:type_name -> google.protobuf.Duration
-	82,  // 26: identity.v1.ResolveAccessTokenResponse.user:type_name -> common.v1.User
-	74,  // 27: identity.v1.UpdateOrganizationEnvVarRequest.value:type_name -> google.protobuf.StringValue
-	75,  // 28: identity.v1.UpdateOrganizationEnvVarRequest.is_secret:type_name -> google.protobuf.BoolValue
-	74,  // 29: identity.v1.UpdateUserEnvVarRequest.value:type_name -> google.protobuf.StringValue
-	75,  // 30: identity.v1.UpdateUserEnvVarRequest.is_secret:type_name -> google.protobuf.BoolValue
-	83,  // 31: identity.v1.CreateAnnouncementRequest.translations:type_name -> identity.v1.AnnouncementTranslation
-	75,  // 32: identity.v1.CreateAnnouncementRequest.active:type_name -> google.protobuf.BoolValue
-	79,  // 33: identity.v1.CreateAnnouncementRequest.starts_at:type_name -> google.protobuf.Timestamp
-	79,  // 34: identity.v1.CreateAnnouncementRequest.ends_at:type_name -> google.protobuf.Timestamp
-	75,  // 35: identity.v1.CreateAnnouncementRequest.email_enabled:type_name -> google.protobuf.BoolValue
-	74,  // 36: identity.v1.UpdateAnnouncementRequest.name:type_name -> google.protobuf.StringValue
-	83,  // 37: identity.v1.UpdateAnnouncementRequest.translations:type_name -> identity.v1.AnnouncementTranslation
-	75,  // 38: identity.v1.UpdateAnnouncementRequest.active:type_name -> google.protobuf.BoolValue
-	79,  // 39: identity.v1.UpdateAnnouncementRequest.starts_at:type_name -> google.protobuf.Timestamp
-	79,  // 40: identity.v1.UpdateAnnouncementRequest.ends_at:type_name -> google.protobuf.Timestamp
-	75,  // 41: identity.v1.UpdateAnnouncementRequest.email_enabled:type_name -> google.protobuf.BoolValue
-	84,  // 42: identity.v1.QueryAnnouncementsRequest.query:type_name -> query.v1.Payload
-	79,  // 43: identity.v1.GetUserSettingsResponse.updated_at:type_name -> google.protobuf.Timestamp
-	79,  // 44: identity.v1.PutUserSettingsResponse.updated_at:type_name -> google.protobuf.Timestamp
-	85,  // 45: identity.v1.IdentityService.FindUser:input_type -> identity.v1.FindUserRequest
-	86,  // 46: identity.v1.IdentityService.GetUsers:input_type -> identity.v1.GetUsersRequest
-	87,  // 47: identity.v1.IdentityService.GetUsersQuerySchema:input_type -> identity.v1.GetUsersQuerySchemaRequest
-	88,  // 48: identity.v1.IdentityService.QueryUsers:input_type -> identity.v1.QueryUsersRequest
+	82,  // 23: identity.v1.UpdateAccessTokenResponse.token:type_name -> identity.v1.AccessTokenInfo
+	82,  // 24: identity.v1.ListAccessTokensResponse.tokens:type_name -> identity.v1.AccessTokenInfo
+	83,  // 25: identity.v1.ResolveAccessTokenRequest.expiry:type_name -> google.protobuf.Duration
+	84,  // 26: identity.v1.ResolveAccessTokenResponse.user:type_name -> common.v1.User
+	76,  // 27: identity.v1.UpdateOrganizationEnvVarRequest.value:type_name -> google.protobuf.StringValue
+	77,  // 28: identity.v1.UpdateOrganizationEnvVarRequest.is_secret:type_name -> google.protobuf.BoolValue
+	76,  // 29: identity.v1.UpdateUserEnvVarRequest.value:type_name -> google.protobuf.StringValue
+	77,  // 30: identity.v1.UpdateUserEnvVarRequest.is_secret:type_name -> google.protobuf.BoolValue
+	85,  // 31: identity.v1.CreateAnnouncementRequest.translations:type_name -> identity.v1.AnnouncementTranslation
+	77,  // 32: identity.v1.CreateAnnouncementRequest.active:type_name -> google.protobuf.BoolValue
+	81,  // 33: identity.v1.CreateAnnouncementRequest.starts_at:type_name -> google.protobuf.Timestamp
+	81,  // 34: identity.v1.CreateAnnouncementRequest.ends_at:type_name -> google.protobuf.Timestamp
+	77,  // 35: identity.v1.CreateAnnouncementRequest.email_enabled:type_name -> google.protobuf.BoolValue
+	76,  // 36: identity.v1.UpdateAnnouncementRequest.name:type_name -> google.protobuf.StringValue
+	85,  // 37: identity.v1.UpdateAnnouncementRequest.translations:type_name -> identity.v1.AnnouncementTranslation
+	77,  // 38: identity.v1.UpdateAnnouncementRequest.active:type_name -> google.protobuf.BoolValue
+	81,  // 39: identity.v1.UpdateAnnouncementRequest.starts_at:type_name -> google.protobuf.Timestamp
+	81,  // 40: identity.v1.UpdateAnnouncementRequest.ends_at:type_name -> google.protobuf.Timestamp
+	77,  // 41: identity.v1.UpdateAnnouncementRequest.email_enabled:type_name -> google.protobuf.BoolValue
+	86,  // 42: identity.v1.QueryAnnouncementsRequest.query:type_name -> query.v1.Payload
+	81,  // 43: identity.v1.GetUserSettingsResponse.updated_at:type_name -> google.protobuf.Timestamp
+	81,  // 44: identity.v1.PutUserSettingsResponse.updated_at:type_name -> google.protobuf.Timestamp
+	87,  // 45: identity.v1.IdentityService.FindUser:input_type -> identity.v1.FindUserRequest
+	88,  // 46: identity.v1.IdentityService.GetUsers:input_type -> identity.v1.GetUsersRequest
+	89,  // 47: identity.v1.IdentityService.GetUsersQuerySchema:input_type -> identity.v1.GetUsersQuerySchemaRequest
+	90,  // 48: identity.v1.IdentityService.QueryUsers:input_type -> identity.v1.QueryUsersRequest
 	12,  // 49: identity.v1.IdentityService.IssueUserToken:input_type -> identity.v1.IssueUserTokenRequest
-	89,  // 50: identity.v1.IdentityService.GetUserOnboardCapability:input_type -> identity.v1.Username
-	90,  // 51: identity.v1.IdentityService.OnboardUserDeviceFlow:input_type -> identity.v1.OnboardUserDeviceFlowRequest
-	91,  // 52: identity.v1.IdentityService.OnboardUserWebFlow:input_type -> identity.v1.OnboardUserWebFlowRequest
-	92,  // 53: identity.v1.IdentityService.CompleteUserWebFlow:input_type -> identity.v1.CompleteUserWebFlowRequest
-	93,  // 54: identity.v1.IdentityService.AuthUserPublicKey:input_type -> identity.v1.AuthUserPublicKeyRequest
-	94,  // 55: identity.v1.IdentityService.AuthUserPassword:input_type -> identity.v1.AuthUserPasswordRequest
-	89,  // 56: identity.v1.IdentityService.GetPasswordLockoutStatus:input_type -> identity.v1.Username
-	89,  // 57: identity.v1.IdentityService.ClearPasswordLockout:input_type -> identity.v1.Username
+	91,  // 50: identity.v1.IdentityService.GetUserOnboardCapability:input_type -> identity.v1.Username
+	92,  // 51: identity.v1.IdentityService.OnboardUserDeviceFlow:input_type -> identity.v1.OnboardUserDeviceFlowRequest
+	93,  // 52: identity.v1.IdentityService.OnboardUserWebFlow:input_type -> identity.v1.OnboardUserWebFlowRequest
+	94,  // 53: identity.v1.IdentityService.CompleteUserWebFlow:input_type -> identity.v1.CompleteUserWebFlowRequest
+	95,  // 54: identity.v1.IdentityService.AuthUserPublicKey:input_type -> identity.v1.AuthUserPublicKeyRequest
+	96,  // 55: identity.v1.IdentityService.AuthUserPassword:input_type -> identity.v1.AuthUserPasswordRequest
+	91,  // 56: identity.v1.IdentityService.GetPasswordLockoutStatus:input_type -> identity.v1.Username
+	91,  // 57: identity.v1.IdentityService.ClearPasswordLockout:input_type -> identity.v1.Username
 	14,  // 58: identity.v1.IdentityService.CompleteUserDeviceFlow:input_type -> identity.v1.CompleteUserDeviceFlowRequest
-	95,  // 59: identity.v1.IdentityService.GetBlueprintByUserStr:input_type -> identity.v1.UserStr
+	97,  // 59: identity.v1.IdentityService.GetBlueprintByUserStr:input_type -> identity.v1.UserStr
 	17,  // 60: identity.v1.IdentityService.ListUserCredentials:input_type -> identity.v1.ListUserCredentialsRequest
 	19,  // 61: identity.v1.IdentityService.GetUserCredential:input_type -> identity.v1.GetUserCredentialRequest
 	20,  // 62: identity.v1.IdentityService.AddKubernetesUserCredential:input_type -> identity.v1.AddKubernetesUserCredentialRequest
@@ -4856,31 +4991,31 @@ var file_identity_v1_identity_proto_depIdxs = []int32{
 	3,   // 65: identity.v1.IdentityService.CreateUser:input_type -> identity.v1.CreateUserRequest
 	4,   // 66: identity.v1.IdentityService.UpdateUser:input_type -> identity.v1.UpdateUserRequest
 	5,   // 67: identity.v1.IdentityService.DeleteUser:input_type -> identity.v1.DeleteUserRequest
-	96,  // 68: identity.v1.IdentityService.AddUserRoles:input_type -> identity.v1.UserRolesRequest
-	96,  // 69: identity.v1.IdentityService.RemoveUserRoles:input_type -> identity.v1.UserRolesRequest
-	97,  // 70: identity.v1.IdentityService.ListRoles:input_type -> identity.v1.ListRolesRequest
-	98,  // 71: identity.v1.IdentityService.ListGlobalRoles:input_type -> identity.v1.ListGlobalRolesRequest
-	99,  // 72: identity.v1.IdentityService.CreateRole:input_type -> identity.v1.CreateRoleRequest
-	100, // 73: identity.v1.IdentityService.UpdateRole:input_type -> identity.v1.UpdateRoleRequest
-	101, // 74: identity.v1.IdentityService.DeleteRole:input_type -> identity.v1.DeleteRoleRequest
-	102, // 75: identity.v1.IdentityService.AddRoleBlueprints:input_type -> identity.v1.RoleBlueprintsRequest
-	102, // 76: identity.v1.IdentityService.RemoveRoleBlueprints:input_type -> identity.v1.RoleBlueprintsRequest
-	103, // 77: identity.v1.IdentityService.ListOrganizations:input_type -> identity.v1.ListOrganizationsRequest
-	104, // 78: identity.v1.IdentityService.GetOrganization:input_type -> identity.v1.GetOrganizationRequest
-	105, // 79: identity.v1.IdentityService.GetOrganizationsQuerySchema:input_type -> identity.v1.GetOrganizationsQuerySchemaRequest
-	106, // 80: identity.v1.IdentityService.QueryOrganizations:input_type -> identity.v1.QueryOrganizationsRequest
-	107, // 81: identity.v1.IdentityService.CreateOrganization:input_type -> identity.v1.CreateOrganizationRequest
-	108, // 82: identity.v1.IdentityService.UpdateOrganization:input_type -> identity.v1.UpdateOrganizationRequest
-	109, // 83: identity.v1.IdentityService.DeleteOrganization:input_type -> identity.v1.DeleteOrganizationRequest
-	110, // 84: identity.v1.IdentityService.GetOnboardRulesQuerySchema:input_type -> identity.v1.GetOnboardRulesQuerySchemaRequest
-	111, // 85: identity.v1.IdentityService.QueryOnboardRules:input_type -> identity.v1.QueryOnboardRulesRequest
-	112, // 86: identity.v1.IdentityService.CreateOnboardRule:input_type -> identity.v1.CreateOnboardRuleRequest
-	113, // 87: identity.v1.IdentityService.UpdateOnboardRule:input_type -> identity.v1.UpdateOnboardRuleRequest
-	114, // 88: identity.v1.IdentityService.DeleteOnboardRule:input_type -> identity.v1.DeleteOnboardRuleRequest
-	115, // 89: identity.v1.IdentityService.ApproveOnboardRequest:input_type -> identity.v1.ApproveOnboardRuleRequest
-	116, // 90: identity.v1.IdentityService.RejectOnboardRequest:input_type -> identity.v1.RejectOnboardRuleRequest
+	98,  // 68: identity.v1.IdentityService.AddUserRoles:input_type -> identity.v1.UserRolesRequest
+	98,  // 69: identity.v1.IdentityService.RemoveUserRoles:input_type -> identity.v1.UserRolesRequest
+	99,  // 70: identity.v1.IdentityService.ListRoles:input_type -> identity.v1.ListRolesRequest
+	100, // 71: identity.v1.IdentityService.ListGlobalRoles:input_type -> identity.v1.ListGlobalRolesRequest
+	101, // 72: identity.v1.IdentityService.CreateRole:input_type -> identity.v1.CreateRoleRequest
+	102, // 73: identity.v1.IdentityService.UpdateRole:input_type -> identity.v1.UpdateRoleRequest
+	103, // 74: identity.v1.IdentityService.DeleteRole:input_type -> identity.v1.DeleteRoleRequest
+	104, // 75: identity.v1.IdentityService.AddRoleBlueprints:input_type -> identity.v1.RoleBlueprintsRequest
+	104, // 76: identity.v1.IdentityService.RemoveRoleBlueprints:input_type -> identity.v1.RoleBlueprintsRequest
+	105, // 77: identity.v1.IdentityService.ListOrganizations:input_type -> identity.v1.ListOrganizationsRequest
+	106, // 78: identity.v1.IdentityService.GetOrganization:input_type -> identity.v1.GetOrganizationRequest
+	107, // 79: identity.v1.IdentityService.GetOrganizationsQuerySchema:input_type -> identity.v1.GetOrganizationsQuerySchemaRequest
+	108, // 80: identity.v1.IdentityService.QueryOrganizations:input_type -> identity.v1.QueryOrganizationsRequest
+	109, // 81: identity.v1.IdentityService.CreateOrganization:input_type -> identity.v1.CreateOrganizationRequest
+	110, // 82: identity.v1.IdentityService.UpdateOrganization:input_type -> identity.v1.UpdateOrganizationRequest
+	111, // 83: identity.v1.IdentityService.DeleteOrganization:input_type -> identity.v1.DeleteOrganizationRequest
+	112, // 84: identity.v1.IdentityService.GetOnboardRulesQuerySchema:input_type -> identity.v1.GetOnboardRulesQuerySchemaRequest
+	113, // 85: identity.v1.IdentityService.QueryOnboardRules:input_type -> identity.v1.QueryOnboardRulesRequest
+	114, // 86: identity.v1.IdentityService.CreateOnboardRule:input_type -> identity.v1.CreateOnboardRuleRequest
+	115, // 87: identity.v1.IdentityService.UpdateOnboardRule:input_type -> identity.v1.UpdateOnboardRuleRequest
+	116, // 88: identity.v1.IdentityService.DeleteOnboardRule:input_type -> identity.v1.DeleteOnboardRuleRequest
+	117, // 89: identity.v1.IdentityService.ApproveOnboardRequest:input_type -> identity.v1.ApproveOnboardRuleRequest
+	118, // 90: identity.v1.IdentityService.RejectOnboardRequest:input_type -> identity.v1.RejectOnboardRuleRequest
 	1,   // 91: identity.v1.IdentityService.ListUserAuthKeys:input_type -> identity.v1.ListUserAuthKeysRequest
-	117, // 92: identity.v1.IdentityService.AddUserAuthKeys:input_type -> identity.v1.UserAuthKeysRequest
+	119, // 92: identity.v1.IdentityService.AddUserAuthKeys:input_type -> identity.v1.UserAuthKeysRequest
 	2,   // 93: identity.v1.IdentityService.RemoveUserAuthKey:input_type -> identity.v1.RemoveUserAuthKeyRequest
 	7,   // 94: identity.v1.IdentityService.SetUserPassword:input_type -> identity.v1.SetUserPasswordRequest
 	8,   // 95: identity.v1.IdentityService.RequestPasswordReset:input_type -> identity.v1.RequestPasswordResetRequest
@@ -4889,11 +5024,11 @@ var file_identity_v1_identity_proto_depIdxs = []int32{
 	28,  // 98: identity.v1.IdentityService.DeleteUserCredential:input_type -> identity.v1.DeleteUserCredentialRequest
 	30,  // 99: identity.v1.IdentityService.RemoveUserCredential:input_type -> identity.v1.RemoveUserCredentialRequest
 	32,  // 100: identity.v1.IdentityService.GetAvailableIdentityProviders:input_type -> identity.v1.GetAvailableIdentityProvidersRequest
-	89,  // 101: identity.v1.IdentityService.ListRepoOwners:input_type -> identity.v1.Username
-	118, // 102: identity.v1.IdentityService.ListRepos:input_type -> identity.v1.ListReposRequest
+	91,  // 101: identity.v1.IdentityService.ListRepoOwners:input_type -> identity.v1.Username
+	120, // 102: identity.v1.IdentityService.ListRepos:input_type -> identity.v1.ListReposRequest
 	34,  // 103: identity.v1.IdentityService.CreateAccessToken:input_type -> identity.v1.CreateAccessTokenRequest
 	37,  // 104: identity.v1.IdentityService.UpdateAccessToken:input_type -> identity.v1.UpdateAccessTokenRequest
-	89,  // 105: identity.v1.IdentityService.ListAccessTokens:input_type -> identity.v1.Username
+	91,  // 105: identity.v1.IdentityService.ListAccessTokens:input_type -> identity.v1.Username
 	40,  // 106: identity.v1.IdentityService.RevokeAccessToken:input_type -> identity.v1.RevokeAccessTokenRequest
 	42,  // 107: identity.v1.IdentityService.DeleteAccessToken:input_type -> identity.v1.DeleteAccessTokenRequest
 	44,  // 108: identity.v1.IdentityService.ResolveAccessToken:input_type -> identity.v1.ResolveAccessTokenRequest
@@ -4917,98 +5052,100 @@ var file_identity_v1_identity_proto_depIdxs = []int32{
 	66,  // 126: identity.v1.IdentityService.MarkAnnouncementRead:input_type -> identity.v1.MarkAnnouncementReadRequest
 	68,  // 127: identity.v1.IdentityService.GetAnnouncementsQuerySchema:input_type -> identity.v1.GetAnnouncementsQuerySchemaRequest
 	69,  // 128: identity.v1.IdentityService.QueryAnnouncements:input_type -> identity.v1.QueryAnnouncementsRequest
-	119, // 129: identity.v1.IdentityService.GetVersionInfo:input_type -> common.v1.GetVersionInfoRequest
+	121, // 129: identity.v1.IdentityService.GetVersionInfo:input_type -> common.v1.GetVersionInfoRequest
 	70,  // 130: identity.v1.IdentityService.GetUserSettings:input_type -> identity.v1.GetUserSettingsRequest
 	72,  // 131: identity.v1.IdentityService.PutUserSettings:input_type -> identity.v1.PutUserSettingsRequest
-	82,  // 132: identity.v1.IdentityService.FindUser:output_type -> common.v1.User
-	120, // 133: identity.v1.IdentityService.GetUsers:output_type -> identity.v1.UserList
-	121, // 134: identity.v1.IdentityService.GetUsersQuerySchema:output_type -> query.v1.Descriptor
-	120, // 135: identity.v1.IdentityService.QueryUsers:output_type -> identity.v1.UserList
-	13,  // 136: identity.v1.IdentityService.IssueUserToken:output_type -> identity.v1.IssueUserTokenResponse
-	122, // 137: identity.v1.IdentityService.GetUserOnboardCapability:output_type -> common.v1.UserOnboardCapability
-	123, // 138: identity.v1.IdentityService.OnboardUserDeviceFlow:output_type -> common.v1.OnboardUserDeviceFlow
-	124, // 139: identity.v1.IdentityService.OnboardUserWebFlow:output_type -> common.v1.OnboardUserWebFlow
-	16,  // 140: identity.v1.IdentityService.CompleteUserWebFlow:output_type -> identity.v1.CompleteUserWebFlowResponse
-	125, // 141: identity.v1.IdentityService.AuthUserPublicKey:output_type -> identity.v1.AuthUserResponse
-	125, // 142: identity.v1.IdentityService.AuthUserPassword:output_type -> identity.v1.AuthUserResponse
-	126, // 143: identity.v1.IdentityService.GetPasswordLockoutStatus:output_type -> identity.v1.PasswordLockoutStatus
-	127, // 144: identity.v1.IdentityService.ClearPasswordLockout:output_type -> identity.v1.ClearPasswordLockoutResponse
-	15,  // 145: identity.v1.IdentityService.CompleteUserDeviceFlow:output_type -> identity.v1.CompleteUserDeviceFlowResponse
-	128, // 146: identity.v1.IdentityService.GetBlueprintByUserStr:output_type -> identity.v1.Blueprint
-	18,  // 147: identity.v1.IdentityService.ListUserCredentials:output_type -> identity.v1.ListUserCredentialsResponse
-	77,  // 148: identity.v1.IdentityService.GetUserCredential:output_type -> common.v1.UserCredential
-	21,  // 149: identity.v1.IdentityService.AddKubernetesUserCredential:output_type -> identity.v1.AddKubernetesUserCredentialResponse
-	23,  // 150: identity.v1.IdentityService.AddGitUserCredential:output_type -> identity.v1.AddGitUserCredentialResponse
-	25,  // 151: identity.v1.IdentityService.AddRegistryUserCredential:output_type -> identity.v1.AddRegistryUserCredentialResponse
-	82,  // 152: identity.v1.IdentityService.CreateUser:output_type -> common.v1.User
-	82,  // 153: identity.v1.IdentityService.UpdateUser:output_type -> common.v1.User
-	6,   // 154: identity.v1.IdentityService.DeleteUser:output_type -> identity.v1.DeleteUserResponse
-	82,  // 155: identity.v1.IdentityService.AddUserRoles:output_type -> common.v1.User
-	82,  // 156: identity.v1.IdentityService.RemoveUserRoles:output_type -> common.v1.User
-	129, // 157: identity.v1.IdentityService.ListRoles:output_type -> identity.v1.RoleList
-	129, // 158: identity.v1.IdentityService.ListGlobalRoles:output_type -> identity.v1.RoleList
-	130, // 159: identity.v1.IdentityService.CreateRole:output_type -> identity.v1.Role
-	130, // 160: identity.v1.IdentityService.UpdateRole:output_type -> identity.v1.Role
-	131, // 161: identity.v1.IdentityService.DeleteRole:output_type -> identity.v1.DeleteRoleResponse
-	130, // 162: identity.v1.IdentityService.AddRoleBlueprints:output_type -> identity.v1.Role
-	130, // 163: identity.v1.IdentityService.RemoveRoleBlueprints:output_type -> identity.v1.Role
-	132, // 164: identity.v1.IdentityService.ListOrganizations:output_type -> identity.v1.OrganizationList
-	133, // 165: identity.v1.IdentityService.GetOrganization:output_type -> identity.v1.Organization
-	121, // 166: identity.v1.IdentityService.GetOrganizationsQuerySchema:output_type -> query.v1.Descriptor
-	132, // 167: identity.v1.IdentityService.QueryOrganizations:output_type -> identity.v1.OrganizationList
-	133, // 168: identity.v1.IdentityService.CreateOrganization:output_type -> identity.v1.Organization
-	133, // 169: identity.v1.IdentityService.UpdateOrganization:output_type -> identity.v1.Organization
-	134, // 170: identity.v1.IdentityService.DeleteOrganization:output_type -> identity.v1.DeleteOrganizationResponse
-	121, // 171: identity.v1.IdentityService.GetOnboardRulesQuerySchema:output_type -> query.v1.Descriptor
-	135, // 172: identity.v1.IdentityService.QueryOnboardRules:output_type -> identity.v1.OnboardRuleList
-	136, // 173: identity.v1.IdentityService.CreateOnboardRule:output_type -> identity.v1.OnboardRule
-	136, // 174: identity.v1.IdentityService.UpdateOnboardRule:output_type -> identity.v1.OnboardRule
-	137, // 175: identity.v1.IdentityService.DeleteOnboardRule:output_type -> identity.v1.DeleteOnboardRuleResponse
-	82,  // 176: identity.v1.IdentityService.ApproveOnboardRequest:output_type -> common.v1.User
-	136, // 177: identity.v1.IdentityService.RejectOnboardRequest:output_type -> identity.v1.OnboardRule
-	138, // 178: identity.v1.IdentityService.ListUserAuthKeys:output_type -> identity.v1.ListUserAuthKeysResponse
-	82,  // 179: identity.v1.IdentityService.AddUserAuthKeys:output_type -> common.v1.User
-	82,  // 180: identity.v1.IdentityService.RemoveUserAuthKey:output_type -> common.v1.User
-	82,  // 181: identity.v1.IdentityService.SetUserPassword:output_type -> common.v1.User
-	9,   // 182: identity.v1.IdentityService.RequestPasswordReset:output_type -> identity.v1.RequestPasswordResetResponse
-	11,  // 183: identity.v1.IdentityService.ConfirmPasswordReset:output_type -> identity.v1.ConfirmPasswordResetResponse
-	27,  // 184: identity.v1.IdentityService.UpdateUserCredential:output_type -> identity.v1.UpdateUserCredentialResponse
-	29,  // 185: identity.v1.IdentityService.DeleteUserCredential:output_type -> identity.v1.DeleteUserCredentialResponse
-	31,  // 186: identity.v1.IdentityService.RemoveUserCredential:output_type -> identity.v1.RemoveUserCredentialResponse
-	33,  // 187: identity.v1.IdentityService.GetAvailableIdentityProviders:output_type -> identity.v1.GetAvailableIdentityProvidersResponse
-	139, // 188: identity.v1.IdentityService.ListRepoOwners:output_type -> identity.v1.RepoOwnerList
-	140, // 189: identity.v1.IdentityService.ListRepos:output_type -> identity.v1.RepoList
-	35,  // 190: identity.v1.IdentityService.CreateAccessToken:output_type -> identity.v1.CreateAccessTokenResponse
-	38,  // 191: identity.v1.IdentityService.UpdateAccessToken:output_type -> identity.v1.UpdateAccessTokenResponse
-	39,  // 192: identity.v1.IdentityService.ListAccessTokens:output_type -> identity.v1.ListAccessTokensResponse
-	41,  // 193: identity.v1.IdentityService.RevokeAccessToken:output_type -> identity.v1.RevokeAccessTokenResponse
-	43,  // 194: identity.v1.IdentityService.DeleteAccessToken:output_type -> identity.v1.DeleteAccessTokenResponse
-	45,  // 195: identity.v1.IdentityService.ResolveAccessToken:output_type -> identity.v1.ResolveAccessTokenResponse
-	141, // 196: identity.v1.IdentityService.ListOrganizationEnvVars:output_type -> identity.v1.EnvVarList
-	142, // 197: identity.v1.IdentityService.GetOrganizationEnvVar:output_type -> identity.v1.EnvVar
-	142, // 198: identity.v1.IdentityService.AddOrganizationEnvVar:output_type -> identity.v1.EnvVar
-	142, // 199: identity.v1.IdentityService.UpdateOrganizationEnvVar:output_type -> identity.v1.EnvVar
-	51,  // 200: identity.v1.IdentityService.DeleteOrganizationEnvVar:output_type -> identity.v1.DeleteOrganizationEnvVarResponse
-	141, // 201: identity.v1.IdentityService.ListUserEnvVars:output_type -> identity.v1.EnvVarList
-	142, // 202: identity.v1.IdentityService.GetUserEnvVar:output_type -> identity.v1.EnvVar
-	142, // 203: identity.v1.IdentityService.AddUserEnvVar:output_type -> identity.v1.EnvVar
-	142, // 204: identity.v1.IdentityService.UpdateUserEnvVar:output_type -> identity.v1.EnvVar
-	57,  // 205: identity.v1.IdentityService.DeleteUserEnvVar:output_type -> identity.v1.DeleteUserEnvVarResponse
-	143, // 206: identity.v1.IdentityService.CreateAnnouncement:output_type -> identity.v1.Announcement
-	143, // 207: identity.v1.IdentityService.GetAnnouncement:output_type -> identity.v1.Announcement
-	143, // 208: identity.v1.IdentityService.UpdateAnnouncement:output_type -> identity.v1.Announcement
-	62,  // 209: identity.v1.IdentityService.DeleteAnnouncement:output_type -> identity.v1.DeleteAnnouncementResponse
-	144, // 210: identity.v1.IdentityService.ListAnnouncements:output_type -> identity.v1.AnnouncementList
-	144, // 211: identity.v1.IdentityService.ListUnreadAnnouncements:output_type -> identity.v1.AnnouncementList
-	144, // 212: identity.v1.IdentityService.ListUserAnnouncements:output_type -> identity.v1.AnnouncementList
-	67,  // 213: identity.v1.IdentityService.MarkAnnouncementRead:output_type -> identity.v1.MarkAnnouncementReadResponse
-	121, // 214: identity.v1.IdentityService.GetAnnouncementsQuerySchema:output_type -> query.v1.Descriptor
-	144, // 215: identity.v1.IdentityService.QueryAnnouncements:output_type -> identity.v1.AnnouncementList
-	145, // 216: identity.v1.IdentityService.GetVersionInfo:output_type -> common.v1.GetVersionInfoResponse
-	71,  // 217: identity.v1.IdentityService.GetUserSettings:output_type -> identity.v1.GetUserSettingsResponse
-	73,  // 218: identity.v1.IdentityService.PutUserSettings:output_type -> identity.v1.PutUserSettingsResponse
-	132, // [132:219] is the sub-list for method output_type
-	45,  // [45:132] is the sub-list for method input_type
+	74,  // 132: identity.v1.IdentityService.NotifyUser:input_type -> identity.v1.NotifyUserRequest
+	84,  // 133: identity.v1.IdentityService.FindUser:output_type -> common.v1.User
+	122, // 134: identity.v1.IdentityService.GetUsers:output_type -> identity.v1.UserList
+	123, // 135: identity.v1.IdentityService.GetUsersQuerySchema:output_type -> query.v1.Descriptor
+	122, // 136: identity.v1.IdentityService.QueryUsers:output_type -> identity.v1.UserList
+	13,  // 137: identity.v1.IdentityService.IssueUserToken:output_type -> identity.v1.IssueUserTokenResponse
+	124, // 138: identity.v1.IdentityService.GetUserOnboardCapability:output_type -> common.v1.UserOnboardCapability
+	125, // 139: identity.v1.IdentityService.OnboardUserDeviceFlow:output_type -> common.v1.OnboardUserDeviceFlow
+	126, // 140: identity.v1.IdentityService.OnboardUserWebFlow:output_type -> common.v1.OnboardUserWebFlow
+	16,  // 141: identity.v1.IdentityService.CompleteUserWebFlow:output_type -> identity.v1.CompleteUserWebFlowResponse
+	127, // 142: identity.v1.IdentityService.AuthUserPublicKey:output_type -> identity.v1.AuthUserResponse
+	127, // 143: identity.v1.IdentityService.AuthUserPassword:output_type -> identity.v1.AuthUserResponse
+	128, // 144: identity.v1.IdentityService.GetPasswordLockoutStatus:output_type -> identity.v1.PasswordLockoutStatus
+	129, // 145: identity.v1.IdentityService.ClearPasswordLockout:output_type -> identity.v1.ClearPasswordLockoutResponse
+	15,  // 146: identity.v1.IdentityService.CompleteUserDeviceFlow:output_type -> identity.v1.CompleteUserDeviceFlowResponse
+	130, // 147: identity.v1.IdentityService.GetBlueprintByUserStr:output_type -> identity.v1.Blueprint
+	18,  // 148: identity.v1.IdentityService.ListUserCredentials:output_type -> identity.v1.ListUserCredentialsResponse
+	79,  // 149: identity.v1.IdentityService.GetUserCredential:output_type -> common.v1.UserCredential
+	21,  // 150: identity.v1.IdentityService.AddKubernetesUserCredential:output_type -> identity.v1.AddKubernetesUserCredentialResponse
+	23,  // 151: identity.v1.IdentityService.AddGitUserCredential:output_type -> identity.v1.AddGitUserCredentialResponse
+	25,  // 152: identity.v1.IdentityService.AddRegistryUserCredential:output_type -> identity.v1.AddRegistryUserCredentialResponse
+	84,  // 153: identity.v1.IdentityService.CreateUser:output_type -> common.v1.User
+	84,  // 154: identity.v1.IdentityService.UpdateUser:output_type -> common.v1.User
+	6,   // 155: identity.v1.IdentityService.DeleteUser:output_type -> identity.v1.DeleteUserResponse
+	84,  // 156: identity.v1.IdentityService.AddUserRoles:output_type -> common.v1.User
+	84,  // 157: identity.v1.IdentityService.RemoveUserRoles:output_type -> common.v1.User
+	131, // 158: identity.v1.IdentityService.ListRoles:output_type -> identity.v1.RoleList
+	131, // 159: identity.v1.IdentityService.ListGlobalRoles:output_type -> identity.v1.RoleList
+	132, // 160: identity.v1.IdentityService.CreateRole:output_type -> identity.v1.Role
+	132, // 161: identity.v1.IdentityService.UpdateRole:output_type -> identity.v1.Role
+	133, // 162: identity.v1.IdentityService.DeleteRole:output_type -> identity.v1.DeleteRoleResponse
+	132, // 163: identity.v1.IdentityService.AddRoleBlueprints:output_type -> identity.v1.Role
+	132, // 164: identity.v1.IdentityService.RemoveRoleBlueprints:output_type -> identity.v1.Role
+	134, // 165: identity.v1.IdentityService.ListOrganizations:output_type -> identity.v1.OrganizationList
+	135, // 166: identity.v1.IdentityService.GetOrganization:output_type -> identity.v1.Organization
+	123, // 167: identity.v1.IdentityService.GetOrganizationsQuerySchema:output_type -> query.v1.Descriptor
+	134, // 168: identity.v1.IdentityService.QueryOrganizations:output_type -> identity.v1.OrganizationList
+	135, // 169: identity.v1.IdentityService.CreateOrganization:output_type -> identity.v1.Organization
+	135, // 170: identity.v1.IdentityService.UpdateOrganization:output_type -> identity.v1.Organization
+	136, // 171: identity.v1.IdentityService.DeleteOrganization:output_type -> identity.v1.DeleteOrganizationResponse
+	123, // 172: identity.v1.IdentityService.GetOnboardRulesQuerySchema:output_type -> query.v1.Descriptor
+	137, // 173: identity.v1.IdentityService.QueryOnboardRules:output_type -> identity.v1.OnboardRuleList
+	138, // 174: identity.v1.IdentityService.CreateOnboardRule:output_type -> identity.v1.OnboardRule
+	138, // 175: identity.v1.IdentityService.UpdateOnboardRule:output_type -> identity.v1.OnboardRule
+	139, // 176: identity.v1.IdentityService.DeleteOnboardRule:output_type -> identity.v1.DeleteOnboardRuleResponse
+	84,  // 177: identity.v1.IdentityService.ApproveOnboardRequest:output_type -> common.v1.User
+	138, // 178: identity.v1.IdentityService.RejectOnboardRequest:output_type -> identity.v1.OnboardRule
+	140, // 179: identity.v1.IdentityService.ListUserAuthKeys:output_type -> identity.v1.ListUserAuthKeysResponse
+	84,  // 180: identity.v1.IdentityService.AddUserAuthKeys:output_type -> common.v1.User
+	84,  // 181: identity.v1.IdentityService.RemoveUserAuthKey:output_type -> common.v1.User
+	84,  // 182: identity.v1.IdentityService.SetUserPassword:output_type -> common.v1.User
+	9,   // 183: identity.v1.IdentityService.RequestPasswordReset:output_type -> identity.v1.RequestPasswordResetResponse
+	11,  // 184: identity.v1.IdentityService.ConfirmPasswordReset:output_type -> identity.v1.ConfirmPasswordResetResponse
+	27,  // 185: identity.v1.IdentityService.UpdateUserCredential:output_type -> identity.v1.UpdateUserCredentialResponse
+	29,  // 186: identity.v1.IdentityService.DeleteUserCredential:output_type -> identity.v1.DeleteUserCredentialResponse
+	31,  // 187: identity.v1.IdentityService.RemoveUserCredential:output_type -> identity.v1.RemoveUserCredentialResponse
+	33,  // 188: identity.v1.IdentityService.GetAvailableIdentityProviders:output_type -> identity.v1.GetAvailableIdentityProvidersResponse
+	141, // 189: identity.v1.IdentityService.ListRepoOwners:output_type -> identity.v1.RepoOwnerList
+	142, // 190: identity.v1.IdentityService.ListRepos:output_type -> identity.v1.RepoList
+	35,  // 191: identity.v1.IdentityService.CreateAccessToken:output_type -> identity.v1.CreateAccessTokenResponse
+	38,  // 192: identity.v1.IdentityService.UpdateAccessToken:output_type -> identity.v1.UpdateAccessTokenResponse
+	39,  // 193: identity.v1.IdentityService.ListAccessTokens:output_type -> identity.v1.ListAccessTokensResponse
+	41,  // 194: identity.v1.IdentityService.RevokeAccessToken:output_type -> identity.v1.RevokeAccessTokenResponse
+	43,  // 195: identity.v1.IdentityService.DeleteAccessToken:output_type -> identity.v1.DeleteAccessTokenResponse
+	45,  // 196: identity.v1.IdentityService.ResolveAccessToken:output_type -> identity.v1.ResolveAccessTokenResponse
+	143, // 197: identity.v1.IdentityService.ListOrganizationEnvVars:output_type -> identity.v1.EnvVarList
+	144, // 198: identity.v1.IdentityService.GetOrganizationEnvVar:output_type -> identity.v1.EnvVar
+	144, // 199: identity.v1.IdentityService.AddOrganizationEnvVar:output_type -> identity.v1.EnvVar
+	144, // 200: identity.v1.IdentityService.UpdateOrganizationEnvVar:output_type -> identity.v1.EnvVar
+	51,  // 201: identity.v1.IdentityService.DeleteOrganizationEnvVar:output_type -> identity.v1.DeleteOrganizationEnvVarResponse
+	143, // 202: identity.v1.IdentityService.ListUserEnvVars:output_type -> identity.v1.EnvVarList
+	144, // 203: identity.v1.IdentityService.GetUserEnvVar:output_type -> identity.v1.EnvVar
+	144, // 204: identity.v1.IdentityService.AddUserEnvVar:output_type -> identity.v1.EnvVar
+	144, // 205: identity.v1.IdentityService.UpdateUserEnvVar:output_type -> identity.v1.EnvVar
+	57,  // 206: identity.v1.IdentityService.DeleteUserEnvVar:output_type -> identity.v1.DeleteUserEnvVarResponse
+	145, // 207: identity.v1.IdentityService.CreateAnnouncement:output_type -> identity.v1.Announcement
+	145, // 208: identity.v1.IdentityService.GetAnnouncement:output_type -> identity.v1.Announcement
+	145, // 209: identity.v1.IdentityService.UpdateAnnouncement:output_type -> identity.v1.Announcement
+	62,  // 210: identity.v1.IdentityService.DeleteAnnouncement:output_type -> identity.v1.DeleteAnnouncementResponse
+	146, // 211: identity.v1.IdentityService.ListAnnouncements:output_type -> identity.v1.AnnouncementList
+	146, // 212: identity.v1.IdentityService.ListUnreadAnnouncements:output_type -> identity.v1.AnnouncementList
+	146, // 213: identity.v1.IdentityService.ListUserAnnouncements:output_type -> identity.v1.AnnouncementList
+	67,  // 214: identity.v1.IdentityService.MarkAnnouncementRead:output_type -> identity.v1.MarkAnnouncementReadResponse
+	123, // 215: identity.v1.IdentityService.GetAnnouncementsQuerySchema:output_type -> query.v1.Descriptor
+	146, // 216: identity.v1.IdentityService.QueryAnnouncements:output_type -> identity.v1.AnnouncementList
+	147, // 217: identity.v1.IdentityService.GetVersionInfo:output_type -> common.v1.GetVersionInfoResponse
+	71,  // 218: identity.v1.IdentityService.GetUserSettings:output_type -> identity.v1.GetUserSettingsResponse
+	73,  // 219: identity.v1.IdentityService.PutUserSettings:output_type -> identity.v1.PutUserSettingsResponse
+	75,  // 220: identity.v1.IdentityService.NotifyUser:output_type -> identity.v1.NotifyUserResponse
+	133, // [133:221] is the sub-list for method output_type
+	45,  // [45:133] is the sub-list for method input_type
 	45,  // [45:45] is the sub-list for extension type_name
 	45,  // [45:45] is the sub-list for extension extendee
 	0,   // [0:45] is the sub-list for field type_name
@@ -5026,7 +5163,7 @@ func file_identity_v1_identity_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_identity_v1_identity_proto_rawDesc), len(file_identity_v1_identity_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   73,
+			NumMessages:   75,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

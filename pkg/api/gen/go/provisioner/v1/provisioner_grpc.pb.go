@@ -48,6 +48,7 @@ const (
 	ProvisionerService_DeleteUserWorkspaces_FullMethodName     = "/provisioner.v1.ProvisionerService/DeleteUserWorkspaces"
 	ProvisionerService_StopWorkspace_FullMethodName            = "/provisioner.v1.ProvisionerService/StopWorkspace"
 	ProvisionerService_UpdateWorkspaceResources_FullMethodName = "/provisioner.v1.ProvisionerService/UpdateWorkspaceResources"
+	ProvisionerService_SetWorkspaceSchedule_FullMethodName     = "/provisioner.v1.ProvisionerService/SetWorkspaceSchedule"
 	ProvisionerService_StartWorkspaceStream_FullMethodName     = "/provisioner.v1.ProvisionerService/StartWorkspaceStream"
 	ProvisionerService_EjectWorkspace_FullMethodName           = "/provisioner.v1.ProvisionerService/EjectWorkspace"
 	ProvisionerService_ListInjectNamespaces_FullMethodName     = "/provisioner.v1.ProvisionerService/ListInjectNamespaces"
@@ -148,6 +149,14 @@ type ProvisionerServiceClient interface {
 	// (a re-provision, or a stop followed by a start) reverts the workspace to
 	// the CPU/memory and network settings from its blueprint.
 	UpdateWorkspaceResources(ctx context.Context, in *UpdateWorkspaceResourcesRequest, opts ...grpc.CallOption) (*UpdateWorkspaceResourcesResponse, error)
+	// SetWorkspaceSchedule overrides the run schedule of a running workspace
+	// (see the schedule block of a blueprint), e.g. to extend it. The override
+	// stays with the workspace across a stop and a start, and reverts to the
+	// blueprint's schedule when the workspace is re-provisioned. It is only
+	// accepted while the workspace is running (FailedPrecondition otherwise,
+	// and for injected workspaces), and the new "to" must lie in the future.
+	// The provisioner does not authorize the caller; the calling service does.
+	SetWorkspaceSchedule(ctx context.Context, in *SetWorkspaceScheduleRequest, opts ...grpc.CallOption) (*SetWorkspaceScheduleResponse, error)
 	// StartWorkspaceStream resumes a previously stopped workspace, recreating
 	// its pod from the existing Helm release, and streams progress events back
 	// to the caller until the workspace is ready or an error occurs.
@@ -399,6 +408,16 @@ func (c *provisionerServiceClient) UpdateWorkspaceResources(ctx context.Context,
 	return out, nil
 }
 
+func (c *provisionerServiceClient) SetWorkspaceSchedule(ctx context.Context, in *SetWorkspaceScheduleRequest, opts ...grpc.CallOption) (*SetWorkspaceScheduleResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SetWorkspaceScheduleResponse)
+	err := c.cc.Invoke(ctx, ProvisionerService_SetWorkspaceSchedule_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *provisionerServiceClient) StartWorkspaceStream(ctx context.Context, in *StartWorkspaceRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ProvisionWorkspaceResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	stream, err := c.cc.NewStream(ctx, &ProvisionerService_ServiceDesc.Streams[1], ProvisionerService_StartWorkspaceStream_FullMethodName, cOpts...)
@@ -560,6 +579,14 @@ type ProvisionerServiceServer interface {
 	// (a re-provision, or a stop followed by a start) reverts the workspace to
 	// the CPU/memory and network settings from its blueprint.
 	UpdateWorkspaceResources(context.Context, *UpdateWorkspaceResourcesRequest) (*UpdateWorkspaceResourcesResponse, error)
+	// SetWorkspaceSchedule overrides the run schedule of a running workspace
+	// (see the schedule block of a blueprint), e.g. to extend it. The override
+	// stays with the workspace across a stop and a start, and reverts to the
+	// blueprint's schedule when the workspace is re-provisioned. It is only
+	// accepted while the workspace is running (FailedPrecondition otherwise,
+	// and for injected workspaces), and the new "to" must lie in the future.
+	// The provisioner does not authorize the caller; the calling service does.
+	SetWorkspaceSchedule(context.Context, *SetWorkspaceScheduleRequest) (*SetWorkspaceScheduleResponse, error)
 	// StartWorkspaceStream resumes a previously stopped workspace, recreating
 	// its pod from the existing Helm release, and streams progress events back
 	// to the caller until the workspace is ready or an error occurs.
@@ -661,6 +688,9 @@ func (UnimplementedProvisionerServiceServer) StopWorkspace(context.Context, *Sto
 }
 func (UnimplementedProvisionerServiceServer) UpdateWorkspaceResources(context.Context, *UpdateWorkspaceResourcesRequest) (*UpdateWorkspaceResourcesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateWorkspaceResources not implemented")
+}
+func (UnimplementedProvisionerServiceServer) SetWorkspaceSchedule(context.Context, *SetWorkspaceScheduleRequest) (*SetWorkspaceScheduleResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SetWorkspaceSchedule not implemented")
 }
 func (UnimplementedProvisionerServiceServer) StartWorkspaceStream(*StartWorkspaceRequest, grpc.ServerStreamingServer[ProvisionWorkspaceResponse]) error {
 	return status.Error(codes.Unimplemented, "method StartWorkspaceStream not implemented")
@@ -1054,6 +1084,24 @@ func _ProvisionerService_UpdateWorkspaceResources_Handler(srv interface{}, ctx c
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProvisionerService_SetWorkspaceSchedule_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetWorkspaceScheduleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProvisionerServiceServer).SetWorkspaceSchedule(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProvisionerService_SetWorkspaceSchedule_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProvisionerServiceServer).SetWorkspaceSchedule(ctx, req.(*SetWorkspaceScheduleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ProvisionerService_StartWorkspaceStream_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(StartWorkspaceRequest)
 	if err := stream.RecvMsg(m); err != nil {
@@ -1237,6 +1285,10 @@ var ProvisionerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateWorkspaceResources",
 			Handler:    _ProvisionerService_UpdateWorkspaceResources_Handler,
+		},
+		{
+			MethodName: "SetWorkspaceSchedule",
+			Handler:    _ProvisionerService_SetWorkspaceSchedule_Handler,
 		},
 		{
 			MethodName: "EjectWorkspace",

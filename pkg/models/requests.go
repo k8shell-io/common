@@ -133,6 +133,22 @@ type WorkspaceResourcesUpdateRequest struct {
 	Memory *string `json:"memory,omitempty" example:"256Mi"`
 }
 
+// WorkspaceScheduleUpdateRequest is the HTTP request body for PATCH
+// /workspaces/{workspace_name}/schedule, which overrides the run schedule of a
+// running workspace. A nil field keeps its value and "" clears it ("to": ""
+// means no expiry). Revert drops the override and restores the blueprint's
+// schedule; it can't be combined with values. To is absolute with an offset
+// or Z; without one it is read in the blueprint's timezone or the deployment's
+// default zone, never the caller's. At least one field or Revert
+// must be set. Gated by workspace:update with data type schedule.
+// Note: proto counterpart is provisionerv1.SetWorkspaceScheduleRequest.
+type WorkspaceScheduleUpdateRequest struct {
+	To             *string `json:"to,omitempty" example:"2026-11-12T18:00:00Z"`
+	StopGrace      *string `json:"stopGrace,omitempty" example:"15m"`
+	TerminateGrace *string `json:"terminateGrace,omitempty" example:"7d"`
+	Revert         bool    `json:"revert,omitempty"`
+}
+
 // WorkspaceNetworkUpdateRequest is the HTTP request body for PATCH
 // /workspaces/{workspace_name}/network, which changes a workspace's network
 // policy class, egress rules, and/or web-proxy route. Gated by the

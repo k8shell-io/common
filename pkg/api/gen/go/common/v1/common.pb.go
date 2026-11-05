@@ -1087,7 +1087,10 @@ type WorkspaceDetails struct {
 	NodeSelectors map[string]string `protobuf:"bytes,35,rep,name=node_selectors,json=nodeSelectors,proto3" json:"node_selectors,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	// node_name is the node the workspace pod is scheduled on. Empty while the
 	// pod is not yet scheduled and for a stopped workspace.
-	NodeName      string `protobuf:"bytes,36,opt,name=node_name,json=nodeName,proto3" json:"node_name,omitempty"`
+	NodeName string `protobuf:"bytes,36,opt,name=node_name,json=nodeName,proto3" json:"node_name,omitempty"`
+	// schedule is the run schedule the workspace was provisioned with. Unset
+	// when its blueprint declares none.
+	Schedule      *WorkspaceSchedule `protobuf:"bytes,37,opt,name=schedule,proto3" json:"schedule,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1374,6 +1377,110 @@ func (x *WorkspaceDetails) GetNodeName() string {
 	return ""
 }
 
+func (x *WorkspaceDetails) GetSchedule() *WorkspaceSchedule {
+	if x != nil {
+		return x.Schedule
+	}
+	return nil
+}
+
+// WorkspaceSchedule is the effective run schedule of a workspace, as resolved
+// from its blueprint when it was provisioned. All fields are optional.
+type WorkspaceSchedule struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// from is the earliest time the workspace could be provisioned.
+	From *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=from,proto3" json:"from,omitempty"`
+	// to is the time the workspace expires and its stop grace period begins.
+	To *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=to,proto3" json:"to,omitempty"`
+	// stop_grace is the period between to and the stop, as a duration string
+	// such as "15m".
+	StopGrace string `protobuf:"bytes,3,opt,name=stop_grace,json=stopGrace,proto3" json:"stop_grace,omitempty"`
+	// terminate_grace is the period a stopped workspace is kept before it is
+	// terminated, as a duration string such as "7d". Empty means never.
+	TerminateGrace string `protobuf:"bytes,4,opt,name=terminate_grace,json=terminateGrace,proto3" json:"terminate_grace,omitempty"`
+	// stops_at is when the workspace pod is stopped: to plus stop_grace. Unset
+	// when to is unset.
+	StopsAt *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=stops_at,json=stopsAt,proto3" json:"stops_at,omitempty"`
+	// terminates_at is when the stopped workspace is terminated: to plus
+	// stop_grace plus terminate_grace. Unset when to or terminate_grace is
+	// unset.
+	TerminatesAt  *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=terminates_at,json=terminatesAt,proto3" json:"terminates_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WorkspaceSchedule) Reset() {
+	*x = WorkspaceSchedule{}
+	mi := &file_common_v1_common_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WorkspaceSchedule) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WorkspaceSchedule) ProtoMessage() {}
+
+func (x *WorkspaceSchedule) ProtoReflect() protoreflect.Message {
+	mi := &file_common_v1_common_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WorkspaceSchedule.ProtoReflect.Descriptor instead.
+func (*WorkspaceSchedule) Descriptor() ([]byte, []int) {
+	return file_common_v1_common_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *WorkspaceSchedule) GetFrom() *timestamppb.Timestamp {
+	if x != nil {
+		return x.From
+	}
+	return nil
+}
+
+func (x *WorkspaceSchedule) GetTo() *timestamppb.Timestamp {
+	if x != nil {
+		return x.To
+	}
+	return nil
+}
+
+func (x *WorkspaceSchedule) GetStopGrace() string {
+	if x != nil {
+		return x.StopGrace
+	}
+	return ""
+}
+
+func (x *WorkspaceSchedule) GetTerminateGrace() string {
+	if x != nil {
+		return x.TerminateGrace
+	}
+	return ""
+}
+
+func (x *WorkspaceSchedule) GetStopsAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.StopsAt
+	}
+	return nil
+}
+
+func (x *WorkspaceSchedule) GetTerminatesAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.TerminatesAt
+	}
+	return nil
+}
+
 // BlueprintSummary is a lightweight representation of a blueprint used in
 // listing responses.
 type BlueprintSummary struct {
@@ -1414,7 +1521,7 @@ type BlueprintSummary struct {
 
 func (x *BlueprintSummary) Reset() {
 	*x = BlueprintSummary{}
-	mi := &file_common_v1_common_proto_msgTypes[11]
+	mi := &file_common_v1_common_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1426,7 +1533,7 @@ func (x *BlueprintSummary) String() string {
 func (*BlueprintSummary) ProtoMessage() {}
 
 func (x *BlueprintSummary) ProtoReflect() protoreflect.Message {
-	mi := &file_common_v1_common_proto_msgTypes[11]
+	mi := &file_common_v1_common_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1439,7 +1546,7 @@ func (x *BlueprintSummary) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BlueprintSummary.ProtoReflect.Descriptor instead.
 func (*BlueprintSummary) Descriptor() ([]byte, []int) {
-	return file_common_v1_common_proto_rawDescGZIP(), []int{11}
+	return file_common_v1_common_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *BlueprintSummary) GetName() string {
@@ -1517,7 +1624,7 @@ type GetVersionInfoRequest struct {
 
 func (x *GetVersionInfoRequest) Reset() {
 	*x = GetVersionInfoRequest{}
-	mi := &file_common_v1_common_proto_msgTypes[12]
+	mi := &file_common_v1_common_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1529,7 +1636,7 @@ func (x *GetVersionInfoRequest) String() string {
 func (*GetVersionInfoRequest) ProtoMessage() {}
 
 func (x *GetVersionInfoRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_common_v1_common_proto_msgTypes[12]
+	mi := &file_common_v1_common_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1542,7 +1649,7 @@ func (x *GetVersionInfoRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetVersionInfoRequest.ProtoReflect.Descriptor instead.
 func (*GetVersionInfoRequest) Descriptor() ([]byte, []int) {
-	return file_common_v1_common_proto_rawDescGZIP(), []int{12}
+	return file_common_v1_common_proto_rawDescGZIP(), []int{13}
 }
 
 // GetVersionInfoResponse reports build and version metadata for a single
@@ -1562,7 +1669,7 @@ type GetVersionInfoResponse struct {
 
 func (x *GetVersionInfoResponse) Reset() {
 	*x = GetVersionInfoResponse{}
-	mi := &file_common_v1_common_proto_msgTypes[13]
+	mi := &file_common_v1_common_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1574,7 +1681,7 @@ func (x *GetVersionInfoResponse) String() string {
 func (*GetVersionInfoResponse) ProtoMessage() {}
 
 func (x *GetVersionInfoResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_common_v1_common_proto_msgTypes[13]
+	mi := &file_common_v1_common_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1587,7 +1694,7 @@ func (x *GetVersionInfoResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetVersionInfoResponse.ProtoReflect.Descriptor instead.
 func (*GetVersionInfoResponse) Descriptor() ([]byte, []int) {
-	return file_common_v1_common_proto_rawDescGZIP(), []int{13}
+	return file_common_v1_common_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GetVersionInfoResponse) GetVersion() string {
@@ -1705,7 +1812,7 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"\fmatch_labels\x18\x01 \x03(\v2,.common.v1.PodLabelSelector.MatchLabelsEntryR\vmatchLabels\x1a>\n" +
 	"\x10MatchLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xd6\v\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x90\f\n" +
 	"\x10WorkspaceDetails\x12E\n" +
 	"\x10workspace_status\x18\x01 \x01(\v2\x1a.common.v1.WorkspaceStatusR\x0fworkspaceStatus\x12\x1f\n" +
 	"\vapp_version\x18\x02 \x01(\tR\n" +
@@ -1747,13 +1854,22 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"\x12blueprint_outdated\x18! \x01(\bH\x02R\x11blueprintOutdated\x88\x01\x01\x12\x18\n" +
 	"\aruntime\x18\" \x01(\tR\aruntime\x12U\n" +
 	"\x0enode_selectors\x18# \x03(\v2..common.v1.WorkspaceDetails.NodeSelectorsEntryR\rnodeSelectors\x12\x1b\n" +
-	"\tnode_name\x18$ \x01(\tR\bnodeName\x1a@\n" +
+	"\tnode_name\x18$ \x01(\tR\bnodeName\x128\n" +
+	"\bschedule\x18% \x01(\v2\x1c.common.v1.WorkspaceScheduleR\bschedule\x1a@\n" +
 	"\x12NodeSelectorsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\x10\n" +
 	"\x0e_replica_indexB\x10\n" +
 	"\x0e_replica_countB\x15\n" +
-	"\x13_blueprint_outdated\"\xc6\x02\n" +
+	"\x13_blueprint_outdated\"\xaf\x02\n" +
+	"\x11WorkspaceSchedule\x12.\n" +
+	"\x04from\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x04from\x12*\n" +
+	"\x02to\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x02to\x12\x1d\n" +
+	"\n" +
+	"stop_grace\x18\x03 \x01(\tR\tstopGrace\x12'\n" +
+	"\x0fterminate_grace\x18\x04 \x01(\tR\x0eterminateGrace\x125\n" +
+	"\bstops_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\astopsAt\x12?\n" +
+	"\rterminates_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\fterminatesAt\"\xc6\x02\n" +
 	"\x10BlueprintSummary\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x1f\n" +
@@ -1785,7 +1901,7 @@ func file_common_v1_common_proto_rawDescGZIP() []byte {
 	return file_common_v1_common_proto_rawDescData
 }
 
-var file_common_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_common_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
 var file_common_v1_common_proto_goTypes = []any{
 	(*User)(nil),                   // 0: common.v1.User
 	(*UserCredential)(nil),         // 1: common.v1.UserCredential
@@ -1798,32 +1914,38 @@ var file_common_v1_common_proto_goTypes = []any{
 	(*WorkspaceStatus)(nil),        // 8: common.v1.WorkspaceStatus
 	(*PodLabelSelector)(nil),       // 9: common.v1.PodLabelSelector
 	(*WorkspaceDetails)(nil),       // 10: common.v1.WorkspaceDetails
-	(*BlueprintSummary)(nil),       // 11: common.v1.BlueprintSummary
-	(*GetVersionInfoRequest)(nil),  // 12: common.v1.GetVersionInfoRequest
-	(*GetVersionInfoResponse)(nil), // 13: common.v1.GetVersionInfoResponse
-	nil,                            // 14: common.v1.PodLabelSelector.MatchLabelsEntry
-	nil,                            // 15: common.v1.WorkspaceDetails.NodeSelectorsEntry
-	(*timestamppb.Timestamp)(nil),  // 16: google.protobuf.Timestamp
+	(*WorkspaceSchedule)(nil),      // 11: common.v1.WorkspaceSchedule
+	(*BlueprintSummary)(nil),       // 12: common.v1.BlueprintSummary
+	(*GetVersionInfoRequest)(nil),  // 13: common.v1.GetVersionInfoRequest
+	(*GetVersionInfoResponse)(nil), // 14: common.v1.GetVersionInfoResponse
+	nil,                            // 15: common.v1.PodLabelSelector.MatchLabelsEntry
+	nil,                            // 16: common.v1.WorkspaceDetails.NodeSelectorsEntry
+	(*timestamppb.Timestamp)(nil),  // 17: google.protobuf.Timestamp
 }
 var file_common_v1_common_proto_depIdxs = []int32{
-	16, // 0: common.v1.User.expires_at:type_name -> google.protobuf.Timestamp
-	16, // 1: common.v1.UserCredential.created_at:type_name -> google.protobuf.Timestamp
-	16, // 2: common.v1.UserCredential.updated_at:type_name -> google.protobuf.Timestamp
-	16, // 3: common.v1.UserCredential.expires_at:type_name -> google.protobuf.Timestamp
-	16, // 4: common.v1.UserCredential.last_used_at:type_name -> google.protobuf.Timestamp
+	17, // 0: common.v1.User.expires_at:type_name -> google.protobuf.Timestamp
+	17, // 1: common.v1.UserCredential.created_at:type_name -> google.protobuf.Timestamp
+	17, // 2: common.v1.UserCredential.updated_at:type_name -> google.protobuf.Timestamp
+	17, // 3: common.v1.UserCredential.expires_at:type_name -> google.protobuf.Timestamp
+	17, // 4: common.v1.UserCredential.last_used_at:type_name -> google.protobuf.Timestamp
 	6,  // 5: common.v1.UserResult.onboard_rule:type_name -> common.v1.OnboardUserRule
-	16, // 6: common.v1.WorkspaceStatus.created:type_name -> google.protobuf.Timestamp
-	14, // 7: common.v1.PodLabelSelector.match_labels:type_name -> common.v1.PodLabelSelector.MatchLabelsEntry
+	17, // 6: common.v1.WorkspaceStatus.created:type_name -> google.protobuf.Timestamp
+	15, // 7: common.v1.PodLabelSelector.match_labels:type_name -> common.v1.PodLabelSelector.MatchLabelsEntry
 	8,  // 8: common.v1.WorkspaceDetails.workspace_status:type_name -> common.v1.WorkspaceStatus
 	9,  // 9: common.v1.WorkspaceDetails.allow_egress_to_pods:type_name -> common.v1.PodLabelSelector
-	15, // 10: common.v1.WorkspaceDetails.node_selectors:type_name -> common.v1.WorkspaceDetails.NodeSelectorsEntry
-	16, // 11: common.v1.BlueprintSummary.created_at:type_name -> google.protobuf.Timestamp
-	16, // 12: common.v1.BlueprintSummary.updated_at:type_name -> google.protobuf.Timestamp
-	13, // [13:13] is the sub-list for method output_type
-	13, // [13:13] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	16, // 10: common.v1.WorkspaceDetails.node_selectors:type_name -> common.v1.WorkspaceDetails.NodeSelectorsEntry
+	11, // 11: common.v1.WorkspaceDetails.schedule:type_name -> common.v1.WorkspaceSchedule
+	17, // 12: common.v1.WorkspaceSchedule.from:type_name -> google.protobuf.Timestamp
+	17, // 13: common.v1.WorkspaceSchedule.to:type_name -> google.protobuf.Timestamp
+	17, // 14: common.v1.WorkspaceSchedule.stops_at:type_name -> google.protobuf.Timestamp
+	17, // 15: common.v1.WorkspaceSchedule.terminates_at:type_name -> google.protobuf.Timestamp
+	17, // 16: common.v1.BlueprintSummary.created_at:type_name -> google.protobuf.Timestamp
+	17, // 17: common.v1.BlueprintSummary.updated_at:type_name -> google.protobuf.Timestamp
+	18, // [18:18] is the sub-list for method output_type
+	18, // [18:18] is the sub-list for method input_type
+	18, // [18:18] is the sub-list for extension type_name
+	18, // [18:18] is the sub-list for extension extendee
+	0,  // [0:18] is the sub-list for field type_name
 }
 
 func init() { file_common_v1_common_proto_init() }
@@ -1839,7 +1961,7 @@ func file_common_v1_common_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_common_v1_common_proto_rawDesc), len(file_common_v1_common_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   16,
+			NumMessages:   17,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

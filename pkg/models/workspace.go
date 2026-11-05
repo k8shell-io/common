@@ -129,6 +129,29 @@ type WorkspaceDetails struct {
 	// NodeName is the node the workspace pod is scheduled on. Empty while the
 	// pod is not yet scheduled and for a stopped workspace.
 	NodeName string `json:"nodeName,omitempty" example:"worker-1"`
+	// Schedule is the run schedule the workspace was provisioned with. Nil
+	// when its blueprint declares none.
+	Schedule *WorkspaceSchedule `json:"schedule,omitempty"`
+}
+
+// WorkspaceSchedule is the effective run schedule of a workspace, resolved
+// from its blueprint when it was provisioned. See Schedule for the timeline.
+type WorkspaceSchedule struct {
+	// From is the earliest time the workspace could be provisioned.
+	From *time.Time `json:"from,omitempty" example:"2026-11-10T08:00:00Z"`
+	// To is the time the workspace expires and its stop grace period begins.
+	To *time.Time `json:"to,omitempty" example:"2026-11-10T18:00:00Z"`
+	// StopGrace is the period between To and the stop, e.g. "15m".
+	StopGrace string `json:"stopGrace,omitempty" example:"15m"`
+	// TerminateGrace is the period a stopped workspace is kept before it is
+	// terminated, e.g. "7d". Empty means never.
+	TerminateGrace string `json:"terminateGrace,omitempty" example:"7d"`
+	// StopsAt is when the workspace pod is stopped: To plus StopGrace. Nil
+	// when To is unset.
+	StopsAt *time.Time `json:"stopsAt,omitempty" example:"2026-11-10T18:15:00Z"`
+	// TerminatesAt is when the stopped workspace is terminated: To plus
+	// StopGrace plus TerminateGrace. Nil when To or TerminateGrace is unset.
+	TerminatesAt *time.Time `json:"terminatesAt,omitempty" example:"2026-11-17T18:15:00Z"`
 }
 
 type WorkspaceStreamEventType string

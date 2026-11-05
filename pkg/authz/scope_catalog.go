@@ -93,9 +93,13 @@ var scopeCatalogSource = []domainSpec{
 				{scope: "workspace:update:cpu", label: "CPU", description: "Change a workspace's CPU limit."},
 				{scope: "workspace:update:memory", label: "Memory", description: "Change a workspace's memory limit."},
 				{scope: "workspace:update:network", label: "Network", description: "Change a workspace's network policy class and egress rules."},
+				{scope: "workspace:update:schedule", label: "Schedule", description: "Override a running workspace's expiry and grace periods, or revert to the blueprint's schedule."},
 			}},
 			{action: "workspace:delete", label: "Delete", entries: []entrySpec{
 				{scope: "workspace:delete", label: "Delete", description: "Delete a workspace."},
+			}},
+			{action: "workspace:start:force", label: "Force start", entries: []entrySpec{
+				{scope: "workspace:start:force", label: "Force start", description: "Start a workspace that was stopped by its schedule expiry, giving it a new expiry."},
 			}},
 			{action: "workspace:files", label: "Files", entries: []entrySpec{
 				{scope: "workspace:files", label: "Files", description: "Browse and edit files inside a workspace."},

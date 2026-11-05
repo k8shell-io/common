@@ -111,6 +111,7 @@ const (
 	IdentityService_GetVersionInfo_FullMethodName                = "/identity.v1.IdentityService/GetVersionInfo"
 	IdentityService_GetUserSettings_FullMethodName               = "/identity.v1.IdentityService/GetUserSettings"
 	IdentityService_PutUserSettings_FullMethodName               = "/identity.v1.IdentityService/PutUserSettings"
+	IdentityService_NotifyUser_FullMethodName                    = "/identity.v1.IdentityService/NotifyUser"
 )
 
 // IdentityServiceClient is the client API for IdentityService service.
@@ -426,6 +427,14 @@ type IdentityServiceClient interface {
 	// as an informational counter). Identity does not interpret data beyond
 	// enforcing its size cap.
 	PutUserSettings(ctx context.Context, in *PutUserSettingsRequest, opts ...grpc.CallOption) (*PutUserSettingsResponse, error)
+	// NotifyUser sends a one-off message to a single user, by email to the
+	// address on the user's account. Unlike an announcement it is addressed to
+	// one user and is not stored for reading later. It is meant for service
+	// callers (e.g. the provisioner warning that a workspace is about to stop).
+	// Delivery is best effort: a successful response means the message was
+	// accepted for sending, not that it arrived. NotFound when the user does
+	// not exist; FailedPrecondition when the user has no email address.
+	NotifyUser(ctx context.Context, in *NotifyUserRequest, opts ...grpc.CallOption) (*NotifyUserResponse, error)
 }
 
 type identityServiceClient struct {
@@ -1306,6 +1315,16 @@ func (c *identityServiceClient) PutUserSettings(ctx context.Context, in *PutUser
 	return out, nil
 }
 
+func (c *identityServiceClient) NotifyUser(ctx context.Context, in *NotifyUserRequest, opts ...grpc.CallOption) (*NotifyUserResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(NotifyUserResponse)
+	err := c.cc.Invoke(ctx, IdentityService_NotifyUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // IdentityServiceServer is the server API for IdentityService service.
 // All implementations must embed UnimplementedIdentityServiceServer
 // for forward compatibility.
@@ -1619,6 +1638,14 @@ type IdentityServiceServer interface {
 	// as an informational counter). Identity does not interpret data beyond
 	// enforcing its size cap.
 	PutUserSettings(context.Context, *PutUserSettingsRequest) (*PutUserSettingsResponse, error)
+	// NotifyUser sends a one-off message to a single user, by email to the
+	// address on the user's account. Unlike an announcement it is addressed to
+	// one user and is not stored for reading later. It is meant for service
+	// callers (e.g. the provisioner warning that a workspace is about to stop).
+	// Delivery is best effort: a successful response means the message was
+	// accepted for sending, not that it arrived. NotFound when the user does
+	// not exist; FailedPrecondition when the user has no email address.
+	NotifyUser(context.Context, *NotifyUserRequest) (*NotifyUserResponse, error)
 	mustEmbedUnimplementedIdentityServiceServer()
 }
 
@@ -1889,6 +1916,9 @@ func (UnimplementedIdentityServiceServer) GetUserSettings(context.Context, *GetU
 }
 func (UnimplementedIdentityServiceServer) PutUserSettings(context.Context, *PutUserSettingsRequest) (*PutUserSettingsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method PutUserSettings not implemented")
+}
+func (UnimplementedIdentityServiceServer) NotifyUser(context.Context, *NotifyUserRequest) (*NotifyUserResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method NotifyUser not implemented")
 }
 func (UnimplementedIdentityServiceServer) mustEmbedUnimplementedIdentityServiceServer() {}
 func (UnimplementedIdentityServiceServer) testEmbeddedByValue()                         {}
@@ -3477,6 +3507,24 @@ func _IdentityService_PutUserSettings_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IdentityService_NotifyUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NotifyUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).NotifyUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_NotifyUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).NotifyUser(ctx, req.(*NotifyUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // IdentityService_ServiceDesc is the grpc.ServiceDesc for IdentityService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -3831,6 +3879,10 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "PutUserSettings",
 			Handler:    _IdentityService_PutUserSettings_Handler,
+		},
+		{
+			MethodName: "NotifyUser",
+			Handler:    _IdentityService_NotifyUser_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -255,7 +255,7 @@ func normalizeByDomain(req *authzv1.EvaluateRequest) (*authzv1.EvaluateRequest, 
 		normalized := ownerReq.ToProto("")
 		normalized.Package = req.Package
 		return normalized, nil
-	case action == "workspace:read", action == "workspace:delete":
+	case action == "workspace:read", action == "workspace:delete", action == "workspace:start:force":
 		accessReq, err := WorkspaceAccessEvalRequestFromProto(req)
 		if err != nil {
 			return nil, err

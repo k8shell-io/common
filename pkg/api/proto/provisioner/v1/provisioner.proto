@@ -122,6 +122,15 @@ service ProvisionerService {
   // the CPU/memory and network settings from its blueprint.
   rpc UpdateWorkspaceResources(UpdateWorkspaceResourcesRequest) returns (UpdateWorkspaceResourcesResponse);
 
+  // SetWorkspaceSchedule overrides the run schedule of a running workspace
+  // (see the schedule block of a blueprint), e.g. to extend it. The override
+  // stays with the workspace across a stop and a start, and reverts to the
+  // blueprint's schedule when the workspace is re-provisioned. It is only
+  // accepted while the workspace is running (FailedPrecondition otherwise,
+  // and for injected workspaces), and the new "to" must lie in the future.
+  // The provisioner does not authorize the caller; the calling service does.
+  rpc SetWorkspaceSchedule(SetWorkspaceScheduleRequest) returns (SetWorkspaceScheduleResponse);
+
   // StartWorkspaceStream resumes a previously stopped workspace, recreating
   // its pod from the existing Helm release, and streams progress events back
   // to the caller until the workspace is ready or an error occurs.
@@ -587,6 +596,33 @@ message WorkspaceNetworkRules {
   optional string web_proxy_alias = 8;
 }
 
+// SetWorkspaceScheduleRequest identifies the workspace and the schedule
+// values to change. A field that is not set keeps its current value; a field
+// set to the empty string clears it (no expiry, no grace period). Either
+// set at least one field or set revert, not both.
+message SetWorkspaceScheduleRequest {
+  // workspace is the name of the workspace.
+  string workspace = 1;
+  // to is the new expiry as an RFC 3339 timestamp, or "" for none.
+  optional string to = 2;
+  // stop_grace is the new stop grace period such as "15m", or "" for none.
+  optional string stop_grace = 3;
+  // terminate_grace is the new terminate grace period such as "7d", or ""
+  // to never terminate.
+  optional string terminate_grace = 4;
+  // revert drops the override and restores the blueprint's schedule.
+  bool revert = 5;
+}
+
+// SetWorkspaceScheduleResponse reports the schedule in effect afterwards.
+message SetWorkspaceScheduleResponse {
+  // message is a human-readable summary.
+  string message = 1;
+  // schedule is the workspace's schedule after the change; unset when the
+  // workspace has none.
+  common.v1.WorkspaceSchedule schedule = 2;
+}
+
 // UpdateWorkspaceResourcesRequest identifies the workspace to update and
 // carries the resource and/or network changes to apply. At least one of
 // resources or network must be set.
@@ -630,6 +666,24 @@ message StartWorkspaceRequest {
   bool send_progress = 3;
   // send_events controls whether Kubernetes object events are included in the stream.
   bool send_events = 4;
+  // force starts the workspace although its schedule does not allow it, i.e.
+  // after its expiry ("to") has passed. The provisioner does not authorize the
+  // caller; the calling service must restrict who may set this.
+  //
+  // A workspace past its expiry would be stopped again within moments, so a
+  // forced start of one gives it a new expiry, applied as a schedule override
+  // (see SetWorkspaceSchedule) before the pod starts: "to" when given,
+  // otherwise the provisioner's configured default (schedule.forceStartDuration,
+  // one hour by default) from now. The new expiry is what the workspace's stop
+  // and terminate times follow. A workspace whose expiry has not passed is
+  // started as it is, unless "to" is given.
+  bool force = 5;
+  // to is the new expiry used with force: an RFC 3339 timestamp, or a local
+  // time such as "2026-11-14 19:00" in the blueprint's time zone, which must
+  // lie in the future. The empty string removes the expiry. When not set, a
+  // workspace past its expiry gets the configured default. Ignored without
+  // force.
+  optional string to = 6;
 }
 
 // EjectWorkspaceRequest identifies the workload from which to eject a workspace.

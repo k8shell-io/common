@@ -36,6 +36,10 @@ type Blueprint struct {
 	ExtFiles             map[string]string      `yaml:"extFiles,omitempty" json:"extFiles,omitempty" default:"{}"`
 	EnableApps           bool                   `yaml:"enableApps,omitempty" json:"enableApps,omitempty" default:"false"`
 	Apps                 map[string]AppSpec     `yaml:"apps,omitempty" json:"apps,omitempty" default:"{}"`
+	// Schedule limits how long workspaces of this blueprint may run. Nil means
+	// no limit. It is deliberately absent from CustomBlueprint: a repository's
+	// k8shell file must not be able to lift an organization's schedule.
+	Schedule *Schedule `yaml:"schedule,omitempty" json:"schedule,omitempty"`
 }
 
 // BlueprintMetadata holds metadata information for a blueprint.
